@@ -1,7 +1,10 @@
 import '../components/controls/box-tracker';
 import '../components/controls/dot-rating';
+import '../components/controls/health-track';
+import type { HealthChange, HealthTrack } from '../components/controls/health-track';
 import type { RatingChange, RatingControl } from '../components/controls/rating-control';
 import {
+  cycleHealthBox,
   namedRow,
   setNamedRow,
   setText,
@@ -23,6 +26,7 @@ const textInputs = sheet.querySelectorAll<HTMLInputElement>('[data-text]');
 
 const traitRatings = sheet.querySelectorAll<RatingControl>('[data-trait]');
 const rowNames = sheet.querySelectorAll<HTMLInputElement>('[data-row-name]');
+const healthTrack = sheet.querySelector<HealthTrack>('health-track')!;
 const rowRatings = sheet.querySelectorAll<RatingControl>('[data-row-rating]');
 
 const textFieldOf = (input: HTMLInputElement): TextRef => input.dataset.text as TextRef;
@@ -41,6 +45,7 @@ function render(character: V20Character): void {
   for (const rating of traitRatings) {
     rating.value = traitValue(character, traitOf(rating));
   }
+  healthTrack.damage = character.health;
   for (const input of rowNames) {
     showText(input, namedRow(character, input.dataset.rowName as NamedRowRef)?.name ?? '');
   }
@@ -90,6 +95,11 @@ function showSheet(loaded: V20Character): void {
       apply((current) => setNamedRow(current, row, { rating: value }));
     });
   }
+
+  healthTrack.addEventListener('change', (event) => {
+    const { level } = (event as CustomEvent<HealthChange>).detail;
+    apply((current) => cycleHealthBox(current, level));
+  });
 
   render(character);
   sheet.hidden = false;

@@ -9,6 +9,8 @@ interface ScenarioMemory {
   saved: V20Character[];
   /** The rating the scenario is working with. */
   rating: string;
+  /** The health box the scenario is working with. */
+  healthLevel: string;
 }
 
 // Every step file imports Given/When/Then from here so scenarios share one
@@ -17,7 +19,7 @@ export const test = base.extend<{ memory: ScenarioMemory }>({
   // Playwright requires the first fixture argument to be a destructuring pattern.
   // oxlint-disable-next-line no-empty-pattern
   memory: async ({}, use) => {
-    await use({ entered: new Map(), saved: [], rating: '' });
+    await use({ entered: new Map(), saved: [], rating: '', healthLevel: '' });
   },
 });
 export const { Given, When, Then } = createBdd(test);

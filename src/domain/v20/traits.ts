@@ -138,6 +138,10 @@ export const HEALTH_LEVELS = [
   { key: 'incapacitated', label: 'Incapacitated', penalty: '' },
 ] as const;
 
+/** The damage a health box can hold, in the order activating it steps through. */
+export const DAMAGE_TYPES = ['empty', 'bashing', 'lethal', 'aggravated'] as const;
+
+export type DamageType = (typeof DAMAGE_TYPES)[number];
 export type HeaderField = (typeof HEADER_FIELDS)[number]['key'];
 export type AttributeKey = (typeof ATTRIBUTE_GROUPS)[number]['traits'][number]['key'];
 export type AbilityGroupKey = (typeof ABILITY_GROUPS)[number]['key'];

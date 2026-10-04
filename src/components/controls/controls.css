@@ -26,3 +26,12 @@ box-tracker {
 box-tracker .rating-mark {
 	border-radius: 0;
 }
+
+.health-box {
+	box-sizing: border-box;
+	inline-size: 1.5rem;
+	block-size: 1.5rem;
+	padding: 0;
+	font: inherit;
+	line-height: 1;
+}

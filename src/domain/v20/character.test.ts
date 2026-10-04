@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   activateRating,
   blankCharacter,
+  cycleHealthBox,
   displayName,
   namedRow,
   setHeaderField,
@@ -13,6 +14,7 @@ import {
 } from './character';
 import {
   HEADER_FIELDS,
+  HEALTH_LEVELS,
   RATING_RANGE,
   VIRTUE_RANGE,
   rangeOf,
@@ -502,5 +504,50 @@ describe('trackers', () => {
     const character = setText(blankCharacter('abc'), 'bloodPool.perTurn', '3');
 
     expect(character.bloodPool).toEqual({ current: 0, perTurn: '3' });
+  });
+});
+
+describe('cycleHealthBox', () => {
+  test('steps a box through bashing, lethal, aggravated and back to empty', () => {
+    let character = blankCharacter('abc');
+    const seen: string[] = [];
+    for (let step = 0; step < 5; step += 1) {
+      character = cycleHealthBox(character, 'bruised');
+      seen.push(character.health.bruised);
+    }
+
+    expect(seen).toEqual(['bashing', 'lethal', 'aggravated', 'empty', 'bashing']);
+  });
+
+  test.each(HEALTH_LEVELS.map((level) => level.key))('changes only the %s box', (level) => {
+    const original = blankCharacter('abc');
+
+    const updated = cycleHealthBox(original, level);
+
+    expect(updated).toEqual({ ...original, health: { ...original.health, [level]: 'bashing' } });
+  });
+
+  test('boxes hold different damage and are not sorted', () => {
+    let character = blankCharacter('abc');
+    character = cycleHealthBox(cycleHealthBox(character, 'wounded'), 'wounded');
+    character = cycleHealthBox(character, 'incapacitated');
+
+    expect(character.health).toEqual({
+      bruised: 'empty',
+      hurt: 'empty',
+      injured: 'empty',
+      wounded: 'lethal',
+      mauled: 'empty',
+      crippled: 'empty',
+      incapacitated: 'bashing',
+    });
+  });
+
+  test('does not change the character it was given', () => {
+    const original = blankCharacter('abc');
+
+    cycleHealthBox(original, 'hurt');
+
+    expect(original).toEqual(blankCharacter('abc'));
   });
 });

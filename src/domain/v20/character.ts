@@ -11,8 +11,10 @@ import {
   VIRTUE_DEFAULT,
   type AbilityGroupKey,
   type AbilityKey,
+  DAMAGE_TYPES,
   rangeOf,
   type AttributeKey,
+  type DamageType,
   RATING_RANGE,
   type HeaderField,
   type HealthLevelKey,
@@ -22,8 +24,6 @@ import {
   type TraitRef,
   type VirtueKey,
 } from './traits';
-
-export type DamageType = 'empty' | 'bashing' | 'lethal' | 'aggravated';
 
 /** A write-in row: the player supplies the trait's name as well as its rating. */
 export interface NamedRating {
@@ -175,4 +175,11 @@ export function setNamedRow(
       ? rows.map((existing, index) => (index === Number(key) ? updated : existing))
       : { ...rows, [key]: updated },
   };
+}
+
+/** Steps one health box to its next damage type: empty, bashing, lethal, aggravated, empty. */
+export function cycleHealthBox(character: V20Character, level: HealthLevelKey): V20Character {
+  const position = DAMAGE_TYPES.indexOf(character.health[level]);
+  const next = DAMAGE_TYPES[(position + 1) % DAMAGE_TYPES.length];
+  return { ...character, health: { ...character.health, [level]: next } };
 }

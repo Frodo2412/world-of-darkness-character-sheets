@@ -1,0 +1,28 @@
+---
+import { HEALTH_LEVELS } from '../../domain/v20/traits';
+---
+
+<section aria-labelledby="health-heading">
+	<h2 id="health-heading">Health</h2>
+	<health-track>
+		<ul>
+			{
+				HEALTH_LEVELS.map((level) => (
+					<li>
+						<span class="health-level">
+							{level.label}
+							{level.penalty && <span class="health-penalty">{level.penalty}</span>}
+						</span>
+						<button
+							type="button"
+							class="health-box"
+							data-health-level={level.key}
+							data-label={level.label}
+							aria-label={`${level.label}, empty`}
+						/>
+					</li>
+				))
+			}
+		</ul>
+	</health-track>
+</section>
