@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { blankCharacter } from './character';
+import { blankCharacter, displayName } from './character';
 
 describe('blankCharacter', () => {
   const character = blankCharacter('abc');
@@ -116,5 +116,29 @@ describe('blankCharacter', () => {
     const [firstRow, secondRow] = blankCharacter('rows').disciplines;
     firstRow.rating = 4;
     expect(secondRow.rating).toBe(0);
+  });
+});
+
+describe('displayName', () => {
+  const named = (name: string) => {
+    const character = blankCharacter('abc');
+    character.header.name = name;
+    return character;
+  };
+
+  test("is the character's name", () => {
+    expect(displayName(named('Lucita'))).toBe('Lucita');
+  });
+
+  test('is a placeholder when the name is empty', () => {
+    expect(displayName(blankCharacter('abc'))).toBe('Unnamed character');
+  });
+
+  test('is a placeholder when the name is only spaces', () => {
+    expect(displayName(named('   '))).toBe('Unnamed character');
+  });
+
+  test('drops spaces around the name', () => {
+    expect(displayName(named('  Lucita '))).toBe('Lucita');
   });
 });

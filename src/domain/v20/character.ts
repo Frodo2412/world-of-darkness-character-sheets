@@ -81,3 +81,10 @@ export function blankCharacter(id: string): V20Character {
     notes: '',
   };
 }
+
+export const UNNAMED_CHARACTER = 'Unnamed character';
+
+/** The name to show for a character wherever it is listed. */
+export function displayName(character: V20Character): string {
+  return character.header.name.trim() || UNNAMED_CHARACTER;
+}

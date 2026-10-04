@@ -1,11 +1,16 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Characters">
+	<main>
+		<h1 id="roster-heading">Characters</h1>
+		<button type="button" id="new-character">New V20 character</button>
+		<p id="roster-empty" hidden>No characters yet. Create one to get started.</p>
+		<ul id="roster" aria-labelledby="roster-heading" hidden></ul>
+	</main>
 </Layout>
+
+<script>
+	import '../scripts/roster';
+</script>
