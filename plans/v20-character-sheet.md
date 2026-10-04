@@ -771,7 +771,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
 - [ ] Slice 6: Storage resilience
   - [x] Step 6.1: Validate stored records
   - [x] Step 6.2: Report unreadable characters
-  - [ ] Step 6.3: Surface failed and unavailable saves
+  - [x] Step 6.3: Surface failed and unavailable saves
 
 #### Wave 6
 - [ ] Slice 7: Sheet layout, responsiveness and accessibility verification

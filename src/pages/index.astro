@@ -1,10 +1,12 @@
 ---
+import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Characters">
 	<main>
 		<h1 id="roster-heading">Characters</h1>
+		<StatusMessage />
 		<button type="button" id="new-character">New V20 character</button>
 		<p id="roster-empty" hidden>No characters yet. Create one to get started.</p>
 		<ul id="roster" aria-labelledby="roster-heading" hidden></ul>

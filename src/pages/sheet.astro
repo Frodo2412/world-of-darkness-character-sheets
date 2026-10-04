@@ -7,12 +7,14 @@ import Morality from '../components/sheet/Morality.astro';
 import Notes from '../components/sheet/Notes.astro';
 import SheetHeader from '../components/sheet/SheetHeader.astro';
 import Trackers from '../components/sheet/Trackers.astro';
+import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Character sheet">
 	<main>
 		<p><a href="/">Back to characters</a></p>
+		<StatusMessage />
 		<div id="sheet" hidden>
 			<h1>Character sheet</h1>
 			<SheetHeader />

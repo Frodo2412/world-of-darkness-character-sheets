@@ -14,11 +14,14 @@ import {
   type V20Character,
 } from '../domain/v20/character';
 import type { NamedRowRef, TextRef, TraitRef } from '../domain/v20/traits';
-import { createCharacterStore } from '../storage/characterStore';
+import {
+  browserStorage,
+  createCharacterStore,
+  type CharacterStore,
+} from '../storage/characterStore';
+import { STORAGE_UNAVAILABLE, clearStatus, showStatus } from './status';
 
 type Update = (character: V20Character) => V20Character;
-
-const store = createCharacterStore(window.localStorage);
 
 const sheet = document.querySelector<HTMLElement>('#sheet')!;
 const notFound = document.querySelector<HTMLElement>('#sheet-not-found')!;
@@ -62,14 +65,18 @@ function render(character: V20Character): void {
   }
 }
 
-function showSheet(loaded: V20Character): void {
+function showSheet(loaded: V20Character, store: CharacterStore): void {
   let character = loaded;
 
   /** The one path every edit takes: update the model, redraw, save. */
   function apply(update: Update): void {
     character = update(character);
     render(character);
-    store.save(character);
+    if (store.save(character).status === 'failed') {
+      showStatus('Changes not saved. This browser refused to store your latest changes.');
+    } else {
+      clearStatus();
+    }
   }
 
   for (const input of textInputs) {
@@ -109,18 +116,23 @@ function showSheet(loaded: V20Character): void {
 }
 
 type PageState =
-  | { kind: 'loaded'; character: V20Character }
+  | { kind: 'loaded'; character: V20Character; store: CharacterStore }
+  | { kind: 'unavailable' }
   | { kind: 'not-found' }
   | { kind: 'unreadable' };
 
 function pageState(): PageState {
+  const storage = browserStorage();
+  if (storage === undefined) return { kind: 'unavailable' };
+
   const id = new URLSearchParams(window.location.search).get('id');
   if (id === null) return { kind: 'not-found' };
 
+  const store = createCharacterStore(storage);
   const result = store.load(id);
   switch (result.status) {
     case 'found':
-      return { kind: 'loaded', character: result.character };
+      return { kind: 'loaded', character: result.character, store };
     case 'unreadable':
       return { kind: 'unreadable' };
     case 'not-found':
@@ -131,7 +143,10 @@ function pageState(): PageState {
 const state = pageState();
 switch (state.kind) {
   case 'loaded':
-    showSheet(state.character);
+    showSheet(state.character, state.store);
+    break;
+  case 'unavailable':
+    showStatus(STORAGE_UNAVAILABLE);
     break;
   case 'not-found':
     notFound.hidden = false;

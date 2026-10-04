@@ -1,6 +1,13 @@
 import { expect, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
-import { openRoster, rosterEntries, sheetAddress, sheetField } from './support/pages';
+import {
+  createCharacter,
+  openRoster,
+  rosterEntries,
+  sheetAddress,
+  sheetField,
+} from './support/pages';
+import { rating, setRating } from './support/ratings';
 import { characterWith, saveCharacters } from './support/seed';
 import { overwriteRecord, storedText } from './support/storage';
 
@@ -96,4 +103,93 @@ Then('it is no longer reported', async ({ page, memory }) => {
   await expect(unreadableEntries(page)).toHaveCount(0);
   await expect(page.getByText('No characters yet')).toBeVisible();
   expect(await storedText(page, memory.damaged!.key)).toBeNull();
+});
+
+const savingProblem = (page: Page) => page.getByRole('alert').filter({ hasText: /changes not saved/i });
+
+/** Makes every write to storage fail the way a full or blocked storage does. */
+async function refuseWrites(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const original = Storage.prototype.setItem;
+    (window as unknown as { restoreStorage: () => void }).restoreStorage = () => {
+      Storage.prototype.setItem = original;
+    };
+    Storage.prototype.setItem = () => {
+      throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+    };
+  });
+}
+
+async function acceptWrites(page: Page): Promise<void> {
+  await page.evaluate(() => (window as unknown as { restoreStorage: () => void }).restoreStorage());
+}
+
+async function change(page: Page, entered: Map<string, string>, label: string, text: string) {
+  await sheetField(page, label).fill(text);
+  entered.set(label, text);
+}
+
+Given('the browser will not accept further saved data', async ({ page }) => {
+  await refuseWrites(page);
+});
+
+Given('the "changes not saved" message is shown', async ({ page, memory }) => {
+  await createCharacter(page);
+  await refuseWrites(page);
+  await change(page, memory.entered, 'Name', 'Lucita');
+  await expect(savingProblem(page)).toBeVisible();
+});
+
+Given('the browser provides no storage to the page', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', {
+      get() {
+        throw new DOMException('The operation is insecure.', 'SecurityError');
+      },
+    });
+  });
+});
+
+When("they change the character's Name", async ({ page, memory }) => {
+  await change(page, memory.entered, 'Name', 'Lucita');
+});
+
+When(
+  'the browser accepts saved data again and the player makes another change',
+  async ({ page, memory }) => {
+    await acceptWrites(page);
+    await change(page, memory.entered, 'Clan', 'Lasombra');
+  },
+);
+
+Then('a "changes not saved" message is shown', async ({ page }) => {
+  await expect(savingProblem(page)).toBeVisible();
+});
+
+Then('they can keep editing the sheet', async ({ page, memory }) => {
+  await change(page, memory.entered, 'Clan', 'Lasombra');
+  await setRating(rating(page, 'Strength'), 3);
+
+  for (const [label, text] of memory.entered) {
+    await expect(sheetField(page, label)).toHaveValue(text);
+  }
+  await expect(savingProblem(page)).toBeVisible();
+});
+
+Then('the message is no longer shown', async ({ page }) => {
+  await expect(savingProblem(page)).toBeHidden();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+Then('after a reload the latest values are shown', async ({ page, memory }) => {
+  await page.reload();
+  expect(memory.entered.size).toBe(2);
+  for (const [label, text] of memory.entered) {
+    await expect(sheetField(page, label)).toHaveValue(text);
+  }
+});
+
+Then('they see that characters cannot be saved in this browser', async ({ page }) => {
+  await expect(page.getByRole('alert')).toContainText('cannot be saved in this browser');
+  await expect(page.getByRole('button', { name: 'New V20 character' })).toBeDisabled();
 });

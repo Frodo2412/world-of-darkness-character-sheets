@@ -18,8 +18,9 @@ export type LoadResult =
   | { status: 'found'; character: V20Character }
   | { status: 'not-found' }
   | { status: 'unreadable'; id: string };
-export type CreateResult = { status: 'created'; character: V20Character };
-export type SaveResult = { status: 'saved' };
+/** `failed` means the browser refused the write: storage is full, disabled or blocked. */
+export type CreateResult = { status: 'created'; character: V20Character } | { status: 'failed' };
+export type SaveResult = { status: 'saved' } | { status: 'failed' };
 export type DeleteResult = { status: 'deleted' };
 
 export interface CharacterStore {
@@ -109,13 +110,29 @@ export function generateId(latestId?: string): string {
   return `${createdAt.toString(36).padStart(TIMESTAMP_WIDTH, '0')}-${randomHex(4)}`;
 }
 
+/** The browser's storage, or undefined where the browser withholds it from the page. */
+export function browserStorage(): StoragePort | undefined {
+  try {
+    const storage = globalThis.localStorage;
+    // Some browsers hand over the object and only refuse when it is used.
+    void storage.length;
+    return storage;
+  } catch {
+    return undefined;
+  }
+}
+
 export function createCharacterStore(
   storage: StoragePort,
   newId: (latestId?: string) => string = generateId,
 ): CharacterStore {
   function save(character: V20Character): SaveResult {
-    storage.setItem(keyFor(character.id), serialise(character));
-    return { status: 'saved' };
+    try {
+      storage.setItem(keyFor(character.id), serialise(character));
+      return { status: 'saved' };
+    } catch {
+      return { status: 'failed' };
+    }
   }
 
   function load(id: string): LoadResult {
@@ -128,8 +145,9 @@ export function createCharacterStore(
   return {
     create() {
       const character = blankCharacter(newId(storedIds(storage).at(-1)));
-      save(character);
-      return { status: 'created', character };
+      return save(character).status === 'saved'
+        ? { status: 'created', character }
+        : { status: 'failed' };
     },
     save,
     load,

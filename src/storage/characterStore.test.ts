@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { blankCharacter } from '../domain/v20/character';
-import { createCharacterStore, generateId, type StoragePort } from './characterStore';
+import {
+  browserStorage,
+  createCharacterStore,
+  generateId,
+  type StoragePort,
+} from './characterStore';
 
 /** An in-memory stand-in for `localStorage`. */
 function fakeStorage(initial: Record<string, string> = {}): StoragePort {
@@ -19,6 +24,13 @@ function fakeStorage(initial: Record<string, string> = {}): StoragePort {
 function sequentialIds(...ids: string[]): () => string {
   let next = 0;
   return () => ids[next++];
+}
+
+/** Creates a character, failing the test if the store could not. */
+function createIn(store: ReturnType<typeof createCharacterStore>) {
+  const result = store.create();
+  if (result.status !== 'created') throw new Error('the store could not create a character');
+  return result.character;
 }
 
 const listedIds = (store: ReturnType<typeof createCharacterStore>) =>
@@ -41,8 +53,8 @@ describe('characterStore', () => {
   test('two creates give distinct characters', () => {
     const store = createCharacterStore(fakeStorage());
 
-    const first = store.create().character;
-    const second = store.create().character;
+    const first = createIn(store);
+    const second = createIn(store);
 
     expect(first.id).not.toBe(second.id);
     expect(listedIds(store)).toEqual([first.id, second.id]);
@@ -65,7 +77,7 @@ describe('characterStore', () => {
 
   test('saving again replaces the stored character rather than adding one', () => {
     const store = createCharacterStore(fakeStorage(), sequentialIds('a'));
-    const { character } = store.create();
+    const character = createIn(store);
 
     store.save({ ...character, notes: 'edited' });
 
@@ -75,7 +87,7 @@ describe('characterStore', () => {
 
   test('saving one character leaves another untouched', () => {
     const store = createCharacterStore(fakeStorage(), sequentialIds('a', 'b'));
-    const first = store.create().character;
+    const first = createIn(store);
     store.create();
 
     store.save({ ...first, notes: 'edited' });
@@ -102,7 +114,7 @@ describe('characterStore', () => {
 
   test('list ignores storage entries that belong to something else', () => {
     const store = createCharacterStore(fakeStorage({ theme: 'dark' }), sequentialIds('a'));
-    const { character } = store.create();
+    const character = createIn(store);
     // Same length as the store's own key prefix, so only a prefix check tells it apart.
     const foreignKey = 'x'.repeat('wod-sheets:character:'.length) + character.id;
     const storage = fakeStorage({
@@ -268,6 +280,107 @@ describe('characterStore with unreadable records', () => {
   });
 });
 
+describe('characterStore when the browser refuses to write', () => {
+  /** A storage that reads normally but refuses writes while `refusing` is true. */
+  function refusingStorage(initial: Record<string, string> = {}) {
+    const storage = fakeStorage(initial);
+    const control = { refusing: true };
+    const port: StoragePort = {
+      get length() {
+        return storage.length;
+      },
+      key: (index) => storage.key(index),
+      getItem: (key) => storage.getItem(key),
+      removeItem: (key) => storage.removeItem(key),
+      setItem: (key, value) => {
+        if (control.refusing) throw new DOMException('quota exceeded', 'QuotaExceededError');
+        storage.setItem(key, value);
+      },
+    };
+    return { port, control };
+  }
+
+  test('save reports the failure instead of throwing', () => {
+    const { port } = refusingStorage();
+
+    expect(createCharacterStore(port).save(blankCharacter('a'))).toEqual({ status: 'failed' });
+  });
+
+  test('a failed save leaves the earlier saved character as it was', () => {
+    const saved = JSON.stringify(blankCharacter('a'));
+    const { port } = refusingStorage({ 'wod-sheets:character:a': saved });
+    const store = createCharacterStore(port);
+
+    store.save({ ...blankCharacter('a'), notes: 'edited' });
+
+    expect(store.load('a')).toEqual({ status: 'found', character: blankCharacter('a') });
+  });
+
+  test('create reports the failure and lists nothing', () => {
+    const { port } = refusingStorage();
+    const store = createCharacterStore(port, sequentialIds('a'));
+
+    expect(store.create()).toEqual({ status: 'failed' });
+    expect(store.list()).toEqual([]);
+  });
+
+  test('saving works again once the browser accepts writes', () => {
+    const { port, control } = refusingStorage();
+    const store = createCharacterStore(port);
+    const edited = { ...blankCharacter('a'), notes: 'edited' };
+    store.save(edited);
+
+    control.refusing = false;
+
+    expect(store.save(edited)).toEqual({ status: 'saved' });
+    expect(store.load('a')).toEqual({ status: 'found', character: edited });
+  });
+});
+
+describe('browserStorage', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test("is the browser's storage when it is available", () => {
+    const storage = fakeStorage();
+    vi.stubGlobal('localStorage', storage);
+
+    expect(browserStorage()).toBe(storage);
+  });
+
+  test('is undefined when the browser refuses to hand storage over', () => {
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new DOMException('denied', 'SecurityError');
+      },
+    });
+
+    try {
+      expect(browserStorage()).toBeUndefined();
+    } finally {
+      delete (globalThis as { localStorage?: unknown }).localStorage;
+    }
+  });
+
+  test('is undefined when storage exists but cannot be used', () => {
+    vi.stubGlobal('localStorage', {
+      get length(): number {
+        throw new DOMException('denied', 'SecurityError');
+      },
+    });
+
+    expect(browserStorage()).toBeUndefined();
+  });
+
+  test('is undefined when the browser has no storage at all', () => {
+    vi.stubGlobal('localStorage', undefined);
+
+    expect(browserStorage()).toBeUndefined();
+  });
+});
+
 describe('generateId', () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -326,8 +439,8 @@ describe('characterStore with generated ids', () => {
     vi.useFakeTimers({ now: 5_000 });
     const store = createCharacterStore(fakeStorage());
 
-    const created = [store.create(), store.create(), store.create()].map(
-      (result) => result.character.id,
+    const created = [createIn(store), createIn(store), createIn(store)].map(
+      (character) => character.id,
     );
 
     expect(listedIds(store)).toEqual(created);
