@@ -6,12 +6,11 @@ const PORT = 4322;
 const baseURL = `http://localhost:${PORT}`;
 
 // Feature files are the executable specification; step definitions bind them
-// to the browser. Scenarios whose steps are not written yet are skipped, so a
-// feature file can exist before its slice is built.
+// to the browser. A scenario with a step nobody has defined fails the run.
 const testDir = defineBddConfig({
   features: 'features/**/*.feature',
   steps: 'features/steps/**/*.ts',
-  missingSteps: 'skip-scenario',
+  missingSteps: 'fail-on-gen',
 });
 
 export default defineConfig({

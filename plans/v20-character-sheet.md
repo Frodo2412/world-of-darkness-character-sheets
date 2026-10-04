@@ -2,7 +2,7 @@
 
 **Created**: 2026-10-04
 **Branch**: `feat/v20-character-sheet`
-**Status**: approved
+**Status**: in-progress
 **Gherkin persistence**: features
 **Spec**: `docs/specs/v20-character-sheet.md`
 
@@ -789,4 +789,4 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
 - [ ] Slice 7: Sheet layout, responsiveness and accessibility verification
   - [x] Step 7.1: Sheet and roster styling
   - [x] Step 7.2: Accessibility verification
-  - [ ] Step 7.3: Project README
+  - [x] Step 7.3: Project README
