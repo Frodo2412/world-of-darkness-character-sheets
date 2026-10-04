@@ -59,7 +59,9 @@ function confirmDelete(character: V20Character): void {
 
 function render(): void {
   const entries = store.list();
-  list.replaceChildren(...entries.map((entry) => rosterItem(entry.character)));
+  list.replaceChildren(
+    ...entries.flatMap((entry) => (entry.kind === 'character' ? [rosterItem(entry.character)] : [])),
+  );
   list.hidden = entries.length === 0;
   emptyMessage.hidden = entries.length > 0;
 }

@@ -751,25 +751,25 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
   - [x] Step 2.3: Character not found
 
 #### Wave 3
-- [ ] Slice 3: Dot-rated traits
+- [x] Slice 3: Dot-rated traits
   - [x] Step 3.1: Rating updates in the model
   - [x] Step 3.2: Dot-rating control
   - [x] Step 3.3: Abilities with custom rows
   - [x] Step 3.4: Disciplines, backgrounds and virtues
   - [x] Step 3.5: Humanity/Path and permanent Willpower
-- [ ] Slice 5: Delete a character
+- [x] Slice 5: Delete a character
   - [x] Step 5.1: Store deletes a character
   - [x] Step 5.2: Delete from the roster with confirmation
 
 #### Wave 4
-- [ ] Slice 4: Trackers, health and notes
+- [x] Slice 4: Trackers, health and notes
   - [x] Step 4.1: Box tracker for temporary Willpower and Blood Pool
   - [x] Step 4.2: Health track with damage types
   - [x] Step 4.3: Weakness, Experience, notes and reminder line
 
 #### Wave 5
 - [ ] Slice 6: Storage resilience
-  - [ ] Step 6.1: Validate stored records
+  - [x] Step 6.1: Validate stored records
   - [ ] Step 6.2: Report unreadable characters
   - [ ] Step 6.3: Surface failed and unavailable saves
 

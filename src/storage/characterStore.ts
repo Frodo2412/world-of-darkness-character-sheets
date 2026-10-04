@@ -1,4 +1,5 @@
 import { blankCharacter, type V20Character } from '../domain/v20/character';
+import { DAMAGE_TYPES } from '../domain/v20/traits';
 
 /** The part of the Web Storage API the store needs; `localStorage` satisfies it. */
 export interface StoragePort {
@@ -9,8 +10,14 @@ export interface StoragePort {
   removeItem(key: string): void;
 }
 
-export type RosterEntry = { kind: 'character'; character: V20Character };
-export type LoadResult = { status: 'found'; character: V20Character } | { status: 'not-found' };
+/** A stored record that is not a character this version can read. It is never rewritten. */
+export type RosterEntry =
+  | { kind: 'character'; character: V20Character }
+  | { kind: 'unreadable'; id: string };
+export type LoadResult =
+  | { status: 'found'; character: V20Character }
+  | { status: 'not-found' }
+  | { status: 'unreadable'; id: string };
 export type CreateResult = { status: 'created'; character: V20Character };
 export type SaveResult = { status: 'saved' };
 export type DeleteResult = { status: 'deleted' };
@@ -21,7 +28,7 @@ export interface CharacterStore {
   load(id: string): LoadResult;
   /** Removes one character; an id that is not stored is left as it is. */
   delete(id: string): DeleteResult;
-  /** Every stored character, oldest first. */
+  /** Every stored record, oldest first, readable or not. */
   list(): RosterEntry[];
 }
 
@@ -33,8 +40,43 @@ function serialise(character: V20Character): string {
   return JSON.stringify(character);
 }
 
-function deserialise(text: string): V20Character {
-  return JSON.parse(text) as V20Character;
+/** Whether `value` has every field of `template`, each of the same kind, all the way down. */
+function hasShapeOf(value: unknown, template: unknown): boolean {
+  if (Array.isArray(template)) {
+    return (
+      Array.isArray(value) &&
+      value.length === template.length &&
+      value.every((item) => hasShapeOf(item, template[0]))
+    );
+  }
+  if (typeof template === 'object' && template !== null) {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+    const fields = value as Record<string, unknown>;
+    return Object.entries(template).every(([key, expected]) => hasShapeOf(fields[key], expected));
+  }
+  if (typeof template === 'number') return typeof value === 'number' && Number.isFinite(value);
+  return typeof value === typeof template;
+}
+
+function isV20Character(value: unknown, id: string): value is V20Character {
+  if (!hasShapeOf(value, blankCharacter(id))) return false;
+  const character = value as V20Character;
+  return (
+    character.id === id &&
+    character.system === 'v20' &&
+    character.schemaVersion === 1 &&
+    Object.values(character.health).every((damage) => DAMAGE_TYPES.includes(damage))
+  );
+}
+
+/** The only way stored text becomes a character. */
+function parseRecord(text: string, id: string): V20Character | undefined {
+  try {
+    const value: unknown = JSON.parse(text);
+    return isV20Character(value, id) ? value : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function storedIds(storage: StoragePort): string[] {
@@ -79,7 +121,8 @@ export function createCharacterStore(
   function load(id: string): LoadResult {
     const text = storage.getItem(keyFor(id));
     if (text === null) return { status: 'not-found' };
-    return { status: 'found', character: deserialise(text) };
+    const character = parseRecord(text, id);
+    return character ? { status: 'found', character } : { status: 'unreadable', id };
   }
 
   return {
@@ -97,7 +140,8 @@ export function createCharacterStore(
     list() {
       return storedIds(storage).flatMap((id): RosterEntry[] => {
         const result = load(id);
-        return result.status === 'found' ? [{ kind: 'character', character: result.character }] : [];
+        if (result.status === 'found') return [{ kind: 'character', character: result.character }];
+        return result.status === 'unreadable' ? [{ kind: 'unreadable', id }] : [];
       });
     },
   };

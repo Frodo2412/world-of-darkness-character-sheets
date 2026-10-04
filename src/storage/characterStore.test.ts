@@ -22,7 +22,7 @@ function sequentialIds(...ids: string[]): () => string {
 }
 
 const listedIds = (store: ReturnType<typeof createCharacterStore>) =>
-  store.list().map((entry) => entry.character.id);
+  store.list().map((entry) => (entry.kind === 'character' ? entry.character.id : entry.id));
 
 describe('characterStore', () => {
   test('a new store lists no characters', () => {
@@ -174,6 +174,97 @@ describe('characterStore delete', () => {
     store.delete('a');
 
     expect(store.list()).toEqual([]);
+  });
+});
+
+describe('characterStore with unreadable records', () => {
+  const KEY = 'wod-sheets:character:';
+  const valid = (id: string) => JSON.stringify(blankCharacter(id));
+  const altered = (id: string, change: (record: Record<string, any>) => void): string => {
+    const record = JSON.parse(valid(id));
+    change(record);
+    return JSON.stringify(record);
+  };
+
+  const UNREADABLE: [string, string][] = [
+    ['text that is not JSON', '{not json'],
+    ['an empty value', ''],
+    ['JSON that is not an object', '"just a string"'],
+    ['JSON null', 'null'],
+    ['an array', '[]'],
+    ['an object that is not a character', '{"hello":"world"}'],
+    ['another game system', altered('bad', (record) => (record.system = 'mage'))],
+    ['a schema version from the future', altered('bad', (record) => (record.schemaVersion = 2))],
+    ['no schema version', altered('bad', (record) => delete record.schemaVersion)],
+    ['an id that differs from its key', altered('bad', (record) => (record.id = 'other'))],
+    ['a missing section', altered('bad', (record) => delete record.attributes)],
+    ['a missing trait', altered('bad', (record) => delete record.attributes.strength)],
+    ['a rating that is text', altered('bad', (record) => (record.abilities.brawl = '3'))],
+    ['a rating that is null', altered('bad', (record) => (record.virtues.courage = null))],
+    ['a header field that is a number', altered('bad', (record) => (record.header.name = 7))],
+    ['five discipline rows', altered('bad', (record) => record.disciplines.pop())],
+    ['a discipline row with no name', altered('bad', (record) => delete record.disciplines[0].name)],
+    ['disciplines that are not a list', altered('bad', (record) => (record.disciplines = {}))],
+    ['an unknown damage type', altered('bad', (record) => (record.health.hurt = 'fire'))],
+    ['notes that are not text', altered('bad', (record) => (record.notes = ['a']))],
+  ];
+
+  test.each(UNREADABLE)('%s loads as unreadable', (_description, text) => {
+    const store = createCharacterStore(fakeStorage({ [KEY + 'bad']: text }));
+
+    expect(store.load('bad')).toEqual({ status: 'unreadable', id: 'bad' });
+  });
+
+  test.each(UNREADABLE)('%s is listed as unreadable beside its readable neighbours', (_d, text) => {
+    const storage = fakeStorage({ [KEY + 'a']: valid('a'), [KEY + 'bad']: text, [KEY + 'c']: valid('c') });
+
+    expect(createCharacterStore(storage).list()).toEqual([
+      { kind: 'character', character: blankCharacter('a') },
+      { kind: 'unreadable', id: 'bad' },
+      { kind: 'character', character: blankCharacter('c') },
+    ]);
+  });
+
+  test('reading never rewrites or removes what is stored', () => {
+    const records = { [KEY + 'a']: valid('a'), [KEY + 'bad']: '{not json', [KEY + 'worse']: 'null' };
+    const storage = fakeStorage(records);
+    const store = createCharacterStore(storage);
+
+    store.list();
+    store.load('bad');
+    store.load('worse');
+
+    expect(Object.fromEntries(Object.keys(records).map((key) => [key, storage.getItem(key)]))).toEqual(
+      records,
+    );
+    expect(storage.length).toBe(3);
+  });
+
+  test('a record with fields this version does not know is still readable', () => {
+    const text = altered('a', (record) => (record.merits = ['Eidetic Memory']));
+    const store = createCharacterStore(fakeStorage({ [KEY + 'a']: text }));
+
+    expect(store.load('a')).toMatchObject({ status: 'found', character: { id: 'a' } });
+  });
+
+  test('an unreadable record can be deleted', () => {
+    const storage = fakeStorage({ [KEY + 'a']: valid('a'), [KEY + 'bad']: '{not json' });
+    const store = createCharacterStore(storage);
+
+    store.delete('bad');
+
+    expect(store.list()).toEqual([{ kind: 'character', character: blankCharacter('a') }]);
+  });
+
+  test('a new character can be created beside an unreadable record', () => {
+    const store = createCharacterStore(fakeStorage({ [KEY + 'bad']: '{not json' }), sequentialIds('z'));
+
+    store.create();
+
+    expect(store.list()).toEqual([
+      { kind: 'unreadable', id: 'bad' },
+      { kind: 'character', character: blankCharacter('z') },
+    ]);
   });
 });
 
