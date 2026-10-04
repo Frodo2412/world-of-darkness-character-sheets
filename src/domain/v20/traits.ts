@@ -165,4 +165,7 @@ export function rangeOf(trait: TraitRef): Range {
 }
 
 /** Names one write-in row: a rating whose name the player supplies. */
-export type NamedRowRef = `customAbilities.${AbilityGroupKey}`;
+export type NamedRowRef =
+  | `customAbilities.${AbilityGroupKey}`
+  | `disciplines.${number}`
+  | `backgrounds.${number}`;

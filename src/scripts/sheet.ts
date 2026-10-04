@@ -41,10 +41,11 @@ function render(character: V20Character): void {
     rating.value = traitValue(character, traitOf(rating));
   }
   for (const input of rowNames) {
-    showText(input, namedRow(character, input.dataset.rowName as NamedRowRef).name);
+    showText(input, namedRow(character, input.dataset.rowName as NamedRowRef)?.name ?? '');
   }
   for (const rating of rowRatings) {
     const row = namedRow(character, rating.dataset.rowRating as NamedRowRef);
+    if (row === undefined) continue;
     rating.value = row.rating;
     // A write-in rating is announced with the name the player gave it.
     const label = rating.dataset.label!;

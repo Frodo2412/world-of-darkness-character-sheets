@@ -130,9 +130,17 @@ export function setTrait(character: V20Character, trait: TraitRef, value: number
   };
 }
 
-export function namedRow(character: V20Character, row: NamedRowRef): NamedRating {
-  const [section, key] = row.split('.') as ['customAbilities', AbilityGroupKey];
-  return character[section][key];
+type NamedRows = NamedRating[] | Record<string, NamedRating>;
+
+function rowsOf(character: V20Character, row: NamedRowRef): [keyof V20Character, NamedRows, string] {
+  const [section, key] = row.split('.') as ['customAbilities' | 'disciplines' | 'backgrounds', string];
+  return [section, character[section], key];
+}
+
+/** The write-in row at `row`, or undefined when the sheet has no such row. */
+export function namedRow(character: V20Character, row: NamedRowRef): NamedRating | undefined {
+  const [, rows, key] = rowsOf(character, row);
+  return Array.isArray(rows) ? rows[Number(key)] : rows[key];
 }
 
 /** Changes the name, the rating or both of a write-in row. */
@@ -141,11 +149,18 @@ export function setNamedRow(
   row: NamedRowRef,
   change: Partial<NamedRating>,
 ): V20Character {
-  const [section, key] = row.split('.') as ['customAbilities', AbilityGroupKey];
-  const current = character[section][key];
+  const current = namedRow(character, row);
+  if (current === undefined) return character;
+
   const updated: NamedRating = {
     name: change.name ?? current.name,
     rating: clamp(change.rating ?? current.rating, RATING_RANGE),
   };
-  return { ...character, [section]: { ...character[section], [key]: updated } };
+  const [section, rows, key] = rowsOf(character, row);
+  return {
+    ...character,
+    [section]: Array.isArray(rows)
+      ? rows.map((existing, index) => (index === Number(key) ? updated : existing))
+      : { ...rows, [key]: updated },
+  };
 }

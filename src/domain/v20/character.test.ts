@@ -353,3 +353,58 @@ describe('setNamedRow', () => {
     expect(original).toEqual(blankCharacter('abc'));
   });
 });
+
+describe('setNamedRow on disciplines and backgrounds', () => {
+  test('names and rates one discipline row', () => {
+    const updated = setNamedRow(blankCharacter('abc'), 'disciplines.0', {
+      name: 'Dominate',
+      rating: 3,
+    });
+
+    expect(updated.disciplines).toEqual([
+      { name: 'Dominate', rating: 3 },
+      ...Array(5).fill({ name: '', rating: 0 }),
+    ]);
+    expect(namedRow(updated, 'disciplines.0')).toEqual({ name: 'Dominate', rating: 3 });
+  });
+
+  test('changes the last background row and no other', () => {
+    const updated = setNamedRow(blankCharacter('abc'), 'backgrounds.5', {
+      name: 'Resources',
+      rating: 2,
+    });
+
+    expect(updated.backgrounds).toEqual([
+      ...Array(5).fill({ name: '', rating: 0 }),
+      { name: 'Resources', rating: 2 },
+    ]);
+    expect(updated.disciplines).toEqual(blankCharacter('abc').disciplines);
+  });
+
+  test.each([
+    [11, 10],
+    [-1, 0],
+  ])('a discipline rating of %i is stored as %i', (rating, stored) => {
+    expect(setNamedRow(blankCharacter('abc'), 'disciplines.2', { rating }).disciplines[2].rating).toBe(
+      stored,
+    );
+  });
+
+  test.each(['disciplines.6', 'backgrounds.-1', 'disciplines.x'] as const)(
+    '%s is not a row on the sheet, so nothing changes',
+    (row) => {
+      const original = blankCharacter('abc');
+
+      expect(setNamedRow(original, row as never, { name: 'Dominate' })).toEqual(original);
+      expect(namedRow(original, row as never)).toBeUndefined();
+    },
+  );
+
+  test('does not change the character it was given', () => {
+    const original = blankCharacter('abc');
+
+    setNamedRow(original, 'disciplines.0', { name: 'Dominate', rating: 3 });
+
+    expect(original).toEqual(blankCharacter('abc'));
+  });
+});
