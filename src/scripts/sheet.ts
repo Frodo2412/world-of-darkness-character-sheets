@@ -140,6 +140,13 @@ function pageState(): PageState {
   }
 }
 
+// A sheet restored from the back/forward cache still holds the character as it
+// was. If that character has since been deleted, the next edit would save it
+// back, so start again from what is stored now.
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) window.location.reload();
+});
+
 const state = pageState();
 switch (state.kind) {
   case 'loaded':

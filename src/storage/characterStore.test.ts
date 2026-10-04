@@ -259,6 +259,13 @@ describe('characterStore with unreadable records', () => {
     expect(store.load('a')).toMatchObject({ status: 'found', character: { id: 'a' } });
   });
 
+  test('a record with a health level this version does not know is still readable', () => {
+    const text = altered('a', (record) => (record.health.torpor = 'staked'));
+    const store = createCharacterStore(fakeStorage({ [KEY + 'a']: text }));
+
+    expect(store.load('a')).toMatchObject({ status: 'found', character: { id: 'a' } });
+  });
+
   test('an unreadable record can be deleted', () => {
     const storage = fakeStorage({ [KEY + 'a']: valid('a'), [KEY + 'bad']: '{not json' });
     const store = createCharacterStore(storage);

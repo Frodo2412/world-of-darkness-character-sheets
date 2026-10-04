@@ -1,5 +1,5 @@
 import { blankCharacter, type V20Character } from '../domain/v20/character';
-import { DAMAGE_TYPES } from '../domain/v20/traits';
+import { DAMAGE_TYPES, HEALTH_LEVELS } from '../domain/v20/traits';
 
 /** The part of the Web Storage API the store needs; `localStorage` satisfies it. */
 export interface StoragePort {
@@ -66,7 +66,7 @@ function isV20Character(value: unknown, id: string): value is V20Character {
     character.id === id &&
     character.system === 'v20' &&
     character.schemaVersion === 1 &&
-    Object.values(character.health).every((damage) => DAMAGE_TYPES.includes(damage))
+    HEALTH_LEVELS.every((level) => DAMAGE_TYPES.includes(character.health[level.key]))
   );
 }
 

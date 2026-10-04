@@ -568,6 +568,18 @@ Feature: Storage resilience
     Given the browser provides no storage to the page
     When the player opens the roster
     Then they see that characters cannot be saved in this browser
+
+  Scenario: Storage is unavailable when a sheet opens
+    Given the browser provides no storage to the page
+    When the player opens a sheet address
+    Then they see on the sheet page that characters cannot be saved in this browser
+
+  Scenario: The browser refuses to save a new character
+    Given a player with no saved characters
+    And the roster is open and the browser will not accept further saved data
+    When they try to create a V20 character
+    Then they see that the new character could not be saved
+    And the roster shows the empty state
 ```
 
 **Steps:**
@@ -768,7 +780,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
   - [x] Step 4.3: Weakness, Experience, notes and reminder line
 
 #### Wave 5
-- [ ] Slice 6: Storage resilience
+- [x] Slice 6: Storage resilience
   - [x] Step 6.1: Validate stored records
   - [x] Step 6.2: Report unreadable characters
   - [x] Step 6.3: Surface failed and unavailable saves

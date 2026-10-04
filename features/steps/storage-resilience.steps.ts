@@ -81,13 +81,14 @@ Then('that entry is reported as an unreadable character', async ({ page }) => {
   await expect(unreadableEntries(page)).toHaveCount(1);
 });
 
-Then('creating a new character still works', async ({ page }) => {
+Then('creating a new character still works', async ({ page, memory }) => {
   await page.getByRole('button', { name: 'New V20 character' }).click();
   await expect(sheetField(page, 'Name')).toBeEditable();
 
   await openRoster(page);
   await expect(rosterEntries(page)).toHaveCount(2);
   await expect(unreadableEntries(page)).toHaveCount(1);
+  expect(await storedText(page, memory.damaged!.key)).toBe(memory.damaged!.text);
 });
 
 Then(
@@ -192,4 +193,34 @@ Then('after a reload the latest values are shown', async ({ page, memory }) => {
 Then('they see that characters cannot be saved in this browser', async ({ page }) => {
   await expect(page.getByRole('alert')).toContainText('cannot be saved in this browser');
   await expect(page.getByRole('button', { name: 'New V20 character' })).toBeDisabled();
+});
+
+Given(
+  'the roster is open and the browser will not accept further saved data',
+  async ({ page }) => {
+    await openRoster(page);
+    await refuseWrites(page);
+  },
+);
+
+When('the player opens a sheet address', async ({ page }) => {
+  await page.goto(sheetAddress('any-character'));
+});
+
+When('they try to create a V20 character', async ({ page }) => {
+  await page.getByRole('button', { name: 'New V20 character' }).click();
+});
+
+Then(
+  'they see on the sheet page that characters cannot be saved in this browser',
+  async ({ page }) => {
+    await expect(page.getByRole('alert')).toContainText('cannot be saved in this browser');
+    await expect(page.getByRole('heading', { name: 'Character sheet' })).toBeHidden();
+    await expect(page.getByRole('heading', { name: 'Character not found' })).toBeHidden();
+  },
+);
+
+Then('they see that the new character could not be saved', async ({ page }) => {
+  await expect(page.getByRole('alert')).toContainText('could not be saved');
+  await expect(page).toHaveURL(/\/$/);
 });
