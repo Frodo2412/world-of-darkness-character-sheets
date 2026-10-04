@@ -17,6 +17,7 @@ export const RATING_RANGES = {
   virtues: VIRTUE_RANGE,
   humanity: RATING_RANGE,
   willpower: RATING_RANGE,
+  bloodPool: BLOOD_POOL_RANGE,
 } as const satisfies Record<string, Range>;
 
 export const ATTRIBUTE_DEFAULT = 1;
@@ -157,7 +158,9 @@ export type TraitRef =
   | `abilities.${AbilityKey}`
   | `virtues.${VirtueKey}`
   | 'humanity.rating'
-  | 'willpower.permanent';
+  | 'willpower.permanent'
+  | 'willpower.temporary'
+  | 'bloodPool.current';
 
 export function rangeOf(trait: TraitRef): Range {
   const [section] = trait.split('.') as [keyof typeof RATING_RANGES];
@@ -175,4 +178,5 @@ export type TextRef =
   | `header.${HeaderField}`
   | 'humanity.pathName'
   | 'humanity.bearing'
-  | 'humanity.bearingModifier';
+  | 'humanity.bearingModifier'
+  | 'bloodPool.perTurn';

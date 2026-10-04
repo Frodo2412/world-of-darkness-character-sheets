@@ -763,7 +763,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
 
 #### Wave 4
 - [ ] Slice 4: Trackers, health and notes
-  - [ ] Step 4.1: Box tracker for temporary Willpower and Blood Pool
+  - [x] Step 4.1: Box tracker for temporary Willpower and Blood Pool
   - [ ] Step 4.2: Health track with damage types
   - [ ] Step 4.3: Weakness, Experience, notes and reminder line
 

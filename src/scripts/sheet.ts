@@ -1,5 +1,6 @@
+import '../components/controls/box-tracker';
 import '../components/controls/dot-rating';
-import type { DotRating, RatingChange } from '../components/controls/dot-rating';
+import type { RatingChange, RatingControl } from '../components/controls/rating-control';
 import {
   namedRow,
   setNamedRow,
@@ -20,13 +21,13 @@ const sheet = document.querySelector<HTMLElement>('#sheet')!;
 const notFound = document.querySelector<HTMLElement>('#sheet-not-found')!;
 const textInputs = sheet.querySelectorAll<HTMLInputElement>('[data-text]');
 
-const traitRatings = sheet.querySelectorAll<DotRating>('[data-trait]');
+const traitRatings = sheet.querySelectorAll<RatingControl>('[data-trait]');
 const rowNames = sheet.querySelectorAll<HTMLInputElement>('[data-row-name]');
-const rowRatings = sheet.querySelectorAll<DotRating>('[data-row-rating]');
+const rowRatings = sheet.querySelectorAll<RatingControl>('[data-row-rating]');
 
 const textFieldOf = (input: HTMLInputElement): TextRef => input.dataset.text as TextRef;
 
-const traitOf = (rating: DotRating): TraitRef => rating.dataset.trait as TraitRef;
+const traitOf = (rating: RatingControl): TraitRef => rating.dataset.trait as TraitRef;
 
 // Leave a matching input alone so typing does not move the caret.
 function showText(input: HTMLInputElement, text: string): void {

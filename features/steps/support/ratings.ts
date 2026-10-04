@@ -5,6 +5,7 @@ import { SHEET_ADDRESS, createCharacter } from './pages';
 const RATING_LABELS: Record<string, string> = {
   'permanent Willpower': 'Willpower',
   Humanity: 'Humanity / Path',
+  'temporary Willpower': 'Temporary Willpower',
 };
 
 export const rating = (page: Page, name: string): Locator =>

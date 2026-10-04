@@ -226,6 +226,8 @@ describe('rangeOf', () => {
     ['virtues.courage', 5],
     ['humanity.rating', 10],
     ['willpower.permanent', 10],
+    ['willpower.temporary', 10],
+    ['bloodPool.current', 50],
   ])('%s runs from 0 to %i', (trait, max) => {
     expect(rangeOf(trait)).toEqual({ min: 0, max });
   });
@@ -272,6 +274,12 @@ describe('setTrait', () => {
     ['virtues.courage', -1, 0],
     ['humanity.rating', 11, 10],
     ['willpower.permanent', 11, 10],
+    ['willpower.temporary', 10, 10],
+    ['willpower.temporary', 11, 10],
+    ['willpower.temporary', -1, 0],
+    ['bloodPool.current', 50, 50],
+    ['bloodPool.current', 51, 50],
+    ['bloodPool.current', -1, 0],
   ])('%s set to %i is stored as %i', (trait, value, stored) => {
     const [section, key] = trait.split('.');
     const updated = setTrait(blankCharacter('abc'), trait, value) as unknown as Record<
@@ -465,5 +473,34 @@ describe('setText', () => {
     setText(original, 'humanity.pathName', 'Path of Night');
 
     expect(original).toEqual(blankCharacter('abc'));
+  });
+});
+
+describe('trackers', () => {
+  test('temporary Willpower may exceed permanent Willpower', () => {
+    let character = setTrait(blankCharacter('abc'), 'willpower.permanent', 3);
+    character = setTrait(character, 'willpower.temporary', 10);
+
+    expect(character.willpower).toEqual({ permanent: 3, temporary: 10 });
+  });
+
+  test('lowering permanent Willpower leaves temporary Willpower alone', () => {
+    let character = setTrait(blankCharacter('abc'), 'willpower.temporary', 8);
+    character = setTrait(character, 'willpower.permanent', 2);
+
+    expect(character.willpower).toEqual({ permanent: 2, temporary: 8 });
+  });
+
+  test('the Blood Pool is not limited by generation', () => {
+    let character = setHeaderField(blankCharacter('abc'), 'generation', '13');
+    character = setTrait(character, 'bloodPool.current', 50);
+
+    expect(character.bloodPool.current).toBe(50);
+  });
+
+  test('Blood Per Turn keeps whatever is typed', () => {
+    const character = setText(blankCharacter('abc'), 'bloodPool.perTurn', '3');
+
+    expect(character.bloodPool).toEqual({ current: 0, perTurn: '3' });
   });
 });
