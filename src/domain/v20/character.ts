@@ -104,13 +104,15 @@ export function setHeaderField(
 }
 
 export function textValue(character: V20Character, field: TextRef): string {
-  const [section, key] = field.split('.') as [keyof V20Character, string];
-  return (character[section] as unknown as Record<string, string>)[key];
+  const [section, key] = field.split('.') as [keyof V20Character, string?];
+  const value = character[section];
+  return key === undefined ? (value as string) : (value as unknown as Record<string, string>)[key];
 }
 
 /** Sets a free-text field to exactly what was typed. */
 export function setText(character: V20Character, field: TextRef, text: string): V20Character {
-  const [section, key] = field.split('.') as [keyof V20Character, string];
+  const [section, key] = field.split('.') as [keyof V20Character, string?];
+  if (key === undefined) return { ...character, [section]: text };
   return { ...character, [section]: { ...(character[section] as object), [key]: text } };
 }
 

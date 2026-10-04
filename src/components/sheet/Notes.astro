@@ -1,0 +1,21 @@
+---
+import { CREATION_REMINDER } from '../../domain/v20/traits';
+---
+
+<section aria-labelledby="notes-heading">
+	<h2 id="notes-heading">Weakness, Experience and Notes</h2>
+	<label>
+		Weakness
+		<input type="text" data-text="weakness" autocomplete="off" />
+	</label>
+	<label>
+		Experience
+		<input type="text" data-text="experience" autocomplete="off" />
+	</label>
+	<label>
+		Notes
+		<textarea data-text="notes" rows="6"></textarea>
+	</label>
+</section>
+
+<p class="creation-reminder">{CREATION_REMINDER}</p>

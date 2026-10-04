@@ -435,6 +435,10 @@ describe('setText', () => {
     'humanity.pathName',
     'humanity.bearing',
     'humanity.bearingModifier',
+    'bloodPool.perTurn',
+    'weakness',
+    'experience',
+    'notes',
   ])('sets %s', (field) => {
     const updated = setText(blankCharacter('abc'), field, 'some text');
 
@@ -549,5 +553,92 @@ describe('cycleHealthBox', () => {
     cycleHealthBox(original, 'hurt');
 
     expect(original).toEqual(blankCharacter('abc'));
+  });
+});
+
+describe('weakness, experience and notes', () => {
+  test('notes keep their line breaks', () => {
+    const notes = 'first line\nsecond line\n\nfourth line';
+
+    expect(setText(blankCharacter('abc'), 'notes', notes).notes).toBe(notes);
+  });
+
+  test('setting one leaves the other two and the rest of the character alone', () => {
+    const original = blankCharacter('abc');
+
+    const updated = setText(original, 'weakness', 'Casts no reflection');
+
+    expect(updated).toEqual({ ...original, weakness: 'Casts no reflection' });
+  });
+
+  test('experience keeps whatever is typed', () => {
+    expect(setText(blankCharacter('abc'), 'experience', '12 (3 unspent)').experience).toBe(
+      '12 (3 unspent)',
+    );
+  });
+});
+
+describe('a fully filled-in character', () => {
+  /** Every page-1 field given a value different from its blank default. */
+  function filledIn() {
+    let character = blankCharacter('abc');
+    for (const [index, field] of HEADER_FIELDS.entries()) {
+      character = setText(character, `header.${field.key}`, `${field.label} ${index}`);
+    }
+    for (const key of Object.keys(character.attributes)) {
+      character = setTrait(character, `attributes.${key}` as TraitRef, 5);
+    }
+    for (const key of Object.keys(character.abilities)) {
+      character = setTrait(character, `abilities.${key}` as TraitRef, 3);
+    }
+    for (const key of Object.keys(character.virtues)) {
+      character = setTrait(character, `virtues.${key}` as TraitRef, 4);
+    }
+    for (const group of ['talents', 'skills', 'knowledges'] as const) {
+      character = setNamedRow(character, `customAbilities.${group}`, { name: `My ${group}`, rating: 2 });
+    }
+    for (let index = 0; index < 6; index += 1) {
+      character = setNamedRow(character, `disciplines.${index}`, { name: `Discipline ${index}`, rating: 1 });
+      character = setNamedRow(character, `backgrounds.${index}`, { name: `Background ${index}`, rating: 6 });
+    }
+    character = setTrait(character, 'humanity.rating', 7);
+    character = setText(character, 'humanity.pathName', 'Path of Night');
+    character = setText(character, 'humanity.bearing', 'Guilt');
+    character = setText(character, 'humanity.bearingModifier', '+1');
+    character = setTrait(character, 'willpower.permanent', 6);
+    character = setTrait(character, 'willpower.temporary', 9);
+    character = setTrait(character, 'bloodPool.current', 37);
+    character = setText(character, 'bloodPool.perTurn', '3');
+    for (const [index, level] of HEALTH_LEVELS.entries()) {
+      for (let step = 0; step <= index % 3; step += 1) character = cycleHealthBox(character, level.key);
+    }
+    character = setText(character, 'weakness', 'Casts no reflection');
+    character = setText(character, 'experience', '12');
+    return setText(character, 'notes', 'one\ntwo\nthree');
+  }
+
+  test('differs from a blank character in every field', () => {
+    const blank = blankCharacter('abc') as unknown as Record<string, unknown>;
+    const filled = filledIn() as unknown as Record<string, unknown>;
+    const unchanged = (before: unknown, after: unknown): string[] => {
+      if (typeof before !== 'object' || before === null) return before === after ? ['<value>'] : [];
+      return Object.keys(before).flatMap((key) =>
+        unchanged((before as Record<string, unknown>)[key], (after as Record<string, unknown>)[key]).map(
+          (path) => `${key}.${path}`,
+        ),
+      );
+    };
+
+    expect(unchanged(blank, filled)).toEqual([
+      'id.<value>',
+      'system.<value>',
+      'schemaVersion.<value>',
+    ]);
+  });
+
+  test('survives being written out and read back', () => {
+    const character = filledIn();
+
+    expect(JSON.parse(JSON.stringify(character))).toEqual(character);
   });
 });

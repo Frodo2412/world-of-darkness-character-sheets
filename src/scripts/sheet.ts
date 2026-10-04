@@ -22,19 +22,21 @@ const store = createCharacterStore(window.localStorage);
 
 const sheet = document.querySelector<HTMLElement>('#sheet')!;
 const notFound = document.querySelector<HTMLElement>('#sheet-not-found')!;
-const textInputs = sheet.querySelectorAll<HTMLInputElement>('[data-text]');
+type TextInput = HTMLInputElement | HTMLTextAreaElement;
+
+const textInputs = sheet.querySelectorAll<TextInput>('[data-text]');
 
 const traitRatings = sheet.querySelectorAll<RatingControl>('[data-trait]');
 const rowNames = sheet.querySelectorAll<HTMLInputElement>('[data-row-name]');
 const healthTrack = sheet.querySelector<HealthTrack>('health-track')!;
 const rowRatings = sheet.querySelectorAll<RatingControl>('[data-row-rating]');
 
-const textFieldOf = (input: HTMLInputElement): TextRef => input.dataset.text as TextRef;
+const textFieldOf = (input: TextInput): TextRef => input.dataset.text as TextRef;
 
 const traitOf = (rating: RatingControl): TraitRef => rating.dataset.trait as TraitRef;
 
 // Leave a matching input alone so typing does not move the caret.
-function showText(input: HTMLInputElement, text: string): void {
+function showText(input: TextInput, text: string): void {
   if (input.value !== text) input.value = text;
 }
 
