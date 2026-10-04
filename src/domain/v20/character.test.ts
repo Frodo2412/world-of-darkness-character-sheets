@@ -1,6 +1,13 @@
 import { describe, expect, test } from 'vitest';
-import { blankCharacter, displayName, setHeaderField } from './character';
-import { HEADER_FIELDS } from './traits';
+import {
+  activateRating,
+  blankCharacter,
+  displayName,
+  setHeaderField,
+  setTrait,
+  traitValue,
+} from './character';
+import { HEADER_FIELDS, RATING_RANGE, VIRTUE_RANGE, rangeOf, type TraitRef } from './traits';
 
 describe('blankCharacter', () => {
   const character = blankCharacter('abc');
@@ -174,4 +181,102 @@ describe('setHeaderField', () => {
       expect(setHeaderField(blankCharacter('abc'), 'generation', text).header.generation).toBe(text);
     },
   );
+});
+
+describe('activateRating', () => {
+  test.each([
+    { current: 1, position: 4, expected: 4, why: 'a higher position sets that rating' },
+    { current: 4, position: 2, expected: 2, why: 'a lower position sets that rating' },
+    { current: 4, position: 4, expected: 3, why: 'the current position lowers the rating by one' },
+    { current: 1, position: 1, expected: 0, why: 'the current position at 1 reaches zero' },
+    { current: 0, position: 1, expected: 1, why: 'the first position from zero gives 1' },
+    { current: 9, position: 10, expected: 10, why: 'the last position gives the maximum' },
+    { current: 10, position: 10, expected: 9, why: 'the current position at the maximum lowers it' },
+    { current: 5, position: 11, expected: 10, why: 'a position past the maximum stops at the maximum' },
+    { current: 5, position: -1, expected: 0, why: 'a negative position stops at zero' },
+    { current: 0, position: 0, expected: 0, why: 'position zero at zero stays at zero' },
+    { current: 5, position: 0, expected: 0, why: 'position zero clears the rating' },
+    { current: 5, position: Number.NaN, expected: 0, why: 'a position that is not a number gives zero' },
+    { current: 5, position: 3.9, expected: 3, why: 'a fractional position is cut to a whole dot' },
+  ])('$why', ({ current, position, expected }) => {
+    expect(activateRating(current, position, RATING_RANGE)).toBe(expected);
+  });
+
+  test('stops at 5 in a virtue range', () => {
+    expect(activateRating(1, 6, VIRTUE_RANGE)).toBe(5);
+    expect(activateRating(5, 5, VIRTUE_RANGE)).toBe(4);
+  });
+});
+
+describe('rangeOf', () => {
+  test.each<[TraitRef, number]>([
+    ['attributes.strength', 10],
+    ['abilities.brawl', 10],
+    ['virtues.courage', 5],
+    ['humanity.rating', 10],
+    ['willpower.permanent', 10],
+  ])('%s runs from 0 to %i', (trait, max) => {
+    expect(rangeOf(trait)).toEqual({ min: 0, max });
+  });
+});
+
+describe('setTrait', () => {
+  test.each<[TraitRef, (character: ReturnType<typeof blankCharacter>) => number]>([
+    ['attributes.strength', (character) => character.attributes.strength],
+    ['abilities.animalKen', (character) => character.abilities.animalKen],
+    ['virtues.selfControl', (character) => character.virtues.selfControl],
+    ['humanity.rating', (character) => character.humanity.rating],
+    ['willpower.permanent', (character) => character.willpower.permanent],
+  ])('sets %s', (trait, read) => {
+    const updated = setTrait(blankCharacter('abc'), trait, 4);
+
+    expect(read(updated)).toBe(4);
+    expect(traitValue(updated, trait)).toBe(4);
+  });
+
+  test('leaves every other value as it was', () => {
+    const original = blankCharacter('abc');
+
+    const updated = setTrait(original, 'humanity.rating', 7);
+
+    expect(updated).toEqual({ ...original, humanity: { ...original.humanity, rating: 7 } });
+  });
+
+  test('does not change the character it was given', () => {
+    const original = blankCharacter('abc');
+
+    setTrait(original, 'attributes.strength', 5);
+
+    expect(original).toEqual(blankCharacter('abc'));
+  });
+
+  test.each<[TraitRef, number, number]>([
+    ['attributes.strength', 0, 0],
+    ['attributes.strength', 10, 10],
+    ['attributes.strength', 11, 10],
+    ['attributes.strength', -1, 0],
+    ['abilities.brawl', 11, 10],
+    ['virtues.courage', 5, 5],
+    ['virtues.courage', 6, 5],
+    ['virtues.courage', -1, 0],
+    ['humanity.rating', 11, 10],
+    ['willpower.permanent', 11, 10],
+  ])('%s set to %i is stored as %i', (trait, value, stored) => {
+    const [section, key] = trait.split('.');
+    const updated = setTrait(blankCharacter('abc'), trait, value) as unknown as Record<
+      string,
+      Record<string, number>
+    >;
+
+    expect(updated[section][key]).toBe(stored);
+  });
+
+  test('accepts every attribute at 10, whatever the generation', () => {
+    let character = setHeaderField(blankCharacter('abc'), 'generation', '13');
+    for (const key of Object.keys(character.attributes)) {
+      character = setTrait(character, `attributes.${key}` as TraitRef, 10);
+    }
+
+    expect(Object.values(character.attributes)).toEqual(Array(9).fill(10));
+  });
 });

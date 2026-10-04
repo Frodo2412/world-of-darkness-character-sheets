@@ -11,9 +11,12 @@ import {
   VIRTUE_DEFAULT,
   type AbilityGroupKey,
   type AbilityKey,
+  rangeOf,
   type AttributeKey,
   type HeaderField,
   type HealthLevelKey,
+  type Range,
+  type TraitRef,
   type VirtueKey,
 } from './traits';
 
@@ -95,4 +98,32 @@ export function setHeaderField(
   text: string,
 ): V20Character {
   return { ...character, header: { ...character.header, [field]: text } };
+}
+
+function clamp(value: number, range: Range): number {
+  if (Number.isNaN(value)) return range.min;
+  return Math.min(range.max, Math.max(range.min, Math.trunc(value)));
+}
+
+/**
+ * The rating that results from activating the dot or box at `position`:
+ * that position, or one less when it is already the current rating, so
+ * every rating down to zero can be reached with one activation.
+ */
+export function activateRating(current: number, position: number, range: Range): number {
+  return clamp(position === current ? position - 1 : position, range);
+}
+
+export function traitValue(character: V20Character, trait: TraitRef): number {
+  const [section, key] = trait.split('.') as [keyof V20Character, string];
+  return (character[section] as unknown as Record<string, number>)[key];
+}
+
+/** Sets a fixed rating, keeping it within that trait's range. */
+export function setTrait(character: V20Character, trait: TraitRef, value: number): V20Character {
+  const [section, key] = trait.split('.') as [keyof V20Character, string];
+  return {
+    ...character,
+    [section]: { ...(character[section] as object), [key]: clamp(value, rangeOf(trait)) },
+  };
 }

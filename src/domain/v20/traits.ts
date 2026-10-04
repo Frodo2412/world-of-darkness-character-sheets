@@ -10,6 +10,15 @@ export const RATING_RANGE: Range = { min: 0, max: 10 };
 export const VIRTUE_RANGE: Range = { min: 0, max: 5 };
 export const BLOOD_POOL_RANGE: Range = { min: 0, max: 50 };
 
+/** The range of every rating in each part of the character. */
+export const RATING_RANGES = {
+  attributes: RATING_RANGE,
+  abilities: RATING_RANGE,
+  virtues: VIRTUE_RANGE,
+  humanity: RATING_RANGE,
+  willpower: RATING_RANGE,
+} as const satisfies Record<string, Range>;
+
 export const ATTRIBUTE_DEFAULT = 1;
 export const VIRTUE_DEFAULT = 1;
 
@@ -138,3 +147,16 @@ export const ATTRIBUTE_KEYS: readonly AttributeKey[] = ATTRIBUTE_GROUPS.flatMap(
 export const ABILITY_KEYS: readonly AbilityKey[] = ABILITY_GROUPS.flatMap((group) =>
   group.traits.map((trait) => trait.key),
 );
+
+/** Names one fixed rating on the sheet, as `<part of the character>.<trait>`. */
+export type TraitRef =
+  | `attributes.${AttributeKey}`
+  | `abilities.${AbilityKey}`
+  | `virtues.${VirtueKey}`
+  | 'humanity.rating'
+  | 'willpower.permanent';
+
+export function rangeOf(trait: TraitRef): Range {
+  const [section] = trait.split('.') as [keyof typeof RATING_RANGES];
+  return RATING_RANGES[section];
+}
