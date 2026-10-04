@@ -1,6 +1,12 @@
 import { expect, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
-import { createCharacter, sheetAddress, sheetField } from './support/pages';
+import {
+  createCharacter,
+  openRoster,
+  rosterEntries,
+  sheetAddress,
+  sheetField,
+} from './support/pages';
 import { characterWith, saveCharacters } from './support/seed';
 
 const HEADER_LABELS = [
@@ -85,4 +91,33 @@ Then("the second character's Name is still empty", async ({ page, memory }) => {
   await page.goto(sheetAddress(memory.saved[1].id));
   await expect(sheetField(page, 'Name')).toBeVisible();
   await expect(sheetField(page, 'Name')).toHaveValue('');
+});
+
+Given('no saved character has the id in the sheet address', async () => {
+  // Storage starts empty, so no id matches.
+});
+
+When('the player opens that address', async ({ page }) => {
+  await page.goto(sheetAddress('no-such-character'));
+});
+
+When('the player opens the sheet address with no character id', async ({ page }) => {
+  await page.goto('/sheet/');
+});
+
+Then(
+  'they see a "character not found" message with a link to the roster',
+  async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Character not found' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Character sheet' })).toBeHidden();
+
+    await page.getByRole('link', { name: 'Go to your characters' }).click();
+    await expect(page.getByRole('heading', { name: 'Characters' })).toBeVisible();
+  },
+);
+
+Then('the roster still lists no additional character', async ({ page }) => {
+  await openRoster(page);
+  await expect(page.getByText('No characters yet')).toBeVisible();
+  await expect(rosterEntries(page)).toHaveCount(0);
 });

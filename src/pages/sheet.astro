@@ -10,6 +10,11 @@ import Layout from '../layouts/Layout.astro';
 			<h1>Character sheet</h1>
 			<SheetHeader />
 		</div>
+		<div id="sheet-not-found" hidden>
+			<h1>Character not found</h1>
+			<p>No saved character matches this address. It may have been deleted, or saved in a different browser.</p>
+			<p><a href="/">Go to your characters</a></p>
+		</div>
 	</main>
 </Layout>
 

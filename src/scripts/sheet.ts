@@ -7,6 +7,7 @@ type Update = (character: V20Character) => V20Character;
 const store = createCharacterStore(window.localStorage);
 
 const sheet = document.querySelector<HTMLElement>('#sheet')!;
+const notFound = document.querySelector<HTMLElement>('#sheet-not-found')!;
 const headerInputs = sheet.querySelectorAll<HTMLInputElement>('[data-header-field]');
 
 const headerFieldOf = (input: HTMLInputElement): HeaderField =>
@@ -40,6 +41,24 @@ function showSheet(loaded: V20Character): void {
   sheet.hidden = false;
 }
 
-const id = new URLSearchParams(window.location.search).get('id');
-const result = store.load(id ?? '');
-if (result.status === 'found') showSheet(result.character);
+type PageState = { kind: 'loaded'; character: V20Character } | { kind: 'not-found' };
+
+function pageState(): PageState {
+  const id = new URLSearchParams(window.location.search).get('id');
+  if (id === null) return { kind: 'not-found' };
+
+  const result = store.load(id);
+  return result.status === 'found'
+    ? { kind: 'loaded', character: result.character }
+    : { kind: 'not-found' };
+}
+
+const state = pageState();
+switch (state.kind) {
+  case 'loaded':
+    showSheet(state.character);
+    break;
+  case 'not-found':
+    notFound.hidden = false;
+    break;
+}
