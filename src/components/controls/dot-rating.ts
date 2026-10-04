@@ -55,6 +55,8 @@ export class DotRating extends HTMLElement {
     }
     this.setAttribute('aria-valuemax', String(this.max));
     this.setAttribute('aria-valuenow', String(this.value));
+    // Announce the scale with the value: "3 of 10", not a bare "3".
+    this.setAttribute('aria-valuetext', `${this.value} of ${this.max}`);
   }
 
   #request(value: number): void {
@@ -73,11 +75,14 @@ export class DotRating extends HTMLElement {
   };
 
   #onKeydown = (event: KeyboardEvent): void => {
+    const page = Math.max(2, Math.round(this.max / 5));
     const targets: Record<string, number> = {
       ArrowRight: this.value + 1,
       ArrowUp: this.value + 1,
       ArrowLeft: this.value - 1,
       ArrowDown: this.value - 1,
+      PageUp: this.value + page,
+      PageDown: this.value - page,
       Home: 0,
       End: this.max,
     };
