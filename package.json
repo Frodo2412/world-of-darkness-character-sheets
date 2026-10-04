@@ -9,7 +9,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test:e2e": "bddgen && playwright test"
   },
   "dependencies": {
     "astro": "^7.3.5"
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "oxlint": "^1.86.0"
+    "oxlint": "^1.86.0",
+    "playwright-bdd": "^9.2.1"
   }
 }

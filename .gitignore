@@ -4,6 +4,11 @@ dist/
 # generated types
 .astro/
 
+# playwright (tests generated from features/, reports, traces)
+.features-gen/
+test-results/
+playwright-report/
+
 # dependencies
 node_modules/
 
