@@ -13,11 +13,14 @@ export type RosterEntry = { kind: 'character'; character: V20Character };
 export type LoadResult = { status: 'found'; character: V20Character } | { status: 'not-found' };
 export type CreateResult = { status: 'created'; character: V20Character };
 export type SaveResult = { status: 'saved' };
+export type DeleteResult = { status: 'deleted' };
 
 export interface CharacterStore {
   create(): CreateResult;
   save(character: V20Character): SaveResult;
   load(id: string): LoadResult;
+  /** Removes one character; an id that is not stored is left as it is. */
+  delete(id: string): DeleteResult;
   /** Every stored character, oldest first. */
   list(): RosterEntry[];
 }
@@ -87,6 +90,10 @@ export function createCharacterStore(
     },
     save,
     load,
+    delete(id) {
+      storage.removeItem(keyFor(id));
+      return { status: 'deleted' };
+    },
     list() {
       return storedIds(storage).flatMap((id): RosterEntry[] => {
         const result = load(id);

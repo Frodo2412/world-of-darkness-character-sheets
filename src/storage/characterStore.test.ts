@@ -121,6 +121,62 @@ describe('characterStore', () => {
   });
 });
 
+describe('characterStore delete', () => {
+  /** Everything in the storage, so a test can see exactly what changed. */
+  const contents = (storage: StoragePort): Record<string, string | null> =>
+    Object.fromEntries(
+      Array.from({ length: storage.length }, (_, index) => storage.key(index)!).map((key) => [
+        key,
+        storage.getItem(key),
+      ]),
+    );
+
+  test('removes the character from the store', () => {
+    const store = createCharacterStore(fakeStorage(), sequentialIds('a', 'b'));
+    store.create();
+    store.create();
+
+    expect(store.delete('a')).toEqual({ status: 'deleted' });
+
+    expect(listedIds(store)).toEqual(['b']);
+    expect(store.load('a')).toEqual({ status: 'not-found' });
+  });
+
+  test('leaves every other stored entry exactly as it was', () => {
+    const storage = fakeStorage({ theme: 'dark' });
+    const store = createCharacterStore(storage, sequentialIds('a', 'b', 'c'));
+    store.create();
+    store.create();
+    store.create();
+    const expected = contents(storage);
+    delete expected[Object.keys(expected).find((key) => key.endsWith(':b'))!];
+
+    store.delete('b');
+
+    expect(contents(storage)).toEqual(expected);
+  });
+
+  test('deleting an id that is not stored changes nothing', () => {
+    const storage = fakeStorage();
+    const store = createCharacterStore(storage, sequentialIds('a'));
+    store.create();
+    const before = contents(storage);
+
+    expect(store.delete('missing')).toEqual({ status: 'deleted' });
+
+    expect(contents(storage)).toEqual(before);
+  });
+
+  test('deleting the last character leaves an empty roster', () => {
+    const store = createCharacterStore(fakeStorage(), sequentialIds('a'));
+    store.create();
+
+    store.delete('a');
+
+    expect(store.list()).toEqual([]);
+  });
+});
+
 describe('generateId', () => {
   afterEach(() => {
     vi.useRealTimers();
