@@ -22,3 +22,12 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# dev-team hygiene — machine-specific MCP config (absolute-path pollution — issues #1376, #1416)
+.mcp.json
+.vscode/mcp.json
+
+# code-lookup indexes (machine-local)
+.repowise/
+.codegraph/
+/docs/references/sourcebooks/
