@@ -1,0 +1,17 @@
+dot-rating {
+	display: inline-flex;
+	gap: 0.15rem;
+	cursor: pointer;
+}
+
+.rating-mark {
+	box-sizing: border-box;
+	inline-size: 1rem;
+	block-size: 1rem;
+	border: 1px solid currentColor;
+	border-radius: 50%;
+}
+
+.rating-mark.is-filled {
+	background: currentColor;
+}

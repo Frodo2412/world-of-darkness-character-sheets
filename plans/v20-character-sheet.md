@@ -753,7 +753,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
 #### Wave 3
 - [ ] Slice 3: Dot-rated traits
   - [x] Step 3.1: Rating updates in the model
-  - [ ] Step 3.2: Dot-rating control
+  - [x] Step 3.2: Dot-rating control
   - [ ] Step 3.3: Abilities with custom rows
   - [ ] Step 3.4: Disciplines, backgrounds and virtues
   - [ ] Step 3.5: Humanity/Path and permanent Willpower

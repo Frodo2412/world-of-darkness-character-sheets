@@ -1,4 +1,5 @@
 ---
+import Attributes from '../components/sheet/Attributes.astro';
 import SheetHeader from '../components/sheet/SheetHeader.astro';
 import Layout from '../layouts/Layout.astro';
 ---
@@ -9,6 +10,7 @@ import Layout from '../layouts/Layout.astro';
 		<div id="sheet" hidden>
 			<h1>Character sheet</h1>
 			<SheetHeader />
+			<Attributes />
 		</div>
 		<div id="sheet-not-found" hidden>
 			<h1>Character not found</h1>
