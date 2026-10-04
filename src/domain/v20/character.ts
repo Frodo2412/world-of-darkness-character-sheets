@@ -88,3 +88,11 @@ export const UNNAMED_CHARACTER = 'Unnamed character';
 export function displayName(character: V20Character): string {
   return character.header.name.trim() || UNNAMED_CHARACTER;
 }
+
+export function setHeaderField(
+  character: V20Character,
+  field: HeaderField,
+  text: string,
+): V20Character {
+  return { ...character, header: { ...character.header, [field]: text } };
+}

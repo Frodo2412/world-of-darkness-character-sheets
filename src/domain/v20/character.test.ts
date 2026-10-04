@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { blankCharacter, displayName } from './character';
+import { blankCharacter, displayName, setHeaderField } from './character';
+import { HEADER_FIELDS } from './traits';
 
 describe('blankCharacter', () => {
   const character = blankCharacter('abc');
@@ -141,4 +142,36 @@ describe('displayName', () => {
   test('drops spaces around the name', () => {
     expect(displayName(named('  Lucita '))).toBe('Lucita');
   });
+});
+
+describe('setHeaderField', () => {
+  test.each(HEADER_FIELDS.map((field) => field.key))('sets %s', (field) => {
+    const updated = setHeaderField(blankCharacter('abc'), field, 'some text');
+
+    expect(updated.header).toEqual({ ...blankCharacter('abc').header, [field]: 'some text' });
+  });
+
+  test('leaves the rest of the character as it was', () => {
+    const original = blankCharacter('abc');
+    original.attributes.strength = 4;
+
+    const updated = setHeaderField(original, 'name', 'Lucita');
+
+    expect(updated).toEqual({ ...original, header: { ...original.header, name: 'Lucita' } });
+  });
+
+  test('does not change the character it was given', () => {
+    const original = blankCharacter('abc');
+
+    setHeaderField(original, 'name', 'Lucita');
+
+    expect(original).toEqual(blankCharacter('abc'));
+  });
+
+  test.each(['banana', 'Not A Real Clan', '', '  spaced  ', '13th', '<b>x</b>'])(
+    'keeps %j exactly as given',
+    (text) => {
+      expect(setHeaderField(blankCharacter('abc'), 'generation', text).header.generation).toBe(text);
+    },
+  );
 });

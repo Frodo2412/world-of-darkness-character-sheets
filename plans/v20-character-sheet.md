@@ -738,7 +738,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
 ### Slices (grouped by wave)
 
 #### Wave 1
-- [ ] Slice 1: Create and list characters
+- [x] Slice 1: Create and list characters
   - [x] Step 1.1: Test and quality tooling
   - [x] Step 1.2: Blank V20 character
   - [x] Step 1.3: Store creates, saves, loads and lists characters
@@ -746,7 +746,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
 
 #### Wave 2
 - [ ] Slice 2: Sheet header with autosave
-  - [ ] Step 2.1: Set header text in the model
+  - [x] Step 2.1: Set header text in the model
   - [ ] Step 2.2: Sheet page loads a character and autosaves the header
   - [ ] Step 2.3: Character not found
 
