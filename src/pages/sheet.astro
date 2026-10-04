@@ -1,10 +1,18 @@
 ---
+import SheetHeader from '../components/sheet/SheetHeader.astro';
 import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Character sheet">
 	<main>
 		<p><a href="/">Back to characters</a></p>
-		<h1>Character sheet</h1>
+		<div id="sheet" hidden>
+			<h1>Character sheet</h1>
+			<SheetHeader />
+		</div>
 	</main>
 </Layout>
+
+<script>
+	import '../scripts/sheet';
+</script>

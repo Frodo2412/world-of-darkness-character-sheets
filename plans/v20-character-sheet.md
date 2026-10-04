@@ -747,7 +747,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
 #### Wave 2
 - [ ] Slice 2: Sheet header with autosave
   - [x] Step 2.1: Set header text in the model
-  - [ ] Step 2.2: Sheet page loads a character and autosaves the header
+  - [x] Step 2.2: Sheet page loads a character and autosaves the header
   - [ ] Step 2.3: Character not found
 
 #### Wave 3

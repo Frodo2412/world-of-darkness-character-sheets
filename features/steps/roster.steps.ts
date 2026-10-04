@@ -1,21 +1,8 @@
-import { expect, type Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
+import { SHEET_ADDRESS, createCharacter, openRoster, rosterEntries } from './support/pages';
 import { characterWith, saveCharacters } from './support/seed';
 
-const SHEET_ADDRESS = /\/sheet\/\?id=.+/;
-
-const rosterEntries = (page: Page) =>
-  page.getByRole('list', { name: 'Characters' }).getByRole('listitem');
-
-async function openRoster(page: Page): Promise<void> {
-  await page.goto('/');
-}
-
-async function createCharacter(page: Page): Promise<void> {
-  await openRoster(page);
-  await page.getByRole('button', { name: 'New V20 character' }).click();
-  await expect(page).toHaveURL(SHEET_ADDRESS);
-}
 
 Given('a player with no saved characters', async () => {
   // Every scenario starts in a fresh browser with empty storage.
