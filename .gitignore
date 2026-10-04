@@ -32,6 +32,12 @@ pnpm-debug.log*
 .mcp.json
 .vscode/mcp.json
 
+# local tool output
+.claude/metrics/
+.claude/memory/
+.claude/code-intelligence-turn-state.json*
+/metrics/
+
 # code-lookup indexes (machine-local)
 .repowise/
 .codegraph/

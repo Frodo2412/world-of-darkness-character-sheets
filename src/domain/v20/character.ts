@@ -168,7 +168,7 @@ export function setNamedRow(
 
   const updated: NamedRating = {
     name: change.name ?? current.name,
-    rating: clamp(change.rating ?? current.rating, RATING_RANGE),
+    rating: change.rating === undefined ? current.rating : clamp(change.rating, RATING_RANGE),
   };
   const [section, rows, key] = rowsOf(character, row);
   return {

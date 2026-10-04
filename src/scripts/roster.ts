@@ -71,7 +71,13 @@ function start(store: CharacterStore): void {
   }
 
   function rosterItem(entry: RosterEntry): HTMLLIElement {
-    return entry.kind === 'character' ? characterItem(entry.character) : unreadableItem(entry.id);
+    if (entry.kind === 'unreadable') return unreadableItem(entry.id);
+    try {
+      return characterItem(entry.character);
+    } catch {
+      // One record that cannot be drawn must not take the rest of the roster with it.
+      return unreadableItem(entry.character.id);
+    }
   }
 
   /** Asks before deleting; the dialog opens with Cancel focused. */

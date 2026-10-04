@@ -178,12 +178,16 @@ async function tabTo(
       await page.evaluate(() => {
         const focused = document.activeElement!;
         const style = getComputedStyle(focused);
+        const page = getComputedStyle(document.documentElement).backgroundColor;
         return {
           control: focused.getAttribute('aria-label') ?? focused.tagName.toLowerCase(),
           visible:
             focused.matches(':focus-visible') &&
             style.outlineStyle !== 'none' &&
-            parseFloat(style.outlineWidth) >= 2,
+            parseFloat(style.outlineWidth) >= 2 &&
+            style.outlineColor !== page &&
+            !style.outlineColor.includes('transparent') &&
+            !style.outlineColor.endsWith(', 0)'),
         };
       }),
     );

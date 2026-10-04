@@ -2,7 +2,7 @@
 
 **Created**: 2026-10-04
 **Branch**: `feat/v20-character-sheet`
-**Status**: in-progress
+**Status**: implemented
 **Gherkin persistence**: features
 **Spec**: `docs/specs/v20-character-sheet.md`
 
@@ -723,13 +723,13 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
 
 ## Pre-PR Quality Gate
 
-- [ ] `npm test` (Vitest) passes
-- [ ] `npm run test:e2e` (Playwright) passes
-- [ ] `npm run typecheck` (`astro check`) passes
-- [ ] `npm run lint` (oxlint) passes
-- [ ] `npm run build` succeeds
+- [x] `npm test` (Vitest) passes
+- [x] `npm run test:e2e` (Playwright) passes
+- [x] `npm run typecheck` (`astro check`) passes
+- [x] `npm run lint` (oxlint) passes
+- [x] `npm run build` succeeds
 - [ ] `/code-review` passes
-- [ ] README updated (step 7.3)
+- [x] README updated (step 7.3)
 
 ## Skipped (low value)
 
@@ -786,7 +786,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
   - [x] Step 6.3: Surface failed and unavailable saves
 
 #### Wave 6
-- [ ] Slice 7: Sheet layout, responsiveness and accessibility verification
+- [x] Slice 7: Sheet layout, responsiveness and accessibility verification
   - [x] Step 7.1: Sheet and roster styling
   - [x] Step 7.2: Accessibility verification
   - [x] Step 7.3: Project README

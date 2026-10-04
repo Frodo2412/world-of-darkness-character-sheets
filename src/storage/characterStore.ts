@@ -35,7 +35,8 @@ export interface CharacterStore {
 
 const KEY_PREFIX = 'wod-sheets:character:';
 
-const keyFor = (id: string): string => KEY_PREFIX + id;
+/** The storage key holding the record for `id`. */
+export const keyFor = (id: string): string => KEY_PREFIX + id;
 
 function serialise(character: V20Character): string {
   return JSON.stringify(character);

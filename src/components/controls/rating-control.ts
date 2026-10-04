@@ -75,6 +75,8 @@ export class RatingControl extends HTMLElement {
   };
 
   #onKeydown = (event: KeyboardEvent): void => {
+    // Alt+Left is the browser's Back, Ctrl+Home scrolls the page: leave shortcuts alone.
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
     const page = Math.max(2, Math.round(this.max / 5));
     const targets: Record<string, number> = {
       ArrowRight: this.value + 1,

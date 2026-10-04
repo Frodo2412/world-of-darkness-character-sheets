@@ -642,3 +642,14 @@ describe('a fully filled-in character', () => {
     expect(JSON.parse(JSON.stringify(character))).toEqual(character);
   });
 });
+
+describe('setNamedRow with a rating it was not asked to change', () => {
+  test('renaming a row leaves an out-of-range stored rating exactly as it was', () => {
+    const stored = blankCharacter('abc');
+    stored.disciplines[0] = { name: 'Dominate', rating: 12 };
+
+    const renamed = setNamedRow(stored, 'disciplines.0', { name: 'Presence' });
+
+    expect(renamed.disciplines[0]).toEqual({ name: 'Presence', rating: 12 });
+  });
+});

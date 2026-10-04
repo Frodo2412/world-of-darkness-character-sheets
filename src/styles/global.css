@@ -3,7 +3,7 @@
 
 	--color-page: #14110f;
 	--color-surface: #1f1a17;
-	--color-line: #6b5a49;
+	--color-line: #8c7862;
 	--color-text: #ece3d4;
 	--color-muted: #b9ab97;
 	--color-accent: #e2675a;
@@ -32,6 +32,11 @@
 *::before,
 *::after {
 	box-sizing: border-box;
+}
+
+/* An author `display` rule would otherwise defeat the hidden attribute. */
+[hidden] {
+	display: none !important;
 }
 
 html {

@@ -17,6 +17,7 @@ import type { NamedRowRef, TextRef, TraitRef } from '../domain/v20/traits';
 import {
   browserStorage,
   createCharacterStore,
+  keyFor,
   type CharacterStore,
 } from '../storage/characterStore';
 import { STORAGE_UNAVAILABLE, clearStatus, showStatus } from './status';
@@ -109,6 +110,12 @@ function showSheet(loaded: V20Character, store: CharacterStore): void {
   healthTrack.addEventListener('change', (event) => {
     const { level } = (event as CustomEvent<HealthChange>).detail;
     apply((current) => cycleHealthBox(current, level));
+  });
+
+  // Another tab changed or deleted this character: what this page holds is stale,
+  // and saving it would undo that. Start again from what is stored now.
+  window.addEventListener('storage', (event) => {
+    if (event.key === null || event.key === keyFor(character.id)) window.location.reload();
   });
 
   render(character);
