@@ -1,0 +1,245 @@
+import AxeBuilder from '@axe-core/playwright';
+import { expect, type Locator, type Page } from '@playwright/test';
+import { Given, Then, When } from './fixtures';
+import { createCharacter, openRoster, sheetAddress, sheetField } from './support/pages';
+import { expectRating, rating } from './support/ratings';
+import { characterWith, saveCharacters } from './support/seed';
+
+const WIDE = { width: 1280, height: 900 };
+const PHONE = { width: 375, height: 800 };
+
+const SAVED = [
+  { name: 'Lucita', clan: 'Lasombra', player: 'Ana' },
+  { name: 'Fatima al-Faqadi of the Web of Knives', clan: 'Assamite', player: 'Benedict' },
+];
+
+/** The controls the page is presenting; a closed dialog or an unused page state has none. */
+const controls = (page: Page): Locator =>
+  page
+    .locator('main')
+    .locator('a, button, input, textarea, [role="slider"]')
+    .filter({ visible: true });
+
+async function topsAndLefts(items: Locator): Promise<{ top: number; left: number }[]> {
+  return items.evaluateAll((elements) =>
+    elements.map((element) => {
+      const box = element.getBoundingClientRect();
+      return { top: Math.round(box.top), left: Math.round(box.left) };
+    }),
+  );
+}
+
+/** Side by side: one row, each further right than the last. */
+function expectSideBySide(boxes: { top: number; left: number }[]): void {
+  expect(boxes).toHaveLength(3);
+  expect(new Set(boxes.map((box) => box.top)).size).toBe(1);
+  expect(boxes[0].left).toBeLessThan(boxes[1].left);
+  expect(boxes[1].left).toBeLessThan(boxes[2].left);
+}
+
+Given("a player viewing a character's sheet on a wide screen", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await createCharacter(page);
+});
+
+Given(
+  /^a player viewing the (roster|sheet) on a 375 pixel wide screen$/,
+  async ({ page }, which: string) => {
+    await page.setViewportSize(PHONE);
+    if (which === 'sheet') {
+      await createCharacter(page);
+    } else {
+      await saveCharacters(page, SAVED.map(characterWith));
+      await openRoster(page);
+    }
+  },
+);
+
+Then(
+  'the sections appear in the order header, Attributes, Abilities, Advantages, then notes with Humanity, Willpower, Blood Pool, Health, Weakness and Experience',
+  async ({ page }) => {
+    const headings = page.locator('#sheet h2');
+    await expect(headings).toHaveText([
+      'Character',
+      'Attributes',
+      'Abilities',
+      'Advantages',
+      'Notes',
+      'Humanity / Path',
+      'Willpower',
+      'Temporary Willpower',
+      'Blood Pool',
+      'Health',
+      'Weakness and Experience',
+    ]);
+
+    const boxes = await topsAndLefts(headings);
+    const [header, attributes, abilities, advantages, notes, humanity, , , , health] = boxes;
+    // The four full-width sections run down the page...
+    for (const [above, below] of [
+      [header, attributes],
+      [attributes, abilities],
+      [abilities, advantages],
+      [advantages, notes],
+    ]) {
+      expect(above.top).toBeLessThan(below.top);
+    }
+    // ...and the foot is three columns: notes, then Humanity/Willpower/Blood Pool, then Health.
+    expectSideBySide([notes, humanity, health]);
+  },
+);
+
+Then(
+  'Attributes, Abilities and Advantages are each laid out in three columns',
+  async ({ page }) => {
+    for (const section of ['Attributes', 'Abilities', 'Advantages']) {
+      const groups = page.getByRole('region', { name: section }).getByRole('group');
+      expectSideBySide(await topsAndLefts(groups));
+    }
+  },
+);
+
+Then('the page does not scroll sideways', async ({ page }) => {
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBe(0);
+});
+
+Then('every control is visible and can be activated', async ({ page }) => {
+  const all = await controls(page).all();
+  // The roster shows a create button and a link and delete button per character;
+  // the sheet shows about a hundred fields, ratings and boxes.
+  expect(all.length).toBeGreaterThanOrEqual(5);
+  for (const control of all) {
+    await control.scrollIntoViewIfNeeded();
+    await expect(control).toBeEnabled();
+    const box = (await control.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(PHONE.width);
+    // Fails if something else would receive the click.
+    await control.click({ trial: true });
+  }
+});
+
+Given(
+  /^a player viewing the (empty roster|roster with characters|sheet|character not found|delete confirmation)$/,
+  async ({ page }, state: string) => {
+    switch (state) {
+      case 'empty roster':
+        await openRoster(page);
+        await expect(page.getByText('No characters yet')).toBeVisible();
+        break;
+      case 'roster with characters':
+        await saveCharacters(page, SAVED.map(characterWith));
+        await openRoster(page);
+        await expect(page.getByRole('link', { name: 'Lucita' })).toBeVisible();
+        break;
+      case 'sheet':
+        await createCharacter(page);
+        break;
+      case 'character not found':
+        await page.goto(sheetAddress('no-such-character'));
+        await expect(page.getByRole('heading', { name: 'Character not found' })).toBeVisible();
+        break;
+      case 'delete confirmation':
+        await saveCharacters(page, SAVED.map(characterWith));
+        await openRoster(page);
+        await page.getByRole('button', { name: 'Delete Lucita', exact: true }).click();
+        await expect(page.getByRole('dialog')).toBeVisible();
+        break;
+    }
+  },
+);
+
+When('the page is checked against WCAG 2.1 AA', async ({ page, memory }) => {
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  memory.violations = results.violations.map(
+    (violation) =>
+      `${violation.id}: ${violation.help} — ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`,
+  );
+});
+
+Then('no violations are reported', async ({ memory }) => {
+  expect(memory.violations).toEqual([]);
+});
+
+/** Tabs forward to `target`, noting at every stop whether a focus indicator was drawn. */
+async function tabTo(
+  page: Page,
+  target: Locator,
+  stops: { control: string; visible: boolean }[],
+): Promise<void> {
+  for (let presses = 0; presses < 150; presses += 1) {
+    await page.keyboard.press('Tab');
+    stops.push(
+      await page.evaluate(() => {
+        const focused = document.activeElement!;
+        const style = getComputedStyle(focused);
+        const page = getComputedStyle(document.documentElement).backgroundColor;
+        return {
+          control: focused.getAttribute('aria-label') ?? focused.tagName.toLowerCase(),
+          visible:
+            focused.matches(':focus-visible') &&
+            style.outlineStyle !== 'none' &&
+            parseFloat(style.outlineWidth) >= 2 &&
+            style.outlineColor !== page &&
+            !style.outlineColor.includes('transparent') &&
+            !style.outlineColor.endsWith(', 0)'),
+        };
+      }),
+    );
+    if (await target.evaluate((element) => element === document.activeElement)) return;
+  }
+  throw new Error('The control was never reached with the Tab key.');
+}
+
+When(
+  'they use only the keyboard to enter a Name, set Strength to 3, mark 2 Blood Pool and mark bashing damage on Bruised',
+  async ({ page, memory }) => {
+    await tabTo(page, sheetField(page, 'Name'), memory.focusStops);
+    await page.keyboard.type('Lucita');
+
+    await tabTo(page, rating(page, 'Strength'), memory.focusStops);
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+
+    await tabTo(page, rating(page, 'Blood Pool'), memory.focusStops);
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+
+    await tabTo(page, page.getByRole('button', { name: /^Bruised, / }), memory.focusStops);
+    await page.keyboard.press('Space');
+  },
+);
+
+Then('those values are shown', async ({ page }) => {
+  await expect(sheetField(page, 'Name')).toHaveValue('Lucita');
+  await expectRating(rating(page, 'Strength'), 3);
+  await expectRating(rating(page, 'Blood Pool'), 2);
+  await expect(page.getByRole('button', { name: 'Bruised, bashing', exact: true })).toHaveText('/');
+});
+
+Then('keyboard focus was visible at every stop', async ({ memory }) => {
+  expect(memory.focusStops.length).toBeGreaterThan(50);
+  expect(memory.focusStops.filter((stop) => !stop.visible)).toEqual([]);
+});
+
+Then(
+  'every text field, rating, tracker and health box has an accessible name unique within the sheet',
+  async ({ page }) => {
+    // The accessibility tree as assistive technology receives it, one control per line.
+    const tree = await page.locator('#sheet').ariaSnapshot();
+    const lines = tree.split('\n').filter((line) => /^\s*- (textbox|slider|button)\b/.test(line));
+    const names = lines.map((line) => /^\s*- (?:textbox|slider|button) "([^"]+)"/.exec(line)?.[1]);
+
+    // 31 text fields, 59 dot ratings, 2 trackers and 7 health boxes.
+    expect(lines).toHaveLength(99);
+    expect(lines.filter((_, index) => names[index] === undefined)).toEqual([]);
+    // A health box is named "<level>, <damage>"; its level is what must be unique.
+    const identities = names.map((name) => name!.replace(/, (empty|bashing|lethal|aggravated)$/, ''));
+    expect(identities.filter((name, index) => identities.indexOf(name) !== index)).toEqual([]);
+  },
+);

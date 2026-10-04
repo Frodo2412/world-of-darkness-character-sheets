@@ -1,0 +1,25 @@
+---
+import { RATING_RANGES } from '../../domain/v20/traits';
+---
+
+<section aria-labelledby="temporary-willpower-label">
+	<h2 id="temporary-willpower-label">Temporary Willpower</h2>
+	<box-tracker
+		data-trait="willpower.temporary"
+		aria-labelledby="temporary-willpower-label"
+		max={RATING_RANGES.willpower.max}
+		value="0"></box-tracker>
+</section>
+
+<section aria-labelledby="blood-pool-label">
+	<h2 id="blood-pool-label">Blood Pool</h2>
+	<box-tracker
+		data-trait="bloodPool.current"
+		aria-labelledby="blood-pool-label"
+		max={RATING_RANGES.bloodPool.max}
+		value="0"></box-tracker>
+	<label>
+		Blood Per Turn
+		<input type="text" data-text="bloodPool.perTurn" autocomplete="off" />
+	</label>
+</section>

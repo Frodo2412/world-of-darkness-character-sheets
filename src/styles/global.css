@@ -1,0 +1,217 @@
+:root {
+	color-scheme: dark;
+
+	--color-page: #14110f;
+	--color-surface: #1f1a17;
+	--color-line: #8c7862;
+	--color-text: #ece3d4;
+	--color-muted: #b9ab97;
+	--color-accent: #e2675a;
+	--color-focus: #f4c95d;
+	--color-danger: #ff8a7a;
+
+	--space-1: 0.25rem;
+	--space-2: 0.5rem;
+	--space-3: 1rem;
+	--space-4: 1.5rem;
+	--space-5: 2.5rem;
+
+	--font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+	--text-small: 0.875rem;
+	--text-body: 1rem;
+	--text-h3: 1.05rem;
+	--text-h2: 1.3rem;
+	--text-h1: 1.9rem;
+
+	--mark-size: 1.125rem;
+	--control-size: 2.75rem;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+/* An author `display` rule would otherwise defeat the hidden attribute. */
+[hidden] {
+	display: none !important;
+}
+
+html {
+	background: var(--color-page);
+	color: var(--color-text);
+	font-family: var(--font-body);
+	font-size: var(--text-body);
+	line-height: 1.5;
+}
+
+body {
+	margin: 0;
+}
+
+main {
+	max-inline-size: 72rem;
+	margin-inline: auto;
+	padding: var(--space-3);
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--font-display);
+	font-weight: 600;
+	line-height: 1.2;
+	margin: 0;
+}
+
+h1 {
+	font-size: var(--text-h1);
+	letter-spacing: 0.04em;
+	margin-block: var(--space-3) var(--space-4);
+}
+
+h2 {
+	font-size: var(--text-h2);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--color-accent);
+	border-block-end: 1px solid var(--color-line);
+	padding-block-end: var(--space-1);
+	margin-block: var(--space-4) var(--space-3);
+}
+
+h3 {
+	font-size: var(--text-h3);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+	margin-block-end: var(--space-2);
+}
+
+a {
+	color: var(--color-accent);
+	text-underline-offset: 0.2em;
+}
+
+:focus-visible {
+	outline: 3px solid var(--color-focus);
+	outline-offset: 2px;
+	border-radius: 2px;
+}
+
+button {
+	font: inherit;
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: 1px solid var(--color-line);
+	border-radius: 4px;
+	min-block-size: var(--control-size);
+	padding: var(--space-2) var(--space-3);
+	cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+	border-color: var(--color-accent);
+}
+
+button:disabled {
+	color: var(--color-muted);
+	cursor: not-allowed;
+}
+
+input[type='text'],
+textarea {
+	font: inherit;
+	color: var(--color-text);
+	background: transparent;
+	border: 0;
+	border-block-end: 1px solid var(--color-line);
+	border-radius: 0;
+	padding: var(--space-1) var(--space-1);
+	min-inline-size: 0;
+	inline-size: 100%;
+}
+
+textarea {
+	border: 1px solid var(--color-line);
+	border-radius: 4px;
+	padding: var(--space-2);
+	resize: vertical;
+}
+
+.status-message {
+	border: 1px solid var(--color-danger);
+	border-inline-start-width: 0.4rem;
+	border-radius: 4px;
+	background: var(--color-surface);
+	color: var(--color-text);
+	padding: var(--space-2) var(--space-3);
+	margin-block: var(--space-3);
+}
+
+/* Roster */
+
+.roster {
+	list-style: none;
+	padding: 0;
+	margin-block: var(--space-4) 0;
+	display: grid;
+	gap: var(--space-2);
+}
+
+.roster > li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2) var(--space-3);
+	background: var(--color-surface);
+	border: 1px solid var(--color-line);
+	border-radius: 4px;
+	padding: var(--space-2) var(--space-3);
+}
+
+.roster a {
+	font-family: var(--font-display);
+	font-size: var(--text-h2);
+	min-block-size: var(--control-size);
+	display: inline-flex;
+	align-items: center;
+}
+
+.roster span {
+	color: var(--color-muted);
+}
+
+.roster button {
+	margin-inline-start: auto;
+}
+
+.roster-empty {
+	color: var(--color-muted);
+}
+
+dialog {
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: 1px solid var(--color-line);
+	border-radius: 6px;
+	padding: var(--space-4);
+	max-inline-size: min(30rem, calc(100vw - 2rem));
+}
+
+dialog::backdrop {
+	background: rgb(0 0 0 / 0.7);
+}
+
+dialog h2 {
+	margin-block-start: 0;
+}
+
+dialog form {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--space-2);
+	margin-block-start: var(--space-4);
+}

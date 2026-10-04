@@ -1,0 +1,25 @@
+---
+import { BACKGROUND_ROWS, DISCIPLINE_ROWS, VIRTUES } from '../../domain/v20/traits';
+import NamedRatingRow from './NamedRatingRow.astro';
+import RatingRow from './RatingRow.astro';
+
+const rowNumbers = (count: number) => Array.from({ length: count }, (_, index) => index);
+---
+
+<section aria-labelledby="advantages-heading">
+	<h2 id="advantages-heading">Advantages</h2>
+	<div class="columns">
+	<div class="trait-group" role="group" aria-labelledby="disciplines-heading">
+		<h3 id="disciplines-heading">Disciplines</h3>
+		{rowNumbers(DISCIPLINE_ROWS).map((index) => <NamedRatingRow row={`disciplines.${index}`} label={`Discipline ${index + 1}`} />)}
+	</div>
+	<div class="trait-group" role="group" aria-labelledby="backgrounds-heading">
+		<h3 id="backgrounds-heading">Backgrounds</h3>
+		{rowNumbers(BACKGROUND_ROWS).map((index) => <NamedRatingRow row={`backgrounds.${index}`} label={`Background ${index + 1}`} />)}
+	</div>
+	<div class="trait-group" role="group" aria-labelledby="virtues-heading">
+		<h3 id="virtues-heading">Virtues</h3>
+		{VIRTUES.map((virtue) => <RatingRow trait={`virtues.${virtue.key}`} label={virtue.label} />)}
+	</div>
+	</div>
+</section>

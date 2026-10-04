@@ -1,0 +1,17 @@
+---
+import { rangeOf, type TraitRef } from '../../domain/v20/traits';
+
+interface Props {
+	trait: TraitRef;
+	label: string;
+}
+
+const { trait, label } = Astro.props;
+const labelId = `${trait.replace('.', '-')}-label`;
+---
+
+<div class="rating-row">
+	<span id={labelId}>{label}</span>
+	<dot-rating data-trait={trait} aria-labelledby={labelId} max={rangeOf(trait).max} value="0"
+	></dot-rating>
+</div>

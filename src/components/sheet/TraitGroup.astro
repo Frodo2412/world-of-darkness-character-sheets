@@ -1,0 +1,19 @@
+---
+import type { TraitRef } from '../../domain/v20/traits';
+import RatingRow from './RatingRow.astro';
+
+interface Props {
+	label: string;
+	section: 'attributes' | 'abilities';
+	traits: readonly { key: string; label: string }[];
+}
+
+const { label, section, traits } = Astro.props;
+const headingId = `${section}-${label.toLowerCase()}-heading`;
+---
+
+<div class="trait-group" role="group" aria-labelledby={headingId}>
+	<h3 id={headingId}>{label}</h3>
+	{traits.map((trait) => <RatingRow trait={`${section}.${trait.key}` as TraitRef} label={trait.label} />)}
+	<slot />
+</div>

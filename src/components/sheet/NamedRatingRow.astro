@@ -1,0 +1,17 @@
+---
+import { RATING_RANGE, type NamedRowRef } from '../../domain/v20/traits';
+
+interface Props {
+	row: NamedRowRef;
+	/** What the row is called while the player has not named it, e.g. "Custom talent". */
+	label: string;
+}
+
+const { row, label } = Astro.props;
+---
+
+<div class="rating-row">
+	<input type="text" data-row-name={row} aria-label={`${label} name`} autocomplete="off" />
+	<dot-rating data-row-rating={row} data-label={label} aria-label={label} max={RATING_RANGE.max} value="0"
+	></dot-rating>
+</div>

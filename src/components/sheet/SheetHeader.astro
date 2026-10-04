@@ -1,0 +1,17 @@
+---
+import { HEADER_FIELDS } from '../../domain/v20/traits';
+---
+
+<section aria-labelledby="sheet-header-heading">
+	<h2 id="sheet-header-heading">Character</h2>
+	<div class="columns header-fields">
+	{
+		HEADER_FIELDS.map((field) => (
+			<label>
+				{field.label}
+				<input type="text" data-text={`header.${field.key}`} autocomplete="off" />
+			</label>
+		))
+	}
+	</div>
+</section>
