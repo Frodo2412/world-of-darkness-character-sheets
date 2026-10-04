@@ -40,20 +40,33 @@ function storedIds(storage: StoragePort): string[] {
     const key = storage.key(index);
     if (key?.startsWith(KEY_PREFIX)) ids.push(key.slice(KEY_PREFIX.length));
   }
-  // Ids start with their creation time, so sorting them gives oldest first
+  // Generated ids sort in creation order, so sorting them gives oldest first
   // whatever order the browser enumerates keys in.
   return ids.sort();
 }
 
-/** A unique id that sorts by creation time. */
-export function generateId(): string {
-  const createdAt = Date.now().toString(36).padStart(9, '0');
-  return `${createdAt}-${crypto.randomUUID().slice(0, 8)}`;
+const TIMESTAMP_WIDTH = 9;
+
+function randomHex(bytes: number): string {
+  // getRandomValues, unlike randomUUID, also exists on plain-HTTP origins.
+  const values = crypto.getRandomValues(new Uint8Array(bytes));
+  return Array.from(values, (value) => value.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * A unique id that sorts after `latestId`, the newest id already in use.
+ * It is the creation time unless the clock has not moved past `latestId`
+ * (two creates in one millisecond, or a clock set backwards).
+ */
+export function generateId(latestId?: string): string {
+  const latest = latestId === undefined ? NaN : parseInt(latestId.slice(0, TIMESTAMP_WIDTH), 36);
+  const createdAt = Number.isNaN(latest) ? Date.now() : Math.max(Date.now(), latest + 1);
+  return `${createdAt.toString(36).padStart(TIMESTAMP_WIDTH, '0')}-${randomHex(4)}`;
 }
 
 export function createCharacterStore(
   storage: StoragePort,
-  newId: () => string = generateId,
+  newId: (latestId?: string) => string = generateId,
 ): CharacterStore {
   function save(character: V20Character): SaveResult {
     storage.setItem(keyFor(character.id), serialise(character));
@@ -68,7 +81,7 @@ export function createCharacterStore(
 
   return {
     create() {
-      const character = blankCharacter(newId());
+      const character = blankCharacter(newId(storedIds(storage).at(-1)));
       save(character);
       return { status: 'created', character };
     },

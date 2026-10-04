@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { blankCharacter } from '../domain/v20/character';
 import { createCharacterStore, generateId, type StoragePort } from './characterStore';
 
@@ -45,7 +45,7 @@ describe('characterStore', () => {
     const second = store.create().character;
 
     expect(first.id).not.toBe(second.id);
-    expect(listedIds(store).sort()).toEqual([first.id, second.id].sort());
+    expect(listedIds(store)).toEqual([first.id, second.id]);
   });
 
   test('a saved character round-trips with every field intact', () => {
@@ -98,15 +98,19 @@ describe('characterStore', () => {
     store.create();
 
     expect(listedIds(store)).toEqual(['a', 'b', 'c']);
-    expect(listedIds(store)).toEqual(['a', 'b', 'c']);
   });
 
   test('list ignores storage entries that belong to something else', () => {
-    const storage = fakeStorage({ theme: 'dark', 'other-app:character:x': '{}' });
-    const store = createCharacterStore(storage, sequentialIds('a'));
-    store.create();
+    const store = createCharacterStore(fakeStorage({ theme: 'dark' }), sequentialIds('a'));
+    const { character } = store.create();
+    // Same length as the store's own key prefix, so only a prefix check tells it apart.
+    const foreignKey = 'x'.repeat('wod-sheets:character:'.length) + character.id;
+    const storage = fakeStorage({
+      theme: 'dark',
+      [foreignKey]: JSON.stringify(character),
+    });
 
-    expect(listedIds(store)).toEqual(['a']);
+    expect(listedIds(createCharacterStore(storage))).toEqual([]);
   });
 
   test('a store over the same storage sees characters saved earlier', () => {
@@ -118,21 +122,67 @@ describe('characterStore', () => {
 });
 
 describe('generateId', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const idAt = (time: number, latestId?: string): string => {
+    vi.useFakeTimers({ now: time });
+    return generateId(latestId);
+  };
+
   test('gives a different id each time', () => {
-    const ids = new Set(Array.from({ length: 50 }, generateId));
+    const ids = new Set(Array.from({ length: 50 }, () => generateId()));
     expect(ids.size).toBe(50);
   });
 
-  test('later ids sort after earlier ones', () => {
-    const realNow = Date.now;
-    try {
-      Date.now = () => 1_000;
-      const earlier = generateId();
-      Date.now = () => 2_000_000_000_000;
-      const later = generateId();
-      expect([later, earlier].sort()).toEqual([earlier, later]);
-    } finally {
-      Date.now = realNow;
-    }
+  test('an id created later sorts after one created earlier', () => {
+    const earlier = idAt(1_000);
+    const later = idAt(2_000_000_000_000);
+
+    expect([later, earlier].sort()).toEqual([earlier, later]);
+  });
+
+  test('ids keep sorting by time when the timestamp gains a digit', () => {
+    const lastEightDigit = 36 ** 8 - 1;
+    const earlier = idAt(lastEightDigit);
+    const later = idAt(lastEightDigit + 1);
+
+    expect([later, earlier].sort()).toEqual([earlier, later]);
+  });
+
+  test('an id sorts after the latest one when created in the same millisecond', () => {
+    const latest = idAt(5_000);
+    const next = idAt(5_000, latest);
+
+    expect(next > latest).toBe(true);
+  });
+
+  test('an id sorts after the latest one when the clock has gone backwards', () => {
+    const latest = idAt(2_000_000_000_000);
+    const next = idAt(1_000, latest);
+
+    expect(next > latest).toBe(true);
+  });
+
+  test('an id is still generated when the latest one has no timestamp', () => {
+    expect(idAt(5_000, '-')).toMatch(/^0000003uw-[0-9a-f]{8}$/);
+  });
+});
+
+describe('characterStore with generated ids', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test('characters created in the same millisecond are listed in creation order', () => {
+    vi.useFakeTimers({ now: 5_000 });
+    const store = createCharacterStore(fakeStorage());
+
+    const created = [store.create(), store.create(), store.create()].map(
+      (result) => result.character.id,
+    );
+
+    expect(listedIds(store)).toEqual(created);
   });
 });
