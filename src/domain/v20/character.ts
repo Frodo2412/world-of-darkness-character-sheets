@@ -1,0 +1,83 @@
+import {
+  ABILITY_GROUPS,
+  ABILITY_KEYS,
+  ATTRIBUTE_DEFAULT,
+  ATTRIBUTE_KEYS,
+  BACKGROUND_ROWS,
+  DISCIPLINE_ROWS,
+  HEADER_FIELDS,
+  HEALTH_LEVELS,
+  VIRTUES,
+  VIRTUE_DEFAULT,
+  type AbilityGroupKey,
+  type AbilityKey,
+  type AttributeKey,
+  type HeaderField,
+  type HealthLevelKey,
+  type VirtueKey,
+} from './traits';
+
+export type DamageType = 'empty' | 'bashing' | 'lethal' | 'aggravated';
+
+/** A write-in row: the player supplies the trait's name as well as its rating. */
+export interface NamedRating {
+  name: string;
+  rating: number;
+}
+
+/** Page 1 of the V20 sheet. A record of what the player entered, not a rules check. */
+export interface V20Character {
+  id: string;
+  system: 'v20';
+  schemaVersion: 1;
+  header: Record<HeaderField, string>;
+  attributes: Record<AttributeKey, number>;
+  abilities: Record<AbilityKey, number>;
+  customAbilities: Record<AbilityGroupKey, NamedRating>;
+  disciplines: NamedRating[];
+  backgrounds: NamedRating[];
+  virtues: Record<VirtueKey, number>;
+  humanity: { pathName: string; rating: number; bearing: string; bearingModifier: string };
+  willpower: { permanent: number; temporary: number };
+  bloodPool: { current: number; perTurn: string };
+  health: Record<HealthLevelKey, DamageType>;
+  weakness: string;
+  experience: string;
+  notes: string;
+}
+
+function recordOf<K extends string, V>(keys: readonly K[], value: () => V): Record<K, V> {
+  return Object.fromEntries(keys.map((key) => [key, value()])) as Record<K, V>;
+}
+
+function keysOf<K extends string>(entries: readonly { key: K }[]): K[] {
+  return entries.map((entry) => entry.key);
+}
+
+const blankRow = (): NamedRating => ({ name: '', rating: 0 });
+
+function blankRows(count: number): NamedRating[] {
+  return Array.from({ length: count }, blankRow);
+}
+
+export function blankCharacter(id: string): V20Character {
+  return {
+    id,
+    system: 'v20',
+    schemaVersion: 1,
+    header: recordOf(keysOf(HEADER_FIELDS), () => ''),
+    attributes: recordOf(ATTRIBUTE_KEYS, () => ATTRIBUTE_DEFAULT),
+    abilities: recordOf(ABILITY_KEYS, () => 0),
+    customAbilities: recordOf(keysOf(ABILITY_GROUPS), blankRow),
+    disciplines: blankRows(DISCIPLINE_ROWS),
+    backgrounds: blankRows(BACKGROUND_ROWS),
+    virtues: recordOf(keysOf(VIRTUES), () => VIRTUE_DEFAULT),
+    humanity: { pathName: '', rating: 0, bearing: '', bearingModifier: '' },
+    willpower: { permanent: 0, temporary: 0 },
+    bloodPool: { current: 0, perTurn: '' },
+    health: recordOf(keysOf(HEALTH_LEVELS), (): DamageType => 'empty'),
+    weakness: '',
+    experience: '',
+    notes: '',
+  };
+}

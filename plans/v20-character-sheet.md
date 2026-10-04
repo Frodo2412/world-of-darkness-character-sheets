@@ -740,7 +740,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
 #### Wave 1
 - [ ] Slice 1: Create and list characters
   - [x] Step 1.1: Test and quality tooling
-  - [ ] Step 1.2: Blank V20 character
+  - [x] Step 1.2: Blank V20 character
   - [ ] Step 1.3: Store creates, saves, loads and lists characters
   - [ ] Step 1.4: Roster page
 
