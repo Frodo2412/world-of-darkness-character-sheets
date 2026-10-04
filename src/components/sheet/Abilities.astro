@@ -6,6 +6,7 @@ import TraitGroup from './TraitGroup.astro';
 
 <section aria-labelledby="abilities-heading">
 	<h2 id="abilities-heading">Abilities</h2>
+	<div class="columns">
 	{
 		ABILITY_GROUPS.map((group) => (
 			<TraitGroup label={group.label} section="abilities" traits={group.traits}>
@@ -13,4 +14,5 @@ import TraitGroup from './TraitGroup.astro';
 			</TraitGroup>
 		))
 	}
+	</div>
 </section>

@@ -1,0 +1,87 @@
+/* The sheet follows the printed page: header, three trait sections of three
+   columns each, then a foot of three columns. Everything is one column on a
+   phone. */
+
+.columns {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3) var(--space-5);
+}
+
+@media (min-width: 60rem) {
+	.columns {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	/* Fill the header down each column, as the printed sheet reads. */
+	.header-fields {
+		grid-template-rows: repeat(3, auto);
+		grid-auto-flow: column;
+	}
+}
+
+.sheet label {
+	display: flex;
+	align-items: baseline;
+	gap: var(--space-2);
+	color: var(--color-muted);
+	white-space: nowrap;
+	min-block-size: var(--control-size);
+}
+
+.sheet label:has(textarea) {
+	display: block;
+}
+
+.sheet label input {
+	flex: 1;
+}
+
+.trait-group {
+	min-inline-size: 0;
+}
+
+.rating-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+	min-block-size: 2rem;
+}
+
+.rating-row input {
+	flex: 1;
+}
+
+.sheet-column > section:first-child > h2,
+.sheet-column > div:first-child > h2 {
+	margin-block-start: var(--space-4);
+}
+
+.health-levels {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.health-levels > li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+	padding-block: var(--space-1);
+}
+
+.health-penalty {
+	color: var(--color-muted);
+	margin-inline-start: var(--space-2);
+}
+
+.creation-reminder {
+	color: var(--color-muted);
+	font-size: var(--text-small);
+	text-align: center;
+	border-block-start: 1px solid var(--color-line);
+	margin-block-start: var(--space-5);
+	padding-block-start: var(--space-3);
+}

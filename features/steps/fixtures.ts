@@ -13,6 +13,10 @@ interface ScenarioMemory {
   healthLevel: string;
   /** A stored record the scenario damaged, with the exact text it was left holding. */
   damaged?: { id: string; key: string; text: string };
+  /** Accessibility rule ids the page broke, with the elements that broke them. */
+  violations?: string[];
+  /** Each place keyboard focus stopped, and whether a focus indicator was drawn there. */
+  focusStops: { control: string; visible: boolean }[];
 }
 
 // Every step file imports Given/When/Then from here so scenarios share one
@@ -21,7 +25,7 @@ export const test = base.extend<{ memory: ScenarioMemory }>({
   // Playwright requires the first fixture argument to be a destructuring pattern.
   // oxlint-disable-next-line no-empty-pattern
   memory: async ({}, use) => {
-    await use({ entered: new Map(), saved: [], rating: '', healthLevel: '' });
+    await use({ entered: new Map(), saved: [], rating: '', healthLevel: '', focusStops: [] });
   },
 });
 export const { Given, When, Then } = createBdd(test);

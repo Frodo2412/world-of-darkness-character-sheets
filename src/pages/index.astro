@@ -8,8 +8,8 @@ import Layout from '../layouts/Layout.astro';
 		<h1 id="roster-heading">Characters</h1>
 		<StatusMessage />
 		<button type="button" id="new-character">New V20 character</button>
-		<p id="roster-empty" hidden>No characters yet. Create one to get started.</p>
-		<ul id="roster" aria-labelledby="roster-heading" hidden></ul>
+		<p id="roster-empty" class="roster-empty" hidden>No characters yet. Create one to get started.</p>
+		<ul id="roster" class="roster" aria-labelledby="roster-heading" hidden></ul>
 		<dialog id="delete-dialog" aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-message">
 			<h2 id="delete-dialog-title">Delete character?</h2>
 			<p id="delete-dialog-message"></p>
