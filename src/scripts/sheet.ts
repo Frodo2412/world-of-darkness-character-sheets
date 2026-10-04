@@ -22,6 +22,7 @@ const store = createCharacterStore(window.localStorage);
 
 const sheet = document.querySelector<HTMLElement>('#sheet')!;
 const notFound = document.querySelector<HTMLElement>('#sheet-not-found')!;
+const unreadable = document.querySelector<HTMLElement>('#sheet-unreadable')!;
 type TextInput = HTMLInputElement | HTMLTextAreaElement;
 
 const textInputs = sheet.querySelectorAll<TextInput>('[data-text]');
@@ -107,16 +108,24 @@ function showSheet(loaded: V20Character): void {
   sheet.hidden = false;
 }
 
-type PageState = { kind: 'loaded'; character: V20Character } | { kind: 'not-found' };
+type PageState =
+  | { kind: 'loaded'; character: V20Character }
+  | { kind: 'not-found' }
+  | { kind: 'unreadable' };
 
 function pageState(): PageState {
   const id = new URLSearchParams(window.location.search).get('id');
   if (id === null) return { kind: 'not-found' };
 
   const result = store.load(id);
-  return result.status === 'found'
-    ? { kind: 'loaded', character: result.character }
-    : { kind: 'not-found' };
+  switch (result.status) {
+    case 'found':
+      return { kind: 'loaded', character: result.character };
+    case 'unreadable':
+      return { kind: 'unreadable' };
+    case 'not-found':
+      return { kind: 'not-found' };
+  }
 }
 
 const state = pageState();
@@ -126,5 +135,8 @@ switch (state.kind) {
     break;
   case 'not-found':
     notFound.hidden = false;
+    break;
+  case 'unreadable':
+    unreadable.hidden = false;
     break;
 }

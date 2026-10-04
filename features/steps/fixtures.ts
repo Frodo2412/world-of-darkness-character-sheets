@@ -11,6 +11,8 @@ interface ScenarioMemory {
   rating: string;
   /** The health box the scenario is working with. */
   healthLevel: string;
+  /** A stored record the scenario damaged, with the exact text it was left holding. */
+  damaged?: { id: string; key: string; text: string };
 }
 
 // Every step file imports Given/When/Then from here so scenarios share one

@@ -24,6 +24,11 @@ import Layout from '../layouts/Layout.astro';
 			<Health />
 			<Notes />
 		</div>
+		<div id="sheet-unreadable" hidden>
+			<h1>Character could not be read</h1>
+			<p>The saved data for this character is damaged or was saved by a different version. It has been left untouched.</p>
+			<p><a href="/">Go to your characters</a></p>
+		</div>
 		<div id="sheet-not-found" hidden>
 			<h1>Character not found</h1>
 			<p>No saved character matches this address. It may have been deleted, or saved in a different browser.</p>
