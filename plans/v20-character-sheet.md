@@ -788,5 +788,5 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
 #### Wave 6
 - [ ] Slice 7: Sheet layout, responsiveness and accessibility verification
   - [x] Step 7.1: Sheet and roster styling
-  - [ ] Step 7.2: Accessibility verification
+  - [x] Step 7.2: Accessibility verification
   - [ ] Step 7.3: Project README
