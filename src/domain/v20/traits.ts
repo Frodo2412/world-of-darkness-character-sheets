@@ -169,3 +169,10 @@ export type NamedRowRef =
   | `customAbilities.${AbilityGroupKey}`
   | `disciplines.${number}`
   | `backgrounds.${number}`;
+
+/** Names one free-text field on the sheet. */
+export type TextRef =
+  | `header.${HeaderField}`
+  | 'humanity.pathName'
+  | 'humanity.bearing'
+  | 'humanity.bearingModifier';

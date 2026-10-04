@@ -756,7 +756,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
   - [x] Step 3.2: Dot-rating control
   - [x] Step 3.3: Abilities with custom rows
   - [x] Step 3.4: Disciplines, backgrounds and virtues
-  - [ ] Step 3.5: Humanity/Path and permanent Willpower
+  - [x] Step 3.5: Humanity/Path and permanent Willpower
 - [ ] Slice 5: Delete a character
   - [ ] Step 5.1: Store deletes a character
   - [ ] Step 5.2: Delete from the roster with confirmation

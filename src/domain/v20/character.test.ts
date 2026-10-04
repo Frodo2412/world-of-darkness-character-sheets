@@ -6,10 +6,19 @@ import {
   namedRow,
   setHeaderField,
   setNamedRow,
+  setText,
+  textValue,
   setTrait,
   traitValue,
 } from './character';
-import { HEADER_FIELDS, RATING_RANGE, VIRTUE_RANGE, rangeOf, type TraitRef } from './traits';
+import {
+  HEADER_FIELDS,
+  RATING_RANGE,
+  VIRTUE_RANGE,
+  rangeOf,
+  type TextRef,
+  type TraitRef,
+} from './traits';
 
 describe('blankCharacter', () => {
   const character = blankCharacter('abc');
@@ -404,6 +413,56 @@ describe('setNamedRow on disciplines and backgrounds', () => {
     const original = blankCharacter('abc');
 
     setNamedRow(original, 'disciplines.0', { name: 'Dominate', rating: 3 });
+
+    expect(original).toEqual(blankCharacter('abc'));
+  });
+});
+
+describe('setText', () => {
+  test.each<TextRef>([
+    'header.name',
+    'header.sire',
+    'humanity.pathName',
+    'humanity.bearing',
+    'humanity.bearingModifier',
+  ])('sets %s', (field) => {
+    const updated = setText(blankCharacter('abc'), field, 'some text');
+
+    expect(textValue(updated, field)).toBe('some text');
+  });
+
+  test('records a path with its bearing and modifier, leaving the rating alone', () => {
+    let character = setTrait(blankCharacter('abc'), 'humanity.rating', 6);
+    character = setText(character, 'humanity.pathName', 'Path of Night');
+    character = setText(character, 'humanity.bearing', 'Guilt');
+    character = setText(character, 'humanity.bearingModifier', '+1');
+
+    expect(character.humanity).toEqual({
+      pathName: 'Path of Night',
+      rating: 6,
+      bearing: 'Guilt',
+      bearingModifier: '+1',
+    });
+  });
+
+  test.each(['+1', '-2', 'none', '', '  '])('keeps a bearing modifier of %j as typed', (text) => {
+    expect(setText(blankCharacter('abc'), 'humanity.bearingModifier', text).humanity.bearingModifier).toBe(
+      text,
+    );
+  });
+
+  test('leaves the rest of the character as it was', () => {
+    const original = blankCharacter('abc');
+
+    const updated = setText(original, 'humanity.bearing', 'Guilt');
+
+    expect(updated).toEqual({ ...original, humanity: { ...original.humanity, bearing: 'Guilt' } });
+  });
+
+  test('does not change the character it was given', () => {
+    const original = blankCharacter('abc');
+
+    setText(original, 'humanity.pathName', 'Path of Night');
 
     expect(original).toEqual(blankCharacter('abc'));
   });

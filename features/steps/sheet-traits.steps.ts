@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
+import { sheetField } from './support/pages';
 import { ensureOnSheet, expectRating, mark, rating, setRating } from './support/ratings';
 
 /** A write-in row: its name field and its rating, which is announced with that name. */
@@ -134,3 +135,70 @@ Then('five discipline rows and five background rows remain blank', async ({ page
     await expect(namedRowOf(page, `${kind} ${WRITE_IN_ROWS + 1}`).name).toHaveCount(0);
   }
 });
+
+Given('a new character whose Generation is {string}', async ({ page }, generation: string) => {
+  await ensureOnSheet(page);
+  await sheetField(page, 'Generation').fill(generation);
+});
+
+Given(
+  'the player sets Dexterity to {int} and Brawl to {int} and Courage to {int}',
+  async ({ page }, dexterity: number, brawl: number, courage: number) => {
+    await ensureOnSheet(page);
+    await setRating(rating(page, 'Dexterity'), dexterity);
+    await setRating(rating(page, 'Brawl'), brawl);
+    await setRating(rating(page, 'Courage'), courage);
+  },
+);
+
+When(/^they activate the last ([A-Z][A-Za-z]*) dot$/, async ({ page, memory }, name: string) => {
+  memory.rating = name;
+  await rating(page, name).locator('.rating-mark').last().click();
+});
+
+When('the player sets every attribute to {int}', async ({ page }, dots: number) => {
+  for (const name of ATTRIBUTES) await setRating(rating(page, name), dots);
+});
+
+When(
+  'they enter {string} as the path name, {int} dots, {string} as bearing and {string} as its modifier',
+  async ({ page, memory }, path: string, dots: number, bearing: string, modifier: string) => {
+    for (const [label, text] of [
+      ['Path name', path],
+      ['Bearing', bearing],
+      ['Bearing modifier', modifier],
+    ]) {
+      await sheetField(page, label).fill(text);
+      memory.entered.set(label, text);
+    }
+    await setRating(rating(page, 'Humanity'), dots);
+    memory.entered.set('Humanity', String(dots));
+  },
+);
+
+Then('there is no dot beyond position {int}', async ({ page, memory }, max: number) => {
+  await expect(rating(page, memory.rating).locator('.rating-mark')).toHaveCount(max);
+});
+
+Then('every attribute shows {int} dots and nothing is flagged', async ({ page }, dots: number) => {
+  for (const name of ATTRIBUTES) await expectRating(rating(page, name), dots);
+  await expect(page.locator('[aria-invalid="true"], :invalid')).toHaveCount(0);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+Then('all four entries are shown as entered', async ({ page, memory }) => {
+  expect(memory.entered.size).toBe(4);
+  for (const [label, text] of memory.entered) {
+    if (label === 'Humanity') await expectRating(rating(page, label), Number(text));
+    else await expect(sheetField(page, label)).toHaveValue(text);
+  }
+});
+
+Then(
+  'Dexterity shows {int} dots, Brawl {int} dots and Courage {int} dots',
+  async ({ page }, dexterity: number, brawl: number, courage: number) => {
+    await expectRating(rating(page, 'Dexterity'), dexterity);
+    await expectRating(rating(page, 'Brawl'), brawl);
+    await expectRating(rating(page, 'Courage'), courage);
+  },
+);

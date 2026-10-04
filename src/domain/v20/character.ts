@@ -18,6 +18,7 @@ import {
   type HealthLevelKey,
   type NamedRowRef,
   type Range,
+  type TextRef,
   type TraitRef,
   type VirtueKey,
 } from './traits';
@@ -99,7 +100,18 @@ export function setHeaderField(
   field: HeaderField,
   text: string,
 ): V20Character {
-  return { ...character, header: { ...character.header, [field]: text } };
+  return setText(character, `header.${field}`, text);
+}
+
+export function textValue(character: V20Character, field: TextRef): string {
+  const [section, key] = field.split('.') as [keyof V20Character, string];
+  return (character[section] as unknown as Record<string, string>)[key];
+}
+
+/** Sets a free-text field to exactly what was typed. */
+export function setText(character: V20Character, field: TextRef, text: string): V20Character {
+  const [section, key] = field.split('.') as [keyof V20Character, string];
+  return { ...character, [section]: { ...(character[section] as object), [key]: text } };
 }
 
 function clamp(value: number, range: Range): number {

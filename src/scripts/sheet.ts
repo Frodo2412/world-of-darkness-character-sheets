@@ -2,13 +2,14 @@ import '../components/controls/dot-rating';
 import type { DotRating, RatingChange } from '../components/controls/dot-rating';
 import {
   namedRow,
-  setHeaderField,
   setNamedRow,
+  setText,
   setTrait,
+  textValue,
   traitValue,
   type V20Character,
 } from '../domain/v20/character';
-import type { HeaderField, NamedRowRef, TraitRef } from '../domain/v20/traits';
+import type { NamedRowRef, TextRef, TraitRef } from '../domain/v20/traits';
 import { createCharacterStore } from '../storage/characterStore';
 
 type Update = (character: V20Character) => V20Character;
@@ -17,14 +18,13 @@ const store = createCharacterStore(window.localStorage);
 
 const sheet = document.querySelector<HTMLElement>('#sheet')!;
 const notFound = document.querySelector<HTMLElement>('#sheet-not-found')!;
-const headerInputs = sheet.querySelectorAll<HTMLInputElement>('[data-header-field]');
+const textInputs = sheet.querySelectorAll<HTMLInputElement>('[data-text]');
 
 const traitRatings = sheet.querySelectorAll<DotRating>('[data-trait]');
 const rowNames = sheet.querySelectorAll<HTMLInputElement>('[data-row-name]');
 const rowRatings = sheet.querySelectorAll<DotRating>('[data-row-rating]');
 
-const headerFieldOf = (input: HTMLInputElement): HeaderField =>
-  input.dataset.headerField as HeaderField;
+const textFieldOf = (input: HTMLInputElement): TextRef => input.dataset.text as TextRef;
 
 const traitOf = (rating: DotRating): TraitRef => rating.dataset.trait as TraitRef;
 
@@ -34,8 +34,8 @@ function showText(input: HTMLInputElement, text: string): void {
 }
 
 function render(character: V20Character): void {
-  for (const input of headerInputs) {
-    showText(input, character.header[headerFieldOf(input)]);
+  for (const input of textInputs) {
+    showText(input, textValue(character, textFieldOf(input)));
   }
   for (const rating of traitRatings) {
     rating.value = traitValue(character, traitOf(rating));
@@ -63,9 +63,9 @@ function showSheet(loaded: V20Character): void {
     store.save(character);
   }
 
-  for (const input of headerInputs) {
+  for (const input of textInputs) {
     input.addEventListener('input', () => {
-      apply((current) => setHeaderField(current, headerFieldOf(input), input.value));
+      apply((current) => setText(current, textFieldOf(input), input.value));
     });
   }
 

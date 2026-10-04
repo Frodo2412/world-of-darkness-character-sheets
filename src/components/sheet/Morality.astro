@@ -1,0 +1,25 @@
+---
+import RatingRow from './RatingRow.astro';
+---
+
+<section aria-labelledby="humanity-heading">
+	<h2 id="humanity-heading">Humanity / Path</h2>
+	<label>
+		Path name
+		<input type="text" data-text="humanity.pathName" autocomplete="off" />
+	</label>
+	<RatingRow trait="humanity.rating" label="Humanity / Path" />
+	<label>
+		Bearing
+		<input type="text" data-text="humanity.bearing" autocomplete="off" />
+	</label>
+	<label>
+		Bearing modifier
+		<input type="text" data-text="humanity.bearingModifier" autocomplete="off" />
+	</label>
+</section>
+
+<section aria-labelledby="willpower-heading">
+	<h2 id="willpower-heading">Willpower</h2>
+	<RatingRow trait="willpower.permanent" label="Willpower" />
+</section>

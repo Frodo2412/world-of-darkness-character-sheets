@@ -4,6 +4,7 @@ import { SHEET_ADDRESS, createCharacter } from './pages';
 /** What a scenario calls a rating, where that differs from its label on the sheet. */
 const RATING_LABELS: Record<string, string> = {
   'permanent Willpower': 'Willpower',
+  Humanity: 'Humanity / Path',
 };
 
 export const rating = (page: Page, name: string): Locator =>
