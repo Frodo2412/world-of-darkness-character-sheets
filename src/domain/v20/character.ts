@@ -13,8 +13,10 @@ import {
   type AbilityKey,
   rangeOf,
   type AttributeKey,
+  RATING_RANGE,
   type HeaderField,
   type HealthLevelKey,
+  type NamedRowRef,
   type Range,
   type TraitRef,
   type VirtueKey,
@@ -126,4 +128,24 @@ export function setTrait(character: V20Character, trait: TraitRef, value: number
     ...character,
     [section]: { ...(character[section] as object), [key]: clamp(value, rangeOf(trait)) },
   };
+}
+
+export function namedRow(character: V20Character, row: NamedRowRef): NamedRating {
+  const [section, key] = row.split('.') as ['customAbilities', AbilityGroupKey];
+  return character[section][key];
+}
+
+/** Changes the name, the rating or both of a write-in row. */
+export function setNamedRow(
+  character: V20Character,
+  row: NamedRowRef,
+  change: Partial<NamedRating>,
+): V20Character {
+  const [section, key] = row.split('.') as ['customAbilities', AbilityGroupKey];
+  const current = character[section][key];
+  const updated: NamedRating = {
+    name: change.name ?? current.name,
+    rating: clamp(change.rating ?? current.rating, RATING_RANGE),
+  };
+  return { ...character, [section]: { ...character[section], [key]: updated } };
 }

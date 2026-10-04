@@ -745,7 +745,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
   - [x] Step 1.4: Roster page
 
 #### Wave 2
-- [ ] Slice 2: Sheet header with autosave
+- [x] Slice 2: Sheet header with autosave
   - [x] Step 2.1: Set header text in the model
   - [x] Step 2.2: Sheet page loads a character and autosaves the header
   - [x] Step 2.3: Character not found
@@ -754,7 +754,7 @@ Complex steps: 1.3 (storage boundary), 3.2 (the shared control abstraction), 6.1
 - [ ] Slice 3: Dot-rated traits
   - [x] Step 3.1: Rating updates in the model
   - [x] Step 3.2: Dot-rating control
-  - [ ] Step 3.3: Abilities with custom rows
+  - [x] Step 3.3: Abilities with custom rows
   - [ ] Step 3.4: Disciplines, backgrounds and virtues
   - [ ] Step 3.5: Humanity/Path and permanent Willpower
 - [ ] Slice 5: Delete a character

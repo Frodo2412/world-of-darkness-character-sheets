@@ -1,0 +1,16 @@
+---
+import { ABILITY_GROUPS } from '../../domain/v20/traits';
+import NamedRatingRow from './NamedRatingRow.astro';
+import TraitGroup from './TraitGroup.astro';
+---
+
+<section aria-labelledby="abilities-heading">
+	<h2 id="abilities-heading">Abilities</h2>
+	{
+		ABILITY_GROUPS.map((group) => (
+			<TraitGroup label={group.label} section="abilities" traits={group.traits}>
+				<NamedRatingRow row={`customAbilities.${group.key}`} label={group.customLabel} />
+			</TraitGroup>
+		))
+	}
+</section>

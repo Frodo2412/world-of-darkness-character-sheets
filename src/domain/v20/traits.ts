@@ -71,6 +71,7 @@ export const ABILITY_GROUPS = [
   {
     key: 'talents',
     label: 'Talents',
+    customLabel: 'Custom talent',
     traits: [
       { key: 'alertness', label: 'Alertness' },
       { key: 'athletics', label: 'Athletics' },
@@ -87,6 +88,7 @@ export const ABILITY_GROUPS = [
   {
     key: 'skills',
     label: 'Skills',
+    customLabel: 'Custom skill',
     traits: [
       { key: 'animalKen', label: 'Animal Ken' },
       { key: 'crafts', label: 'Crafts' },
@@ -103,6 +105,7 @@ export const ABILITY_GROUPS = [
   {
     key: 'knowledges',
     label: 'Knowledges',
+    customLabel: 'Custom knowledge',
     traits: [
       { key: 'academics', label: 'Academics' },
       { key: 'computer', label: 'Computer' },
@@ -160,3 +163,6 @@ export function rangeOf(trait: TraitRef): Range {
   const [section] = trait.split('.') as [keyof typeof RATING_RANGES];
   return RATING_RANGES[section];
 }
+
+/** Names one write-in row: a rating whose name the player supplies. */
+export type NamedRowRef = `customAbilities.${AbilityGroupKey}`;

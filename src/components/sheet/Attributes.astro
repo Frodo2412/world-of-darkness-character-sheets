@@ -1,18 +1,9 @@
 ---
 import { ATTRIBUTE_GROUPS } from '../../domain/v20/traits';
-import RatingRow from './RatingRow.astro';
+import TraitGroup from './TraitGroup.astro';
 ---
 
 <section aria-labelledby="attributes-heading">
 	<h2 id="attributes-heading">Attributes</h2>
-	{
-		ATTRIBUTE_GROUPS.map((group) => (
-			<div class="trait-group">
-				<h3>{group.label}</h3>
-				{group.traits.map((trait) => (
-					<RatingRow trait={`attributes.${trait.key}`} label={trait.label} />
-				))}
-			</div>
-		))
-	}
+	{ATTRIBUTE_GROUPS.map((group) => <TraitGroup label={group.label} section="attributes" traits={group.traits} />)}
 </section>

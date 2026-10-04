@@ -1,12 +1,14 @@
 import '../components/controls/dot-rating';
 import type { DotRating, RatingChange } from '../components/controls/dot-rating';
 import {
+  namedRow,
   setHeaderField,
+  setNamedRow,
   setTrait,
   traitValue,
   type V20Character,
 } from '../domain/v20/character';
-import type { HeaderField, TraitRef } from '../domain/v20/traits';
+import type { HeaderField, NamedRowRef, TraitRef } from '../domain/v20/traits';
 import { createCharacterStore } from '../storage/characterStore';
 
 type Update = (character: V20Character) => V20Character;
@@ -18,20 +20,35 @@ const notFound = document.querySelector<HTMLElement>('#sheet-not-found')!;
 const headerInputs = sheet.querySelectorAll<HTMLInputElement>('[data-header-field]');
 
 const traitRatings = sheet.querySelectorAll<DotRating>('[data-trait]');
+const rowNames = sheet.querySelectorAll<HTMLInputElement>('[data-row-name]');
+const rowRatings = sheet.querySelectorAll<DotRating>('[data-row-rating]');
 
 const headerFieldOf = (input: HTMLInputElement): HeaderField =>
   input.dataset.headerField as HeaderField;
 
 const traitOf = (rating: DotRating): TraitRef => rating.dataset.trait as TraitRef;
 
+// Leave a matching input alone so typing does not move the caret.
+function showText(input: HTMLInputElement, text: string): void {
+  if (input.value !== text) input.value = text;
+}
+
 function render(character: V20Character): void {
   for (const input of headerInputs) {
-    const text = character.header[headerFieldOf(input)];
-    // Leave a matching input alone so typing does not move the caret.
-    if (input.value !== text) input.value = text;
+    showText(input, character.header[headerFieldOf(input)]);
   }
   for (const rating of traitRatings) {
     rating.value = traitValue(character, traitOf(rating));
+  }
+  for (const input of rowNames) {
+    showText(input, namedRow(character, input.dataset.rowName as NamedRowRef).name);
+  }
+  for (const rating of rowRatings) {
+    const row = namedRow(character, rating.dataset.rowRating as NamedRowRef);
+    rating.value = row.rating;
+    // A write-in rating is announced with the name the player gave it.
+    const label = rating.dataset.label!;
+    rating.setAttribute('aria-label', row.name ? `${label}: ${row.name}` : label);
   }
 }
 
@@ -55,6 +72,20 @@ function showSheet(loaded: V20Character): void {
     rating.addEventListener('change', (event) => {
       const { value } = (event as CustomEvent<RatingChange>).detail;
       apply((current) => setTrait(current, traitOf(rating), value));
+    });
+  }
+
+  for (const input of rowNames) {
+    input.addEventListener('input', () => {
+      const row = input.dataset.rowName as NamedRowRef;
+      apply((current) => setNamedRow(current, row, { name: input.value }));
+    });
+  }
+  for (const rating of rowRatings) {
+    rating.addEventListener('change', (event) => {
+      const row = rating.dataset.rowRating as NamedRowRef;
+      const { value } = (event as CustomEvent<RatingChange>).detail;
+      apply((current) => setNamedRow(current, row, { rating: value }));
     });
   }
 

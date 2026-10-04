@@ -3,7 +3,9 @@ import {
   activateRating,
   blankCharacter,
   displayName,
+  namedRow,
   setHeaderField,
+  setNamedRow,
   setTrait,
   traitValue,
 } from './character';
@@ -278,5 +280,76 @@ describe('setTrait', () => {
     }
 
     expect(Object.values(character.attributes)).toEqual(Array(9).fill(10));
+  });
+});
+
+describe('setNamedRow', () => {
+  test('names a custom ability', () => {
+    const updated = setNamedRow(blankCharacter('abc'), 'customAbilities.talents', {
+      name: 'Hobby Talent',
+    });
+
+    expect(updated.customAbilities.talents).toEqual({ name: 'Hobby Talent', rating: 0 });
+    expect(namedRow(updated, 'customAbilities.talents')).toEqual({
+      name: 'Hobby Talent',
+      rating: 0,
+    });
+  });
+
+  test('rates a custom ability without changing its name', () => {
+    const named = setNamedRow(blankCharacter('abc'), 'customAbilities.skills', { name: 'Sailing' });
+
+    const updated = setNamedRow(named, 'customAbilities.skills', { rating: 2 });
+
+    expect(updated.customAbilities.skills).toEqual({ name: 'Sailing', rating: 2 });
+  });
+
+  test('renames a custom ability without changing its rating', () => {
+    const rated = setNamedRow(blankCharacter('abc'), 'customAbilities.skills', { rating: 3 });
+
+    const updated = setNamedRow(rated, 'customAbilities.skills', { name: 'Sailing' });
+
+    expect(updated.customAbilities.skills).toEqual({ name: 'Sailing', rating: 3 });
+  });
+
+  test('a name can be cleared', () => {
+    const named = setNamedRow(blankCharacter('abc'), 'customAbilities.skills', { name: 'Sailing' });
+
+    expect(setNamedRow(named, 'customAbilities.skills', { name: '' }).customAbilities.skills.name).toBe(
+      '',
+    );
+  });
+
+  test.each([
+    [11, 10],
+    [10, 10],
+    [0, 0],
+    [-1, 0],
+  ])('a rating of %i is stored as %i', (rating, stored) => {
+    const updated = setNamedRow(blankCharacter('abc'), 'customAbilities.knowledges', { rating });
+
+    expect(updated.customAbilities.knowledges.rating).toBe(stored);
+  });
+
+  test('leaves the other groups and the rest of the character as they were', () => {
+    const original = blankCharacter('abc');
+
+    const updated = setNamedRow(original, 'customAbilities.talents', { name: 'Hobby Talent' });
+
+    expect(updated).toEqual({
+      ...original,
+      customAbilities: {
+        ...original.customAbilities,
+        talents: { name: 'Hobby Talent', rating: 0 },
+      },
+    });
+  });
+
+  test('does not change the character it was given', () => {
+    const original = blankCharacter('abc');
+
+    setNamedRow(original, 'customAbilities.talents', { name: 'Hobby Talent', rating: 2 });
+
+    expect(original).toEqual(blankCharacter('abc'));
   });
 });
