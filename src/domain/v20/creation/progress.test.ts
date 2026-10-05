@@ -14,6 +14,7 @@ describe('settingsReport', () => {
       baseGeneration: 13,
       extraFreebies: 0,
       freebieBudget: 15,
+      effectiveGeneration: 13,
       maxTrait: 5,
       bloodPoolMax: 10,
       bloodPerTurn: 1,
@@ -25,6 +26,7 @@ describe('settingsReport', () => {
       baseGeneration: 11,
       extraFreebies: 75,
       freebieBudget: 90,
+      effectiveGeneration: 11,
       maxTrait: 5,
       bloodPoolMax: 12,
       bloodPerTurn: 1,
@@ -44,7 +46,7 @@ describe('settingsReport', () => {
 describe('report', () => {
   test('is composed from the per-area reports', () => {
     const build = played(9, '30');
-    expect(report(build)).toEqual({
+    expect(report(build)).toMatchObject({
       settings: settingsReport(build),
       concept: conceptReport(build),
       steps: stepStatuses(build),

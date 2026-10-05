@@ -1,5 +1,5 @@
-import { blankBuild, type V20Build } from '../domain/v20/creation/build';
-import { CLAN_NAMES, EXTRA_FREEBIES_RANGE, GENERATION_TABLE } from '../domain/v20/creation/rules';
+import { blankBuild, type DisciplineEntry, type V20Build } from '../domain/v20/creation/build';
+import { CLAN_NAMES, EXTRA_FREEBIES_RANGE, GENERATION_TABLE, RANKS } from '../domain/v20/creation/rules';
 import { generateId, hasShapeOf, storedIds, type StoragePort } from './storagePort';
 
 /** A stored record that is not a build this version can read. It is never rewritten. */
@@ -32,8 +32,28 @@ export const buildKeyFor = (id: string): string => KEY_PREFIX + id;
 const isWholeInRange = (value: number, min: number, max: number): boolean =>
   Number.isInteger(value) && value >= min && value <= max;
 
+const isDotCount = (value: number): boolean => Number.isInteger(value) && value >= 0;
+
+/** The Discipline list has no fixed length, so each entry is checked by hand. */
+function isDisciplineList(value: unknown): value is DisciplineEntry[] {
+  if (!Array.isArray(value)) return false;
+  const template: DisciplineEntry = { name: '', writeIn: false, creation: 0, freebie: 0 };
+  const names = new Set<string>();
+  return value.every((entry) => {
+    if (!hasShapeOf(entry, template)) return false;
+    const { name, creation, freebie } = entry as DisciplineEntry;
+    const key = name.trim().toLowerCase();
+    if (key === '' || names.has(key)) return false;
+    names.add(key);
+    return isDotCount(creation) && isDotCount(freebie);
+  });
+}
+
 function isV20Build(value: unknown, id: string): value is V20Build {
-  if (!hasShapeOf(value, blankBuild(id))) return false;
+  if (typeof value !== 'object' || value === null) return false;
+  const { disciplines, ...fixed } = value as V20Build;
+  const { disciplines: _template, ...template } = blankBuild(id);
+  if (!hasShapeOf(fixed, template) || !isDisciplineList(disciplines)) return false;
   const build = value as V20Build;
   return (
     build.id === id &&
@@ -42,7 +62,10 @@ function isV20Build(value: unknown, id: string): value is V20Build {
     build.schemaVersion === 1 &&
     GENERATION_TABLE.some((row) => row.generation === build.settings.baseGeneration) &&
     isWholeInRange(build.settings.extraFreebies, EXTRA_FREEBIES_RANGE.min, EXTRA_FREEBIES_RANGE.max) &&
-    (build.clan === '' || (CLAN_NAMES as readonly string[]).includes(build.clan))
+    (build.clan === '' || (CLAN_NAMES as readonly string[]).includes(build.clan)) &&
+    Object.values(build.ranks).every((rank) => rank === '' || (RANKS as readonly string[]).includes(rank)) &&
+    Object.values(build.traits).every((dots) => isDotCount(dots.creation) && isDotCount(dots.freebie)) &&
+    isDotCount(build.bloodPool)
   );
 }
 

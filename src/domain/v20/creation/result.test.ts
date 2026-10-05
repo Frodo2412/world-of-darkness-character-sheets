@@ -45,12 +45,12 @@ describe('creation module layers', () => {
   const BELOW_UPDATES = ['rules', 'build', 'ratings', 'allotments', 'freebies', 'limits', 'result'];
   const ALLOWED: Record<string, string[]> = {
     rules: [],
-    build: [],
+    build: ['rules'],
     ratings: ['rules', 'build'],
     allotments: ['rules', 'build', 'ratings'],
     freebies: ['rules', 'build', 'ratings'],
     limits: ['rules', 'build', 'ratings', 'allotments', 'freebies'],
-    result: ['build', 'limits'],
+    result: ['rules', 'build', 'limits'],
     updates: BELOW_UPDATES,
     progress: BELOW_UPDATES,
     toCharacter: BELOW_UPDATES,

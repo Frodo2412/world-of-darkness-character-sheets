@@ -3,10 +3,18 @@ import { blankBuild, type V20Build } from '../domain/v20/creation/build';
 import {
   setBaseGeneration,
   setClan,
+  setBloodPool,
   setConceptText,
   setExtraFreebies,
 } from '../domain/v20/creation/updates';
 import type { UpdateResult } from '../domain/v20/creation/result';
+import {
+  addCreationDiscipline,
+  clan,
+  completeBrujah,
+  freebie,
+  play,
+} from '../domain/v20/creation/testing/play';
 import { buildKeyFor, createBuildStore } from './buildStore';
 import { createCharacterStore, keyFor } from './characterStore';
 import type { StoragePort } from './storagePort';
@@ -103,6 +111,22 @@ describe('buildStore', () => {
     expect(store.load('a')).toEqual({ status: 'found', build });
   });
 
+  test('a build played through every kind of update round-trips through storage', () => {
+    const store = createBuildStore(fakeStorage(), sequentialIds('a'));
+    store.create();
+    const build = play(
+      { ...completeBrujah(), id: 'a' },
+      clan('Caitiff'),
+      addCreationDiscipline('Flight'),
+      freebie('discipline:Flight', 1),
+      freebie('humanity', 8),
+    );
+    const withPool = appliedBuild(setBloodPool(build, '7'));
+
+    expect(store.save(withPool)).toEqual({ status: 'saved' });
+    expect(store.load('a')).toEqual({ status: 'found', build: withPool });
+  });
+
   test('an unknown id is not found', () => {
     expect(createBuildStore(fakeStorage()).load('missing')).toEqual({ status: 'not-found' });
   });
@@ -123,6 +147,15 @@ describe('buildStore', () => {
     ['an unknown clan', record({ clan: 'Baali' })],
     ['a missing clan', JSON.stringify({ ...blankBuild('a'), clan: undefined })],
     ['a missing concept field', JSON.stringify({ ...blankBuild('a'), concept: { name: 'Lucita' } })],
+    ['an unknown rank', record({ ranks: { ...blankBuild('a').ranks, physical: 'first' } })],
+    ['a fractional dot count', record({ traits: { ...blankBuild('a').traits, 'attribute:strength': { creation: 1.5, freebie: 0 } } })],
+    ['a negative freebie count', record({ traits: { ...blankBuild('a').traits, 'humanity': { creation: 0, freebie: -1 } } })],
+    ['a missing trait', record({ traits: { 'attribute:strength': { creation: 0, freebie: 0 } } })],
+    ['a Discipline list that is not a list', record({ disciplines: {} })],
+    ['a Discipline without a name', record({ disciplines: [{ name: ' ', writeIn: true, creation: 1, freebie: 0 }] })],
+    ['a repeated Discipline', record({ disciplines: [{ name: 'Auspex', writeIn: false, creation: 1, freebie: 0 }, { name: 'auspex', writeIn: false, creation: 0, freebie: 1 }] })],
+    ['a malformed Discipline entry', record({ disciplines: [{ name: 'Auspex', creation: 1 }] })],
+    ['a negative blood pool', record({ bloodPool: -1 })],
     ['textual extra freebies', record({ settings: { baseGeneration: 13, extraFreebies: '5' } })],
   ])('%s loads as unreadable and is not rewritten', (_label, text) => {
     const storage = fakeStorage({ [buildKeyFor('a')]: text });
