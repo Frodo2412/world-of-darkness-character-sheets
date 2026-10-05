@@ -1189,11 +1189,11 @@ graph TD
   - [x] Step 1.2: Application bar on every page
 
 #### Wave 2
-- [ ] Slice 2: Play and edit modes with character identity
-  - [ ] Step 2.1: Identity wording in the domain
-  - [ ] Step 2.2: Read-only presentation for ratings
-  - [ ] Step 2.3: Mode state, identity section and Edit character
-  - [ ] Step 2.4: Save status in the application bar
+- [x] Slice 2: Play and edit modes with character identity
+  - [x] Step 2.1: Identity wording in the domain
+  - [x] Step 2.2: Read-only presentation for ratings
+  - [x] Step 2.3: Mode state, identity section and Edit character
+  - [x] Step 2.4: Save status in the application bar
 
 #### Wave 3
 - [ ] Slice 3: Attribute and ability cards
