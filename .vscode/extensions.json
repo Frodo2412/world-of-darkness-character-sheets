@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "astro-build.astro-vscode",
+    "CucumberOpen.cucumber-official",
     "repowise-dev.repowise"
   ],
   "unwantedRecommendations": []
