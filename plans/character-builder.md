@@ -1961,11 +1961,11 @@ Risks:
   - [x] Step 3.1: Builds in progress on the roster
 
 #### Wave 4
-- [ ] Slice 4: Attributes step
-  - [ ] Step 4.1: Allotment descriptors, ranked groups and the rating entry point
-  - [ ] Step 4.2: Nosferatu Appearance and clan-change effects
-  - [ ] Step 4.3: Rating control floor and lock
-  - [ ] Step 4.4: Attributes step UI and clan-change confirmation
+- [x] Slice 4: Attributes step
+  - [x] Step 4.1: Allotment descriptors, ranked groups and the rating entry point
+  - [x] Step 4.2: Nosferatu Appearance and clan-change effects
+  - [x] Step 4.3: Rating control floor and lock
+  - [x] Step 4.4: Attributes step UI and clan-change confirmation
 
 #### Wave 5
 - [ ] Slice 5: Abilities step

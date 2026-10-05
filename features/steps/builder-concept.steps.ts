@@ -50,7 +50,7 @@ When('they clear the Name', async ({ page }) => {
   await builderField(page, 'Name').fill('');
 });
 
-When(/^they (?:open|look at) the (?:concept step|clan choices)$/, async ({ page }) => {
+When('they look at the clan choices', async ({ page }) => {
   await openStep(page, 'Concept');
 });
 

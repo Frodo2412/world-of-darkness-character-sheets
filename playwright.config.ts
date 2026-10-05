@@ -13,6 +13,9 @@ const testDir = defineBddConfig({
   // Builder slices not yet built have no steps; their scenarios are skipped
   // until the last slice restores 'fail-on-gen'.
   missingSteps: 'skip-scenario',
+  // A Given and a Then may share wording ("Brawl is rated 3" sets it up or
+  // checks it), so steps are matched by keyword as well as text.
+  matchKeywords: true,
 });
 
 export default defineConfig({

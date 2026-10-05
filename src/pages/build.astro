@@ -1,4 +1,5 @@
 ---
+import Attributes from '../components/builder/Attributes.astro';
 import Concept from '../components/builder/Concept.astro';
 import Settings from '../components/builder/Settings.astro';
 import StepNav from '../components/builder/StepNav.astro';
@@ -17,7 +18,7 @@ import '../styles/builder.css';
 			<StepNav />
 			<StepPanel step="settings"><Settings /></StepPanel>
 			<StepPanel step="concept"><Concept /></StepPanel>
-			<StepPanel step="attributes" />
+			<StepPanel step="attributes"><Attributes /></StepPanel>
 			<StepPanel step="abilities" />
 			<StepPanel step="advantages" />
 			<StepPanel step="finishing" />

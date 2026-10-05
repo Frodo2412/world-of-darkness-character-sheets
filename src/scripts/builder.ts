@@ -1,7 +1,8 @@
+import '../components/controls/dot-rating';
 import type { V20Build } from '../domain/v20/creation/build';
 import { report } from '../domain/v20/creation/progress';
 import { buildKeyFor, type BuildStore } from '../storage/buildStore';
-import { clearNotices, reportSave, showRefusal } from './builder/messages';
+import { clearNotices, reportSave, showNotices, showRefusal } from './builder/messages';
 import { pageState, showView } from './builder/pageState';
 import { startSteps } from './builder/steps';
 import { renderControls, wireControls, type Update } from './builder/wiring';
@@ -24,7 +25,7 @@ function showBuilder(loaded: V20Build, store: BuildStore): void {
   function commit(update: Update, control: HTMLElement): void {
     const result = update(build);
     if (result.status === 'refused') {
-      showRefusal(control, result.reason);
+      showRefusal(root, control, result.reason, result.step);
       return;
     }
     // Finished or deleted elsewhere since this page loaded: saving would bring it back.
@@ -35,10 +36,11 @@ function showBuilder(loaded: V20Build, store: BuildStore): void {
     build = result.build;
     clearNotices(root);
     render();
+    showNotices(control, result.notices);
     reportSave(store.save(build).status);
   }
 
-  wireControls(root, commit);
+  wireControls(root, { commit, current: () => build });
   render();
 
   // Another tab changed or removed this build: what this page holds is stale,

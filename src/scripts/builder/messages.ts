@@ -4,6 +4,7 @@
 //     named by the refused control's `aria-describedby`;
 //  3. budgets — each readout is its own live region, written only when it changes.
 
+import { BUILD_STEPS, type BuildStep } from '../../domain/v20/creation/rules';
 import { clearStatus, showStatus } from '../status';
 
 export const NOT_SAVED =
@@ -23,19 +24,52 @@ function noticeSlotFor(control: HTMLElement): HTMLElement | undefined {
     .find((element): element is HTMLElement => element?.hasAttribute('data-notice') ?? false);
 }
 
-/** Channel 2. An identical refusal already shown is left alone, so it is not announced again. */
-export function showRefusal(control: HTMLElement, reason: string): void {
+const stepTitle = (step: BuildStep): string =>
+  BUILD_STEPS.find((entry) => entry.step === step)!.title;
+
+/** A link that opens `step`, for a message that names where to fix something. */
+function stepLink(step: BuildStep): HTMLAnchorElement {
+  const link = document.createElement('a');
+  link.href = `#${step}`;
+  link.dataset.stepGo = step;
+  link.textContent = `Go to ${stepTitle(step)}`;
+  return link;
+}
+
+function write(slot: HTMLElement, text: string, step?: BuildStep): void {
+  const key = `${text}|${step ?? ''}`;
+  // An identical message already shown is left alone, so it is not announced again.
+  if (slot.dataset.message === key) return;
+  slot.dataset.message = key;
+  slot.replaceChildren(text, ...(step ? [' ', stepLink(step)] : []));
+}
+
+function clear(slot: HTMLElement): void {
+  if (slot.dataset.message === undefined) return;
+  delete slot.dataset.message;
+  slot.replaceChildren();
+}
+
+/** Channel 2: one refusal at a time, beside the control that was refused. */
+export function showRefusal(root: HTMLElement, control: HTMLElement, reason: string, step?: BuildStep): void {
+  const slot = noticeSlotFor(control);
+  for (const other of root.querySelectorAll<HTMLElement>('[data-notice]')) {
+    if (other !== slot) clear(other);
+  }
   // Only a typed entry can hold a value the build does not; it stays visible, marked invalid.
   if (control instanceof HTMLInputElement) control.setAttribute('aria-invalid', 'true');
+  if (slot) write(slot, reason, step);
+}
+
+/** Channel 2: what an applied change also did, beside the control that made it. */
+export function showNotices(control: HTMLElement, notices: string[]): void {
   const slot = noticeSlotFor(control);
-  if (slot && slot.textContent !== reason) slot.textContent = reason;
+  if (slot && notices.length > 0) write(slot, notices.join(' '));
 }
 
 /** Clears every refusal and notice under `root`; an applied change does this. */
 export function clearNotices(root: HTMLElement): void {
-  for (const slot of root.querySelectorAll<HTMLElement>('[data-notice]')) {
-    if (slot.textContent !== '') slot.textContent = '';
-  }
+  for (const slot of root.querySelectorAll<HTMLElement>('[data-notice]')) clear(slot);
   for (const control of root.querySelectorAll('[aria-invalid]')) {
     control.removeAttribute('aria-invalid');
   }

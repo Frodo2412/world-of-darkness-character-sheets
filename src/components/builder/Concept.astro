@@ -31,10 +31,17 @@ const isArchetype = (key: string) => key === 'nature' || key === 'demeanor';
 	</datalist>
 	<div class="builder-field">
 		<label for="concept-clan">Clan</label>
-		<select id="concept-clan" data-clan aria-describedby="concept-clan-notice">
+		<select id="concept-clan" data-clan aria-describedby="concept-clan-notice clan-change-text">
 			<option value="">Choose a clan</option>
 			{CLAN_NAMES.map((clan) => <option value={clan}>{clan}</option>)}
 		</select>
 		<p id="concept-clan-notice" class="field-notice" role="status" data-notice></p>
+		<div class="clan-change" data-clan-change hidden>
+			<div id="clan-change-text" role="status" data-clan-change-text></div>
+			<div class="clan-change-actions">
+				<button type="button" data-clan-switch></button>
+				<button type="button" data-clan-keep></button>
+			</div>
+		</div>
 	</div>
 </div>

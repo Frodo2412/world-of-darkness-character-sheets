@@ -1,0 +1,11 @@
+---
+import { ATTRIBUTE_ALLOTMENT } from '../../domain/v20/creation/rules';
+import RankedGroup from './RankedGroup.astro';
+---
+
+<p class="field-hint">
+	Rank the groups primary, secondary and tertiary for 7, 5 and 3 dots. Every Attribute starts with one free dot.
+</p>
+<div class="builder-columns">
+	{ATTRIBUTE_ALLOTMENT.groups.map((group) => <RankedGroup allotment={ATTRIBUTE_ALLOTMENT} group={group} mode="creation" step="attributes" />)}
+</div>
