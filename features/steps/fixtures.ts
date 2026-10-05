@@ -15,6 +15,8 @@ interface ScenarioMemory {
   damaged?: { id: string; key: string; text: string };
   /** Accessibility rule ids the page broke, with the elements that broke them. */
   violations?: string[];
+  /** The question a confirmation asked, kept after it closed. */
+  asked?: string;
   /** Each place keyboard focus stopped, and whether a focus indicator was drawn there. */
   focusStops: { control: string; visible: boolean }[];
 }

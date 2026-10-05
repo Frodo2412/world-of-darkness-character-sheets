@@ -1,6 +1,12 @@
-import { expect, type Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
-import { openRoster, rosterEntries, sheetAddress } from './support/pages';
+import {
+  confirmDelete as confirm,
+  deleteConfirmation as confirmation,
+  rosterEntries,
+  sheetAddress,
+  startDeleting,
+} from './support/pages';
 import { characterWith, saveCharacters } from './support/seed';
 
 /** Details for the characters the scenarios name, so "unchanged" has something to check. */
@@ -8,19 +14,6 @@ const DETAILS: Record<string, { clan: string; player: string }> = {
   Lucita: { clan: 'Lasombra', player: 'Ana' },
   Fatima: { clan: 'Assamite', player: 'Ben' },
 };
-
-const confirmation = (page: Page) => page.getByRole('dialog', { name: 'Delete character?' });
-
-async function startDeleting(page: Page, name: string): Promise<void> {
-  await openRoster(page);
-  await page.getByRole('button', { name: `Delete ${name}`, exact: true }).click();
-  await expect(confirmation(page)).toBeVisible();
-}
-
-async function confirm(page: Page): Promise<void> {
-  await confirmation(page).getByRole('button', { name: 'Delete' }).click();
-  await expect(confirmation(page)).toBeHidden();
-}
 
 Given(
   'saved characters {string} and {string}',

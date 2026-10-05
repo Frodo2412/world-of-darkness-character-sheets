@@ -3,14 +3,26 @@
 // at 375 px.
 
 import AxeBuilder from '@axe-core/playwright';
-import { expect } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { Then, When } from './fixtures';
+import { openRoster } from './support/pages';
 
 const PHONE = { width: 375, height: 800 };
 
 const CONTROL_ROLES = 'textbox|combobox|slider|button|link|checkbox|radio|spinbutton';
 const CONTROL_LINE = new RegExp(`^\\s*- (?:${CONTROL_ROLES})\\b`);
 const CONTROL_NAME = new RegExp(`^\\s*- (${CONTROL_ROLES}) "([^"]+)"`);
+
+/** Accessibility rule ids the page breaks, with the elements that break them. */
+async function wcagViolations(page: Page): Promise<string[]> {
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  return results.violations.map(
+    (violation) =>
+      `${violation.id}: ${violation.help} — ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`,
+  );
+}
 
 When(/^the (.+) step is checked$/, async ({ page, memory }, step: string) => {
   const heading = page.getByRole('heading', { name: step, level: 2, exact: false });
@@ -21,14 +33,12 @@ When(/^the (.+) step is checked$/, async ({ page, memory }, step: string) => {
       .click();
   }
   await expect(heading).toBeVisible();
+  memory.violations = await wcagViolations(page);
+});
 
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze();
-  memory.violations = results.violations.map(
-    (violation) =>
-      `${violation.id}: ${violation.help} — ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`,
-  );
+When('the roster is checked', async ({ page, memory }) => {
+  await openRoster(page);
+  memory.violations = await wcagViolations(page);
 });
 
 Then('no WCAG 2.1 AA violations are reported', async ({ memory }) => {

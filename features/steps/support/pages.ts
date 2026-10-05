@@ -20,3 +20,23 @@ export async function createCharacter(page: Page): Promise<void> {
 
 export const sheetField = (page: Page, label: string): Locator =>
   page.getByLabel(label, { exact: true });
+
+export const deleteConfirmation = (page: Page): Locator =>
+  page.getByRole('dialog', { name: /^Delete (character|build)\?$/ });
+
+const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Opens the roster and starts deleting the character or build in progress named `name`. */
+export async function startDeleting(page: Page, name: string): Promise<void> {
+  await openRoster(page);
+  await page.getByRole('button', { name: new RegExp(`^Delete (build )?${escaped(name)}$`) }).click();
+  await expect(deleteConfirmation(page)).toBeVisible();
+}
+
+export async function confirmDelete(page: Page): Promise<void> {
+  await deleteConfirmation(page).getByRole('button', { name: 'Delete' }).click();
+  await expect(deleteConfirmation(page)).toBeHidden();
+}
+
+export const buildEntries = (page: Page): Locator =>
+  page.getByRole('list', { name: 'Builds in progress' }).getByRole('listitem');

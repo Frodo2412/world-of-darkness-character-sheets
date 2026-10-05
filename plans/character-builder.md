@@ -1957,8 +1957,8 @@ Risks:
   - [x] Step 2.2: Concept step and full step navigation
 
 #### Wave 3
-- [ ] Slice 3: Builds on the roster
-  - [ ] Step 3.1: Builds in progress on the roster
+- [x] Slice 3: Builds on the roster
+  - [x] Step 3.1: Builds in progress on the roster
 
 #### Wave 4
 - [ ] Slice 4: Attributes step
