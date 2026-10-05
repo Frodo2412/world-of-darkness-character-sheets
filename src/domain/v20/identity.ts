@@ -1,6 +1,6 @@
 // How a character's identity reads on the play view: wording only, no rules.
 
-import type { V20Character } from './character';
+import type { NamedRating, V20Character } from './character';
 
 /** "1st", "2nd", "3rd", "4th", "11th", "21st": English ordinal suffixes. */
 export function ordinal(n: number): string {
@@ -51,4 +51,11 @@ export function identitySummary(character: V20Character): string {
 export function temperament(character: V20Character): string {
   const { nature, demeanor } = character.header;
   return joinNonBlank([nature, demeanor], ' / ');
+}
+
+/** The write-in rows the player has named, in order, with trimmed names: an unnamed row is not shown in play. */
+export function namedRows(rows: readonly NamedRating[]): NamedRating[] {
+  return rows
+    .filter((row) => row.name.trim() !== '')
+    .map((row) => ({ ...row, name: row.name.trim() }));
 }

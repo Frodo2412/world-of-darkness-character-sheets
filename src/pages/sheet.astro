@@ -5,10 +5,7 @@ import Attributes from '../components/sheet/Attributes.astro';
 import Health from '../components/sheet/Health.astro';
 import Identity from '../components/sheet/Identity.astro';
 import Morality from '../components/sheet/Morality.astro';
-import Notes from '../components/sheet/Notes.astro';
 import Trackers from '../components/sheet/Trackers.astro';
-import WeaknessExperience from '../components/sheet/WeaknessExperience.astro';
-import { CREATION_REMINDER } from '../domain/v20/traits';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
 import '../styles/sheet.css';
@@ -26,17 +23,14 @@ import '../styles/sheet.css';
 			<Abilities />
 			<Advantages />
 			<div class="columns">
-				<div class="sheet-column"><Notes /></div>
 				<div class="sheet-column">
 					<Morality />
 					<Trackers />
 				</div>
 				<div class="sheet-column">
 					<Health />
-					<WeaknessExperience />
 				</div>
 			</div>
-			<p class="creation-reminder">{CREATION_REMINDER}</p>
 		</div>
 		<div id="sheet-unreadable" hidden>
 			<h1>Character could not be read</h1>

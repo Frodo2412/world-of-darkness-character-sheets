@@ -23,6 +23,7 @@ import {
 import { drawIdentity } from './sheet/identityCard';
 import { createMode, type Mode, type SheetMode } from './sheet/mode';
 import { drawRating } from './sheet/ratingDraw';
+import { drawTraitCards } from './sheet/traitCards';
 import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
 
 type Update = (character: V20Character) => V20Character;
@@ -97,6 +98,7 @@ function render(character: V20Character, mode: SheetMode): void {
   healthTrack.damage = character.health;
   drawRowNames(character);
   drawRowRatings(character, mode);
+  drawTraitCards(sheet, character);
 }
 
 // The roster opens a new character's sheet with this marker: start editing, and do

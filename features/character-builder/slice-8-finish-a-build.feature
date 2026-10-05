@@ -109,7 +109,7 @@ Feature: Finishing a build
     And the first two Discipline rows are "Dominate" at 2 and "Potence" at 1, and the other four are blank
     And the first two Background rows are "Generation" at 2 and "Resources" at 3, and the other four are blank
     And the sheet shows a blood pool of 6 and "2" blood per turn
-    And the sheet's Weakness field is empty
+    And the saved character has no Weakness
 
   Scenario: A finished Nosferatu has no Appearance on the sheet
     Given a complete build of clan "Nosferatu"

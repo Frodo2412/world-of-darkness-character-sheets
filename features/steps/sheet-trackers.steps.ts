@@ -155,23 +155,6 @@ Then('assistive technology reports {string}', async ({ page }, name: string) => 
   await expect(page.getByRole('button', { name, exact: true })).toBeVisible();
 });
 
-const FREE_TEXT = new Map([
-  ['Weakness', 'Casts no reflection'],
-  ['Experience', '12 (3 unspent)'],
-  ['Notes', 'Sire unknown.\nOwes a boon to the Prince.\n  Haven: the old cannery'],
-]);
-
-When(
-  'the player enters a Weakness, an Experience value and three lines of notes',
-  async ({ page, memory }) => {
-    await ensureOnSheet(page);
-    for (const [label, text] of FREE_TEXT) {
-      await sheetField(page, label).fill(text);
-      memory.entered.set(label, text);
-    }
-  },
-);
-
 Given(
   'the player marks {int} temporary Willpower, {int} Blood Pool and aggravated damage on Hurt',
   async ({ page }, willpower: number, blood: number) => {
@@ -182,38 +165,8 @@ Given(
   },
 );
 
-Then(
-  'all three show exactly what was entered, including the line breaks',
-  async ({ page, memory }) => {
-    await ensureEditing(page);
-    expect(memory.entered.size).toBe(3);
-    for (const [label, text] of memory.entered) {
-      await expect(sheetField(page, label)).toHaveValue(text);
-    }
-  },
-);
-
 Then('the same marks are shown', async ({ page }) => {
   await expectRating(rating(page, 'temporary Willpower'), 4);
   await expectRating(rating(page, 'Blood Pool'), 12);
   await expectDamage(page, 'Hurt', 'aggravated');
-});
-
-Then('they see the reminder {string}', async ({ page }, reminder: string) => {
-  await expect(page.getByText(reminder, { exact: true })).toBeVisible();
-});
-
-Then('no entry on the sheet is restricted by it', async ({ page }) => {
-  // Nothing on the sheet carries a constraint a browser would enforce...
-  await expect(
-    page.locator(
-      'main :is(input, textarea):is([required], [pattern], [maxlength], [min], [max], [disabled], [readonly])',
-    ),
-  ).toHaveCount(0);
-  // ...and a value far beyond the reminder's budgets is taken as entered.
-  for (const name of ['Strength', 'Dexterity', 'Stamina']) {
-    await setRating(rating(page, name), 10);
-  }
-  await expect(page.locator('[aria-invalid="true"], :invalid')).toHaveCount(0);
-  await expect(page.getByRole('alert')).toHaveCount(0);
 });

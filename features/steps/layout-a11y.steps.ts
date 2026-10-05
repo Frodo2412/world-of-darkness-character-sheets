@@ -2,11 +2,11 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import { startBuild } from './support/builder';
-import { createCharacter, openRoster, sheetAddress, sheetField } from './support/pages';
+import { SHEET_ADDRESS, createCharacter, openRoster, sheetAddress, sheetField } from './support/pages';
 import { expectRating, rating } from './support/ratings';
 import { characterWith, saveCharacters } from './support/seed';
+import { doneButton, editButton, isEditing } from './support/sheet';
 
-const WIDE = { width: 1280, height: 900 };
 const SCREEN_HEIGHT = 800;
 
 const SAVED = [
@@ -20,28 +20,6 @@ const controls = (page: Page): Locator =>
     .locator('main')
     .locator('a, button, input, textarea, [role="slider"]')
     .filter({ visible: true });
-
-async function topsAndLefts(items: Locator): Promise<{ top: number; left: number }[]> {
-  return items.evaluateAll((elements) =>
-    elements.map((element) => {
-      const box = element.getBoundingClientRect();
-      return { top: Math.round(box.top), left: Math.round(box.left) };
-    }),
-  );
-}
-
-/** Side by side: one row, each further right than the last. */
-function expectSideBySide(boxes: { top: number; left: number }[]): void {
-  expect(boxes).toHaveLength(3);
-  expect(new Set(boxes.map((box) => box.top)).size).toBe(1);
-  expect(boxes[0].left).toBeLessThan(boxes[1].left);
-  expect(boxes[1].left).toBeLessThan(boxes[2].left);
-}
-
-Given("a player viewing a character's sheet on a wide screen", async ({ page }) => {
-  await page.setViewportSize(WIDE);
-  await createCharacter(page);
-});
 
 Given(
   /^a player viewing the (roster|builder|sheet) on a (\d+) pixel wide screen$/,
@@ -58,50 +36,6 @@ Given(
   },
 );
 
-Then(
-  'the sections appear in the order header, Attributes, Abilities, Advantages, then notes with Humanity, Willpower, Blood Pool, Health, Weakness and Experience',
-  async ({ page }) => {
-    const headings = page.locator('#sheet h2');
-    await expect(headings).toHaveText([
-      'Character',
-      'Attributes',
-      'Abilities',
-      'Advantages',
-      'Notes',
-      'Humanity / Path',
-      'Willpower',
-      'Temporary Willpower',
-      'Blood Pool',
-      'Health',
-      'Weakness and Experience',
-    ]);
-
-    const boxes = await topsAndLefts(headings);
-    const [header, attributes, abilities, advantages, notes, humanity, , , , health] = boxes;
-    // The four full-width sections run down the page...
-    for (const [above, below] of [
-      [header, attributes],
-      [attributes, abilities],
-      [abilities, advantages],
-      [advantages, notes],
-    ]) {
-      expect(above.top).toBeLessThan(below.top);
-    }
-    // ...and the foot is three columns: notes, then Humanity/Willpower/Blood Pool, then Health.
-    expectSideBySide([notes, humanity, health]);
-  },
-);
-
-Then(
-  'Attributes, Abilities and Advantages are each laid out in three columns',
-  async ({ page }) => {
-    for (const section of ['Attributes', 'Abilities', 'Advantages']) {
-      const groups = page.getByRole('region', { name: section }).getByRole('group');
-      expectSideBySide(await topsAndLefts(groups));
-    }
-  },
-);
-
 Then('the page does not scroll sideways', async ({ page }) => {
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -109,7 +43,12 @@ Then('the page does not scroll sideways', async ({ page }) => {
   expect(overflow).toBe(0);
 });
 
-Then('every control is visible and can be activated', async ({ page }) => {
+Then('every control offered in play mode is visible and can be activated', async ({ page }) => {
+  // A new character's sheet opens for editing; the controls checked are the ones play mode offers.
+  if (SHEET_ADDRESS.test(page.url()) && (await isEditing(page))) {
+    await doneButton(page).click();
+    await expect(editButton(page)).toBeVisible();
+  }
   const all = await controls(page).all();
   // The roster shows a create button and a link and delete button per character;
   // the sheet shows about a hundred fields, ratings and boxes.

@@ -187,7 +187,3 @@ export type TextRef =
   | 'weakness'
   | 'experience'
   | 'notes';
-
-/** The character-creation reminder printed at the foot of the sheet. Reference only. */
-export const CREATION_REMINDER =
-  'Attributes: 7/5/3 • Abilities: 13/9/5 • Disciplines: 3 • Backgrounds: 5 • Virtues: 7 • Freebie Points: 15 (7/5/2/1)';

@@ -376,9 +376,8 @@ Then('the sheet shows a blood pool of {int} and {string} blood per turn', async 
   await expect(sheetField(page, 'Blood Per Turn')).toHaveValue(perTurn);
 });
 
-Then("the sheet's Weakness field is empty", async ({ page }) => {
-  await ensureEditing(page);
-  await expect(sheetField(page, 'Weakness')).toHaveValue('');
+Then('the saved character has no Weakness', async ({ page }) => {
+  expect((await savedCharacter(page, openCharacterId(page))).weakness).toBe('');
 });
 
 Then('the sheet shows the generation {string} and {string} blood per turn', async ({ page }, generationText: string, perTurn: string) => {

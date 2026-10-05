@@ -1,0 +1,39 @@
+---
+import { rangeOf, type AbilityGroupKey, type TraitRef } from '../../domain/v20/traits';
+
+interface Props {
+	/** A fixed trait. Leave out for a group's custom ability, which has only a play row. */
+	trait?: TraitRef;
+	customGroup?: AbilityGroupKey;
+	label: string;
+}
+
+const { trait, customGroup, label } = Astro.props;
+const custom = trait === undefined;
+---
+
+<!--
+	One row per trait. The name button is for choosing a trait for a dice pool and does
+	nothing yet: it is out of the tab order and has no pressed state. A custom ability's
+	play row has no edit control of its own (the write-in row beside it is that); it is
+	drawn from the character and hidden while the ability has no name.
+-->
+<div
+	class="trait-row"
+	data-trait-key={custom ? `customAbilities.${customGroup}` : trait}
+	data-sheet-mode-only={custom ? 'play' : undefined}
+	hidden={custom}
+>
+	<button type="button" class="trait-select" tabindex="-1" data-sheet-mode-only="play" data-show={custom ? 'trait.name' : undefined}>
+		{custom ? '' : label}
+	</button>
+	{custom ? null : <span class="trait-label" data-sheet-mode-only="edit">{label}</span>}
+	{
+		custom ? (
+			<dot-rating max="5" value="0" readonly />
+		) : (
+			<dot-rating data-trait={trait} data-label={label} aria-label={label} max={rangeOf(trait).max} value="0" />
+		)
+	}
+	<span class="trait-number" data-sheet-mode-only="play" data-show="trait.number" aria-hidden="true"></span>
+</div>

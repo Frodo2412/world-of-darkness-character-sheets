@@ -47,17 +47,7 @@ Feature: Trackers, health and notes
     Given the Hurt box shows lethal damage
     Then assistive technology reports "Hurt, lethal"
 
-  Scenario: Free-text fields
-    When the player enters a Weakness, an Experience value and three lines of notes
-    And they reload the sheet
-    Then all three show exactly what was entered, including the line breaks
-
   Scenario: Trackers are saved
     Given the player marks 4 temporary Willpower, 12 Blood Pool and aggravated damage on Hurt
     When they reload the sheet
     Then the same marks are shown
-
-  Scenario: Creation reminder
-    Given a player viewing a character's sheet
-    Then they see the reminder "Attributes: 7/5/3 • Abilities: 13/9/5 • Disciplines: 3 • Backgrounds: 5 • Virtues: 7 • Freebie Points: 15 (7/5/2/1)"
-    And no entry on the sheet is restricted by it

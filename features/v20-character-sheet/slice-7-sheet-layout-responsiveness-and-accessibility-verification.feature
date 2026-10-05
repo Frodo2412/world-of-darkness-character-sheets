@@ -1,14 +1,9 @@
 Feature: Layout and accessibility
 
-  Scenario: Sections follow the printed sheet
-    Given a player viewing a character's sheet on a wide screen
-    Then the sections appear in the order header, Attributes, Abilities, Advantages, then notes with Humanity, Willpower, Blood Pool, Health, Weakness and Experience
-    And Attributes, Abilities and Advantages are each laid out in three columns
-
   Scenario Outline: Usable on a phone
     Given a player viewing the <page> on a 375 pixel wide screen
     Then the page does not scroll sideways
-    And every control is visible and can be activated
+    And every control offered in play mode is visible and can be activated
 
     Examples:
       | page   |

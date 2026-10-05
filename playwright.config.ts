@@ -15,6 +15,7 @@ const testDir = defineBddConfig({
     'features/character-builder/**/*.feature',
     'features/sheet-play-view-redesign/slice-1-*.feature',
     'features/sheet-play-view-redesign/slice-2-*.feature',
+    'features/sheet-play-view-redesign/slice-3-*.feature',
   ],
   steps: 'features/steps/**/*.ts',
   missingSteps: 'fail-on-gen',
