@@ -27,8 +27,7 @@ const LEAST_POTENT = GENERATION_TABLE[GENERATION_TABLE.length - 1].generation;
 
 export const GENERATION_REF: BuildTraitRef = `background:${GENERATION_BACKGROUND}`;
 
-/** "4th", "9th", "13th": every generation the builder offers ends in "th". */
-export const ordinal = (generation: number): string => `${generation}th`;
+export { ordinal } from '../identity';
 
 /** The base generation improved by one per Generation dot. A stored build past 4th reads as 4th. */
 export function effectiveGeneration(build: V20Build): number {

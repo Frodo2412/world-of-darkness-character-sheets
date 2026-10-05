@@ -1,0 +1,107 @@
+import { describe, expect, test } from 'vitest';
+import { blankCharacter, setHeaderField } from './character';
+import { generationLabel, generationNumber, identitySummary, monogram, ordinal } from './identity';
+import type { HeaderField } from './traits';
+
+describe('ordinal', () => {
+  test.each([
+    [1, '1st'],
+    [2, '2nd'],
+    [3, '3rd'],
+    [4, '4th'],
+    [10, '10th'],
+    [11, '11th'],
+    [12, '12th'],
+    [13, '13th'],
+    [21, '21st'],
+    [22, '22nd'],
+    [23, '23rd'],
+    [101, '101st'],
+    [111, '111th'],
+  ])('%i is %s', (n, expected) => {
+    expect(ordinal(n)).toBe(expected);
+  });
+});
+
+describe('generationNumber', () => {
+  test.each([
+    ['10', 10],
+    ['10th', 10],
+    ['3rd', 3],
+    [' 9th generation ', 9],
+    ['between 8 and 9', 8],
+  ])('reads %j as %i', (text, expected) => {
+    expect(generationNumber(text)).toBe(expected);
+  });
+
+  test.each(['', '   ', 'banana'])('finds no number in %j', (text) => {
+    expect(generationNumber(text)).toBeUndefined();
+  });
+});
+
+describe('generationLabel', () => {
+  test.each([
+    ['10', '10th generation'],
+    ['10th', '10th generation'],
+    ['3rd', '3rd generation'],
+    ['  12 ', '12th generation'],
+  ])('words %j as %j', (text, expected) => {
+    expect(generationLabel(text)).toBe(expected);
+  });
+
+  test('keeps the trimmed text when no number is readable', () => {
+    expect(generationLabel('  banana ')).toBe('banana');
+  });
+
+  test('is empty for blank text', () => {
+    expect(generationLabel('')).toBe('');
+    expect(generationLabel('   ')).toBe('');
+  });
+});
+
+describe('monogram', () => {
+  test('takes the first letters of the first and last words', () => {
+    expect(monogram('Éloïse Voss')).toBe('EV');
+    expect(monogram('Maria de la Cruz')).toBe('MC');
+  });
+
+  test('is one letter for a single word', () => {
+    expect(monogram('Lucita')).toBe('L');
+  });
+
+  test('removes diacritics and upper-cases', () => {
+    expect(monogram('émile zola')).toBe('EZ');
+  });
+
+  test('ignores surrounding and repeated whitespace', () => {
+    expect(monogram('  Ana   Ruiz  ')).toBe('AR');
+  });
+
+  test('is empty for a blank name', () => {
+    expect(monogram('')).toBe('');
+    expect(monogram('   ')).toBe('');
+  });
+});
+
+describe('identitySummary', () => {
+  const withHeader = (fields: Partial<Record<HeaderField, string>>) =>
+    (Object.entries(fields) as [HeaderField, string][]).reduce(
+      (character, [key, value]) => setHeaderField(character, key, value),
+      blankCharacter('c1'),
+    );
+
+  test('joins clan, generation label and concept', () => {
+    const character = withHeader({ clan: 'Toreador', generation: '10th', concept: 'Antiquarian' });
+    expect(identitySummary(character)).toBe('Toreador · 10th generation · Antiquarian');
+  });
+
+  test('leaves out the parts that are blank', () => {
+    expect(identitySummary(withHeader({ clan: 'Brujah', generation: '' }))).toBe('Brujah');
+    expect(identitySummary(withHeader({ clan: 'Brujah', generation: 'banana' }))).toBe('Brujah · banana');
+    expect(identitySummary(withHeader({ concept: ' Fixer ' }))).toBe('Fixer');
+  });
+
+  test('is empty when nothing is entered', () => {
+    expect(identitySummary(blankCharacter('c1'))).toBe('');
+  });
+});
