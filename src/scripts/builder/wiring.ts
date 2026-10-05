@@ -6,8 +6,11 @@ import type { RatingChange, RatingControl } from '../../components/controls/rati
 import type { BuildTraitRef, ConceptField, V20Build } from '../../domain/v20/creation/build';
 import type { BuildReport } from '../../domain/v20/creation/progress';
 import type { UpdateResult } from '../../domain/v20/creation/result';
+import { ordinal } from '../../domain/v20/creation/limits';
 import {
+  addDiscipline,
   clanChangeEffects,
+  removeDiscipline,
   setBaseGeneration,
   setClan,
   setConceptText,
@@ -19,8 +22,11 @@ import {
 import { showReadout } from './messages';
 
 export type Update = (build: V20Build) => UpdateResult;
-/** Applies an update made through `control`, which is where a refusal or notice is shown. */
-export type Commit = (update: Update, control: HTMLElement) => void;
+/**
+ * Applies an update made through `control`, which is where a refusal or
+ * notice is shown, and says whether it was applied.
+ */
+export type Commit = (update: Update, control: HTMLElement) => UpdateResult['status'];
 
 export interface Wiring {
   commit: Commit;
@@ -117,6 +123,7 @@ export function wireControls(root: HTMLElement, wiring: Wiring): void {
       commit((build) => setRank(build, select.dataset.rank!, select.value), select);
     });
   }
+  wireDisciplines(root, wiring);
   // Rating rows are found when they change, so rows drawn later need no wiring.
   root.addEventListener('change', (event) => {
     const control = (event.target as Element).closest<RatingControl>('[data-build-trait]');
@@ -127,6 +134,94 @@ export function wireControls(root: HTMLElement, wiring: Wiring): void {
     commit((build) => setRating(build, trait, value, mode), control);
   });
 }
+
+function wireDisciplines(root: HTMLElement, { commit }: Wiring): void {
+  for (const button of root.querySelectorAll<HTMLButtonElement>('[data-add-discipline]')) {
+    const input = button.parentElement!.querySelector<HTMLInputElement>('input')!;
+    const mode = button.dataset.mode as DotSource;
+    const add = () => {
+      const name = input.value;
+      if (commit((build) => addDiscipline(build, name, mode), input) === 'applied') input.value = '';
+    };
+    button.addEventListener('click', add);
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') add();
+    });
+  }
+  root.addEventListener('click', (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('[data-remove-discipline]');
+    if (!button) return;
+    const name = button.dataset.removeDiscipline!;
+    const rows = button.closest<HTMLElement>('[data-discipline-rows]')!;
+    // The button goes with its row, so a refusal is shown on the rows' first control.
+    commit((build) => removeDiscipline(build, name), button);
+    rows.querySelector<HTMLElement>('dot-rating, button')?.focus();
+  });
+}
+
+const slug = (text: string): string => text.replace(/[^a-zA-Z0-9]/g, '-');
+
+function disciplineRow(container: HTMLElement, ref: BuildTraitRef, label: string, removable: boolean): HTMLElement {
+  const { mode, stepId, noticeId } = container.dataset;
+  const labelId = `${stepId}-${slug(ref)}-label`;
+  const name = document.createElement('span');
+  name.id = labelId;
+  name.textContent = label;
+
+  const rating = document.createElement('dot-rating');
+  rating.dataset.buildTrait = ref;
+  rating.dataset.mode = mode;
+  rating.setAttribute('aria-labelledby', labelId);
+  rating.setAttribute('aria-describedby', noticeId!);
+  rating.setAttribute('max', '5');
+  rating.setAttribute('value', '0');
+
+  const actions = document.createElement('span');
+  actions.className = 'discipline-row-actions';
+  actions.append(rating);
+  if (removable) {
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = 'Remove';
+    remove.setAttribute('aria-label', `Remove ${label}`);
+    remove.setAttribute('aria-describedby', noticeId!);
+    remove.dataset.removeDiscipline = label;
+    actions.append(remove);
+  }
+
+  const row = document.createElement('div');
+  row.className = 'rating-row';
+  row.dataset.row = `${ref}|${removable}`;
+  row.append(name, actions);
+  return row;
+}
+
+/** Keeps each container's rows in report order, reusing rows that are still there. */
+function renderDisciplines(root: HTMLElement, report: BuildReport): void {
+  const { disciplines } = report;
+  for (const container of root.querySelectorAll<HTMLElement>('[data-discipline-rows]')) {
+    const creation = container.dataset.mode === 'creation';
+    const refs = creation ? disciplines.creationRows : disciplines.freebieRows;
+    const removable = creation && disciplines.choosesOwn;
+    const existing = new Map(
+      [...container.querySelectorAll<HTMLElement>(':scope > [data-row]')].map((row) => [row.dataset.row!, row]),
+    );
+    const rows = refs.map(
+      (ref) => existing.get(`${ref}|${removable}`) ?? disciplineRow(container, ref, report.traits[ref].label, removable),
+    );
+    const same = rows.length === existing.size && rows.every((row, index) => container.children[index] === row);
+    if (!same) container.replaceChildren(...rows);
+  }
+  for (const hint of root.querySelectorAll<HTMLElement>('[data-needs-clan]')) hint.hidden = !disciplines.needsClan;
+  for (const add of root.querySelectorAll<HTMLElement>('[data-discipline-add][data-mode="creation"]')) {
+    add.hidden = !disciplines.choosesOwn;
+  }
+}
+
+/** Readouts that show something other than the bare number. */
+const READOUT_FORMATS: Partial<Record<keyof BuildReport['settings'], (value: number) => string>> = {
+  effectiveGeneration: ordinal,
+};
 
 function renderRating(control: RatingControl, report: BuildReport): void {
   const trait = report.traits[control.dataset.buildTrait!];
@@ -155,7 +250,9 @@ export function renderControls(root: HTMLElement, report: BuildReport): void {
     if (control.value !== value) control.value = value;
   }
   for (const readout of root.querySelectorAll<HTMLElement>('[data-readout]')) {
-    showReadout(readout, String(report.settings[readout.dataset.readout as keyof BuildReport['settings']]));
+    const key = readout.dataset.readout as keyof BuildReport['settings'];
+    const format = READOUT_FORMATS[key] ?? String;
+    showReadout(readout, format(report.settings[key]));
   }
   // Leave a matching input alone so typing does not move the caret.
   for (const input of root.querySelectorAll<HTMLInputElement>('[data-concept]')) {
@@ -177,6 +274,7 @@ export function renderControls(root: HTMLElement, report: BuildReport): void {
     status.toggleAttribute('data-overspent', allotment.overspent);
     showReadout(status.querySelector<HTMLElement>('[data-readout-text]')!, allotment.status);
   }
+  renderDisciplines(root, report);
   for (const control of root.querySelectorAll<RatingControl>('[data-build-trait]')) {
     renderRating(control, report);
   }

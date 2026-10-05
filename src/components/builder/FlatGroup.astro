@@ -1,0 +1,29 @@
+---
+// One flat allotment (Disciplines, Backgrounds, Virtues): a heading with what
+// is left to place in creation mode, a message slot, and the rows in the slot.
+interface Props {
+	key: string;
+	label: string;
+	mode: 'creation' | 'freebie';
+	step: string;
+}
+
+const { key, label, mode, step } = Astro.props;
+const id = `${step}-${key}`;
+---
+
+<div class="trait-group builder-group" role="group" aria-labelledby={`${id}-label`}>
+	<h3>
+		<span id={`${id}-label`}>{label}</span>
+		{
+			mode === 'creation' && (
+				<span class="allotment-readout" role="status" aria-atomic="true" data-allotment-status={key}>
+					<span class="visually-hidden">{label}: </span>
+					<span data-readout-text />
+				</span>
+			)
+		}
+	</h3>
+	<slot />
+	<p id={`${id}-notice`} class="field-notice" role="status" data-notice></p>
+</div>

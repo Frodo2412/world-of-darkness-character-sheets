@@ -1,6 +1,7 @@
 import '../components/controls/dot-rating';
 import type { V20Build } from '../domain/v20/creation/build';
 import { report } from '../domain/v20/creation/progress';
+import type { UpdateResult } from '../domain/v20/creation/result';
 import { buildKeyFor, type BuildStore } from '../storage/buildStore';
 import { clearNotices, reportSave, showNotices, showRefusal } from './builder/messages';
 import { pageState, showView } from './builder/pageState';
@@ -22,22 +23,26 @@ function showBuilder(loaded: V20Build, store: BuildStore): void {
   }
 
   /** The one path every change takes: update the model, redraw, save. */
-  function commit(update: Update, control: HTMLElement): void {
+  function commit(update: Update, control: HTMLElement): UpdateResult['status'] {
     const result = update(build);
     if (result.status === 'refused') {
+      // Marked first, so the redraw that puts back what a select or rating
+      // asked for leaves a typed entry as it was typed.
       showRefusal(root, control, result.reason, result.step);
-      return;
+      render();
+      return 'refused';
     }
     // Finished or deleted elsewhere since this page loaded: saving would bring it back.
     if (store.load(build.id).status === 'not-found') {
       showView('not-found');
-      return;
+      return 'refused';
     }
     build = result.build;
     clearNotices(root);
     render();
     showNotices(control, result.notices);
     reportSave(store.save(build).status);
+    return 'applied';
   }
 
   wireControls(root, { commit, current: () => build });

@@ -2,6 +2,7 @@
 import { GENERATION_TABLE } from '../../domain/v20/creation/rules';
 
 const READOUTS = [
+	{ key: 'effectiveGeneration', label: 'Effective generation' },
 	{ key: 'freebieBudget', label: 'Freebie budget' },
 	{ key: 'maxTrait', label: 'Maximum trait rating' },
 	{ key: 'bloodPoolMax', label: 'Blood pool maximum' },
@@ -12,10 +13,11 @@ const READOUTS = [
 <div class="builder-fields">
 	<div class="builder-field">
 		<label for="base-generation">Base generation</label>
-		<select id="base-generation" data-setting="baseGeneration" aria-describedby="base-generation-hint">
+		<select id="base-generation" data-setting="baseGeneration" aria-describedby="base-generation-hint base-generation-notice">
 			{GENERATION_TABLE.map((row) => <option value={row.generation}>{row.generation}th</option>)}
 		</select>
 		<p id="base-generation-hint" class="field-hint">Leave at 13th unless your Storyteller says otherwise.</p>
+		<p id="base-generation-notice" class="field-notice" role="status" data-notice></p>
 	</div>
 	<div class="builder-field">
 		<label for="extra-freebies">Extra freebie points</label>

@@ -8,6 +8,7 @@ import {
   enterExtraFreebies,
   extraFreebies,
   openBuildId,
+  openStep,
   readout,
   saveBuilds,
   setBaseGeneration,
@@ -197,6 +198,7 @@ Then('the extra freebie points are {int}', async ({ page }, value: number) => {
 
 // Captured numbers arrive as numbers, whatever the parameter's declared type.
 Then(/^the freebie budget is (?:still )?(\d+)$/, async ({ page }, budget: number) => {
+  await openStep(page, 'Settings');
   await expect(readout(page, 'Freebie budget')).toHaveText(String(budget));
 });
 
@@ -206,14 +208,17 @@ Then('leaving the field sets the freebie budget to {int}', async ({ page }, budg
 });
 
 Then('the maximum trait rating is {int}', async ({ page }, value: number) => {
+  await openStep(page, 'Settings');
   await expect(readout(page, 'Maximum trait rating')).toHaveText(String(value));
 });
 
 Then('the blood pool maximum is {int}', async ({ page }, value: number) => {
+  await openStep(page, 'Settings');
   await expect(readout(page, 'Blood pool maximum')).toHaveText(String(value));
 });
 
 Then('the blood points per turn are {int}', async ({ page }, value: number) => {
+  await openStep(page, 'Settings');
   await expect(readout(page, 'Blood points per turn')).toHaveText(String(value));
 });
 

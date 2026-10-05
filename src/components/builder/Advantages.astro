@@ -1,0 +1,30 @@
+---
+import type { BuildTraitRef } from '../../domain/v20/creation/build';
+import { BACKGROUNDS, BUILD_VIRTUES } from '../../domain/v20/creation/rules';
+import DisciplineRows from './DisciplineRows.astro';
+import FlatGroup from './FlatGroup.astro';
+import TraitRow from './TraitRow.astro';
+---
+
+<p class="field-hint">
+	Place 3 Discipline dots on your clan's Disciplines, 5 Background dots, and 7 Virtue dots over the free dot each Virtue has.
+</p>
+<div class="builder-columns">
+	<FlatGroup key="disciplines" label="Disciplines" mode="creation" step="advantages">
+		<DisciplineRows mode="creation" step="advantages" />
+	</FlatGroup>
+	<FlatGroup key="backgrounds" label="Backgrounds" mode="creation" step="advantages">
+		{
+			BACKGROUNDS.map((name) => (
+				<TraitRow trait={`background:${name}` as BuildTraitRef} mode="creation" step="advantages" noticeId="advantages-backgrounds-notice" />
+			))
+		}
+	</FlatGroup>
+	<FlatGroup key="virtues" label="Virtues" mode="creation" step="advantages">
+		{
+			BUILD_VIRTUES.map((virtue) => (
+				<TraitRow trait={`virtue:${virtue.key}` as BuildTraitRef} mode="creation" step="advantages" noticeId="advantages-virtues-notice" />
+			))
+		}
+	</FlatGroup>
+</div>

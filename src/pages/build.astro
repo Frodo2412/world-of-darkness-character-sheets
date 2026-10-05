@@ -1,5 +1,6 @@
 ---
 import Abilities from '../components/builder/Abilities.astro';
+import Advantages from '../components/builder/Advantages.astro';
 import Attributes from '../components/builder/Attributes.astro';
 import Concept from '../components/builder/Concept.astro';
 import Settings from '../components/builder/Settings.astro';
@@ -21,7 +22,7 @@ import '../styles/builder.css';
 			<StepPanel step="concept"><Concept /></StepPanel>
 			<StepPanel step="attributes"><Attributes /></StepPanel>
 			<StepPanel step="abilities"><Abilities /></StepPanel>
-			<StepPanel step="advantages" />
+			<StepPanel step="advantages"><Advantages /></StepPanel>
 			<StepPanel step="finishing" />
 		</div>
 		<div id="build-unreadable" hidden>

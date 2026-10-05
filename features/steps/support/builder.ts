@@ -130,8 +130,11 @@ export function homeStepOf(label: string): string {
 }
 
 /** The step a ranked group is on. */
-export const groupStepOf = (label: string): string =>
-  ATTRIBUTE_GROUPS.some((group) => group.label === label) ? 'Attributes' : 'Abilities';
+export function groupStepOf(label: string): string {
+  if (ATTRIBUTE_GROUPS.some((group) => group.label === label)) return 'Attributes';
+  if (ABILITY_GROUPS.some((group) => group.label === label)) return 'Abilities';
+  return 'Advantages';
+}
 
 /** The one step panel being shown. */
 export const shownStep = (page: Page): Locator => page.locator('#builder [data-step]:visible');

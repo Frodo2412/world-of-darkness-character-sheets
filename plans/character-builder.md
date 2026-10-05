@@ -1973,11 +1973,11 @@ Risks:
   - [x] Step 5.2: Abilities step UI
 
 #### Wave 6
-- [ ] Slice 6: Advantages step
-  - [ ] Step 6.1: Flat allotments and clan Disciplines
-  - [ ] Step 6.2: Backgrounds and effective generation
-  - [ ] Step 6.3: Virtues
-  - [ ] Step 6.4: Advantages step UI
+- [x] Slice 6: Advantages step
+  - [x] Step 6.1: Flat allotments and clan Disciplines
+  - [x] Step 6.2: Backgrounds and effective generation
+  - [x] Step 6.3: Virtues
+  - [x] Step 6.4: Advantages step UI
 
 #### Wave 7
 - [ ] Slice 7: Finishing touches — freebie points and blood pool

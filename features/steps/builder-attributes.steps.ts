@@ -1,12 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { ATTRIBUTE_GROUPS } from '../../src/domain/v20/traits';
-import {
-  attributesRanked,
-  clan,
-  creation,
-  generation,
-  rank,
-} from '../../src/domain/v20/creation/testing/play';
+import { attributesRanked, creation, rank } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When } from './fixtures';
 import {
   expectRated,
@@ -24,6 +18,8 @@ import {
 } from './support/builder';
 
 const RANK = '(primary|secondary|tertiary)';
+
+const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const EXHAUSTED = 'More can be bought with freebie points on Finishing touches.';
 
 const clanPanel = (page: Page) => page.locator('[data-clan-change]');
@@ -78,13 +74,6 @@ Given(
   },
 );
 
-Given(
-  new RegExp(`^an? (\\d+)th generation build with (\\w+) ranked ${RANK}$`),
-  async ({ page }, base: string, group: string, value: string) => {
-    await openPlayed(page, generation(Number(base)), rank(group.toLowerCase(), value));
-  },
-);
-
 Given('a player who was just told Mental has no dots remaining', async ({ page }) => {
   await startBuild(page);
   await rankGroup(page, 'Mental', 'tertiary');
@@ -105,21 +94,6 @@ Given(/^a build whose Physical group is overspent by 1 dot$/, async ({ page }) =
   );
   await openStep(page, 'Attributes');
 });
-
-Given('a build of clan {string}', async ({ page }, name: string) => {
-  await openPlayed(page, clan(name));
-});
-
-Given(new RegExp(`^a build of clan "([^"]+)" with Social ranked ${RANK}$`), async ({ page }, name: string, value: string) => {
-  await openPlayed(page, clan(name), rank('social', value));
-});
-
-Given(
-  /^a build of clan "([^"]+)" with Social ranked primary and Appearance rated (\d+)$/,
-  async ({ page }, name: string, rating: string) => {
-    await openPlayed(page, clan(name), rank('social', 'primary'), creation('attribute:appearance', Number(rating)));
-  },
-);
 
 Given('a build with ranked Attribute groups, an overspent group and a refusal showing', async ({ page }) => {
   await openPlayed(
@@ -218,7 +192,7 @@ Then(
   /^they are asked to confirm that (.+)$/,
   async ({ page }, what: string) => {
     await expect(clanPanel(page)).toBeVisible();
-    await expect(clanPanel(page)).toContainText(what.replace(/ because .*/, ''));
+    await expect(clanPanel(page)).toContainText(new RegExp(escaped(what), 'i'));
   },
 );
 
@@ -234,7 +208,7 @@ Then(
 );
 
 Then(/^they are told (?:that )?(Appearance was set to 0.*|the .+ dots? (?:was|were) removed.*)$/, async ({ page }, what: string) => {
-  await expect(page.locator('#concept-clan-notice')).toContainText(what);
+  await expect(page.locator('#concept-clan-notice')).toContainText(new RegExp(escaped(what), 'i'));
 });
 
 Then('no confirmation was asked', async ({ page }) => {
