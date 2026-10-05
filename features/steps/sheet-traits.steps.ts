@@ -2,6 +2,7 @@ import { expect, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import { sheetField } from './support/pages';
 import { ensureOnSheet, expectRating, mark, rating, setRating } from './support/ratings';
+import { ensureEditing } from './support/sheet';
 
 /** A write-in row: its name field and its rating, which is announced with that name. */
 const namedRowOf = (page: Page, label: string) => ({
@@ -68,6 +69,7 @@ When(
 Then(
   'the Talents list shows {string} with {int} dots',
   async ({ page }, name: string, dots: number) => {
+    await ensureEditing(page);
     const talents = page.getByRole('group', { name: 'Talents' });
     await expect(talents.getByLabel('Custom talent name', { exact: true })).toHaveValue(name);
     await expectRating(talents.getByRole('slider', { name: `Custom talent: ${name}` }), dots);
@@ -118,6 +120,7 @@ Then('every ability shows 0 dots', async ({ page }) => {
 Then(
   '{string} shows {int} dots and {string} shows {int} dots',
   async ({ page }, discipline: string, disciplineDots: number, background: string, backgroundDots: number) => {
+    await ensureEditing(page);
     const first = namedRowOf(page, 'Discipline 1');
     await expect(first.name).toHaveValue(discipline);
     await expectRating(first.rating, disciplineDots);
@@ -190,6 +193,7 @@ Then('every attribute shows {int} dots and nothing is flagged', async ({ page },
 });
 
 Then('all four entries are shown as entered', async ({ page, memory }) => {
+  await ensureEditing(page);
   expect(memory.entered.size).toBe(4);
   for (const [label, text] of memory.entered) {
     if (label === 'Humanity') await expectRating(rating(page, label), Number(text));

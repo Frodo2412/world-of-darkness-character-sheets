@@ -100,7 +100,8 @@ Feature: Finishing a build
     And the build has one freebie dot of Courage and one freebie dot of Willpower
     And the build has a starting blood pool of 6
     When they finish the build
-    Then the sheet header shows every concept detail, and the generation "9th"
+    Then the sheet identity shows Name, Clan, Concept, Nature and Demeanor, and the generation "9th"
+    And the saved character holds Player, Chronicle and Sire as entered
     And the sheet shows Strength 4 and Brawl 3
     And the sheet shows Conscience 3, Self-Control 4 and Courage 4
     And the sheet shows the path "Humanity" at 7

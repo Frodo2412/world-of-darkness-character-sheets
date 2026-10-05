@@ -9,6 +9,7 @@ import {
 } from './support/pages';
 import { rating, setRating } from './support/ratings';
 import { characterWith, saveCharacters } from './support/seed';
+import { ensureEditing, identityName } from './support/sheet';
 import {
   acceptWrites,
   overwriteRecord,
@@ -66,7 +67,7 @@ When('the player deletes that entry and confirms', async ({ page }) => {
 
 Then('{string} is listed and can be opened', async ({ page }, name: string) => {
   await rosterEntries(page).getByRole('link', { name }).click();
-  await expect(sheetField(page, 'Name')).toHaveValue(name);
+  await expect(identityName(page)).toHaveText(name);
 });
 
 Then('one entry is reported as an unreadable character', async ({ page }) => {
@@ -167,6 +168,7 @@ Then('the message is no longer shown', async ({ page }) => {
 
 Then('after a reload the latest values are shown', async ({ page, memory }) => {
   await page.reload();
+  await ensureEditing(page);
   expect(memory.entered.size).toBe(2);
   for (const [label, text] of memory.entered) {
     await expect(sheetField(page, label)).toHaveValue(text);

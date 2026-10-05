@@ -13,13 +13,15 @@ import {
   traitValue,
   type V20Character,
 } from '../domain/v20/character';
-import type { NamedRowRef, TextRef, TraitRef } from '../domain/v20/traits';
+import { RATING_RANGE, rangeOf, type NamedRowRef, type TextRef, type TraitRef } from '../domain/v20/traits';
 import {
   browserStorage,
   createCharacterStore,
   keyFor,
   type CharacterStore,
 } from '../storage/characterStore';
+import { drawIdentity } from './sheet/identityCard';
+import { createMode, type SheetMode } from './sheet/mode';
 import { STORAGE_UNAVAILABLE, clearStatus, showStatus } from './status';
 
 type Update = (character: V20Character) => V20Character;
@@ -45,34 +47,98 @@ function showText(input: TextInput, text: string): void {
   if (input.value !== text) input.value = text;
 }
 
-function render(character: V20Character): void {
+function setAttr(element: Element, name: string, value: string): void {
+  if (element.getAttribute(name) !== value) element.setAttribute(name, value);
+}
+
+// Until the live resources are rebuilt, temporary Willpower and Blood Pool stay
+// editable in play mode.
+const LIVE_IN_PLAY: readonly string[] = ['willpower.temporary', 'bloodPool.current'];
+
+// An attribute or ability drawn read-only has room for five dots when its rating
+// fits in five, else all ten.
+const hasPlayScale = (ref: string): boolean => /^(attributes|abilities|customAbilities)\./.test(ref);
+
+interface RatingView {
+  ref: string;
+  /** What the rating is called: the slider's name, and the start of a read-only rating's. */
+  label: string;
+  value: number;
+  storedMax: number;
+  mode: SheetMode;
+}
+
+/** Draws a rating for the mode: a slider to edit, an image with a text alternative to play. */
+function drawRating(rating: RatingControl, { ref, label, value, storedMax, mode }: RatingView): void {
+  if (LIVE_IN_PLAY.includes(ref)) {
+    rating.value = value;
+    return;
+  }
+  const readonly = mode === 'play';
+  setAttr(rating, 'max', String(readonly && hasPlayScale(ref) && value <= 5 ? 5 : storedMax));
+  setAttr(rating, 'name', label);
+  rating.value = value;
+  rating.toggleAttribute('readonly', readonly);
+  if (!readonly) setAttr(rating, 'aria-label', label);
+}
+
+function render(character: V20Character, mode: SheetMode): void {
+  drawIdentity(sheet, character);
   for (const input of textInputs) {
     showText(input, textValue(character, textFieldOf(input)));
   }
   for (const rating of traitRatings) {
-    rating.value = traitValue(character, traitOf(rating));
+    const ref = traitOf(rating);
+    drawRating(rating, {
+      ref,
+      label: rating.dataset.label ?? '',
+      value: traitValue(character, ref),
+      storedMax: rangeOf(ref).max,
+      mode,
+    });
   }
   healthTrack.damage = character.health;
   for (const input of rowNames) {
     showText(input, namedRow(character, input.dataset.rowName as NamedRowRef)?.name ?? '');
   }
   for (const rating of rowRatings) {
-    const row = namedRow(character, rating.dataset.rowRating as NamedRowRef);
+    const ref = rating.dataset.rowRating as NamedRowRef;
+    const row = namedRow(character, ref);
     if (row === undefined) continue;
-    rating.value = row.rating;
     // A write-in rating is announced with the name the player gave it.
     const label = rating.dataset.label!;
-    rating.setAttribute('aria-label', row.name ? `${label}: ${row.name}` : label);
+    drawRating(rating, {
+      ref,
+      label: row.name ? `${label}: ${row.name}` : label,
+      value: row.rating,
+      storedMax: RATING_RANGE.max,
+      mode,
+    });
   }
 }
 
+// The roster opens a new character's sheet with this marker: start editing, and do
+// not keep the marker, so a reload is play mode again.
+const EDIT_MARKER = '#edit';
+
 function showSheet(loaded: V20Character, store: CharacterStore): void {
   let character = loaded;
+  const startsEditing = window.location.hash === EDIT_MARKER;
+  if (startsEditing) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+  const mode = createMode(sheet, startsEditing ? 'edit' : 'play');
+
+  // Only the identity and the live health track are read in play mode: every other
+  // text field is something to edit.
+  for (const input of [...textInputs, ...rowNames]) {
+    (input.closest('label') ?? input).dataset.sheetModeOnly = 'edit';
+  }
 
   /** The one path every edit takes: update the model, redraw, save. */
   function apply(update: Update): void {
     character = update(character);
-    render(character);
+    render(character, mode.current());
     if (store.save(character).status === 'failed') {
       showStatus('Changes not saved. This browser refused to store your latest changes.');
     } else {
@@ -118,7 +184,8 @@ function showSheet(loaded: V20Character, store: CharacterStore): void {
     if (event.key === null || event.key === keyFor(character.id)) window.location.reload();
   });
 
-  render(character);
+  mode.onChange((next) => render(character, next));
+  render(character, mode.current());
   sheet.hidden = false;
 }
 

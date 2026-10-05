@@ -3,9 +3,9 @@ import Abilities from '../components/sheet/Abilities.astro';
 import Advantages from '../components/sheet/Advantages.astro';
 import Attributes from '../components/sheet/Attributes.astro';
 import Health from '../components/sheet/Health.astro';
+import Identity from '../components/sheet/Identity.astro';
 import Morality from '../components/sheet/Morality.astro';
 import Notes from '../components/sheet/Notes.astro';
-import SheetHeader from '../components/sheet/SheetHeader.astro';
 import Trackers from '../components/sheet/Trackers.astro';
 import WeaknessExperience from '../components/sheet/WeaknessExperience.astro';
 import { CREATION_REMINDER } from '../domain/v20/traits';
@@ -17,9 +17,11 @@ import '../styles/sheet.css';
 <Layout title="Character sheet">
 	<main>
 		<StatusMessage />
+		<!-- Spoken when the mode changes; in the page from load so it is already a live region. -->
+		<p id="mode-announcement" class="visually-hidden" role="status"></p>
 		<div id="sheet" class="sheet" hidden>
 			<h1>Character sheet</h1>
-			<SheetHeader />
+			<Identity />
 			<Attributes />
 			<Abilities />
 			<Advantages />

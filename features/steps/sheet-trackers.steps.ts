@@ -2,6 +2,7 @@ import { expect, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import { sheetField } from './support/pages';
 import { ensureOnSheet, expectRating, mark, rating, setRating } from './support/ratings';
+import { ensureEditing } from './support/sheet';
 
 const TRACKER = /((?:temporary )?Willpower|Blood Pool)/.source;
 
@@ -62,6 +63,7 @@ Then(
 );
 
 Then('Blood Per Turn shows {string}', async ({ page }, text: string) => {
+  await ensureEditing(page);
   await expect(sheetField(page, 'Blood Per Turn')).toHaveValue(text);
 });
 
@@ -183,6 +185,7 @@ Given(
 Then(
   'all three show exactly what was entered, including the line breaks',
   async ({ page, memory }) => {
+    await ensureEditing(page);
     expect(memory.entered.size).toBe(3);
     for (const [label, text] of memory.entered) {
       await expect(sheetField(page, label)).toHaveValue(text);

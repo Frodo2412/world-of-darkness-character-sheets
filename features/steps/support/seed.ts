@@ -14,6 +14,16 @@ export function characterWith(header: HeaderValues): V20Character {
   return character;
 }
 
+/** As `characterWith`, then `arrange` changes whatever else a scenario needs saved. */
+export function characterArranged(
+  header: HeaderValues,
+  arrange: (character: V20Character) => void,
+): V20Character {
+  const character = characterWith(header);
+  arrange(character);
+  return character;
+}
+
 /**
  * Puts characters into the browser's storage as if they had been saved
  * earlier. The app's own store writes the records, so the keys and format

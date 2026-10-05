@@ -7,11 +7,10 @@ interface Props {
 }
 
 const { trait, label } = Astro.props;
-const labelId = `${trait.replace('.', '-')}-label`;
 ---
 
 <div class="rating-row">
-	<span id={labelId}>{label}</span>
-	<dot-rating data-trait={trait} aria-labelledby={labelId} max={rangeOf(trait).max} value="0"
+	<span>{label}</span>
+	<dot-rating data-trait={trait} data-label={label} aria-label={label} max={rangeOf(trait).max} value="0"
 	></dot-rating>
 </div>

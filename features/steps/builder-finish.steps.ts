@@ -30,6 +30,14 @@ import {
 } from './support/builder';
 import { SHEET_ADDRESS, buildEntries, openRoster, rosterEntries, sheetAddress, sheetField } from './support/pages';
 import { expectRating, rating, setRating } from './support/ratings';
+import {
+  ensureEditing,
+  identityName,
+  identitySummary,
+  identityTemperament,
+  openCharacterId,
+  savedCharacter,
+} from './support/sheet';
 import { storedKeys } from './support/storage';
 
 const finishButton = (page: Page) => page.getByRole('button', { name: 'Finish', exact: true });
@@ -164,6 +172,7 @@ Given('a finished character whose build was not removed', async ({ page, memory 
 
 Given('the player has since renamed the character {string} on the sheet', async ({ page, memory }, name: string) => {
   await page.goto(sheetAddress(memory.build!.id));
+  await ensureEditing(page);
   await sheetField(page, 'Name').fill(name);
 });
 
@@ -222,6 +231,7 @@ When('they continue the lingering build and finish it', async ({ page }) => {
 });
 
 When('they raise Strength to {int} on the sheet', async ({ page }, value: number) => {
+  await ensureEditing(page);
   await setRating(rating(page, 'Strength'), value);
 });
 
@@ -306,19 +316,20 @@ Then('the builder is still shown', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
 });
 
-Then('the sheet header shows every concept detail, and the generation {string}', async ({ page }, generationText: string) => {
-  const expected: Record<string, string> = {
-    Name: 'Lucita',
-    Player: 'Ana',
-    Chronicle: 'Madrid by Night',
-    Nature: 'Rebel',
-    Demeanor: 'Gallant',
-    Concept: 'Fallen noble',
-    Clan: 'Lasombra',
-    Sire: 'Moncada',
-    Generation: generationText,
-  };
-  for (const [label, text] of Object.entries(expected)) await expect(sheetField(page, label)).toHaveValue(text);
+Then(
+  'the sheet identity shows Name, Clan, Concept, Nature and Demeanor, and the generation {string}',
+  async ({ page, memory }, generationText: string) => {
+    const { name, nature, demeanor, concept } = memory.build!.concept;
+    await expect(identityName(page)).toHaveText(name);
+    await expect(identitySummary(page)).toHaveText(`${memory.build!.clan} · ${generationText} generation · ${concept}`);
+    await expect(identityTemperament(page)).toHaveText(`${nature} / ${demeanor}`);
+  },
+);
+
+Then('the saved character holds Player, Chronicle and Sire as entered', async ({ page, memory }) => {
+  const { player, chronicle, sire } = memory.build!.concept;
+  const { header } = await savedCharacter(page, openCharacterId(page));
+  expect({ player: header.player, chronicle: header.chronicle, sire: header.sire }).toEqual({ player, chronicle, sire });
 });
 
 const SHEET_LABELS: Record<string, string> = { Conscience: 'Conscience/Conviction', 'Self-Control': 'Self-Control/Instinct' };
@@ -330,6 +341,7 @@ Then(/^the sheet shows ((?:[A-Z][\w-]* \d+(?:, | and )?)+)$/, async ({ page }, l
 });
 
 Then('the sheet shows the path {string} at {int}', async ({ page }, path: string, value: number) => {
+  await ensureEditing(page);
   await expect(sheetField(page, 'Path name')).toHaveValue(path);
   await expectRating(rating(page, 'Humanity'), value);
 });
@@ -350,6 +362,7 @@ Then(
       ['', '0'],
       ['', '0'],
     ];
+    await ensureEditing(page);
     for (const [index, [name, value]] of rows.entries()) {
       await expect(page.getByLabel(`${kind} ${index + 1} name`, { exact: true })).toHaveValue(name);
       await expect(page.getByRole('slider', { name: new RegExp(`^${kind} ${index + 1}(: |$)`) })).toHaveAttribute('aria-valuenow', String(value));
@@ -358,16 +371,19 @@ Then(
 );
 
 Then('the sheet shows a blood pool of {int} and {string} blood per turn', async ({ page }, pool: number, perTurn: string) => {
+  await ensureEditing(page);
   await expectRating(rating(page, 'Blood Pool'), pool);
   await expect(sheetField(page, 'Blood Per Turn')).toHaveValue(perTurn);
 });
 
 Then("the sheet's Weakness field is empty", async ({ page }) => {
+  await ensureEditing(page);
   await expect(sheetField(page, 'Weakness')).toHaveValue('');
 });
 
 Then('the sheet shows the generation {string} and {string} blood per turn', async ({ page }, generationText: string, perTurn: string) => {
-  await expect(sheetField(page, 'Generation')).toHaveValue(generationText);
+  await expect(identitySummary(page)).toContainText(`${generationText} generation`);
+  await ensureEditing(page);
   await expect(sheetField(page, 'Blood Per Turn')).toHaveValue(perTurn);
 });
 

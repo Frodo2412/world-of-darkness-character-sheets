@@ -19,6 +19,8 @@ const deleteTitle = document.querySelector<HTMLHeadingElement>('#delete-dialog-t
 const deleteMessage = document.querySelector<HTMLParagraphElement>('#delete-dialog-message')!;
 
 const sheetUrl = (id: string): string => `/sheet/?id=${encodeURIComponent(id)}`;
+// A new character is there to be filled in, so its sheet opens in edit mode.
+const newSheetUrl = (id: string): string => `${sheetUrl(id)}#edit`;
 const builderUrl = (id: string): string => `/build/?id=${encodeURIComponent(id)}`;
 
 function detail(label: string, value: string): HTMLElement[] {
@@ -208,7 +210,7 @@ function start(store: CharacterStore, builds: BuildStore): void {
       return;
     }
     clearStatus();
-    window.location.assign(sheetUrl(result.character.id));
+    window.location.assign(newSheetUrl(result.character.id));
   });
 
   buildButton.addEventListener('click', () => {

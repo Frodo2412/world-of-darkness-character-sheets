@@ -16,6 +16,8 @@ import {
   traitName,
   traitRating,
 } from './support/builder';
+import { SHEET_ADDRESS } from './support/pages';
+import { expectRating, rating } from './support/ratings';
 
 const STEP_TITLES: Record<string, string> = {
   settings: 'Settings',
@@ -66,6 +68,8 @@ Given(
 );
 
 Then(new RegExp(`^${NAME} is rated (\\d+)$`), async ({ page }, name: string, value: string) => {
+  // The sheet's scenarios say the same words; there a rating is read in either mode.
+  if (SHEET_ADDRESS.test(page.url())) return expectRating(rating(page, name), Number(value));
   await expectRated(await traitRating(page, name), Number(value));
 });
 
