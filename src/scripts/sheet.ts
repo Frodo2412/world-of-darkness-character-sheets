@@ -1,4 +1,3 @@
-import '../components/controls/box-tracker';
 import '../components/controls/dot-rating';
 import '../components/controls/health-track';
 import type { HealthChange, HealthTrack } from '../components/controls/health-track';
@@ -9,11 +8,14 @@ import {
   setNamedRow,
   setText,
   setTrait,
+  stepBlood,
+  stepTemporaryWillpower,
   textValue,
   traitValue,
   type V20Character,
 } from '../domain/v20/character';
 import { RATING_RANGE, rangeOf, type NamedRowRef, type TextRef, type TraitRef } from '../domain/v20/traits';
+import { bloodPoolMaximum } from '../domain/v20/resources';
 import {
   browserStorage,
   createCharacterStore,
@@ -23,10 +25,17 @@ import {
 import { drawIdentity } from './sheet/identityCard';
 import { createMode, type Mode, type SheetMode } from './sheet/mode';
 import { drawRating } from './sheet/ratingDraw';
+import { announce, drawResourceCards, type Resource } from './sheet/resourceCards';
 import { drawTraitCards } from './sheet/traitCards';
 import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
 
 type Update = (character: V20Character) => V20Character;
+type Apply = (update: Update) => V20Character;
+
+const STEPS: Record<Resource, (character: V20Character, delta: number) => V20Character> = {
+  blood: (character, delta) => stepBlood(character, delta, bloodPoolMaximum(character).maximum),
+  willpower: stepTemporaryWillpower,
+};
 
 const sheet = document.querySelector<HTMLElement>('#sheet')!;
 const notFound = document.querySelector<HTMLElement>('#sheet-not-found')!;
@@ -39,6 +48,7 @@ const traitRatings = sheet.querySelectorAll<RatingControl>('[data-trait]');
 const rowNames = sheet.querySelectorAll<HTMLInputElement>('[data-row-name]');
 const healthTrack = sheet.querySelector<HealthTrack>('health-track')!;
 const rowRatings = sheet.querySelectorAll<RatingControl>('[data-row-rating]');
+const stepperButtons = sheet.querySelectorAll<HTMLButtonElement>('[data-step]');
 
 const textFieldOf = (input: TextInput): TextRef => input.dataset.text as TextRef;
 
@@ -99,6 +109,7 @@ function render(character: V20Character, mode: SheetMode): void {
   drawRowNames(character);
   drawRowRatings(character, mode);
   drawTraitCards(sheet, character);
+  drawResourceCards(sheet, character);
 }
 
 // The roster opens a new character's sheet with this marker: start editing, and do
@@ -123,7 +134,7 @@ function markLegacyInputsEditOnly(): void {
 }
 
 /** Wires every control on the sheet to `apply`, the one path an edit takes. */
-function bindEditListeners(apply: (update: Update) => void): void {
+function bindEditListeners(apply: Apply): void {
   for (const input of textInputs) {
     input.addEventListener('input', () => {
       apply((current) => setText(current, textFieldOf(input), input.value));
@@ -155,6 +166,16 @@ function bindEditListeners(apply: (update: Update) => void): void {
     const { level } = (event as CustomEvent<HealthChange>).detail;
     apply((current) => cycleHealthBox(current, level));
   });
+
+  // A press says the new reading once; a redraw (a new Generation moving the maximum) stays silent.
+  for (const button of stepperButtons) {
+    button.addEventListener('click', () => {
+      if (button.getAttribute('aria-disabled') === 'true') return;
+      const resource = button.dataset.resource as Resource;
+      const changed = apply((current) => STEPS[resource](current, Number(button.dataset.step)));
+      announce(sheet, changed, resource);
+    });
+  }
 }
 
 function showSheet(loaded: V20Character, store: CharacterStore): void {
@@ -163,10 +184,11 @@ function showSheet(loaded: V20Character, store: CharacterStore): void {
   markLegacyInputsEditOnly();
 
   /** The one path every edit takes: update the model, redraw, save. */
-  function apply(update: Update): void {
+  function apply(update: Update): V20Character {
     character = update(character);
     render(character, mode.current());
     reportSave(store.save(character));
+    return character;
   }
   bindEditListeners(apply);
 

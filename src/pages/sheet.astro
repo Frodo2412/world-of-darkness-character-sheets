@@ -2,10 +2,11 @@
 import Abilities from '../components/sheet/Abilities.astro';
 import Advantages from '../components/sheet/Advantages.astro';
 import Attributes from '../components/sheet/Attributes.astro';
+import BloodPool from '../components/sheet/BloodPool.astro';
 import Health from '../components/sheet/Health.astro';
 import Identity from '../components/sheet/Identity.astro';
 import Morality from '../components/sheet/Morality.astro';
-import Trackers from '../components/sheet/Trackers.astro';
+import Willpower from '../components/sheet/Willpower.astro';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
 import '../styles/sheet.css';
@@ -25,7 +26,10 @@ import '../styles/sheet.css';
 			<div class="columns">
 				<div class="sheet-column">
 					<Morality />
-					<Trackers />
+					<div class="resources-row">
+						<BloodPool />
+						<Willpower />
+					</div>
 				</div>
 				<div class="sheet-column">
 					<Health />

@@ -1,5 +1,4 @@
-dot-rating,
-box-tracker {
+dot-rating {
 	gap: 0.2rem;
 	cursor: pointer;
 	border-radius: var(--radius-segment);
@@ -10,21 +9,12 @@ dot-rating {
 	flex-shrink: 0;
 }
 
-box-tracker {
-	display: inline-grid;
-	grid-template-columns: repeat(10, var(--mark-size, 1.125rem));
-}
-
 .rating-mark {
 	box-sizing: border-box;
 	inline-size: var(--mark-size, 1.125rem);
 	block-size: var(--mark-size, 1.125rem);
 	border: 1.5px solid currentColor;
 	border-radius: 50%;
-}
-
-box-tracker .rating-mark {
-	border-radius: var(--radius-segment);
 }
 
 .rating-mark.is-filled {

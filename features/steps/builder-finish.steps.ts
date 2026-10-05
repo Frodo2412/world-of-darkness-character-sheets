@@ -31,12 +31,15 @@ import {
 import { SHEET_ADDRESS, buildEntries, openRoster, rosterEntries, sheetAddress, sheetField } from './support/pages';
 import { expectRating, rating, setRating } from './support/ratings';
 import {
+  bloodPoolCard,
+  bloodTotal,
   ensureEditing,
   identityName,
   identitySummary,
   identityTemperament,
   openCharacterId,
   savedCharacter,
+  willpowerTotal,
 } from './support/sheet';
 import { storedKeys } from './support/storage';
 
@@ -347,8 +350,7 @@ Then('the sheet shows the path {string} at {int}', async ({ page }, path: string
 });
 
 Then('the sheet shows permanent Willpower {int} and temporary Willpower {int}', async ({ page }, permanent: number, temporary: number) => {
-  await expectRating(rating(page, 'permanent Willpower'), permanent);
-  await expectRating(rating(page, 'temporary Willpower'), temporary);
+  await expect(willpowerTotal(page)).toHaveText(`${temporary} / ${permanent}`);
 });
 
 Then(
@@ -371,9 +373,8 @@ Then(
 );
 
 Then('the sheet shows a blood pool of {int} and {string} blood per turn', async ({ page }, pool: number, perTurn: string) => {
-  await ensureEditing(page);
-  await expectRating(rating(page, 'Blood Pool'), pool);
-  await expect(sheetField(page, 'Blood Per Turn')).toHaveValue(perTurn);
+  await expect(bloodTotal(page)).toHaveText(new RegExp(`^${pool} / `));
+  await expect(bloodPoolCard(page).getByText(`${perTurn} blood / turn`, { exact: true })).toBeVisible();
 });
 
 Then('the saved character has no Weakness', async ({ page }) => {
@@ -382,8 +383,7 @@ Then('the saved character has no Weakness', async ({ page }) => {
 
 Then('the sheet shows the generation {string} and {string} blood per turn', async ({ page }, generationText: string, perTurn: string) => {
   await expect(identitySummary(page)).toContainText(`${generationText} generation`);
-  await ensureEditing(page);
-  await expect(sheetField(page, 'Blood Per Turn')).toHaveValue(perTurn);
+  await expect(bloodPoolCard(page).getByText(`${perTurn} blood / turn`, { exact: true })).toBeVisible();
 });
 
 Then(`opening the build's builder address shows "build not found"`, async ({ page, memory }) => {

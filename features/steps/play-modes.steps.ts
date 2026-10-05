@@ -95,7 +95,9 @@ When('the player creates a new V20 character from the roster', async ({ page }) 
 });
 
 When('they activate {string}', async ({ page }, name: string) => {
-  await page.getByRole('button', { name, exact: true }).click();
+  const control = page.getByRole('button', { name, exact: true });
+  // An unavailable control (aria-disabled) is still pressed, as a player would; it must do nothing.
+  await control.click({ force: (await control.getAttribute('aria-disabled')) === 'true' });
   if (name === 'Edit character') {
     // Ratings become sliders, and focus goes to the first field rather than to a control that changed role.
     await expect(page.getByRole('img', { name: /^Strength \d+ of \d+$/ })).toHaveCount(0);

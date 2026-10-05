@@ -1,28 +1,5 @@
 Feature: Trackers, health and notes
 
-  Scenario: Spending and regaining temporary Willpower
-    Given temporary Willpower shows 0 boxes marked
-    When the player activates the 5th temporary Willpower box
-    Then 5 boxes are marked
-    When the player activates the 5th box again
-    Then 4 boxes are marked
-
-  Scenario: Temporary Willpower is independent of permanent Willpower
-    Given permanent Willpower shows 3 dots
-    When the player activates the 10th temporary Willpower box
-    Then 10 temporary boxes are marked and permanent Willpower still shows 3 dots
-
-  Scenario: Blood Pool
-    Given the Blood Pool shows 0 boxes marked
-    When the player activates the 50th Blood Pool box
-    Then 50 boxes are marked and there is no 51st box
-    When the player activates the 1st Blood Pool box twice
-    Then 0 boxes are marked
-
-  Scenario: Blood Per Turn
-    When the player enters "3" as Blood Per Turn and reloads the sheet
-    Then Blood Per Turn shows "3"
-
   Scenario: Health levels are labelled
     Given a player viewing a character's sheet
     Then the health track shows Bruised, Hurt -1, Injured -1, Wounded -2, Mauled -2, Crippled -5 and Incapacitated in that order

@@ -79,3 +79,13 @@ export async function savedCharacter(page: Page, id: string): Promise<V20Charact
 /** The id of the character whose sheet is open. */
 export const openCharacterId = (page: Page): string =>
   new URL(page.url()).searchParams.get('id') ?? '';
+
+/** A card by its heading. */
+const card = (page: Page, name: string): Locator => page.getByRole('region', { name, exact: true });
+
+export const bloodPoolCard = (page: Page): Locator => card(page, 'Blood Pool');
+export const willpowerCard = (page: Page): Locator => card(page, 'Willpower');
+
+/** A stepper's reading, "<current> / <bound>". */
+export const bloodTotal = (page: Page): Locator => bloodPoolCard(page).locator('[data-show="blood.total"]');
+export const willpowerTotal = (page: Page): Locator => willpowerCard(page).locator('[data-show="willpower.total"]');

@@ -127,7 +127,7 @@
    with a 5px gap in play and larger to click in edit; in play they sit in a slot
    as wide as ten dots, so a five-dot row and a ten-dot row keep their numbers
    in one column. */
-.sheet :is(.trait-row, .trait-card .rating-row) {
+.sheet :is(.trait-row, .trait-card .rating-row, .resource-edit) {
 	--mark-size: 1rem;
 	--dot-gap: 0.25rem;
 	display: flex;
@@ -148,7 +148,7 @@
 	flex-wrap: nowrap;
 }
 
-.sheet :is(.trait-row, .trait-card .rating-row) dot-rating {
+.sheet :is(.trait-row, .trait-card .rating-row, .resource-edit) dot-rating {
 	gap: var(--dot-gap);
 }
 
@@ -157,13 +157,13 @@
 	justify-content: flex-end;
 }
 
-.sheet :is(.trait-row, .trait-card .rating-row) .rating-mark {
+.sheet :is(.trait-row, .trait-card .rating-row, .resource-edit) .rating-mark {
 	border-width: 1px;
 	border-color: var(--color-border-control);
 	background: var(--color-row);
 }
 
-.sheet :is(.trait-row, .trait-card .rating-row) .rating-mark.is-filled {
+.sheet :is(.trait-row, .trait-card .rating-row, .resource-edit) .rating-mark.is-filled {
 	border-color: var(--color-text);
 	background: var(--color-text);
 }
@@ -194,6 +194,154 @@
 	font-size: var(--text-caption);
 	font-variant-numeric: tabular-nums;
 	color: var(--color-muted);
+}
+
+/* Live resources: the Blood Pool and Willpower cards. Each is a card of its own;
+   the later steps gather them into one row with Health and Humanity. */
+
+.resources-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-3);
+	margin-block-start: var(--space-3);
+}
+
+.resource-card {
+	display: grid;
+	align-content: start;
+	gap: var(--space-2);
+	flex: 1 1 100%;
+	min-inline-size: 0;
+	max-inline-size: 20rem;
+}
+
+.blood-card {
+	max-inline-size: 18.75rem;
+}
+
+.resource-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-2);
+}
+
+/* A card's name is a small label, not a display heading. */
+.resource-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4375rem;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-body);
+	font-weight: 400;
+	font-size: var(--text-body);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text);
+}
+
+.resource-note,
+.resource-flag {
+	margin: 0;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+}
+
+.resource-flag {
+	font-weight: 600;
+	color: var(--color-accent-text);
+}
+
+.resource-foot {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-2);
+}
+
+.stepper {
+	--control-size: 1.8125rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
+.stepper-button {
+	inline-size: var(--control-size);
+	padding: 0;
+	background: var(--color-control);
+	font-weight: 600;
+	font-size: var(--text-small);
+	line-height: 1;
+}
+
+/* At its bound a button stays focusable and keeps its place; it only says it does nothing. */
+.stepper-button[aria-disabled='true'] {
+	color: var(--color-muted);
+	border-style: dashed;
+	cursor: not-allowed;
+}
+
+.stepper-button[aria-disabled='true']:hover {
+	border-color: var(--color-border-control);
+}
+
+.stepper-total {
+	font-weight: 600;
+	font-size: var(--text-figure);
+	line-height: 1.1;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text);
+}
+
+.blood-tracker {
+	display: flex;
+	gap: 0.25rem;
+	block-size: 0.5rem;
+}
+
+.blood-segment,
+.blood-bar {
+	flex: 1;
+	min-inline-size: 0;
+	border-radius: var(--radius-segment);
+	background: var(--color-divider);
+}
+
+.blood-segment.is-filled {
+	background: var(--color-accent);
+}
+
+.blood-bar {
+	overflow: hidden;
+}
+
+.blood-bar-fill {
+	display: block;
+	block-size: 100%;
+	background: var(--color-accent);
+}
+
+/* Willpower's play display: temporary filled out of permanent, 8px dots. */
+.willpower-dots {
+	--mark-size: 0.5rem;
+	gap: 0.3125rem;
+}
+
+.willpower-dots .rating-mark {
+	border-width: 1px;
+	border-color: var(--color-border-control);
+	background: var(--color-row);
+}
+
+.willpower-dots .rating-mark.is-filled {
+	border-color: var(--color-text);
+	background: var(--color-text);
 }
 
 .sheet-column > section:first-child > h2,

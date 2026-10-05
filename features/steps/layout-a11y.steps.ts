@@ -5,7 +5,7 @@ import { startBuild } from './support/builder';
 import { SHEET_ADDRESS, createCharacter, openRoster, sheetAddress, sheetField } from './support/pages';
 import { expectRating, rating } from './support/ratings';
 import { characterWith, saveCharacters } from './support/seed';
-import { doneButton, editButton, isEditing } from './support/sheet';
+import { bloodTotal, doneButton, editButton, isEditing } from './support/sheet';
 
 const SCREEN_HEIGHT = 800;
 
@@ -56,12 +56,22 @@ Then('every control offered in play mode is visible and can be activated', async
   const { width } = page.viewportSize()!;
   for (const control of all) {
     await control.scrollIntoViewIfNeeded();
-    await expect(control).toBeEnabled();
+    // A stepper at its bound (aria-disabled) is offered but does nothing; it is still reachable.
+    const atBound = (await control.getAttribute('aria-disabled')) === 'true';
+    if (!atBound) await expect(control).toBeEnabled();
     const box = (await control.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(width);
     // Fails if something else would receive the click.
-    await control.click({ trial: true });
+    if (atBound) {
+      const reached = await control.evaluate((element) => {
+        const { x, y, width, height } = element.getBoundingClientRect();
+        return element.contains(document.elementFromPoint(x + width / 2, y + height / 2));
+      });
+      expect(reached).toBe(true);
+    } else {
+      await control.click({ trial: true });
+    }
   }
 });
 
@@ -155,9 +165,9 @@ When(
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowRight');
 
-    await tabTo(page, rating(page, 'Blood Pool'), memory.focusStops);
-    await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('ArrowRight');
+    await tabTo(page, page.getByRole('button', { name: 'Gain one blood', exact: true }), memory.focusStops);
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
 
     await tabTo(page, page.getByRole('button', { name: /^Bruised, / }), memory.focusStops);
     await page.keyboard.press('Space');
@@ -167,7 +177,7 @@ When(
 Then('those values are shown', async ({ page }) => {
   await expect(sheetField(page, 'Name')).toHaveValue('Lucita');
   await expectRating(rating(page, 'Strength'), 3);
-  await expectRating(rating(page, 'Blood Pool'), 2);
+  await expect(bloodTotal(page)).toHaveText(/^2 \/ /);
   await expect(page.getByRole('button', { name: 'Bruised, bashing', exact: true })).toHaveText('/');
 });
 
