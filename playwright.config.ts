@@ -8,7 +8,12 @@ const baseURL = `http://localhost:${PORT}`;
 // Feature files are the executable specification; step definitions bind them
 // to the browser. A scenario with a step nobody has defined fails the run.
 const testDir = defineBddConfig({
-  features: 'features/**/*.feature',
+  // The play-view redesign lands slice by slice: a feature file joins the run
+  // when its slice is built. Collapse back to 'features/**/*.feature' once all seven are in.
+  features: [
+    'features/v20-character-sheet/**/*.feature',
+    'features/character-builder/**/*.feature',
+  ],
   steps: 'features/steps/**/*.ts',
   missingSteps: 'fail-on-gen',
   // A Given and a Then may share wording ("Brawl is rated 3" sets it up or
