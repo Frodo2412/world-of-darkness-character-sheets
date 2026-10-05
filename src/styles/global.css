@@ -39,6 +39,16 @@
 	display: none !important;
 }
 
+/* Read by assistive technology, not drawn. */
+.visually-hidden {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
 html {
 	background: var(--color-page);
 	color: var(--color-text);
@@ -153,6 +163,12 @@ textarea {
 
 /* Roster */
 
+.roster-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
 .roster {
 	list-style: none;
 	padding: 0;
@@ -186,6 +202,18 @@ textarea {
 
 .roster button {
 	margin-inline-start: auto;
+}
+
+/* A build's name is its title; "Continue" is an ordinary link beside it. */
+#builds strong {
+	font-family: var(--font-display);
+	font-size: var(--text-h2);
+	font-weight: 600;
+}
+
+#builds a {
+	font-family: var(--font-body);
+	font-size: var(--text-body);
 }
 
 .roster-empty {

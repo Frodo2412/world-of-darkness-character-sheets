@@ -1,0 +1,47 @@
+---
+import { GENERATION_TABLE } from '../../domain/v20/creation/rules';
+
+const READOUTS = [
+	{ key: 'effectiveGeneration', label: 'Effective generation' },
+	{ key: 'freebieBudget', label: 'Freebie budget' },
+	{ key: 'maxTrait', label: 'Maximum trait rating' },
+	{ key: 'bloodPoolMax', label: 'Blood pool maximum' },
+	{ key: 'bloodPerTurn', label: 'Blood points per turn' },
+];
+---
+
+<div class="builder-fields">
+	<div class="builder-field">
+		<label for="base-generation">Base generation</label>
+		<select id="base-generation" data-setting="baseGeneration" aria-describedby="base-generation-hint base-generation-notice">
+			{GENERATION_TABLE.map((row) => <option value={row.generation}>{row.generation}th</option>)}
+		</select>
+		<p id="base-generation-hint" class="field-hint">Leave at 13th unless your Storyteller says otherwise.</p>
+		<p id="base-generation-notice" class="field-notice" role="status" data-notice></p>
+	</div>
+	<div class="builder-field">
+		<label for="extra-freebies">Extra freebie points</label>
+		<input
+			type="text"
+			inputmode="numeric"
+			autocomplete="off"
+			id="extra-freebies"
+			data-setting="extraFreebies"
+			aria-describedby="extra-freebies-hint extra-freebies-notice"
+		/>
+		<p id="extra-freebies-hint" class="field-hint">Leave at 0 unless your Storyteller grants more.</p>
+		<p id="extra-freebies-notice" class="field-notice" role="status" data-notice></p>
+	</div>
+</div>
+<dl class="settings-readouts">
+	{
+		READOUTS.map((readout) => (
+			<div>
+				<dt id={`readout-${readout.key}`}>{readout.label}</dt>
+				<dd>
+					<output data-readout={readout.key} aria-labelledby={`readout-${readout.key}`} />
+				</dd>
+			</div>
+		))
+	}
+</dl>

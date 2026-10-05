@@ -11,6 +11,9 @@ const testDir = defineBddConfig({
   features: 'features/**/*.feature',
   steps: 'features/steps/**/*.ts',
   missingSteps: 'fail-on-gen',
+  // A Given and a Then may share wording ("Brawl is rated 3" sets it up or
+  // checks it), so steps are matched by keyword as well as text.
+  matchKeywords: true,
 });
 
 export default defineConfig({

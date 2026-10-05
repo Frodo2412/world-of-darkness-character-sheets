@@ -25,3 +25,41 @@ export async function overwriteRecord(page: Page, id: string, text: string): Pro
 export async function storedText(page: Page, key: string): Promise<string | null> {
   return page.evaluate((k) => window.localStorage.getItem(k), key);
 }
+
+/** Makes every write to storage fail the way a full or blocked storage does. */
+export async function refuseWrites(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const original = Storage.prototype.setItem;
+    (window as unknown as { restoreStorage: () => void }).restoreStorage = () => {
+      Storage.prototype.setItem = original;
+    };
+    Storage.prototype.setItem = () => {
+      throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+    };
+  });
+}
+
+export async function acceptWrites(page: Page): Promise<void> {
+  await page.evaluate(() => (window as unknown as { restoreStorage: () => void }).restoreStorage());
+}
+
+/** From the next page load on, the browser withholds storage from the page entirely. */
+export async function withholdStorage(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', {
+      get() {
+        throw new DOMException('The operation is insecure.', 'SecurityError');
+      },
+    });
+  });
+}
+
+/** The keys of every stored record whose key starts with `prefix`. */
+export async function storedKeys(page: Page, prefix: string): Promise<string[]> {
+  return page.evaluate(
+    (start) =>
+      Array.from({ length: window.localStorage.length }, (_, index) => window.localStorage.key(index)!)
+        .filter((key) => key.startsWith(start)),
+    prefix,
+  );
+}

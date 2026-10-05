@@ -1,0 +1,36 @@
+---
+// The Discipline rows of one step, drawn by the page from report(build):
+// the clan's three, then any others. A Caitiff on the Advantages step, and
+// anyone buying with freebie points, can add one from the catalogue or by name.
+import { DISCIPLINES } from '../../domain/v20/creation/rules';
+
+interface Props {
+	mode: 'creation' | 'freebie';
+	step: string;
+}
+
+const { mode, step } = Astro.props;
+const noticeId = `${step}-disciplines-notice`;
+const addId = `${step}-discipline-add`;
+---
+
+{
+	mode === 'creation' && (
+		<p class="field-hint" data-needs-clan hidden>
+			Choose a clan on the Concept step before placing Discipline dots. <a href="#concept" data-step-go="concept">Go to Concept</a>
+		</p>
+	)
+}
+<div data-discipline-rows data-mode={mode} data-step-id={step} data-notice-id={noticeId}></div>
+<div class="discipline-add" data-discipline-add data-mode={mode} hidden={mode === 'creation'}>
+	<label for={addId}>{mode === 'creation' ? 'Discipline to add' : 'Discipline to buy'}</label>
+	<input type="text" id={addId} list="discipline-catalogue" autocomplete="off" aria-describedby={noticeId} />
+	<button type="button" data-add-discipline data-mode={mode}>{mode === 'creation' ? 'Add Discipline' : 'Buy Discipline'}</button>
+</div>
+{
+	step === 'advantages' && (
+		<datalist id="discipline-catalogue">
+			{DISCIPLINES.map((name) => <option value={name} />)}
+		</datalist>
+	)
+}

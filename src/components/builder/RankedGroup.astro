@@ -1,0 +1,50 @@
+---
+// One group of a ranked allotment (Physical, Talents, …): its rank, what is
+// left to place, a message slot and a row per trait. On Finishing touches the
+// same group is shown without rank or readout, for buying freebie dots.
+import type { BuildTraitRef } from '../../domain/v20/creation/build';
+import { RANKS, type RankedAllotment } from '../../domain/v20/creation/rules';
+import TraitRow from './TraitRow.astro';
+
+interface Props {
+	allotment: RankedAllotment;
+	group: RankedAllotment['groups'][number];
+	mode: 'creation' | 'freebie';
+	step: string;
+}
+
+const { allotment, group, mode, step } = Astro.props;
+const id = `${step}-${group.key}`;
+const traits = group.traits.map((trait) => `${allotment.traitKind}:${trait}` as BuildTraitRef);
+---
+
+<div class="trait-group builder-group" role="group" aria-labelledby={`${id}-label`}>
+	<h3>
+		<span id={`${id}-label`}>{group.label}</span>
+		{
+			mode === 'creation' && (
+				<span class="allotment-readout" role="status" aria-atomic="true" data-allotment-status={group.key}>
+					<span class="visually-hidden">{group.label}: </span>
+					<span data-readout-text />
+				</span>
+			)
+		}
+	</h3>
+	{
+		mode === 'creation' && (
+			<div class="rank-field">
+				<label for={`${id}-rank`}>{group.label} rank</label>
+				<select id={`${id}-rank`} data-rank={group.key} aria-describedby={`${id}-notice`}>
+					<option value="" disabled>Not ranked</option>
+					{RANKS.map((rank) => (
+						<option value={rank}>
+							{rank} ({allotment.rankDots[rank]} dots)
+						</option>
+					))}
+				</select>
+			</div>
+		)
+	}
+	{traits.map((trait) => <TraitRow trait={trait} mode={mode} step={step} noticeId={`${id}-notice`} />)}
+	<p id={`${id}-notice`} class="field-notice" role="status" data-notice></p>
+</div>

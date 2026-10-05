@@ -11,14 +11,17 @@ const namedRowOf = (page: Page, label: string) => ({
 
 // "<Trait> shows <n> dots" both arranges and checks: as a scenario's opening
 // step there is no sheet yet, so it opens one and puts the rating there.
-Given(
-  /^((?:permanent )?[A-Z][A-Za-z-]*(?: [A-Z][A-Za-z-]*)?) shows (\d+) dots?$/,
-  async ({ page }, name: string, dots: string) => {
-    const arranging = await ensureOnSheet(page);
-    if (arranging) await setRating(rating(page, name), Number(dots));
-    await expectRating(rating(page, name), Number(dots));
-  },
-);
+// Steps are matched by keyword, so it is registered as a Given and a Then.
+const SHOWS_DOTS = /^((?:permanent )?[A-Z][A-Za-z-]*(?: [A-Z][A-Za-z-]*)?) shows (\d+) dots?$/;
+
+async function showsDots(page: Page, name: string, dots: string): Promise<void> {
+  const arranging = await ensureOnSheet(page);
+  if (arranging) await setRating(rating(page, name), Number(dots));
+  await expectRating(rating(page, name), Number(dots));
+}
+
+Given(SHOWS_DOTS, async ({ page }, name: string, dots: string) => showsDots(page, name, dots));
+Then(SHOWS_DOTS, async ({ page }, name: string, dots: string) => showsDots(page, name, dots));
 
 Given(
   /^keyboard focus is on the ([A-Z][A-Za-z-]*) rating showing (\d+) dots?$/,

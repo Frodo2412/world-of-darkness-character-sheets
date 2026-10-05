@@ -1,0 +1,15 @@
+---
+// Review and finish: what still blocks finishing, each item a link to its
+// step, and the Finish button, which stays focusable but aria-disabled while
+// anything is outstanding.
+---
+
+<section class="review" aria-labelledby="review-heading">
+	<h3 id="review-heading">Review and finish</h3>
+	<div id="outstanding" class="outstanding" tabindex="-1" data-outstanding>
+		<p data-outstanding-intro></p>
+		<ul data-outstanding-list></ul>
+	</div>
+	<button type="button" class="finish-button" data-finish aria-describedby="outstanding finish-notice">Finish</button>
+	<p id="finish-notice" class="field-notice" role="status" data-finish-notice></p>
+</section>

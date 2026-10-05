@@ -7,9 +7,16 @@ import Layout from '../layouts/Layout.astro';
 	<main>
 		<h1 id="roster-heading">Characters</h1>
 		<StatusMessage />
-		<button type="button" id="new-character">New V20 character</button>
+		<div class="roster-actions">
+			<button type="button" id="new-character">New V20 character</button>
+			<button type="button" id="build-character">Build a character</button>
+		</div>
 		<p id="roster-empty" class="roster-empty" hidden>No characters yet. Create one to get started.</p>
 		<ul id="roster" class="roster" aria-labelledby="roster-heading" hidden></ul>
+		<section id="builds-section" aria-labelledby="builds-heading" hidden>
+			<h2 id="builds-heading">Builds in progress</h2>
+			<ul id="builds" class="roster" aria-labelledby="builds-heading"></ul>
+		</section>
 		<dialog id="delete-dialog" aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-message">
 			<h2 id="delete-dialog-title">Delete character?</h2>
 			<p id="delete-dialog-message"></p>

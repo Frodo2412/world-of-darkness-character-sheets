@@ -1,0 +1,30 @@
+---
+// One rated trait in the builder. The rating control is driven entirely by
+// `report(build)`: its value, floor, top dot, lock and announced value text.
+import type { BuildTraitRef } from '../../domain/v20/creation/build';
+import { traitLabel } from '../../domain/v20/creation/ratings';
+
+interface Props {
+	trait: BuildTraitRef;
+	/** Which dots the row changes: creation dots, or freebie points on Finishing touches. */
+	mode: 'creation' | 'freebie';
+	/** The id prefix that keeps ids unique when a trait appears on two steps. */
+	step: string;
+	/** The message slot the row's refusals appear in. */
+	noticeId: string;
+}
+
+const { trait, mode, step, noticeId } = Astro.props;
+const labelId = `${step}-${trait.replace(/[^a-zA-Z0-9]/g, '-')}-label`;
+---
+
+<div class="rating-row">
+	<span id={labelId}>{traitLabel(trait)}</span>
+	<dot-rating
+		data-build-trait={trait}
+		data-mode={mode}
+		aria-labelledby={labelId}
+		aria-describedby={noticeId}
+		max="5"
+		value="0"></dot-rating>
+</div>

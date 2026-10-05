@@ -31,6 +31,21 @@ box-tracker .rating-mark {
 	background: currentColor;
 }
 
+/* A dot bought with freebie points is a filled diamond, not only another colour. */
+.rating-mark.is-freebie {
+	border-radius: 2px;
+	transform: rotate(45deg) scale(0.8);
+}
+
+[aria-disabled='true'] .rating-mark {
+	border-style: dashed;
+	cursor: not-allowed;
+}
+
+dot-rating[aria-disabled='true'] {
+	cursor: not-allowed;
+}
+
 .health-box {
 	inline-size: var(--control-size, 2.75rem);
 	min-block-size: 2rem;

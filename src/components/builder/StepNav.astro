@@ -1,0 +1,21 @@
+---
+// The builder's steps, in order. The current one is marked with
+// aria-current="step" by the step router; each link is described by a text
+// status saying what the step still needs.
+import { STEP_LIST } from './stepList';
+---
+
+<nav class="step-nav" aria-label="Build steps">
+	<ol>
+		{
+			STEP_LIST.map(({ step, title }) => (
+				<li>
+					<a href={`#${step}`} data-step-link={step} aria-describedby={`step-status-${step}`}>
+						{title}
+					</a>
+					<span class="step-status" id={`step-status-${step}`} data-step-status={step} />
+				</li>
+			))
+		}
+	</ol>
+</nav>
