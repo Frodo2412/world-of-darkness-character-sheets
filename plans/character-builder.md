@@ -1947,8 +1947,8 @@ Risks:
 
 #### Wave 1
 - [ ] Slice 1: Start a build with creation settings
-  - [ ] Step 1.1: Generation table, build type and creation settings
-  - [ ] Step 1.2: Shared storage helpers and the build store
+  - [x] Step 1.1: Generation table, build type and creation settings
+  - [x] Step 1.2: Shared storage helpers and the build store
   - [ ] Step 1.3: Builder shell, message channels and the settings step
 
 #### Wave 2
