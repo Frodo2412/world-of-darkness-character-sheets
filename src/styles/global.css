@@ -1,28 +1,48 @@
 :root {
 	color-scheme: dark;
 
-	--color-page: #14110f;
-	--color-surface: #1f1a17;
-	--color-line: #8c7862;
-	--color-text: #ece3d4;
-	--color-muted: #b9ab97;
-	--color-accent: #e2675a;
-	--color-focus: #f4c95d;
-	--color-danger: #ff8a7a;
+	--color-page: #0b0c0f;
+	--color-surface: #17161a;
+	/* Decorative edges only (cards, the application bar); controls use --color-border-control. */
+	--color-line: #2a1f24;
+	/* Inputs, buttons and empty marks: clear of a card by the 3:1 WCAG 1.4.11 asks for. */
+	--color-border-control: #77787c;
+	--color-text: #e7e1d5;
+	--color-text-strong: #f6f0e6;
+	--color-muted: #a5a39f;
+	/* Fills and edges only; accent drawn as text uses --color-accent-text. */
+	--color-accent: #b6474c;
+	--color-accent-text: #e58c8d;
+	--color-focus: #c4a78f;
+	--color-danger: #e58c8d;
+	--color-row: #191a1d;
+	--color-control: #202125;
+	--color-selected: #302024;
+	--color-divider: #343438;
 
 	--space-1: 0.25rem;
 	--space-2: 0.5rem;
 	--space-3: 1rem;
 	--space-4: 1.5rem;
 	--space-5: 2.5rem;
+	--space-card: 0.75rem;
+	--space-gutter: 2rem;
 
-	--font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-	--font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-	--text-small: 0.875rem;
-	--text-body: 1rem;
-	--text-h3: 1.05rem;
-	--text-h2: 1.3rem;
-	--text-h1: 1.9rem;
+	--radius-card: 10px;
+	--radius-button: 6px;
+	--radius-badge: 4px;
+	--radius-row: 3px;
+	--radius-segment: 2px;
+
+	--font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--font-display: 'Cormorant Garamond', 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+	--text-caption: 0.6875rem;
+	--text-small: 0.75rem;
+	--text-body: 0.8125rem;
+	--text-figure: 1.75rem;
+	--text-h3: 1.375rem;
+	--text-h2: 1.625rem;
+	--text-h1: 2rem;
 
 	--mark-size: 1.125rem;
 	--control-size: 2.75rem;
@@ -49,16 +69,19 @@
 	white-space: nowrap;
 }
 
+/* The root stays at the browser's size so every rem in the app keeps its meaning;
+   the body size is set on body. */
 html {
 	background: var(--color-page);
 	color: var(--color-text);
 	font-family: var(--font-body);
-	font-size: var(--text-body);
+	font-size: 100%;
 	line-height: 1.5;
 }
 
 body {
 	margin: 0;
+	font-size: var(--text-body);
 }
 
 main {
@@ -77,6 +100,7 @@ h3 {
 }
 
 h1 {
+	color: var(--color-text-strong);
 	font-size: var(--text-h1);
 	letter-spacing: 0.04em;
 	margin-block: var(--space-3) var(--space-4);
@@ -86,7 +110,7 @@ h2 {
 	font-size: var(--text-h2);
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
-	color: var(--color-accent);
+	color: var(--color-accent-text);
 	border-block-end: 1px solid var(--color-line);
 	padding-block-end: var(--space-1);
 	margin-block: var(--space-4) var(--space-3);
@@ -101,7 +125,7 @@ h3 {
 }
 
 a {
-	color: var(--color-accent);
+	color: var(--color-accent-text);
 	text-underline-offset: 0.2em;
 }
 
@@ -111,18 +135,35 @@ a {
 	border-radius: 2px;
 }
 
-button {
+/* A card: a surface set off from the page by a decorative edge. */
+.card {
+	background: var(--color-surface);
+	border: 1px solid var(--color-line);
+	border-radius: var(--radius-card);
+	padding: var(--space-card);
+}
+
+/* A button is a <button>, or a link that does the same job. */
+button,
+.button {
 	font: inherit;
 	color: var(--color-text);
 	background: var(--color-surface);
-	border: 1px solid var(--color-line);
-	border-radius: 4px;
+	border: 1px solid var(--color-border-control);
+	border-radius: var(--radius-button);
 	min-block-size: var(--control-size);
 	padding: var(--space-2) var(--space-3);
 	cursor: pointer;
 }
 
-button:hover:not(:disabled) {
+.button {
+	display: inline-flex;
+	align-items: center;
+	text-decoration: none;
+}
+
+button:hover:not(:disabled),
+.button:hover {
 	border-color: var(--color-accent);
 }
 
@@ -137,7 +178,7 @@ textarea {
 	color: var(--color-text);
 	background: transparent;
 	border: 0;
-	border-block-end: 1px solid var(--color-line);
+	border-block-end: 1px solid var(--color-border-control);
 	border-radius: 0;
 	padding: var(--space-1) var(--space-1);
 	min-inline-size: 0;
@@ -145,8 +186,8 @@ textarea {
 }
 
 textarea {
-	border: 1px solid var(--color-line);
-	border-radius: 4px;
+	border: 1px solid var(--color-border-control);
+	border-radius: var(--radius-badge);
 	padding: var(--space-2);
 	resize: vertical;
 }
@@ -154,7 +195,7 @@ textarea {
 .status-message {
 	border: 1px solid var(--color-danger);
 	border-inline-start-width: 0.4rem;
-	border-radius: 4px;
+	border-radius: var(--radius-badge);
 	background: var(--color-surface);
 	color: var(--color-text);
 	padding: var(--space-2) var(--space-3);
@@ -184,7 +225,7 @@ textarea {
 	gap: var(--space-2) var(--space-3);
 	background: var(--color-surface);
 	border: 1px solid var(--color-line);
-	border-radius: 4px;
+	border-radius: var(--radius-card);
 	padding: var(--space-2) var(--space-3);
 }
 
@@ -224,7 +265,7 @@ dialog {
 	color: var(--color-text);
 	background: var(--color-surface);
 	border: 1px solid var(--color-line);
-	border-radius: 6px;
+	border-radius: var(--radius-card);
 	padding: var(--space-4);
 	max-inline-size: min(30rem, calc(100vw - 2rem));
 }
