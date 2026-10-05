@@ -2,7 +2,7 @@ dot-rating,
 box-tracker {
 	gap: 0.2rem;
 	cursor: pointer;
-	border-radius: 2px;
+	border-radius: var(--radius-segment);
 }
 
 dot-rating {
@@ -24,7 +24,7 @@ box-tracker {
 }
 
 box-tracker .rating-mark {
-	border-radius: 2px;
+	border-radius: var(--radius-segment);
 }
 
 .rating-mark.is-filled {
@@ -33,7 +33,7 @@ box-tracker .rating-mark {
 
 /* A dot bought with freebie points is a filled diamond, not only another colour. */
 .rating-mark.is-freebie {
-	border-radius: 2px;
+	border-radius: var(--radius-segment);
 	transform: rotate(45deg) scale(0.8);
 }
 

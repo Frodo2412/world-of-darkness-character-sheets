@@ -100,7 +100,7 @@ body {
 .app-bar-identity {
 	display: flex;
 	align-items: center;
-	gap: 0.75rem;
+	gap: var(--space-card);
 	min-inline-size: 0;
 }
 
@@ -205,14 +205,19 @@ a {
 :focus-visible {
 	outline: 3px solid var(--color-focus);
 	outline-offset: 2px;
-	border-radius: 2px;
+	border-radius: var(--radius-segment);
 }
 
-/* A card: a surface set off from the page by a decorative edge. */
-.card {
+/* A card: a surface set off from the page by a decorative edge. Each selector adds its own padding and layout. */
+.card,
+.roster > li,
+dialog {
 	background: var(--color-surface);
 	border: 1px solid var(--color-line);
 	border-radius: var(--radius-card);
+}
+
+.card {
 	padding: var(--space-card);
 }
 
@@ -296,9 +301,6 @@ textarea {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--space-2) var(--space-3);
-	background: var(--color-surface);
-	border: 1px solid var(--color-line);
-	border-radius: var(--radius-card);
 	padding: var(--space-2) var(--space-3);
 }
 
@@ -336,9 +338,6 @@ textarea {
 
 dialog {
 	color: var(--color-text);
-	background: var(--color-surface);
-	border: 1px solid var(--color-line);
-	border-radius: var(--radius-card);
 	padding: var(--space-4);
 	max-inline-size: min(30rem, calc(100vw - 2rem));
 }

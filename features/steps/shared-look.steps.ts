@@ -4,14 +4,21 @@ import { createCharacter, openRoster } from './support/pages';
 import { startBuild } from './support/builder';
 import { withholdStorage } from './support/storage';
 
-/** Every address a page asked for while a scenario opened it, in order. */
-const requestsByPage = new WeakMap<Page, string[]>();
+interface ObservedRequest {
+  url: string;
+  type: string;
+}
+
+/** Every request a page made while a scenario opened it, in order. */
+const requestsByPage = new WeakMap<Page, ObservedRequest[]>();
 
 /** Starts noting the requests `page` makes; call before the page is opened. */
 function watchRequests(page: Page): void {
-  const requested: string[] = [];
+  const requested: ObservedRequest[] = [];
   requestsByPage.set(page, requested);
-  page.on('request', (request) => requested.push(request.url()));
+  page.on('request', (request) =>
+    requested.push({ url: request.url(), type: request.resourceType() }),
+  );
 }
 
 /** Opens `which` the way a player gets there, so the whole journey is observed. */
@@ -39,15 +46,18 @@ const pageTitle = (page: Page) => page.getByRole('heading', { level: 1 }).first(
 
 Then('the Cormorant Garamond and Inter typefaces have finished loading', async ({ page }) => {
   await expect(pageTitle(page)).toBeVisible();
-  const loaded = await page.evaluate(async () => {
-    await document.fonts.ready;
-    const loadedFamilies = new Set<string>();
-    for (const face of document.fonts) {
-      if (face.status === 'loaded') loadedFamilies.add(face.family.replace(/["']/g, ''));
-    }
-    return [...loadedFamilies];
-  });
-  expect(loaded).toEqual(expect.arrayContaining(['Cormorant Garamond', 'Inter']));
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        await document.fonts.ready;
+        const loadedFamilies = new Set<string>();
+        for (const face of document.fonts) {
+          if (face.status === 'loaded') loadedFamilies.add(face.family.replace(/["']/g, ''));
+        }
+        return [...loadedFamilies];
+      }),
+    )
+    .toEqual(expect.arrayContaining(['Cormorant Garamond', 'Inter']));
 });
 
 Then('the page title heading is drawn in Cormorant Garamond', async ({ page }) => {
@@ -65,23 +75,29 @@ Then('the page title heading is drawn in Cormorant Garamond', async ({ page }) =
 Then("every request the page made went to the app's own address", async ({ page, baseURL }) => {
   const requested = requestsByPage.get(page) ?? [];
   expect(requested.length).toBeGreaterThan(0);
-  const elsewhere = requested.filter((url) => {
+  const ownOrigin = new URL(baseURL!).origin;
+  // Fonts must be among the requests, so inlined or missing ones cannot pass vacuously.
+  const fonts = requested.filter((request) => request.type === 'font');
+  expect(fonts.length).toBeGreaterThan(0);
+  expect(fonts.filter((request) => new URL(request.url).origin !== ownOrigin)).toEqual([]);
+  const elsewhere = requested.filter(({ url }) => {
     const { protocol, origin } = new URL(url);
-    return protocol !== 'data:' && protocol !== 'blob:' && origin !== new URL(baseURL!).origin;
+    return protocol !== 'data:' && protocol !== 'blob:' && origin !== ownOrigin;
   });
   expect(elsewhere).toEqual([]);
 });
 
 const applicationBar = (page: Page) => page.getByRole('banner');
 
-const applicationTitle = (page: Page) =>
-  applicationBar(page).getByRole('link', { name: 'Vampire: The Masquerade' });
+/** The bar's one link: by its title when the scenario names one, otherwise whichever it holds. */
+const applicationTitle = (page: Page, title?: string) =>
+  applicationBar(page).getByRole('link', title === undefined ? {} : { name: title, exact: true });
 
 Then(
   'the application bar shows the title {string} and the ruleset {string}',
   async ({ page }, title: string, ruleset: string) => {
-    await expect(page.getByRole('banner')).toHaveCount(1);
-    await expect(applicationTitle(page)).toHaveText(title);
+    await expect(applicationBar(page)).toHaveCount(1);
+    await expect(applicationTitle(page, title)).toBeVisible();
     await expect(applicationBar(page).getByText(ruleset, { exact: true })).toBeVisible();
   },
 );
@@ -91,7 +107,7 @@ When('they activate the application title', async ({ page }) => {
 });
 
 Then('they are on the roster', async ({ page }) => {
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL('/');
   await expect(page.getByRole('heading', { level: 1, name: 'Characters' })).toBeVisible();
 });
 
@@ -106,6 +122,7 @@ Given('the browser does not allow the app to store data', async ({ page }) => {
 Then('the application bar is shown above the storage message', async ({ page }) => {
   const message = page.getByRole('alert').filter({ hasText: 'cannot be saved in this browser' });
   await expect(message).toBeVisible();
+  await expect(applicationBar(page)).toBeVisible();
   const bar = (await applicationBar(page).boundingBox())!;
   const below = (await message.boundingBox())!;
   expect(bar.y + bar.height).toBeLessThanOrEqual(below.y);

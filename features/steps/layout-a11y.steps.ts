@@ -7,7 +7,6 @@ import { expectRating, rating } from './support/ratings';
 import { characterWith, saveCharacters } from './support/seed';
 
 const WIDE = { width: 1280, height: 900 };
-const PHONE = { width: 375, height: 800 };
 const SCREEN_HEIGHT = 800;
 
 const SAVED = [
@@ -115,12 +114,13 @@ Then('every control is visible and can be activated', async ({ page }) => {
   // The roster shows a create button and a link and delete button per character;
   // the sheet shows about a hundred fields, ratings and boxes.
   expect(all.length).toBeGreaterThanOrEqual(5);
+  const { width } = page.viewportSize()!;
   for (const control of all) {
     await control.scrollIntoViewIfNeeded();
     await expect(control).toBeEnabled();
     const box = (await control.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width).toBeLessThanOrEqual(PHONE.width);
+    expect(box.x + box.width).toBeLessThanOrEqual(width);
     // Fails if something else would receive the click.
     await control.click({ trial: true });
   }
