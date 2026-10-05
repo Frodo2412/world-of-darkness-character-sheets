@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
-import { setBaseGeneration, setExtraFreebies } from './updates';
+import { CONCEPT_FIELDS } from './build';
+import { setBaseGeneration, setClan, setConceptText, setExtraFreebies } from './updates';
 
 describe('setBaseGeneration', () => {
   const build = blankBuild('abc');
@@ -64,6 +65,59 @@ describe('setExtraFreebies', () => {
     const snapshot = structuredClone(build);
     setExtraFreebies(build, '30');
     setExtraFreebies(build, 'lots');
+    expect(build).toEqual(snapshot);
+  });
+});
+
+describe('setConceptText', () => {
+  const build = blankBuild('abc');
+
+  test.each(CONCEPT_FIELDS)('keeps %s as entered, then clears it', (field) => {
+    const entered = setConceptText(build, field, '  Fallen noble ');
+    expect(entered).toEqual({
+      status: 'applied',
+      build: { ...build, concept: { ...build.concept, [field]: '  Fallen noble ' } },
+      notices: [],
+    });
+    const cleared = setConceptText(entered.build, field, '');
+    expect(cleared.build.concept[field]).toBe('');
+  });
+
+  test('does not mutate its input', () => {
+    const snapshot = structuredClone(build);
+    setConceptText(build, 'name', 'Lucita');
+    expect(build).toEqual(snapshot);
+  });
+});
+
+describe('setClan', () => {
+  const build = blankBuild('abc');
+
+  test('chooses a clan, and switches to another', () => {
+    const toreador = setClan(build, 'Toreador');
+    expect(toreador).toEqual({ status: 'applied', build: { ...build, clan: 'Toreador' }, notices: [] });
+    expect(setClan(toreador.build, 'Caitiff').build.clan).toBe('Caitiff');
+  });
+
+  test.each(['Baali', 'toreador', ' Toreador'])('refuses %j, which is not a listed clan', (clan) => {
+    const result = setClan(build, clan);
+    expect(result.status).toBe('refused');
+    expect(result.build).toBe(build);
+  });
+
+  test('refuses clearing a chosen clan', () => {
+    const chosen = setClan(build, 'Brujah').build;
+    const result = setClan(chosen, '');
+    expect(result).toEqual({
+      status: 'refused',
+      build: chosen,
+      reason: 'A chosen clan cannot be cleared. Choose another clan instead.',
+    });
+  });
+
+  test('does not mutate its input', () => {
+    const snapshot = structuredClone(build);
+    setClan(build, 'Ventrue');
     expect(build).toEqual(snapshot);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import * as rules from './rules';
-import { GENERATION_TABLE, STANDARD_FREEBIE_BUDGET } from './rules';
+import { ARCHETYPES, CLANS, CLAN_NAMES, GENERATION_TABLE, STANDARD_FREEBIE_BUDGET } from './rules';
 
 describe('generation table', () => {
   test('has one row for each generation from 4th to 13th, most potent first', () => {
@@ -35,4 +35,49 @@ test('every build starts with 15 freebie points', () => {
 test('rules.ts exports data only, no functions', () => {
   const functions = Object.entries(rules).filter(([, value]) => typeof value === 'function');
   expect(functions).toEqual([]);
+});
+
+describe('clans', () => {
+  test('are the thirteen clans and Caitiff, in that order', () => {
+    expect(CLAN_NAMES).toEqual([
+      'Assamite',
+      'Brujah',
+      'Follower of Set',
+      'Gangrel',
+      'Giovanni',
+      'Lasombra',
+      'Malkavian',
+      'Nosferatu',
+      'Ravnos',
+      'Toreador',
+      'Tremere',
+      'Tzimisce',
+      'Ventrue',
+      'Caitiff',
+    ]);
+  });
+
+  test.each([
+    ['Assamite', ['Celerity', 'Obfuscate', 'Quietus']],
+    ['Brujah', ['Celerity', 'Potence', 'Presence']],
+    ['Follower of Set', ['Obfuscate', 'Presence', 'Serpentis']],
+    ['Gangrel', ['Animalism', 'Fortitude', 'Protean']],
+    ['Giovanni', ['Dominate', 'Necromancy', 'Potence']],
+    ['Lasombra', ['Dominate', 'Obtenebration', 'Potence']],
+    ['Malkavian', ['Auspex', 'Dementation', 'Obfuscate']],
+    ['Nosferatu', ['Animalism', 'Obfuscate', 'Potence']],
+    ['Ravnos', ['Animalism', 'Chimerstry', 'Fortitude']],
+    ['Toreador', ['Auspex', 'Celerity', 'Presence']],
+    ['Tremere', ['Auspex', 'Dominate', 'Thaumaturgy']],
+    ['Tzimisce', ['Animalism', 'Auspex', 'Vicissitude']],
+    ['Ventrue', ['Dominate', 'Fortitude', 'Presence']],
+    ['Caitiff', []],
+  ])('%s has the clan Disciplines %j', (name, disciplines) => {
+    expect(CLANS.find((clan) => clan.name === name)?.disciplines).toEqual(disciplines);
+  });
+});
+
+test('Archetypes are unique and include Architect and Visionary', () => {
+  expect(new Set(ARCHETYPES).size).toBe(ARCHETYPES.length);
+  expect(ARCHETYPES).toEqual(expect.arrayContaining(['Architect', 'Visionary']));
 });

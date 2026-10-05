@@ -1,9 +1,9 @@
 // Every change to a build. Each returns an UpdateResult and never mutates its
 // input: a refusal hands back the same build, an applied change a new one.
 
-import type { BuildSettings, V20Build } from './build';
+import type { BuildSettings, ConceptField, V20Build } from './build';
 import { commit, refuse, type UpdateResult } from './result';
-import { EXTRA_FREEBIES_RANGE, GENERATION_TABLE } from './rules';
+import { CLAN_NAMES, EXTRA_FREEBIES_RANGE, GENERATION_TABLE } from './rules';
 
 const FIRST_GENERATION = GENERATION_TABLE[0].generation;
 const LAST_GENERATION = GENERATION_TABLE[GENERATION_TABLE.length - 1].generation;
@@ -32,4 +32,20 @@ export function setExtraFreebies(build: V20Build, text: string): UpdateResult {
     return refuse(build, EXTRA_FREEBIES_REFUSAL);
   }
   return commit(build, withSettings(build, { extraFreebies: value }), []);
+}
+
+/** Any text is kept as entered, including none. */
+export function setConceptText(build: V20Build, field: ConceptField, text: string): UpdateResult {
+  return commit(build, { ...build, concept: { ...build.concept, [field]: text } }, []);
+}
+
+/** A clan from the catalogue. Once one is chosen it can be switched but not cleared. */
+export function setClan(build: V20Build, clan: string): UpdateResult {
+  if (clan === '') {
+    return refuse(build, 'A chosen clan cannot be cleared. Choose another clan instead.');
+  }
+  if (!(CLAN_NAMES as readonly string[]).includes(clan)) {
+    return refuse(build, `${clan} is not one of the clans the builder offers.`);
+  }
+  return commit(build, { ...build, clan }, []);
 }

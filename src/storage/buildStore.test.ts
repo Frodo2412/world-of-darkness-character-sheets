@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild, type V20Build } from '../domain/v20/creation/build';
-import { setBaseGeneration, setExtraFreebies } from '../domain/v20/creation/updates';
+import {
+  setBaseGeneration,
+  setClan,
+  setConceptText,
+  setExtraFreebies,
+} from '../domain/v20/creation/updates';
 import type { UpdateResult } from '../domain/v20/creation/result';
 import { buildKeyFor, createBuildStore } from './buildStore';
 import { createCharacterStore, keyFor } from './characterStore';
@@ -88,6 +93,16 @@ describe('buildStore', () => {
     expect(store.load(build.id)).toEqual({ status: 'found', build });
   });
 
+  test('a build with concept text and a clan round-trips through storage', () => {
+    const store = createBuildStore(fakeStorage(), sequentialIds('a'));
+    store.create();
+    let build = appliedBuild(setConceptText(blankBuild('a'), 'name', 'Lucita'));
+    build = appliedBuild(setClan(build, 'Lasombra'));
+
+    expect(store.save(build)).toEqual({ status: 'saved' });
+    expect(store.load('a')).toEqual({ status: 'found', build });
+  });
+
   test('an unknown id is not found', () => {
     expect(createBuildStore(fakeStorage()).load('missing')).toEqual({ status: 'not-found' });
   });
@@ -105,6 +120,9 @@ describe('buildStore', () => {
     ['negative extra freebies', record({ settings: { baseGeneration: 13, extraFreebies: -1 } })],
     ['extra freebies above 999', record({ settings: { baseGeneration: 13, extraFreebies: 1000 } })],
     ['fractional extra freebies', record({ settings: { baseGeneration: 13, extraFreebies: 2.5 } })],
+    ['an unknown clan', record({ clan: 'Baali' })],
+    ['a missing clan', JSON.stringify({ ...blankBuild('a'), clan: undefined })],
+    ['a missing concept field', JSON.stringify({ ...blankBuild('a'), concept: { name: 'Lucita' } })],
     ['textual extra freebies', record({ settings: { baseGeneration: 13, extraFreebies: '5' } })],
   ])('%s loads as unreadable and is not rewritten', (_label, text) => {
     const storage = fakeStorage({ [buildKeyFor('a')]: text });

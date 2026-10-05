@@ -1,5 +1,5 @@
 import { blankBuild, type V20Build } from '../domain/v20/creation/build';
-import { EXTRA_FREEBIES_RANGE, GENERATION_TABLE } from '../domain/v20/creation/rules';
+import { CLAN_NAMES, EXTRA_FREEBIES_RANGE, GENERATION_TABLE } from '../domain/v20/creation/rules';
 import { generateId, hasShapeOf, storedIds, type StoragePort } from './storagePort';
 
 /** A stored record that is not a build this version can read. It is never rewritten. */
@@ -41,7 +41,8 @@ function isV20Build(value: unknown, id: string): value is V20Build {
     build.kind === 'build' &&
     build.schemaVersion === 1 &&
     GENERATION_TABLE.some((row) => row.generation === build.settings.baseGeneration) &&
-    isWholeInRange(build.settings.extraFreebies, EXTRA_FREEBIES_RANGE.min, EXTRA_FREEBIES_RANGE.max)
+    isWholeInRange(build.settings.extraFreebies, EXTRA_FREEBIES_RANGE.min, EXTRA_FREEBIES_RANGE.max) &&
+    (build.clan === '' || (CLAN_NAMES as readonly string[]).includes(build.clan))
   );
 }
 

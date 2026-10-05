@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
-import { report, settingsReport } from './progress';
-import { setBaseGeneration, setExtraFreebies } from './updates';
+import { conceptReport, report, settingsReport, stepStatuses } from './progress';
+import { setBaseGeneration, setClan, setConceptText, setExtraFreebies } from './updates';
 
 function played(generation: number, extra: string) {
   const first = setBaseGeneration(blankBuild('abc'), generation);
@@ -42,8 +42,31 @@ describe('settingsReport', () => {
 });
 
 describe('report', () => {
-  test('is composed from the settings report', () => {
+  test('is composed from the per-area reports', () => {
     const build = played(9, '30');
-    expect(report(build)).toEqual({ settings: settingsReport(build) });
+    expect(report(build)).toEqual({
+      settings: settingsReport(build),
+      concept: conceptReport(build),
+      steps: stepStatuses(build),
+    });
+  });
+});
+
+describe('conceptReport', () => {
+  test('shows the concept text and clan as stored', () => {
+    let build = setConceptText(blankBuild('abc'), 'name', 'Lucita').build;
+    build = setClan(build, 'Lasombra').build;
+    expect(conceptReport(build)).toEqual({
+      fields: { name: 'Lucita', player: '', chronicle: '', nature: '', demeanor: '', concept: '', sire: '' },
+      clan: 'Lasombra',
+    });
+  });
+});
+
+describe('stepStatuses', () => {
+  test('the concept step needs a clan until one is chosen', () => {
+    const build = blankBuild('abc');
+    expect(stepStatuses(build).concept).toBe('clan needed');
+    expect(stepStatuses(setClan(build, 'Toreador').build).concept).toBe('');
   });
 });

@@ -1953,7 +1953,7 @@ Risks:
 
 #### Wave 2
 - [ ] Slice 2: Concept step and step navigation
-  - [ ] Step 2.1: Concept data and clan catalogue
+  - [x] Step 2.1: Concept data and clan catalogue
   - [ ] Step 2.2: Concept step and full step navigation
 
 #### Wave 3
