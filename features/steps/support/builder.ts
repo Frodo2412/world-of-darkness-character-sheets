@@ -22,6 +22,37 @@ export async function startBuild(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Build a character' }).click();
   await expect(page).toHaveURL(BUILDER_ADDRESS);
   await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await watchAnnouncements(page);
+}
+
+/**
+ * Records what each live region says every time it changes, as assistive
+ * technology would hear it: one entry per region per change.
+ */
+export async function watchAnnouncements(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const log: string[] = [];
+    (window as unknown as { announcements: string[] }).announcements = log;
+    const regions = document.querySelectorAll('[role="status"], [role="alert"], output');
+    const observer = new MutationObserver((records) => {
+      const changed = new Set<Element>();
+      for (const record of records) {
+        const target = record.target instanceof Element ? record.target : record.target.parentElement;
+        const region = target?.closest('[role="status"], [role="alert"], output');
+        if (region) changed.add(region);
+      }
+      for (const region of changed) {
+        const text = (region.textContent ?? '').replace(/\s+/g, ' ').trim();
+        if (text !== '') log.push(text);
+      }
+    });
+    for (const region of regions) observer.observe(region, { childList: true, characterData: true, subtree: true });
+  });
+}
+
+/** Everything announced since the page was watched. */
+export async function announcements(page: Page): Promise<string[]> {
+  return page.evaluate(() => (window as unknown as { announcements?: string[] }).announcements ?? []);
 }
 
 export const baseGeneration = (page: Page): Locator =>
@@ -78,6 +109,7 @@ export async function openSavedBuild(page: Page, build: V20Build): Promise<void>
   await saveBuilds(page, [build]);
   await page.goto(builderAddress(build.id));
   await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await watchAnnouncements(page);
 }
 
 export const stepNav = (page: Page): Locator =>
