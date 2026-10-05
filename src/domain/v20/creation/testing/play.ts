@@ -3,7 +3,16 @@
 
 import { blankBuild, type BuildTraitRef, type V20Build } from '../build';
 import type { UpdateResult } from '../result';
-import { addDiscipline, setBaseGeneration, setClan, setExtraFreebies, setRank, setRating } from '../updates';
+import {
+  addDiscipline,
+  setBaseGeneration,
+  setBloodPool,
+  setClan,
+  setExtraFreebies,
+  setRank,
+  setRating,
+} from '../updates';
+import { clanDisciplinesOf } from '../ratings';
 
 export type Step = (build: V20Build) => UpdateResult;
 
@@ -28,6 +37,7 @@ export const freebie = (ref: BuildTraitRef, value: number): Step => (build) =>
   setRating(build, ref, value, 'freebie');
 export const addCreationDiscipline = (name: string): Step => (build) =>
   addDiscipline(build, name, 'creation');
+export const bloodPool = (value: number): Step => (build) => setBloodPool(build, String(value));
 export const buyDiscipline = (name: string): Step => (build) => addDiscipline(build, name, 'freebie');
 
 /** Physical, Social, Mental ranked primary, secondary, tertiary. */
@@ -44,21 +54,24 @@ export const abilitiesRanked: Step[] = [
 ];
 
 /**
- * Every creation dot of a Brujah placed, at 13th generation with nothing
- * bought: Strength 3, Brawl 2, Celerity 1, Resources 1, Conscience 4,
- * Self-Control 3 and Courage 3 (so Humanity 7 and Willpower 3).
+ * Every creation dot placed for `clanName`, at 13th generation with nothing
+ * bought: the clan's first Discipline at 1 and the rest as below. A Nosferatu
+ * puts Appearance's Social dot on Charisma; a Caitiff takes Celerity, Potence
+ * and Presence.
  */
-export function completeBrujah(): V20Build {
+export function completeBuild(clanName = 'Brujah'): V20Build {
+  const disciplines = clanName === 'Caitiff' ? ['Celerity', 'Potence', 'Presence'] : clanDisciplinesOf(clanName);
+  const nosferatu = clanName === 'Nosferatu';
   return play(
     fresh(),
-    clan('Brujah'),
+    clan(clanName),
     ...attributesRanked,
     creation('attribute:strength', 3),
     creation('attribute:dexterity', 3),
     creation('attribute:stamina', 4),
-    creation('attribute:charisma', 3),
+    creation('attribute:charisma', nosferatu ? 4 : 3),
     creation('attribute:manipulation', 3),
-    creation('attribute:appearance', 2),
+    ...(nosferatu ? [] : [creation('attribute:appearance', 2)]),
     creation('attribute:perception', 2),
     creation('attribute:intelligence', 2),
     creation('attribute:wits', 2),
@@ -73,9 +86,10 @@ export function completeBrujah(): V20Build {
     creation('ability:melee', 3),
     creation('ability:academics', 3),
     creation('ability:computer', 2),
-    creation('discipline:Celerity', 1),
-    creation('discipline:Potence', 1),
-    creation('discipline:Presence', 1),
+    ...disciplines.flatMap((name) => [
+      ...(clanName === 'Caitiff' ? [addCreationDiscipline(name)] : []),
+      creation(`discipline:${name}`, 1),
+    ]),
     creation('background:Resources', 1),
     creation('background:Contacts', 2),
     creation('background:Allies', 2),
@@ -84,3 +98,13 @@ export function completeBrujah(): V20Build {
     creation('virtue:courage', 3),
   );
 }
+
+/**
+ * Every creation dot of a Brujah placed, at 13th generation with nothing
+ * bought: Strength 3, Brawl 2, Celerity 1, Resources 1, Conscience 4,
+ * Self-Control 3 and Courage 3 (so Humanity 7 and Willpower 3).
+ */
+export function completeBrujah(): V20Build {
+  return completeBuild('Brujah');
+}
+

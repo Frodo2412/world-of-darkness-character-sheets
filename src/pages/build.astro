@@ -3,6 +3,8 @@ import Abilities from '../components/builder/Abilities.astro';
 import Advantages from '../components/builder/Advantages.astro';
 import Attributes from '../components/builder/Attributes.astro';
 import Concept from '../components/builder/Concept.astro';
+import FinishingTouches from '../components/builder/FinishingTouches.astro';
+import FreebieBar from '../components/builder/FreebieBar.astro';
 import Settings from '../components/builder/Settings.astro';
 import StepNav from '../components/builder/StepNav.astro';
 import StepPanel from '../components/builder/StepPanel.astro';
@@ -18,12 +20,13 @@ import '../styles/builder.css';
 		<div id="builder" class="builder" hidden>
 			<h1>Build a character</h1>
 			<StepNav />
+			<FreebieBar />
 			<StepPanel step="settings"><Settings /></StepPanel>
 			<StepPanel step="concept"><Concept /></StepPanel>
 			<StepPanel step="attributes"><Attributes /></StepPanel>
 			<StepPanel step="abilities"><Abilities /></StepPanel>
 			<StepPanel step="advantages"><Advantages /></StepPanel>
-			<StepPanel step="finishing" />
+			<StepPanel step="finishing"><FinishingTouches /></StepPanel>
 		</div>
 		<div id="build-unreadable" hidden>
 			<h1>Build could not be read</h1>

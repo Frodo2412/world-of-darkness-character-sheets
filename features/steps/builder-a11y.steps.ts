@@ -5,6 +5,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 import { Then, When } from './fixtures';
+import { openFreebieSections, openStep, shownStep } from './support/builder';
 import { openRoster } from './support/pages';
 
 const PHONE = { width: 375, height: 800 };
@@ -24,7 +25,7 @@ async function wcagViolations(page: Page): Promise<string[]> {
   );
 }
 
-When(/^the (.+) step is checked$/, async ({ page, memory }, step: string) => {
+When(/^the "?([^"]+?)"? step is checked$/, async ({ page, memory }, step: string) => {
   const heading = page.getByRole('heading', { name: step, level: 2, exact: false });
   if (!(await heading.isVisible())) {
     await page
@@ -34,6 +35,62 @@ When(/^the (.+) step is checked$/, async ({ page, memory }, step: string) => {
   }
   await expect(heading).toBeVisible();
   memory.violations = await wcagViolations(page);
+});
+
+When('the finishing touches step is checked with every section open', async ({ page, memory }) => {
+  await openStep(page, 'Finishing touches');
+  await openFreebieSections(page);
+  memory.violations = await wcagViolations(page);
+});
+
+/** Whether two boxes overlap. */
+const overlaps = (a: Box, b: Box): boolean =>
+  a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+type Box = { x: number; y: number; width: number; height: number };
+
+/**
+ * Tabs through the shown step at phone width and checks every stop is clear
+ * of the freebie bar and of any group heading stuck to the top.
+ */
+async function focusStopsClearOfStickyParts(page: Page, includeHeadings: boolean): Promise<void> {
+  await page.setViewportSize(PHONE);
+  const controls = shownStep(page).locator('a, button, input, select, summary, [role="slider"]').filter({ visible: true });
+  const total = await controls.count();
+  expect(total).toBeGreaterThan(0);
+  // Every control is visited when there are few; on long steps, a spread of them.
+  const stride = Math.max(1, Math.floor(total / 25));
+  for (let index = 0; index < total; index += stride) {
+    const control = controls.nth(index);
+    await control.focus();
+    const box = (await control.boundingBox())!;
+    const covering: Box[] = await page.evaluate((withHeadings) => {
+      const stuck = [...document.querySelectorAll<HTMLElement>('[data-freebie-bar]')];
+      if (withHeadings) {
+        for (const heading of document.querySelectorAll<HTMLElement>('.builder-group h3')) {
+          const top = heading.getBoundingClientRect().top;
+          if (heading.offsetParent && Math.abs(top - parseFloat(getComputedStyle(heading).top)) < 1) stuck.push(heading);
+        }
+      }
+      return stuck
+        .filter((element) => !element.hidden)
+        .map((element) => {
+          const rect = element.getBoundingClientRect();
+          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+        });
+    }, includeHeadings);
+    const heading = await control.evaluate((element) => element.closest('h3') !== null);
+    if (heading) continue;
+    expect(covering.filter((cover) => overlaps(cover, box))).toEqual([]);
+  }
+}
+
+Then('at 375 pixels wide no focused control is covered by the freebie bar or a group readout', async ({ page }) => {
+  await focusStopsClearOfStickyParts(page, true);
+});
+
+Then('the freebie points remaining bar does not cover the focused control', async ({ page }) => {
+  await focusStopsClearOfStickyParts(page, false);
 });
 
 When('the roster is checked', async ({ page, memory }) => {

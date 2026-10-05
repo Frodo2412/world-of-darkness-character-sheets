@@ -16,6 +16,7 @@ import {
   buyDiscipline,
   clan,
   completeBrujah,
+  completeBuild,
   creation,
   extra,
   freebie,
@@ -556,6 +557,10 @@ describe('outstanding', () => {
     ]);
   });
 
+  test.each(['Brujah', 'Nosferatu', 'Caitiff', 'Ventrue', 'Tremere'])('a complete %s build has nothing outstanding', (name) => {
+    expect(outstanding(completeBuild(name))).toEqual([]);
+  });
+
   test('a complete build has nothing outstanding', () => {
     expect(outstanding(completeBrujah())).toEqual([]);
     expect(unspentFreebies(completeBrujah())).toBe(15);
@@ -591,8 +596,7 @@ describe('report', () => {
     const build = play(fresh(), rank('physical', 'primary'), creation('attribute:strength', 3), freebie('attribute:strength', 4));
     expect(report(build).traits['attribute:strength']).toMatchObject({
       rating: 4,
-      creationMin: 2,
-      freebieMin: 3,
+      floor: 1,
       max: 5,
       valueText: '4 of 5: 3 from creation, 1 from freebie points',
     });

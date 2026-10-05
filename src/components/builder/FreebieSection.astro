@@ -1,0 +1,22 @@
+---
+// One collapsible freebie section on Finishing touches. Its summary says what
+// a dot costs and how many the build holds; the page fills in the count.
+interface Props {
+	section: string;
+	label: string;
+	cost: number;
+}
+
+const { section, label, cost } = Astro.props;
+---
+
+<details class="freebie-section" data-freebie-section={section}>
+	<summary>
+		<span class="freebie-section-title">{label}</span>
+		<span class="freebie-section-cost">{cost} freebie {cost === 1 ? 'point' : 'points'} per dot</span>
+		<span class="freebie-section-dots" data-freebie-dots={section}></span>
+	</summary>
+	<div class="freebie-section-body">
+		<slot />
+	</div>
+</details>

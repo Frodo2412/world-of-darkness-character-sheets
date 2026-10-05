@@ -1980,11 +1980,11 @@ Risks:
   - [x] Step 6.4: Advantages step UI
 
 #### Wave 7
-- [ ] Slice 7: Finishing touches — freebie points and blood pool
-  - [ ] Step 7.1: Starting Humanity and Willpower
-  - [ ] Step 7.2: Freebie point spending
-  - [ ] Step 7.3: Starting blood pool
-  - [ ] Step 7.4: Finishing touches step UI
+- [x] Slice 7: Finishing touches — freebie points and blood pool
+  - [x] Step 7.1: Starting Humanity and Willpower
+  - [x] Step 7.2: Freebie point spending
+  - [x] Step 7.3: Starting blood pool
+  - [x] Step 7.4: Finishing touches step UI
 
 #### Wave 8
 - [ ] Slice 8: Finish a build

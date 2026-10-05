@@ -17,6 +17,7 @@ export function startSteps(root: HTMLElement, buildName: () => string): StepRout
   const links = [...root.querySelectorAll<HTMLAnchorElement>('[data-step-link]')];
   const statuses = [...root.querySelectorAll<HTMLElement>('[data-step-status]')];
   const heading = (panel: HTMLElement) => panel.querySelector<HTMLElement>('h2')!;
+  const freebieBar = root.querySelector<HTMLElement>('[data-freebie-bar]');
 
   // An unknown or missing step shows the first one.
   const panelFor = (step: string): HTMLElement =>
@@ -31,6 +32,10 @@ export function startSteps(root: HTMLElement, buildName: () => string): StepRout
   function show(panel: HTMLElement, moveFocus: boolean, focusTarget?: HTMLElement): void {
     current = panel;
     for (const each of panels) each.hidden = each !== panel;
+    // The freebie budget is set on Settings; every later step shows what is left of it.
+    const onSettings = panel === panels[0];
+    if (freebieBar) freebieBar.hidden = onSettings;
+    root.toggleAttribute('data-freebie-bar-shown', !onSettings);
     for (const link of links) {
       if (link.dataset.stepLink === panel.dataset.step) link.setAttribute('aria-current', 'step');
       else link.removeAttribute('aria-current');

@@ -12,6 +12,7 @@ import {
   clanChangeEffects,
   removeDiscipline,
   setBaseGeneration,
+  setBloodPool,
   setClan,
   setConceptText,
   setExtraFreebies,
@@ -124,6 +125,11 @@ export function wireControls(root: HTMLElement, wiring: Wiring): void {
     });
   }
   wireDisciplines(root, wiring);
+  for (const input of root.querySelectorAll<HTMLInputElement>('[data-blood-pool]')) {
+    input.addEventListener('change', () => {
+      commit((build) => setBloodPool(build, input.value), input);
+    });
+  }
   // Rating rows are found when they change, so rows drawn later need no wiring.
   root.addEventListener('change', (event) => {
     const control = (event.target as Element).closest<RatingControl>('[data-build-trait]');
@@ -218,6 +224,24 @@ function renderDisciplines(root: HTMLElement, report: BuildReport): void {
   }
 }
 
+function renderFreebies(root: HTMLElement, report: BuildReport): void {
+  for (const status of root.querySelectorAll<HTMLElement>('[data-freebie-remaining]')) {
+    showReadout(status, report.freebies.status);
+  }
+  for (const count of root.querySelectorAll<HTMLElement>('[data-freebie-dots]')) {
+    const { dots } = report.freebies.sections[count.dataset.freebieDots as keyof BuildReport['freebies']['sections']];
+    showReadout(count, `${dots} ${dots === 1 ? 'dot' : 'dots'} bought`);
+  }
+  for (const input of root.querySelectorAll<HTMLInputElement>('[data-blood-pool]')) {
+    if (input.getAttribute('aria-invalid') !== 'true' && input.value !== String(report.bloodPool)) {
+      input.value = String(report.bloodPool);
+    }
+  }
+  for (const hint of root.querySelectorAll<HTMLElement>('[data-blood-pool-hint]')) {
+    showReadout(hint, `0 to ${report.settings.bloodPoolMax} — set with your Storyteller`);
+  }
+}
+
 /** Readouts that show something other than the bare number. */
 const READOUT_FORMATS: Partial<Record<keyof BuildReport['settings'], (value: number) => string>> = {
   effectiveGeneration: ordinal,
@@ -226,12 +250,11 @@ const READOUT_FORMATS: Partial<Record<keyof BuildReport['settings'], (value: num
 function renderRating(control: RatingControl, report: BuildReport): void {
   const trait = report.traits[control.dataset.buildTrait!];
   if (!trait) return;
-  const min = control.dataset.mode === 'freebie' ? trait.freebieMin : trait.creationMin;
   // A locked trait is drawn to the generation's scale so its fixed 0 is visible as empty dots.
   const max = trait.locked ? report.settings.maxTrait : trait.max;
   const attributes: Record<string, string> = {
     max: String(max),
-    min: String(min),
+    min: String(trait.floor),
     valuetext: trait.valueText,
     freebie: String(trait.freebieDots),
   };
@@ -275,6 +298,7 @@ export function renderControls(root: HTMLElement, report: BuildReport): void {
     showReadout(status.querySelector<HTMLElement>('[data-readout-text]')!, allotment.status);
   }
   renderDisciplines(root, report);
+  renderFreebies(root, report);
   for (const control of root.querySelectorAll<RatingControl>('[data-build-trait]')) {
     renderRating(control, report);
   }

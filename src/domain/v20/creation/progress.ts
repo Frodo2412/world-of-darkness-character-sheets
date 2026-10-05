@@ -7,12 +7,12 @@ import { freebieBudget, freebiesRemaining, freebiesSpent } from './freebies';
 import { effectiveGeneration, limits, maximumFor, violations } from './limits';
 import {
   clanDisciplines,
-  creationFloor,
   creationRating,
   dotsOf,
-  freebieFloor,
+  freeDots,
   isCaitiff,
   isLocked,
+  kindOf,
   rating,
   traitLabel,
 } from './ratings';
@@ -44,10 +44,12 @@ export interface TraitReport {
   creationRating: number;
   freebieDots: number;
   max: number;
-  /** The lowest rating a creation step can set. */
-  creationMin: number;
-  /** The lowest rating freebie points can set. */
-  freebieMin: number;
+  /**
+   * The control's floor: the free dots, which nothing removes. Lowering into
+   * creation or freebie dots from the wrong step is asked for and refused with
+   * a reason that names the right step.
+   */
+  floor: number;
   locked: boolean;
   /** What is announced with the value. */
   valueText: string;
@@ -65,11 +67,16 @@ export interface OutstandingItem {
   message: string;
 }
 
+export type FreebieSection = 'attributes' | 'abilities' | 'disciplines' | 'backgrounds' | 'virtues' | 'humanity' | 'willpower';
+
 export interface FreebieReport {
   budget: number;
   spent: number;
   remaining: number;
-  costs: typeof FREEBIE_COSTS;
+  /** "15 freebie points remaining", or how far a stored build is over. */
+  status: string;
+  /** Each section's cost per dot and how many dots it holds bought with freebie points. */
+  sections: Record<FreebieSection, { cost: number; dots: number }>;
 }
 
 export interface BuildReport {
@@ -133,14 +140,47 @@ export function traitReport(build: V20Build, ref: BuildTraitRef): TraitReport {
     creationRating: creationRating(build, ref),
     freebieDots: dotsOf(build, ref).freebie,
     max,
-    creationMin: creationFloor(build, ref),
-    freebieMin: freebieFloor(build, ref),
+    floor: freeDots(build, ref),
     locked: isLocked(build, ref),
     valueText: valueText(build, ref, max),
   };
 }
 
 const disciplineRef = (name: string): BuildTraitRef => `discipline:${name}`;
+
+const SECTION_KINDS: Record<FreebieSection, keyof typeof FREEBIE_COSTS> = {
+  attributes: 'attribute',
+  abilities: 'ability',
+  disciplines: 'discipline',
+  backgrounds: 'background',
+  virtues: 'virtue',
+  humanity: 'humanity',
+  willpower: 'willpower',
+};
+
+export function freebieReport(build: V20Build): FreebieReport {
+  const remaining = freebiesRemaining(build);
+  const traits: BuildTraitRef[] = [...FIXED_TRAIT_REFS, ...build.disciplines.map((entry) => disciplineRef(entry.name))];
+  const sections = Object.fromEntries(
+    Object.entries(SECTION_KINDS).map(([section, kind]) => [
+      section,
+      {
+        cost: FREEBIE_COSTS[kind],
+        dots: traits.filter((ref) => kindOf(ref) === kind).reduce((sum, ref) => sum + dotsOf(build, ref).freebie, 0),
+      },
+    ]),
+  ) as FreebieReport['sections'];
+  return {
+    budget: freebieBudget(build),
+    spent: freebiesSpent(build),
+    remaining,
+    status:
+      remaining >= 0
+        ? `${plural(remaining, 'freebie point')} remaining`
+        : `Overspent by ${plural(-remaining, 'freebie point')}`,
+    sections,
+  };
+}
 
 function disciplineRows(build: V20Build): BuildReport['disciplines'] {
   const clan = clanDisciplines(build);
@@ -250,12 +290,7 @@ export function report(build: V20Build): BuildReport {
     traits: Object.fromEntries(refs.map((ref) => [ref, traitReport(build, ref)])),
     allotments: allotmentReports(build),
     disciplines,
-    freebies: {
-      budget: freebieBudget(build),
-      spent: freebiesSpent(build),
-      remaining: freebiesRemaining(build),
-      costs: FREEBIE_COSTS,
-    },
+    freebies: freebieReport(build),
     bloodPool: build.bloodPool,
     outstanding: outstanding(build),
     steps: stepStatuses(build),

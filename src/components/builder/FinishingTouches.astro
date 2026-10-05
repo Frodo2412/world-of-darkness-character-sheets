@@ -1,0 +1,77 @@
+---
+import type { BuildTraitRef } from '../../domain/v20/creation/build';
+import {
+	ABILITY_ALLOTMENT,
+	ATTRIBUTE_ALLOTMENT,
+	BACKGROUNDS,
+	BUILD_VIRTUES,
+	FREEBIE_COSTS,
+} from '../../domain/v20/creation/rules';
+import DisciplineRows from './DisciplineRows.astro';
+import FlatGroup from './FlatGroup.astro';
+import FreebieSection from './FreebieSection.astro';
+import RankedGroup from './RankedGroup.astro';
+import TraitRow from './TraitRow.astro';
+---
+
+<div class="builder-columns">
+	<div class="trait-group builder-group" role="group" aria-labelledby="finishing-morality-label">
+		<h3><span id="finishing-morality-label">Humanity and Willpower</span></h3>
+		<p class="field-hint">
+			From the Virtues: Humanity is Conscience + Self-Control, Willpower is Courage. More dots cost {FREEBIE_COSTS.humanity} and {FREEBIE_COSTS.willpower} freebie points.
+		</p>
+		<TraitRow trait="humanity" mode="freebie" step="finishing" noticeId="finishing-morality-notice" />
+		<TraitRow trait="willpower" mode="freebie" step="finishing" noticeId="finishing-morality-notice" />
+		<p id="finishing-morality-notice" class="field-notice" role="status" data-notice></p>
+	</div>
+	<div class="builder-field">
+		<label for="blood-pool">Starting blood pool</label>
+		<input
+			type="text"
+			inputmode="numeric"
+			autocomplete="off"
+			id="blood-pool"
+			data-blood-pool
+			aria-describedby="blood-pool-hint blood-pool-notice"
+		/>
+		<p id="blood-pool-hint" class="field-hint" data-blood-pool-hint></p>
+		<p id="blood-pool-notice" class="field-notice" role="status" data-notice></p>
+	</div>
+</div>
+
+<h3 class="freebie-heading">Spend freebie points</h3>
+<div class="freebie-sections">
+	<FreebieSection section="attributes" label="Attributes" cost={FREEBIE_COSTS.attribute}>
+		<div class="builder-columns">
+			{ATTRIBUTE_ALLOTMENT.groups.map((group) => <RankedGroup allotment={ATTRIBUTE_ALLOTMENT} group={group} mode="freebie" step="finishing" />)}
+		</div>
+	</FreebieSection>
+	<FreebieSection section="abilities" label="Abilities" cost={FREEBIE_COSTS.ability}>
+		<div class="builder-columns">
+			{ABILITY_ALLOTMENT.groups.map((group) => <RankedGroup allotment={ABILITY_ALLOTMENT} group={group} mode="freebie" step="finishing" />)}
+		</div>
+	</FreebieSection>
+	<FreebieSection section="disciplines" label="Disciplines" cost={FREEBIE_COSTS.discipline}>
+		<FlatGroup key="disciplines" label="Disciplines" mode="freebie" step="finishing">
+			<DisciplineRows mode="freebie" step="finishing" />
+		</FlatGroup>
+	</FreebieSection>
+	<FreebieSection section="backgrounds" label="Backgrounds" cost={FREEBIE_COSTS.background}>
+		<FlatGroup key="backgrounds" label="Backgrounds" mode="freebie" step="finishing">
+			{
+				BACKGROUNDS.map((name) => (
+					<TraitRow trait={`background:${name}` as BuildTraitRef} mode="freebie" step="finishing" noticeId="finishing-backgrounds-notice" />
+				))
+			}
+		</FlatGroup>
+	</FreebieSection>
+	<FreebieSection section="virtues" label="Virtues" cost={FREEBIE_COSTS.virtue}>
+		<FlatGroup key="virtues" label="Virtues" mode="freebie" step="finishing">
+			{
+				BUILD_VIRTUES.map((virtue) => (
+					<TraitRow trait={`virtue:${virtue.key}` as BuildTraitRef} mode="freebie" step="finishing" noticeId="finishing-virtues-notice" />
+				))
+			}
+		</FlatGroup>
+	</FreebieSection>
+</div>

@@ -36,6 +36,7 @@ export const readout = (page: Page, name: string): Locator =>
 
 /** Enters text the way a player finishes an entry: typed, then the field is left. */
 export async function enterExtraFreebies(page: Page, text: string): Promise<void> {
+  await openStep(page, 'Settings');
   const field = extraFreebies(page);
   await field.fill(text);
   await field.blur();
@@ -143,9 +144,17 @@ export const shownStep = (page: Page): Locator => page.locator('#builder [data-s
 export const traitName = (name: string): string =>
   name.replace(/^the (?:Attribute |Ability |Discipline |Background |Virtue )?/, '').replace(/ background$/, '');
 
+/** Opens every collapsed freebie section on the shown step, so their rows can be found. */
+export async function openFreebieSections(page: Page): Promise<void> {
+  await shownStep(page).evaluate((step) => {
+    for (const details of step.querySelectorAll('details')) details.open = true;
+  });
+}
+
 /** A trait's rating control on the shown step, opening the trait's own step if it is not there. */
 export async function traitRating(page: Page, name: string): Promise<Locator> {
   const label = traitName(name);
+  await openFreebieSections(page);
   const here = shownStep(page).getByRole('slider', { name: label, exact: true });
   if ((await here.count()) > 0) return here;
   await openStep(page, homeStepOf(label));
@@ -180,6 +189,7 @@ export async function rateTrait(page: Page, name: string, value: number): Promis
 }
 
 export async function groupBox(page: Page, label: string): Promise<Locator> {
+  await openFreebieSections(page);
   const here = shownStep(page).getByRole('group', { name: label, exact: true });
   if ((await here.count()) > 0) return here;
   await openStep(page, groupStepOf(label));
@@ -217,7 +227,19 @@ export async function placeDots(page: Page, label: string, count: number, cap: n
 
 /** Saves a build made by playing the real updates, then opens it in the builder. */
 export async function openPlayed(page: Page, ...steps: Step[]): Promise<V20Build> {
-  const build = play(buildWith(), ...steps);
+  return openPlayedFrom(page, buildWith(), ...steps);
+}
+
+/** As `openPlayed`, starting from `start` (given a fresh seed id) rather than a blank build. */
+export async function openPlayedFrom(page: Page, start: V20Build, ...steps: Step[]): Promise<V20Build> {
+  const build = play({ ...start, id: buildWith().id }, ...steps);
   await openSavedBuild(page, build);
   return build;
+}
+
+/** The freebie points remaining bar, shown on every step after Settings. */
+export async function freebieBar(page: Page): Promise<Locator> {
+  const bar = page.locator('[data-freebie-remaining]');
+  if (!(await bar.isVisible())) await openStep(page, 'Finishing touches');
+  return bar;
 }
