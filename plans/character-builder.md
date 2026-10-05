@@ -2,7 +2,7 @@
 
 **Created**: 2026-10-04
 **Branch**: `feat/character-builder`
-**Status**: approved
+**Status**: built
 **Gherkin persistence**: features
 **Spec**: `docs/specs/character-builder.md`
 
@@ -41,36 +41,36 @@ transient — a future shape change makes old builds unreadable, deletable from 
 
 Full wording is in the spec; ids match.
 
-- [ ] AC-1 Roster has "Build a character" beside "New V20 character"; it creates a build with default settings and opens the builder; blank creation unchanged
-- [ ] AC-2 Every builder change autosaves and survives reload
-- [ ] AC-3 Roster lists in-progress builds separately, with name/placeholder, clan, continue link, confirmed delete
-- [ ] AC-4 Unknown build id → "build not found"; unreadable build is reported, not auto-deleted; refused write → "changes not saved"
-- [ ] AC-5 Settings step: base generation 4th–13th (default 13th), extra freebies 0–999 (default 0); other input rejected
-- [ ] AC-6 Freebie budget = 15 + extra
-- [ ] AC-7 Effective generation = base − Generation dots, never past 4th
-- [ ] AC-8 Generation table drives maximum trait rating, blood pool maximum, blood per turn
-- [ ] AC-9 Settings changeable any time; an invalidating change is refused, naming what to lower
-- [ ] AC-10 Concept free-text fields; Nature/Demeanor free text with Archetype suggestions
-- [ ] AC-11 Clan chosen from the thirteen clans plus Caitiff
-- [ ] AC-12 Attribute groups ranked for 7/5/3 with one free dot each; re-ranking reports overspent groups
-- [ ] AC-13 Attribute allotment and maximum enforced
-- [ ] AC-14 Nosferatu Appearance fixed at 0
-- [ ] AC-15 Ability groups ranked for 13/9/5; none above 3 with creation dots
-- [ ] AC-16 Three Discipline dots, clan Disciplines only (Caitiff any); clan change removes invalid dots and says so
-- [ ] AC-17 Five Background dots over the sourcebook list
-- [ ] AC-18 Virtues: one free dot each plus seven creation dots
-- [ ] AC-19 At most six Disciplines and six Backgrounds
-- [ ] AC-20 Humanity = Conscience + Self-Control, Willpower = Courage, from creation-dot Virtues only
-- [ ] AC-21 Freebie costs 5/2/7/1/2/2/1; freebie Abilities may exceed 3; freebie Disciplines may be any or a write-in
-- [ ] AC-22 Unaffordable or over-maximum purchases refused; removing refunds; freebies cannot remove creation or free dots
-- [ ] AC-23 Blood pool entered by the player, 0 to the generation maximum
-- [ ] AC-24 Remaining dots and freebie points visible and announced on change
-- [ ] AC-25 Steps can be visited in any order
-- [ ] AC-26 Finishing blocked until clan chosen and all creation dots placed; unspent freebies need only confirmation
-- [ ] AC-27 Finishing writes the character, opens the sheet, removes the build; a failed save keeps the build
-- [ ] AC-28 The finished character is freely editable on the sheet
-- [ ] AC-29 Keyboard, accessible names, non-colour messages, no WCAG 2.1 AA violations, 375 px
-- [ ] AC-30 Unit and e2e coverage; build, type check, lint and both suites pass
+- [x] AC-1 Roster has "Build a character" beside "New V20 character"; it creates a build with default settings and opens the builder; blank creation unchanged
+- [x] AC-2 Every builder change autosaves and survives reload
+- [x] AC-3 Roster lists in-progress builds separately, with name/placeholder, clan, continue link, confirmed delete
+- [x] AC-4 Unknown build id → "build not found"; unreadable build is reported, not auto-deleted; refused write → "changes not saved"
+- [x] AC-5 Settings step: base generation 4th–13th (default 13th), extra freebies 0–999 (default 0); other input rejected
+- [x] AC-6 Freebie budget = 15 + extra
+- [x] AC-7 Effective generation = base − Generation dots, never past 4th
+- [x] AC-8 Generation table drives maximum trait rating, blood pool maximum, blood per turn
+- [x] AC-9 Settings changeable any time; an invalidating change is refused, naming what to lower
+- [x] AC-10 Concept free-text fields; Nature/Demeanor free text with Archetype suggestions
+- [x] AC-11 Clan chosen from the thirteen clans plus Caitiff
+- [x] AC-12 Attribute groups ranked for 7/5/3 with one free dot each; re-ranking reports overspent groups
+- [x] AC-13 Attribute allotment and maximum enforced
+- [x] AC-14 Nosferatu Appearance fixed at 0
+- [x] AC-15 Ability groups ranked for 13/9/5; none above 3 with creation dots
+- [x] AC-16 Three Discipline dots, clan Disciplines only (Caitiff any); clan change removes invalid dots and says so
+- [x] AC-17 Five Background dots over the sourcebook list
+- [x] AC-18 Virtues: one free dot each plus seven creation dots
+- [x] AC-19 At most six Disciplines and six Backgrounds
+- [x] AC-20 Humanity = Conscience + Self-Control, Willpower = Courage, from creation-dot Virtues only
+- [x] AC-21 Freebie costs 5/2/7/1/2/2/1; freebie Abilities may exceed 3; freebie Disciplines may be any or a write-in
+- [x] AC-22 Unaffordable or over-maximum purchases refused; removing refunds; freebies cannot remove creation or free dots
+- [x] AC-23 Blood pool entered by the player, 0 to the generation maximum
+- [x] AC-24 Remaining dots and freebie points visible and announced on change
+- [x] AC-25 Steps can be visited in any order
+- [x] AC-26 Finishing blocked until clan chosen and all creation dots placed; unspent freebies need only confirmation
+- [x] AC-27 Finishing writes the character, opens the sheet, removes the build; a failed save keeps the build
+- [x] AC-28 The finished character is freely editable on the sheet
+- [x] AC-29 Keyboard, accessible names, non-colour messages, no WCAG 2.1 AA violations, 375 px
+- [x] AC-30 Unit and e2e coverage; build, type check, lint and both suites pass
 
 ## Module layout
 
@@ -1879,12 +1879,12 @@ graph TD
 
 ## Pre-PR Quality Gate
 
-- [ ] All tests pass (`npm run test`, `npm run test:e2e`)
-- [ ] Type check passes (`npm run typecheck`)
-- [ ] Linter passes (`npm run lint`)
-- [ ] `npm run build` succeeds
+- [x] All tests pass (`npm run test`, `npm run test:e2e`)
+- [x] Type check passes (`npm run typecheck`)
+- [x] Linter passes (`npm run lint`)
+- [x] `npm run build` succeeds
 - [ ] `/code-review` passes
-- [ ] `README.md` updated
+- [x] `README.md` updated
 
 ## Skipped (low value)
 
@@ -1993,10 +1993,10 @@ Risks:
   - [x] Step 8.3: Review and finish
 
 #### Wave 9
-- [ ] Slice 9: Whole-builder verification
-  - [ ] Step 9.1: End-to-end journeys
-  - [ ] Step 9.2: Message, dialog, keyboard and announcement verification
-  - [ ] Step 9.3: Documentation
+- [x] Slice 9: Whole-builder verification
+  - [x] Step 9.1: End-to-end journeys
+  - [x] Step 9.2: Message, dialog, keyboard and announcement verification
+  - [x] Step 9.3: Documentation
 
 ## Plan Review Summary
 
