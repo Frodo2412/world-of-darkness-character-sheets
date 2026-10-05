@@ -138,8 +138,27 @@ body {
 }
 
 .app-bar-status {
+	display: flex;
+	align-items: center;
+	gap: 7px;
 	font-size: var(--text-small);
 	color: var(--color-muted);
+}
+
+/* A round dot when saved, a square one when not: the words say it too, so
+   colour is never the only signal. */
+.app-bar-status::before {
+	content: '';
+	flex: none;
+	inline-size: 5px;
+	block-size: 5px;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.app-bar-status[data-state='not-saved']::before {
+	border-radius: 0;
+	background: var(--color-danger);
 }
 
 /* Nothing to report yet: leave no empty pill on the bar. */

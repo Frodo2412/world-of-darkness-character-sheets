@@ -22,7 +22,7 @@ import {
 } from '../storage/characterStore';
 import { drawIdentity } from './sheet/identityCard';
 import { createMode, type SheetMode } from './sheet/mode';
-import { STORAGE_UNAVAILABLE, clearStatus, showStatus } from './status';
+import { STORAGE_UNAVAILABLE, clearStatus, showNotSaved, showSaved, showStatus } from './status';
 
 type Update = (character: V20Character) => V20Character;
 
@@ -140,8 +140,10 @@ function showSheet(loaded: V20Character, store: CharacterStore): void {
     character = update(character);
     render(character, mode.current());
     if (store.save(character).status === 'failed') {
+      showNotSaved();
       showStatus('Changes not saved. This browser refused to store your latest changes.');
     } else {
+      showSaved();
       clearStatus();
     }
   }

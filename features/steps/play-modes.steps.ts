@@ -19,6 +19,7 @@ import {
   savedCharacter,
   sheetRoot,
 } from './support/sheet';
+import { acceptWrites, refuseWrites } from './support/storage';
 
 const IDENTITY_FIELDS = ['Name', 'Clan', 'Generation', 'Concept', 'Nature', 'Demeanor'];
 const HIDDEN_FIELDS = ['Player', 'Chronicle', 'Sire'];
@@ -59,6 +60,8 @@ Given('the player is editing a saved character', async ({ page, memory }) => {
 
 Given('the player created a new V20 character', async ({ page }) => {
   await createCharacter(page);
+  // The sheet drops the #edit marker once it has read it; a reload before then would keep it.
+  await expect(page).not.toHaveURL(/#edit/);
 });
 
 Given(
@@ -394,6 +397,40 @@ Then('the saved character still holds every one of those values exactly', async 
   };
   await expect.poll(() => savedCharacter(page, openCharacterId(page))).toEqual(expected);
 });
+
+// Save status
+
+const saveStatus = (page: Page) => page.getByRole('banner').locator('#save-status');
+
+Given('the browser begins refusing to store changes', async ({ page }) => {
+  await refuseWrites(page);
+});
+
+When('the browser accepts changes again', async ({ page }) => {
+  await acceptWrites(page);
+});
+
+When('they mark bashing damage on Bruised', async ({ page }) => {
+  await page.getByRole('button', { name: /^Bruised, / }).click();
+  await expect(page.getByRole('button', { name: 'Bruised, bashing', exact: true })).toBeVisible();
+});
+
+Then('the application bar shows no save status', async ({ page }) => {
+  await expect(saveStatus(page)).toBeEmpty();
+  await expect(saveStatus(page)).toBeHidden();
+});
+
+Then('the application bar shows {string}', async ({ page }, text: string) => {
+  await expect(saveStatus(page)).toHaveText(text);
+  await expect(saveStatus(page)).toBeVisible();
+});
+
+Then(
+  'assistive technology is alerted that the browser refused to store the latest changes',
+  async ({ page }) => {
+    await expect(page.getByRole('alert')).toHaveText(/This browser refused to store your latest changes/);
+  },
+);
 
 // What the redesign leaves out
 
