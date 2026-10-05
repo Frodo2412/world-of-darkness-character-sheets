@@ -12,6 +12,7 @@ import {
   expectRatingValue,
   identityMonogram,
   identityName,
+  identityRegion,
   identitySummary,
   identityTemperament,
   openCharacterId,
@@ -53,7 +54,8 @@ Given("the player has a saved character's sheet open in play mode", async ({ pag
 });
 
 Given('the player is editing a saved character', async ({ page, memory }) => {
-  memory.saved = [characterWith({ name: 'Lucita', clan: 'Lasombra' })];
+  // Not a name a scenario goes on to enter, so seeing that name proves the edit happened.
+  memory.saved = [characterWith({ name: 'Fatima', clan: 'Lasombra' })];
   await openSavedSheet(page, memory.saved[0]);
   await enterEditMode(page);
 });
@@ -136,13 +138,16 @@ Then(
 );
 
 Then('the identity shows no summary and no nature or demeanor', async ({ page }) => {
+  await expect(identityRegion(page)).toBeVisible();
   await expect(identitySummary(page)).toBeHidden();
   await expect(identityTemperament(page)).toBeHidden();
   await expect(page.getByText('Nature / Demeanor', { exact: true })).toBeHidden();
 });
 
 Then('no identity text field is offered', async ({ page }) => {
-  await expect(page.getByRole('region', { name: 'Character', exact: true }).getByRole('textbox')).toHaveCount(0);
+  const identity = identityRegion(page);
+  await expect(identity).toBeVisible();
+  await expect(identity.getByRole('textbox')).toHaveCount(0);
 });
 
 // Edit mode
@@ -155,6 +160,7 @@ Then(
 );
 
 Then('there is no field for Player, Chronicle or Sire', async ({ page }) => {
+  await expect(identityRegion(page)).toBeVisible();
   for (const label of HIDDEN_FIELDS) await expect(sheetField(page, label)).toHaveCount(0);
 });
 
@@ -175,15 +181,10 @@ Then('keyboard focus is on the {string} button', async ({ page }, name: string) 
   await expect(page.getByRole('button', { name, exact: true })).toBeFocused();
 });
 
-Then('the sheet is in edit mode', async ({ page }) => {
-  await expect(sheetRoot(page)).toHaveAttribute('data-sheet-mode', 'edit');
-  await expect(doneButton(page)).toBeVisible();
-  await expect(sheetField(page, 'Name')).toBeEditable();
-});
-
 Then('the sheet is in play mode', async ({ page }) => {
   await expect(sheetRoot(page)).toHaveAttribute('data-sheet-mode', 'play');
   await expect(editButton(page)).toBeVisible();
+  await expect(identityRegion(page)).toBeVisible();
   await expect(sheetField(page, 'Name')).toBeHidden();
 });
 
@@ -239,23 +240,30 @@ When(
           .filter((element) => element.tabIndex >= 0 && element.checkVisibility())
           .length,
     );
-    memory.focusStops = [];
+    memory.tabbedControls = [];
     for (let presses = 0; presses <= tabStops; presses += 1) {
       await page.keyboard.press('Tab');
       const control = await page.evaluate(() => {
         const focused = document.activeElement as HTMLElement;
         return focused.dataset.trait ?? focused.getAttribute('aria-label') ?? focused.tagName.toLowerCase();
       });
-      memory.focusStops.push({ control, visible: true });
+      memory.tabbedControls.push(control);
     }
   },
 );
 
-Then('keyboard focus never landed on the Strength or Brawl rating', async ({ memory }) => {
-  const stops = memory.focusStops.map((stop) => stop.control);
+Then('keyboard focus never landed on the Strength or Brawl rating', async ({ page, memory }) => {
+  const stops = memory.tabbedControls;
   expect(stops.length).toBeGreaterThan(10);
   expect(stops).not.toContain('attributes.strength');
   expect(stops).not.toContain('abilities.brawl');
+  // Not merely skipped on this run: neither rating, nor anything inside it, is in the tab order.
+  for (const name of ['Strength', 'Brawl']) {
+    const tabIndexes = await rating(page, name).evaluate((element) =>
+      [element, ...element.querySelectorAll<HTMLElement>('*')].map((node) => (node as HTMLElement).tabIndex),
+    );
+    expect(tabIndexes.filter((tabIndex) => tabIndex >= 0)).toEqual([]);
+  }
 });
 
 Then(
@@ -318,7 +326,8 @@ Then('the {string} button is still visible', async ({ page }, name: string) => {
 });
 
 Then('the last card on the sheet is fully visible', async ({ page }) => {
-  await expect(sheetRoot(page).locator(':scope > :visible').last()).toBeInViewport({ ratio: 1 });
+  // The last card in the page, not the paragraph that follows the cards.
+  await expect(sheetRoot(page).locator('section:visible').last()).toBeInViewport({ ratio: 1 });
 });
 
 // A long name
@@ -428,13 +437,18 @@ Then('the application bar shows {string}', async ({ page }, text: string) => {
 Then(
   'assistive technology is alerted that the browser refused to store the latest changes',
   async ({ page }) => {
-    await expect(page.getByRole('alert')).toHaveText(/This browser refused to store your latest changes/);
+    await expect
+      .poll(() => announcements(page))
+      .toEqual(
+        expect.arrayContaining([expect.stringMatching(/This browser refused to store your latest changes/)]),
+      );
   },
 );
 
 // What the redesign leaves out
 
 Then('there is no tab bar, session label or settings control', async ({ page }) => {
+  await expect(identityRegion(page)).toBeVisible();
   await expect(page.getByRole('tablist')).toHaveCount(0);
   await expect(page.getByText(/session/i)).toHaveCount(0);
   await expect(page.getByRole('button', { name: /settings/i })).toHaveCount(0);

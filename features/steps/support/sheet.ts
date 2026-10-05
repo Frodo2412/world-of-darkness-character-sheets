@@ -4,6 +4,7 @@ import { keyFor } from '../../../src/storage/characterStore';
 import { watchAnnouncements } from './builder';
 import { sheetAddress } from './pages';
 import { saveCharacters } from './seed';
+import { escaped } from './text';
 
 export const sheetRoot = (page: Page): Locator => page.locator('#sheet');
 
@@ -36,17 +37,10 @@ export async function enterEditMode(page: Page): Promise<void> {
   await expect(doneButton(page)).toBeVisible();
 }
 
-export async function leaveEditMode(page: Page): Promise<void> {
-  await doneButton(page).click();
-  await expect(editButton(page)).toBeVisible();
-}
-
 /** For steps that set or read an editable value: a reload or a saved sheet opens in play mode. */
 export async function ensureEditing(page: Page): Promise<void> {
   if (!(await isEditing(page))) await enterEditMode(page);
 }
-
-const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
  * A rating by its label, in either mode: a slider while editing, an image named
@@ -65,6 +59,10 @@ export async function expectRatingValue(control: Locator, value: number): Promis
     await expect(control).toHaveAttribute('aria-valuenow', String(value));
   }
 }
+
+/** The identity card and, while editing, its fields: the region every identity check is made within. */
+export const identityRegion = (page: Page): Locator =>
+  page.getByRole('region', { name: 'Character', exact: true });
 
 export const identityName = (page: Page): Locator => page.locator('[data-show="identity.name"]');
 export const identitySummary = (page: Page): Locator => page.locator('[data-show="identity.summary"]');

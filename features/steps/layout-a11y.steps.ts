@@ -245,8 +245,14 @@ Then(
     const lines = tree.split('\n').filter((line) => /^\s*- (textbox|slider|button)\b/.test(line));
     const names = lines.map((line) => /^\s*- (?:textbox|slider|button) "([^"]+)"/.exec(line)?.[1]);
 
-    // The sheet is being edited: 28 text fields, 59 dot ratings, 2 trackers, 7 health boxes and "Done editing".
-    expect(lines).toHaveLength(97);
+    // Every control the sheet is presenting is in that tree; none is left unnamed or unlisted.
+    const presented = await page
+      .locator('#sheet')
+      .locator('input, textarea, select, button, [role="slider"]')
+      .filter({ visible: true })
+      .count();
+    expect(presented).toBeGreaterThan(0);
+    expect(lines).toHaveLength(presented);
     expect(lines.filter((_, index) => names[index] === undefined)).toEqual([]);
     // A health box is named "<level>, <damage>"; its level is what must be unique.
     const identities = names.map((name) => name!.replace(/, (empty|bashing|lethal|aggravated)$/, ''));

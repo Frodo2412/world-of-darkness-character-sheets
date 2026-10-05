@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { escaped } from './text';
 
 export const SHEET_ADDRESS = /\/sheet\/\?id=.+/;
 
@@ -23,8 +24,6 @@ export const sheetField = (page: Page, label: string): Locator =>
 
 export const deleteConfirmation = (page: Page): Locator =>
   page.getByRole('dialog', { name: /^Delete (character|build)\?$/ });
-
-const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Opens the roster and starts deleting the character or build in progress named `name`. */
 export async function startDeleting(page: Page, name: string): Promise<void> {

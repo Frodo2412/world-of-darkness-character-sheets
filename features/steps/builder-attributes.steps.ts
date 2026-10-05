@@ -16,10 +16,10 @@ import {
   startBuild,
   traitRating,
 } from './support/builder';
+import { escaped } from './support/text';
 
 const RANK = '(primary|secondary|tertiary)';
 
-const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const EXHAUSTED = 'More can be bought with freebie points on Finishing touches.';
 
 const clanPanel = (page: Page) => page.locator('[data-clan-change]');

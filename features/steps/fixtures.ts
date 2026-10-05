@@ -24,6 +24,8 @@ interface ScenarioMemory {
   asked?: string;
   /** Each place keyboard focus stopped, and whether a focus indicator was drawn there. */
   focusStops: { control: string; visible: boolean }[];
+  /** What each Tab press in a scenario reached, by the control's name. */
+  tabbedControls: string[];
 }
 
 // Every step file imports Given/When/Then from here so scenarios share one
@@ -39,6 +41,7 @@ export const test = base.extend<{ memory: ScenarioMemory }>({
       rating: '',
       healthLevel: '',
       focusStops: [],
+      tabbedControls: [],
     });
   },
 });
