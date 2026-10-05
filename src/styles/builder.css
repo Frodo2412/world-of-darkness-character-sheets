@@ -140,7 +140,13 @@
 	gap: var(--space-3) var(--space-5);
 }
 
+/* The heading, with what is left to place, stays in view down a long group. */
 .builder-group h3 {
+	position: sticky;
+	inset-block-start: var(--sticky-top, 0);
+	z-index: 1;
+	background: var(--color-page);
+	padding-block: var(--space-1);
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: space-between;

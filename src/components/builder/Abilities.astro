@@ -1,0 +1,11 @@
+---
+import { ABILITY_ALLOTMENT } from '../../domain/v20/creation/rules';
+import RankedGroup from './RankedGroup.astro';
+---
+
+<p class="field-hint">
+	Rank the groups primary, secondary and tertiary for 13, 9 and 5 dots. No Ability goes above 3 before freebie points.
+</p>
+<div class="builder-columns">
+	{ABILITY_ALLOTMENT.groups.map((group) => <RankedGroup allotment={ABILITY_ALLOTMENT} group={group} mode="creation" step="abilities" />)}
+</div>

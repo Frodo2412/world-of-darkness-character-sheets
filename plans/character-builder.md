@@ -1968,9 +1968,9 @@ Risks:
   - [x] Step 4.4: Attributes step UI and clan-change confirmation
 
 #### Wave 5
-- [ ] Slice 5: Abilities step
-  - [ ] Step 5.1: Ability allotments
-  - [ ] Step 5.2: Abilities step UI
+- [x] Slice 5: Abilities step
+  - [x] Step 5.1: Ability allotments
+  - [x] Step 5.2: Abilities step UI
 
 #### Wave 6
 - [ ] Slice 6: Advantages step
