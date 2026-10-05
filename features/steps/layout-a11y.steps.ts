@@ -1,12 +1,14 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
+import { startBuild } from './support/builder';
 import { createCharacter, openRoster, sheetAddress, sheetField } from './support/pages';
 import { expectRating, rating } from './support/ratings';
 import { characterWith, saveCharacters } from './support/seed';
 
 const WIDE = { width: 1280, height: 900 };
 const PHONE = { width: 375, height: 800 };
+const SCREEN_HEIGHT = 800;
 
 const SAVED = [
   { name: 'Lucita', clan: 'Lasombra', player: 'Ana' },
@@ -43,11 +45,13 @@ Given("a player viewing a character's sheet on a wide screen", async ({ page }) 
 });
 
 Given(
-  /^a player viewing the (roster|sheet) on a 375 pixel wide screen$/,
-  async ({ page }, which: string) => {
-    await page.setViewportSize(PHONE);
+  /^a player viewing the (roster|builder|sheet) on a (\d+) pixel wide screen$/,
+  async ({ page }, which: string, width: string) => {
+    await page.setViewportSize({ width: Number(width), height: SCREEN_HEIGHT });
     if (which === 'sheet') {
       await createCharacter(page);
+    } else if (which === 'builder') {
+      await startBuild(page);
     } else {
       await saveCharacters(page, SAVED.map(characterWith));
       await openRoster(page);
@@ -123,9 +127,15 @@ Then('every control is visible and can be activated', async ({ page }) => {
 });
 
 Given(
-  /^a player viewing the (empty roster|roster with characters|sheet|character not found|delete confirmation)$/,
+  /^a player viewing the (roster|builder|empty roster|roster with characters|sheet|character not found|delete confirmation)$/,
   async ({ page }, state: string) => {
     switch (state) {
+      case 'roster':
+        await openRoster(page);
+        break;
+      case 'builder':
+        await startBuild(page);
+        break;
       case 'empty roster':
         await openRoster(page);
         await expect(page.getByText('No characters yet')).toBeVisible();

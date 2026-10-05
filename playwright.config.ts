@@ -13,6 +13,7 @@ const testDir = defineBddConfig({
   features: [
     'features/v20-character-sheet/**/*.feature',
     'features/character-builder/**/*.feature',
+    'features/sheet-play-view-redesign/slice-1-*.feature',
   ],
   steps: 'features/steps/**/*.ts',
   missingSteps: 'fail-on-gen',

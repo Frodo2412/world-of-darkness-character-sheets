@@ -1,7 +1,8 @@
 import { expect, type Page } from '@playwright/test';
-import { Then, When } from './fixtures';
+import { Given, Then, When } from './fixtures';
 import { createCharacter, openRoster } from './support/pages';
 import { startBuild } from './support/builder';
+import { withholdStorage } from './support/storage';
 
 /** Every address a page asked for while a scenario opened it, in order. */
 const requestsByPage = new WeakMap<Page, string[]>();
@@ -69,4 +70,43 @@ Then("every request the page made went to the app's own address", async ({ page,
     return protocol !== 'data:' && protocol !== 'blob:' && origin !== new URL(baseURL!).origin;
   });
   expect(elsewhere).toEqual([]);
+});
+
+const applicationBar = (page: Page) => page.getByRole('banner');
+
+const applicationTitle = (page: Page) =>
+  applicationBar(page).getByRole('link', { name: 'Vampire: The Masquerade' });
+
+Then(
+  'the application bar shows the title {string} and the ruleset {string}',
+  async ({ page }, title: string, ruleset: string) => {
+    await expect(page.getByRole('banner')).toHaveCount(1);
+    await expect(applicationTitle(page)).toHaveText(title);
+    await expect(applicationBar(page).getByText(ruleset, { exact: true })).toBeVisible();
+  },
+);
+
+When('they activate the application title', async ({ page }) => {
+  await applicationTitle(page).click();
+});
+
+Then('they are on the roster', async ({ page }) => {
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Characters' })).toBeVisible();
+});
+
+Then('the application title is visible', async ({ page }) => {
+  await expect(applicationTitle(page)).toBeInViewport({ ratio: 1 });
+});
+
+Given('the browser does not allow the app to store data', async ({ page }) => {
+  await withholdStorage(page);
+});
+
+Then('the application bar is shown above the storage message', async ({ page }) => {
+  const message = page.getByRole('alert').filter({ hasText: 'cannot be saved in this browser' });
+  await expect(message).toBeVisible();
+  const bar = (await applicationBar(page).boundingBox())!;
+  const below = (await message.boundingBox())!;
+  expect(bar.y + bar.height).toBeLessThanOrEqual(below.y);
 });
