@@ -10,6 +10,8 @@ import {
   setText,
   textValue,
   setTrait,
+  stepBlood,
+  stepTemporaryWillpower,
   traitValue,
 } from './character';
 import {
@@ -553,6 +555,76 @@ describe('cycleHealthBox', () => {
     cycleHealthBox(original, 'hurt');
 
     expect(original).toEqual(blankCharacter('abc'));
+  });
+});
+
+describe('stepBlood', () => {
+  const withBlood = (current: number) => setTrait(blankCharacter('abc'), 'bloodPool.current', current);
+
+  test.each([
+    { current: 8, delta: -1, maximum: 13, expected: 7, why: 'spends one' },
+    { current: 8, delta: 1, maximum: 13, expected: 9, why: 'gains one' },
+    { current: 0, delta: -1, maximum: 13, expected: 0, why: 'does not go below zero' },
+    { current: 0, delta: 1, maximum: 13, expected: 1, why: 'gains from empty' },
+    { current: 13, delta: 1, maximum: 13, expected: 13, why: 'does not gain past the maximum' },
+    { current: 13, delta: -1, maximum: 13, expected: 12, why: 'spends from full' },
+    { current: 12, delta: 1, maximum: 13, expected: 13, why: 'gains up to the maximum' },
+    { current: 20, delta: 1, maximum: 13, expected: 20, why: 'leaves a stored excess as stored when gaining' },
+    { current: 20, delta: -1, maximum: 13, expected: 19, why: 'lets a stored excess fall' },
+    { current: 0, delta: 1, maximum: 0, expected: 0, why: 'gains nothing when the maximum is zero' },
+  ])('$why', ({ current, delta, maximum, expected }) => {
+    expect(stepBlood(withBlood(current), delta, maximum).bloodPool.current).toBe(expected);
+  });
+
+  test('leaves every other value as it was', () => {
+    const original = setText(withBlood(8), 'bloodPool.perTurn', '1');
+
+    expect(stepBlood(original, -1, 13)).toEqual({ ...original, bloodPool: { current: 7, perTurn: '1' } });
+  });
+
+  test('does not change the character it was given', () => {
+    const original = withBlood(8);
+
+    stepBlood(original, -1, 13);
+
+    expect(original).toEqual(withBlood(8));
+  });
+});
+
+describe('stepTemporaryWillpower', () => {
+  const withWillpower = (permanent: number, temporary: number) => {
+    const character = setTrait(blankCharacter('abc'), 'willpower.permanent', permanent);
+    return setTrait(character, 'willpower.temporary', temporary);
+  };
+
+  test.each([
+    { permanent: 6, temporary: 4, delta: -1, expected: 3, why: 'spends one' },
+    { permanent: 6, temporary: 4, delta: 1, expected: 5, why: 'regains one' },
+    { permanent: 6, temporary: 0, delta: -1, expected: 0, why: 'does not go below zero' },
+    { permanent: 6, temporary: 0, delta: 1, expected: 1, why: 'regains from empty' },
+    { permanent: 6, temporary: 6, delta: 1, expected: 6, why: 'does not regain past permanent' },
+    { permanent: 6, temporary: 5, delta: 1, expected: 6, why: 'regains up to permanent' },
+    { permanent: 6, temporary: 6, delta: -1, expected: 5, why: 'spends from full' },
+    { permanent: 3, temporary: 8, delta: 1, expected: 8, why: 'leaves a stored excess as stored when regaining' },
+    { permanent: 3, temporary: 8, delta: -1, expected: 7, why: 'lets a stored excess fall' },
+    { permanent: 0, temporary: 0, delta: 1, expected: 0, why: 'regains nothing when permanent is zero' },
+    { permanent: 0, temporary: 0, delta: -1, expected: 0, why: 'spends nothing when permanent is zero and temporary is empty' },
+  ])('$why', ({ permanent, temporary, delta, expected }) => {
+    expect(stepTemporaryWillpower(withWillpower(permanent, temporary), delta).willpower.temporary).toBe(expected);
+  });
+
+  test('leaves permanent Willpower and the rest of the character as they were', () => {
+    const original = withWillpower(6, 4);
+
+    expect(stepTemporaryWillpower(original, 1)).toEqual({ ...original, willpower: { permanent: 6, temporary: 5 } });
+  });
+
+  test('does not change the character it was given', () => {
+    const original = withWillpower(6, 4);
+
+    stepTemporaryWillpower(original, -1);
+
+    expect(original).toEqual(withWillpower(6, 4));
   });
 });
 

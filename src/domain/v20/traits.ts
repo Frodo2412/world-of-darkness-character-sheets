@@ -128,13 +128,14 @@ export const VIRTUES = [
   { key: 'courage', label: 'Courage' },
 ] as const;
 
+/** `penalty` is the sheet's printed text; `dicePenalty` is the same number, for arithmetic. Incapacitated has none. */
 export const HEALTH_LEVELS = [
-  { key: 'bruised', label: 'Bruised', penalty: '' },
-  { key: 'hurt', label: 'Hurt', penalty: '-1' },
-  { key: 'injured', label: 'Injured', penalty: '-1' },
-  { key: 'wounded', label: 'Wounded', penalty: '-2' },
-  { key: 'mauled', label: 'Mauled', penalty: '-2' },
-  { key: 'crippled', label: 'Crippled', penalty: '-5' },
+  { key: 'bruised', label: 'Bruised', penalty: '', dicePenalty: 0 },
+  { key: 'hurt', label: 'Hurt', penalty: '-1', dicePenalty: 1 },
+  { key: 'injured', label: 'Injured', penalty: '-1', dicePenalty: 1 },
+  { key: 'wounded', label: 'Wounded', penalty: '-2', dicePenalty: 2 },
+  { key: 'mauled', label: 'Mauled', penalty: '-2', dicePenalty: 2 },
+  { key: 'crippled', label: 'Crippled', penalty: '-5', dicePenalty: 5 },
   { key: 'incapacitated', label: 'Incapacitated', penalty: '' },
 ] as const;
 

@@ -185,3 +185,27 @@ export function cycleHealthBox(character: V20Character, level: HealthLevelKey): 
   const next = DAMAGE_TYPES[(position + 1) % DAMAGE_TYPES.length];
   return { ...character, health: { ...character.health, [level]: next } };
 }
+
+/**
+ * One step of a resource that is held between 0 and a bound: never below 0 and
+ * never raised above the bound. A stored value already above the bound is left
+ * as stored and can only fall.
+ */
+function boundedStep(current: number, delta: number, bound: number): number {
+  return Math.max(0, Math.min(current + delta, Math.max(current, bound)));
+}
+
+/** Spends (negative) or gains (positive) blood; `maximum` is the most it may be raised to. */
+export function stepBlood(character: V20Character, delta: number, maximum: number): V20Character {
+  const current = character.bloodPool.current;
+  return { ...character, bloodPool: { ...character.bloodPool, current: boundedStep(current, delta, maximum) } };
+}
+
+/** Spends or regains temporary Willpower, which may be raised no higher than permanent Willpower. */
+export function stepTemporaryWillpower(character: V20Character, delta: number): V20Character {
+  const { permanent, temporary } = character.willpower;
+  return {
+    ...character,
+    willpower: { ...character.willpower, temporary: boundedStep(temporary, delta, permanent) },
+  };
+}
