@@ -1184,9 +1184,9 @@ graph TD
 ### Slices (grouped by wave)
 
 #### Wave 1
-- [ ] Slice 1: Shared look and application bar
-  - [ ] Step 1.1: Replace the design tokens and self-host the typefaces
-  - [ ] Step 1.2: Application bar on every page
+- [x] Slice 1: Shared look and application bar
+  - [x] Step 1.1: Replace the design tokens and self-host the typefaces
+  - [x] Step 1.2: Application bar on every page
 
 #### Wave 2
 - [ ] Slice 2: Play and edit modes with character identity
