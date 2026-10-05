@@ -1,3 +1,5 @@
+import type { SaveResult } from '../storage/characterStore';
+
 const region = document.querySelector<HTMLElement>('#status-message')!;
 // Not a live region: a save follows every change. A refused save is announced
 // by the status message instead.
@@ -20,14 +22,18 @@ export function clearStatus(): void {
   region.textContent = '';
 }
 
-/** Reports in the application bar that the latest change is stored. */
-export function showSaved(): void {
-  drawSaveStatus(SAVED, 'saved');
-}
-
-/** Reports in the application bar that the latest change could not be stored. */
-export function showNotSaved(): void {
-  drawSaveStatus(NOT_SAVED, 'not-saved');
+/**
+ * Reports the outcome of a save: the application bar says whether the latest
+ * change is stored, and a refusal is also announced by the status message.
+ */
+export function reportSave(result: SaveResult): void {
+  if (result.status === 'failed') {
+    drawSaveStatus(NOT_SAVED, 'not-saved');
+    showStatus('Changes not saved. This browser refused to store your latest changes.');
+  } else {
+    drawSaveStatus(SAVED, 'saved');
+    clearStatus();
+  }
 }
 
 // The words carry the meaning; the dot's shape (see global.css) echoes it.

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { blankCharacter, setHeaderField } from './character';
-import { generationLabel, generationNumber, identitySummary, monogram, ordinal } from './identity';
+import { generationLabel, generationNumber, identitySummary, monogram, ordinal, temperament } from './identity';
 import type { HeaderField } from './traits';
 
 describe('ordinal', () => {
@@ -77,6 +77,18 @@ describe('monogram', () => {
     expect(monogram('  Ana   Ruiz  ')).toBe('AR');
   });
 
+  test('keeps Hangul syllables whole', () => {
+    expect(monogram('김 민준')).toBe('김민');
+  });
+
+  test('skips quotes around a nickname', () => {
+    expect(monogram('"Mad" Jack')).toBe('MJ');
+  });
+
+  test('takes only the first and last of three words', () => {
+    expect(monogram('Anne Marie Lopez')).toBe('AL');
+  });
+
   test('is empty for a blank name', () => {
     expect(monogram('')).toBe('');
     expect(monogram('   ')).toBe('');
@@ -103,5 +115,27 @@ describe('identitySummary', () => {
 
   test('is empty when nothing is entered', () => {
     expect(identitySummary(blankCharacter('c1'))).toBe('');
+  });
+});
+
+describe('temperament', () => {
+  const withHeader = (fields: Partial<Record<HeaderField, string>>) =>
+    (Object.entries(fields) as [HeaderField, string][]).reduce(
+      (character, [key, value]) => setHeaderField(character, key, value),
+      blankCharacter('c1'),
+    );
+
+  test('joins nature and demeanor', () => {
+    expect(temperament(withHeader({ nature: 'Architect', demeanor: ' Judge ' }))).toBe('Architect / Judge');
+  });
+
+  test('shows the one that is entered', () => {
+    expect(temperament(withHeader({ nature: 'Architect' }))).toBe('Architect');
+    expect(temperament(withHeader({ demeanor: 'Judge' }))).toBe('Judge');
+  });
+
+  test('is empty when neither is entered', () => {
+    expect(temperament(withHeader({ nature: '  ' }))).toBe('');
+    expect(temperament(blankCharacter('c1'))).toBe('');
   });
 });

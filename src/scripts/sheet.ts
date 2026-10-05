@@ -21,8 +21,9 @@ import {
   type CharacterStore,
 } from '../storage/characterStore';
 import { drawIdentity } from './sheet/identityCard';
-import { createMode, type SheetMode } from './sheet/mode';
-import { STORAGE_UNAVAILABLE, clearStatus, showNotSaved, showSaved, showStatus } from './status';
+import { createMode, type Mode, type SheetMode } from './sheet/mode';
+import { drawRating } from './sheet/ratingDraw';
+import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
 
 type Update = (character: V20Character) => V20Character;
 
@@ -47,46 +48,13 @@ function showText(input: TextInput, text: string): void {
   if (input.value !== text) input.value = text;
 }
 
-function setAttr(element: Element, name: string, value: string): void {
-  if (element.getAttribute(name) !== value) element.setAttribute(name, value);
-}
-
-// Until the live resources are rebuilt, temporary Willpower and Blood Pool stay
-// editable in play mode.
-const LIVE_IN_PLAY: readonly string[] = ['willpower.temporary', 'bloodPool.current'];
-
-// An attribute or ability drawn read-only has room for five dots when its rating
-// fits in five, else all ten.
-const hasPlayScale = (ref: string): boolean => /^(attributes|abilities|customAbilities)\./.test(ref);
-
-interface RatingView {
-  ref: string;
-  /** What the rating is called: the slider's name, and the start of a read-only rating's. */
-  label: string;
-  value: number;
-  storedMax: number;
-  mode: SheetMode;
-}
-
-/** Draws a rating for the mode: a slider to edit, an image with a text alternative to play. */
-function drawRating(rating: RatingControl, { ref, label, value, storedMax, mode }: RatingView): void {
-  if (LIVE_IN_PLAY.includes(ref)) {
-    rating.value = value;
-    return;
-  }
-  const readonly = mode === 'play';
-  setAttr(rating, 'max', String(readonly && hasPlayScale(ref) && value <= 5 ? 5 : storedMax));
-  setAttr(rating, 'name', label);
-  rating.value = value;
-  rating.toggleAttribute('readonly', readonly);
-  if (!readonly) setAttr(rating, 'aria-label', label);
-}
-
-function render(character: V20Character, mode: SheetMode): void {
-  drawIdentity(sheet, character);
+function drawTextInputs(character: V20Character): void {
   for (const input of textInputs) {
     showText(input, textValue(character, textFieldOf(input)));
   }
+}
+
+function drawTraitRatings(character: V20Character, mode: SheetMode): void {
   for (const rating of traitRatings) {
     const ref = traitOf(rating);
     drawRating(rating, {
@@ -97,10 +65,15 @@ function render(character: V20Character, mode: SheetMode): void {
       mode,
     });
   }
-  healthTrack.damage = character.health;
+}
+
+function drawRowNames(character: V20Character): void {
   for (const input of rowNames) {
     showText(input, namedRow(character, input.dataset.rowName as NamedRowRef)?.name ?? '');
   }
+}
+
+function drawRowRatings(character: V20Character, mode: SheetMode): void {
   for (const rating of rowRatings) {
     const ref = rating.dataset.rowRating as NamedRowRef;
     const row = namedRow(character, ref);
@@ -117,37 +90,38 @@ function render(character: V20Character, mode: SheetMode): void {
   }
 }
 
+function render(character: V20Character, mode: SheetMode): void {
+  drawIdentity(sheet, character);
+  drawTextInputs(character);
+  drawTraitRatings(character, mode);
+  healthTrack.damage = character.health;
+  drawRowNames(character);
+  drawRowRatings(character, mode);
+}
+
 // The roster opens a new character's sheet with this marker: start editing, and do
 // not keep the marker, so a reload is play mode again.
 const EDIT_MARKER = '#edit';
 
-function showSheet(loaded: V20Character, store: CharacterStore): void {
-  let character = loaded;
+function startMode(): Mode {
   const startsEditing = window.location.hash === EDIT_MARKER;
   if (startsEditing) {
     history.replaceState(null, '', window.location.pathname + window.location.search);
   }
-  const mode = createMode(sheet, startsEditing ? 'edit' : 'play');
+  return createMode(sheet, startsEditing ? 'edit' : 'play');
+}
 
-  // Only the identity and the live health track are read in play mode: every other
-  // text field is something to edit.
-  for (const input of [...textInputs, ...rowNames]) {
+// TEMPORARY: until the later slices rebuild each card, every text field the play
+// view does not read is hidden in play mode. Only the identity and the live
+// health track are read there. Delete this with the last legacy input.
+function markLegacyInputsEditOnly(): void {
+  for (const input of textInputs) {
     (input.closest('label') ?? input).dataset.sheetModeOnly = 'edit';
   }
+}
 
-  /** The one path every edit takes: update the model, redraw, save. */
-  function apply(update: Update): void {
-    character = update(character);
-    render(character, mode.current());
-    if (store.save(character).status === 'failed') {
-      showNotSaved();
-      showStatus('Changes not saved. This browser refused to store your latest changes.');
-    } else {
-      showSaved();
-      clearStatus();
-    }
-  }
-
+/** Wires every control on the sheet to `apply`, the one path an edit takes. */
+function bindEditListeners(apply: (update: Update) => void): void {
   for (const input of textInputs) {
     input.addEventListener('input', () => {
       apply((current) => setText(current, textFieldOf(input), input.value));
@@ -179,6 +153,20 @@ function showSheet(loaded: V20Character, store: CharacterStore): void {
     const { level } = (event as CustomEvent<HealthChange>).detail;
     apply((current) => cycleHealthBox(current, level));
   });
+}
+
+function showSheet(loaded: V20Character, store: CharacterStore): void {
+  let character = loaded;
+  const mode = startMode();
+  markLegacyInputsEditOnly();
+
+  /** The one path every edit takes: update the model, redraw, save. */
+  function apply(update: Update): void {
+    character = update(character);
+    render(character, mode.current());
+    reportSave(store.save(character));
+  }
+  bindEditListeners(apply);
 
   // Another tab changed or deleted this character: what this page holds is stale,
   // and saving it would undo that. Start again from what is stored now.

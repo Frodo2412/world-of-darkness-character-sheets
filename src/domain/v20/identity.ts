@@ -24,19 +24,31 @@ export function generationLabel(text: string): string {
 
 /** The first letters of the first and last words, without accents: "Éloïse Voss" is "EV". */
 export function monogram(name: string): string {
+  // Recompose after stripping marks so scripts such as Hangul are not left decomposed.
   const words = name
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
+    .normalize('NFC')
     .split(/\s+/)
     .filter(Boolean);
   const ends = words.length > 1 ? [words[0], words[words.length - 1]] : words;
-  return ends.map((word) => Array.from(word)[0]).join('').toUpperCase();
+  return ends
+    .map((word) => word.match(/[\p{L}\p{N}]/u)?.[0] ?? '')
+    .join('')
+    .toUpperCase();
 }
+
+const joinNonBlank = (parts: readonly string[], separator: string): string =>
+  parts.map((part) => part.trim()).filter((part) => part !== '').join(separator);
 
 /** Clan, generation and concept on one line, leaving out whichever is blank. */
 export function identitySummary(character: V20Character): string {
   const { clan, generation, concept } = character.header;
-  return [clan.trim(), generationLabel(generation), concept.trim()]
-    .filter((part) => part !== '')
-    .join(' · ');
+  return joinNonBlank([clan, generationLabel(generation), concept], ' · ');
+}
+
+/** Nature and Demeanor on one line, leaving out whichever is blank. */
+export function temperament(character: V20Character): string {
+  const { nature, demeanor } = character.header;
+  return joinNonBlank([nature, demeanor], ' / ');
 }

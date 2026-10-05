@@ -101,6 +101,15 @@
 	border-block-end: 1px solid var(--color-line);
 }
 
+/* A control scrolled into view while editing stops below the strip, not under it.
+   The strip is the only sticky element on the sheet (the application bar scrolls
+   away): its padding, a control-sized button and its border, plus some air. The
+   strip's own button is left out: it sits in that margin, so scrolling it into
+   view would send the page back up. */
+.sheet[data-sheet-mode='edit'] :is(input, textarea, select, button, dot-rating, [tabindex]):not(.edit-strip *) {
+	scroll-margin-block-start: calc(var(--control-size) + var(--space-2) * 2 + var(--space-4));
+}
+
 .edit-badge {
 	background: var(--color-surface);
 	border: 1px solid var(--color-line);
