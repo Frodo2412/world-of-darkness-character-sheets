@@ -1952,9 +1952,9 @@ Risks:
   - [x] Step 1.3: Builder shell, message channels and the settings step
 
 #### Wave 2
-- [ ] Slice 2: Concept step and step navigation
+- [x] Slice 2: Concept step and step navigation
   - [x] Step 2.1: Concept data and clan catalogue
-  - [ ] Step 2.2: Concept step and full step navigation
+  - [x] Step 2.2: Concept step and full step navigation
 
 #### Wave 3
 - [ ] Slice 3: Builds on the roster

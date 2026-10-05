@@ -11,6 +11,14 @@ const root = document.querySelector<HTMLElement>('#builder')!;
 
 function showBuilder(loaded: V20Build, store: BuildStore): void {
   let build = loaded;
+  const router = startSteps(root, () => build.concept.name.trim() || 'Unnamed build');
+
+  function render(): void {
+    const current = report(build);
+    renderControls(root, current);
+    router.renderStatuses(current);
+    router.updateTitle();
+  }
 
   /** The one path every change takes: update the model, redraw, save. */
   function commit(update: Update, control: HTMLElement): void {
@@ -26,13 +34,12 @@ function showBuilder(loaded: V20Build, store: BuildStore): void {
     }
     build = result.build;
     clearNotices(root);
-    renderControls(root, report(build));
+    render();
     reportSave(store.save(build).status);
   }
 
   wireControls(root, commit);
-  renderControls(root, report(build));
-  startSteps(root, () => 'Unnamed build');
+  render();
 
   // Another tab changed or removed this build: what this page holds is stale,
   // and saving it would undo that. Start again from what is stored now.

@@ -1,6 +1,8 @@
 ---
-import StepNav from '../components/builder/StepNav.astro';
+import Concept from '../components/builder/Concept.astro';
 import Settings from '../components/builder/Settings.astro';
+import StepNav from '../components/builder/StepNav.astro';
+import StepPanel from '../components/builder/StepPanel.astro';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
 import '../styles/builder.css';
@@ -13,7 +15,12 @@ import '../styles/builder.css';
 		<div id="builder" class="builder" hidden>
 			<h1>Build a character</h1>
 			<StepNav />
-			<Settings />
+			<StepPanel step="settings"><Settings /></StepPanel>
+			<StepPanel step="concept"><Concept /></StepPanel>
+			<StepPanel step="attributes" />
+			<StepPanel step="abilities" />
+			<StepPanel step="advantages" />
+			<StepPanel step="finishing" />
 		</div>
 		<div id="build-unreadable" hidden>
 			<h1>Build could not be read</h1>

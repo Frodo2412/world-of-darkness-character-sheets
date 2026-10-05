@@ -73,6 +73,11 @@
 	min-block-size: var(--control-size);
 	padding: var(--space-1) var(--space-2);
 	inline-size: 100%;
+}
+
+/* Choices and numbers are short; free text gets the full width. */
+.builder-field select,
+.builder-field input[inputmode='numeric'] {
 	max-inline-size: 12rem;
 }
 
@@ -118,4 +123,12 @@
 	margin: 0;
 	font-family: var(--font-display);
 	font-size: var(--text-h2);
+}
+
+.step-pager {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: var(--space-2);
+	margin-block-start: var(--space-5);
 }

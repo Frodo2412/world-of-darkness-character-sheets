@@ -1,0 +1,40 @@
+---
+// The sheet's header fields the concept step fills, in the sheet's order.
+// Nature and Demeanor suggest Archetypes but accept any text.
+import { CONCEPT_FIELDS } from '../../domain/v20/creation/build';
+import { ARCHETYPES, CLAN_NAMES } from '../../domain/v20/creation/rules';
+import { HEADER_FIELDS } from '../../domain/v20/traits';
+
+const fields = HEADER_FIELDS.filter((field) => (CONCEPT_FIELDS as readonly string[]).includes(field.key));
+const isArchetype = (key: string) => key === 'nature' || key === 'demeanor';
+---
+
+<div class="builder-fields">
+	{
+		fields.map((field) => (
+			<div class="builder-field">
+				<label for={`concept-${field.key}`}>{field.label}</label>
+				<input
+					type="text"
+					id={`concept-${field.key}`}
+					data-concept={field.key}
+					autocomplete="off"
+					list={isArchetype(field.key) ? 'archetypes' : undefined}
+					aria-describedby={isArchetype(field.key) ? 'archetype-hint' : undefined}
+				/>
+			</div>
+		))
+	}
+	<p id="archetype-hint" class="field-hint">For Nature and Demeanor, pick a suggested Archetype or write your own.</p>
+	<datalist id="archetypes">
+		{ARCHETYPES.map((archetype) => <option value={archetype} />)}
+	</datalist>
+	<div class="builder-field">
+		<label for="concept-clan">Clan</label>
+		<select id="concept-clan" data-clan aria-describedby="concept-clan-notice">
+			<option value="">Choose a clan</option>
+			{CLAN_NAMES.map((clan) => <option value={clan}>{clan}</option>)}
+		</select>
+		<p id="concept-clan-notice" class="field-notice" role="status" data-notice></p>
+	</div>
+</div>

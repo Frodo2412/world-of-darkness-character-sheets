@@ -1,0 +1,25 @@
+---
+// One builder step: a heading-led region with Previous / Next buttons naming
+// the neighbouring steps. The step router shows one panel at a time.
+import type { BuildStep } from '../../domain/v20/creation/progress';
+import { STEP_LIST } from './stepList';
+
+interface Props {
+	step: BuildStep;
+}
+
+const { step } = Astro.props;
+const index = STEP_LIST.findIndex((entry) => entry.step === step);
+const { title } = STEP_LIST[index];
+const previous = STEP_LIST[index - 1];
+const next = STEP_LIST[index + 1];
+---
+
+<section class="builder-step" data-step={step} aria-labelledby={`step-${step}-heading`} hidden>
+	<h2 id={`step-${step}-heading`} tabindex="-1">{title}</h2>
+	<slot />
+	<div class="step-pager">
+		{previous && <button type="button" data-step-go={previous.step}>Previous: {previous.title}</button>}
+		{next && <button type="button" data-step-go={next.step}>Next: {next.title}</button>}
+	</div>
+</section>

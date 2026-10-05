@@ -45,13 +45,49 @@ export async function setBaseGeneration(page: Page, label: string): Promise<void
 
 let nextSeedId = 0;
 
-/** A blank build with the given settings, for arranging saved data. */
-export function buildWith(settings: Partial<V20Build['settings']> = {}): V20Build {
+interface BuildValues {
+  settings?: Partial<V20Build['settings']>;
+  concept?: Partial<V20Build['concept']>;
+  clan?: string;
+}
+
+/** A blank build with the given values, for arranging saved data. */
+export function buildWith(values: BuildValues = {}): V20Build {
   nextSeedId += 1;
   const build = blankBuild(`seed-build-${String(nextSeedId).padStart(4, '0')}`);
-  Object.assign(build.settings, settings);
+  Object.assign(build.settings, values.settings);
+  Object.assign(build.concept, values.concept);
+  if (values.clan !== undefined) build.clan = values.clan;
   return build;
 }
+
+/** Saves the builds, then opens the first in the builder. */
+export async function openSavedBuild(page: Page, build: V20Build): Promise<void> {
+  await saveBuilds(page, [build]);
+  await page.goto(builderAddress(build.id));
+  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+}
+
+export const stepNav = (page: Page): Locator =>
+  page.getByRole('navigation', { name: 'Build steps' });
+
+export const stepHeading = (page: Page, title: string): Locator =>
+  page.getByRole('heading', { name: title, level: 2, exact: true });
+
+/** Opens a step from the step navigation, unless it is already shown. */
+export async function openStep(page: Page, title: string): Promise<void> {
+  if (!(await stepHeading(page, title).isVisible())) {
+    await stepNav(page).getByRole('link', { name: title, exact: true }).click();
+  }
+  await expect(stepHeading(page, title)).toBeVisible();
+}
+
+/** A builder field by its label; a step region of the same name is not a field. */
+export const builderField = (page: Page, label: string): Locator =>
+  page
+    .locator('#builder')
+    .getByLabel(label, { exact: true })
+    .and(page.locator('input, select, textarea'));
 
 /**
  * Puts builds into the browser's storage as if they had been saved earlier.

@@ -10,7 +10,7 @@ const PHONE = { width: 375, height: 800 };
 
 const CONTROL_ROLES = 'textbox|combobox|slider|button|link|checkbox|radio|spinbutton';
 const CONTROL_LINE = new RegExp(`^\\s*- (?:${CONTROL_ROLES})\\b`);
-const CONTROL_NAME = new RegExp(`^\\s*- (?:${CONTROL_ROLES}) "([^"]+)"`);
+const CONTROL_NAME = new RegExp(`^\\s*- (${CONTROL_ROLES}) "([^"]+)"`);
 
 When(/^the (.+) step is checked$/, async ({ page, memory }, step: string) => {
   const heading = page.getByRole('heading', { name: step, level: 2, exact: false });
@@ -39,11 +39,14 @@ Then('every control has a unique, non-empty accessible name', async ({ page }) =
   // The accessibility tree as assistive technology receives it, one node per line.
   const tree = await page.locator('main').ariaSnapshot();
   const lines = tree.split('\n').filter((line) => CONTROL_LINE.test(line));
-  const names = lines.map((line) => CONTROL_NAME.exec(line)?.[1]);
+  const named = lines.map((line) => CONTROL_NAME.exec(line));
 
   expect(lines.length).toBeGreaterThan(0);
-  expect(lines.filter((_, index) => !names[index]?.trim())).toEqual([]);
-  expect(names.filter((name, index) => names.indexOf(name) !== index)).toEqual([]);
+  expect(lines.filter((_, index) => !named[index]?.[2].trim())).toEqual([]);
+  // A role is announced with its name, so the "Concept" step link and the
+  // "Concept" text field are told apart; two links of one name are not.
+  const identities = named.map((match) => `${match![1]} "${match![2]}"`);
+  expect(identities.filter((identity, index) => identities.indexOf(identity) !== index)).toEqual([]);
 });
 
 Then('at 375 pixels wide the page does not scroll horizontally', async ({ page }) => {
