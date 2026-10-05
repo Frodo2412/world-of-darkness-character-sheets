@@ -5,15 +5,18 @@ import {
   type CharacterStore,
   type RosterEntry,
 } from '../storage/characterStore';
+import { createBuildStore, type BuildStore } from '../storage/buildStore';
 import { STORAGE_UNAVAILABLE, clearStatus, showStatus } from './status';
 
 const list = document.querySelector<HTMLUListElement>('#roster')!;
 const emptyMessage = document.querySelector<HTMLParagraphElement>('#roster-empty')!;
 const newCharacterButton = document.querySelector<HTMLButtonElement>('#new-character')!;
+const buildButton = document.querySelector<HTMLButtonElement>('#build-character')!;
 const deleteDialog = document.querySelector<HTMLDialogElement>('#delete-dialog')!;
 const deleteMessage = document.querySelector<HTMLParagraphElement>('#delete-dialog-message')!;
 
 const sheetUrl = (id: string): string => `/sheet/?id=${encodeURIComponent(id)}`;
+const builderUrl = (id: string): string => `/build/?id=${encodeURIComponent(id)}`;
 
 function detail(label: string, value: string): HTMLElement[] {
   if (value === '') return [];
@@ -22,7 +25,7 @@ function detail(label: string, value: string): HTMLElement[] {
   return [element];
 }
 
-function start(store: CharacterStore): void {
+function start(store: CharacterStore, builds: BuildStore): void {
   function deleteButton(id: string, name: string, question: string): HTMLButtonElement {
     const button = document.createElement('button');
     button.type = 'button';
@@ -115,6 +118,16 @@ function start(store: CharacterStore): void {
     window.location.assign(sheetUrl(result.character.id));
   });
 
+  buildButton.addEventListener('click', () => {
+    const result = builds.create();
+    if (result.status === 'failed') {
+      showStatus('The new build could not be saved. This browser refused to store it.');
+      return;
+    }
+    clearStatus();
+    window.location.assign(builderUrl(result.build.id));
+  });
+
   // A page restored from the back/forward cache must show characters created since.
   window.addEventListener('pageshow', render);
 }
@@ -123,6 +136,7 @@ const storage = browserStorage();
 if (storage === undefined) {
   showStatus(STORAGE_UNAVAILABLE);
   newCharacterButton.disabled = true;
+  buildButton.disabled = true;
 } else {
-  start(createCharacterStore(storage));
+  start(createCharacterStore(storage), createBuildStore(storage));
 }

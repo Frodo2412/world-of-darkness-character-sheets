@@ -1,0 +1,20 @@
+---
+// The builder's steps, in order. The current one is marked with
+// aria-current="step" by the step router; each has a text status beside it.
+const STEPS = [{ id: 'settings', title: 'Settings' }];
+---
+
+<nav class="step-nav" aria-label="Build steps">
+	<ol>
+		{
+			STEPS.map((step) => (
+				<li>
+					<a href={`#${step.id}`} data-step-link={step.id}>
+						{step.title}
+					</a>
+					<span class="step-status" data-step-status={step.id} />
+				</li>
+			))
+		}
+	</ol>
+</nav>

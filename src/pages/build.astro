@@ -1,0 +1,34 @@
+---
+import StepNav from '../components/builder/StepNav.astro';
+import Settings from '../components/builder/Settings.astro';
+import StatusMessage from '../components/StatusMessage.astro';
+import Layout from '../layouts/Layout.astro';
+import '../styles/builder.css';
+---
+
+<Layout title="Build a character">
+	<main>
+		<p><a href="/">Back to characters</a></p>
+		<StatusMessage />
+		<div id="builder" class="builder" hidden>
+			<h1>Build a character</h1>
+			<StepNav />
+			<Settings />
+		</div>
+		<div id="build-unreadable" hidden>
+			<h1>Build could not be read</h1>
+			<p>The saved data for this build is damaged or was saved by a different version. It has not been changed.</p>
+			<p>You can delete it or build a new character from your characters.</p>
+			<p><a href="/">Go to your characters</a></p>
+		</div>
+		<div id="build-not-found" hidden>
+			<h1>Build not found</h1>
+			<p>Build not found. It may have been finished or deleted.</p>
+			<p><a href="/">Go to your characters</a></p>
+		</div>
+	</main>
+</Layout>
+
+<script>
+	import '../scripts/builder';
+</script>

@@ -9,7 +9,13 @@ import {
 } from './support/pages';
 import { rating, setRating } from './support/ratings';
 import { characterWith, saveCharacters } from './support/seed';
-import { overwriteRecord, storedText } from './support/storage';
+import {
+  acceptWrites,
+  overwriteRecord,
+  refuseWrites,
+  storedText,
+  withholdStorage,
+} from './support/storage';
 
 const NOT_JSON = '{"id": "broken", "header": {"name": "Fat';
 
@@ -108,23 +114,6 @@ Then('it is no longer reported', async ({ page, memory }) => {
 
 const savingProblem = (page: Page) => page.getByRole('alert').filter({ hasText: /changes not saved/i });
 
-/** Makes every write to storage fail the way a full or blocked storage does. */
-async function refuseWrites(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    const original = Storage.prototype.setItem;
-    (window as unknown as { restoreStorage: () => void }).restoreStorage = () => {
-      Storage.prototype.setItem = original;
-    };
-    Storage.prototype.setItem = () => {
-      throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
-    };
-  });
-}
-
-async function acceptWrites(page: Page): Promise<void> {
-  await page.evaluate(() => (window as unknown as { restoreStorage: () => void }).restoreStorage());
-}
-
 async function change(page: Page, entered: Map<string, string>, label: string, text: string) {
   await sheetField(page, label).fill(text);
   entered.set(label, text);
@@ -142,13 +131,7 @@ Given('the "changes not saved" message is shown', async ({ page, memory }) => {
 });
 
 Given('the browser provides no storage to the page', async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(window, 'localStorage', {
-      get() {
-        throw new DOMException('The operation is insecure.', 'SecurityError');
-      },
-    });
-  });
+  await withholdStorage(page);
 });
 
 When("they change the character's Name", async ({ page, memory }) => {
