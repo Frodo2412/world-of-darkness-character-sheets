@@ -4,7 +4,7 @@
 
 import type { RatingChange, RatingControl } from '../../components/controls/rating-control';
 import type { BuildTraitRef, ConceptField, V20Build } from '../../domain/v20/creation/build';
-import type { BuildReport } from '../../domain/v20/creation/progress';
+import { BUILD_STEPS, type BuildReport } from '../../domain/v20/creation/progress';
 import type { UpdateResult } from '../../domain/v20/creation/result';
 import { ordinal } from '../../domain/v20/creation/limits';
 import {
@@ -165,6 +165,8 @@ function wireDisciplines(root: HTMLElement, { commit }: Wiring): void {
   });
 }
 
+const stepTitle = (step: string): string => BUILD_STEPS.find((entry) => entry.step === step)?.title ?? step;
+
 const slug = (text: string): string => text.replace(/[^a-zA-Z0-9]/g, '-');
 
 function disciplineRow(container: HTMLElement, ref: BuildTraitRef, label: string, removable: boolean): HTMLElement {
@@ -221,6 +223,37 @@ function renderDisciplines(root: HTMLElement, report: BuildReport): void {
   for (const hint of root.querySelectorAll<HTMLElement>('[data-needs-clan]')) hint.hidden = !disciplines.needsClan;
   for (const add of root.querySelectorAll<HTMLElement>('[data-discipline-add][data-mode="creation"]')) {
     add.hidden = !disciplines.choosesOwn;
+  }
+}
+
+function renderOutstanding(root: HTMLElement, report: BuildReport): void {
+  const { outstanding } = report;
+  for (const intro of root.querySelectorAll<HTMLElement>('[data-outstanding-intro]')) {
+    showReadout(intro, outstanding.length === 0 ? 'Nothing outstanding.' : 'Before finishing:');
+  }
+  for (const list of root.querySelectorAll<HTMLElement>('[data-outstanding-list]')) {
+    const key = JSON.stringify(outstanding);
+    if (list.dataset.items === key) continue;
+    list.dataset.items = key;
+    list.replaceChildren(
+      ...outstanding.map((item) => {
+        const link = document.createElement('a');
+        link.href = `#${item.step}`;
+        link.dataset.stepGo = item.step;
+        link.textContent = item.message;
+        const where = document.createElement('span');
+        where.className = 'outstanding-step';
+        where.dataset.outstandingStep = item.step;
+        where.textContent = ` (${stepTitle(item.step)})`;
+        const entry = document.createElement('li');
+        entry.append(link, where);
+        return entry;
+      }),
+    );
+    list.hidden = outstanding.length === 0;
+  }
+  for (const button of root.querySelectorAll<HTMLButtonElement>('[data-finish]')) {
+    button.setAttribute('aria-disabled', String(outstanding.length > 0));
   }
 }
 
@@ -299,6 +332,7 @@ export function renderControls(root: HTMLElement, report: BuildReport): void {
   }
   renderDisciplines(root, report);
   renderFreebies(root, report);
+  renderOutstanding(root, report);
   for (const control of root.querySelectorAll<RatingControl>('[data-build-trait]')) {
     renderRating(control, report);
   }

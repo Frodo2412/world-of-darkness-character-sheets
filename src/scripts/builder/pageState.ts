@@ -3,10 +3,11 @@
 
 import type { V20Build } from '../../domain/v20/creation/build';
 import { createBuildStore, type BuildStore } from '../../storage/buildStore';
+import { createCharacterStore, type CharacterStore } from '../../storage/characterStore';
 import { browserStorage } from '../../storage/storagePort';
 
 export type PageState =
-  | { kind: 'loaded'; build: V20Build; store: BuildStore }
+  | { kind: 'loaded'; build: V20Build; store: BuildStore; characters: CharacterStore }
   | { kind: 'unavailable' }
   | { kind: 'not-found' }
   | { kind: 'unreadable' };
@@ -22,7 +23,7 @@ export function pageState(): PageState {
   const result = store.load(id);
   switch (result.status) {
     case 'found':
-      return { kind: 'loaded', build: result.build, store };
+      return { kind: 'loaded', build: result.build, store, characters: createCharacterStore(storage) };
     case 'unreadable':
       return { kind: 'unreadable' };
     case 'not-found':

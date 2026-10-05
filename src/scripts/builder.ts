@@ -3,6 +3,8 @@ import type { V20Build } from '../domain/v20/creation/build';
 import { report } from '../domain/v20/creation/progress';
 import type { UpdateResult } from '../domain/v20/creation/result';
 import { buildKeyFor, type BuildStore } from '../storage/buildStore';
+import type { CharacterStore } from '../storage/characterStore';
+import { wireFinish } from './builder/finish';
 import { clearNotices, reportSave, showNotices, showRefusal } from './builder/messages';
 import { pageState, showView } from './builder/pageState';
 import { startSteps } from './builder/steps';
@@ -11,7 +13,7 @@ import { STORAGE_UNAVAILABLE, showStatus } from './status';
 
 const root = document.querySelector<HTMLElement>('#builder')!;
 
-function showBuilder(loaded: V20Build, store: BuildStore): void {
+function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterStore): void {
   let build = loaded;
   const router = startSteps(root, () => build.concept.name.trim() || 'Unnamed build');
 
@@ -46,6 +48,15 @@ function showBuilder(loaded: V20Build, store: BuildStore): void {
   }
 
   wireControls(root, { commit, current: () => build });
+  wireFinish(root, () => build, store, characters);
+
+  // "Review and finish" on every step opens Finishing touches at the outstanding list.
+  root.addEventListener('click', (event) => {
+    const link = (event.target as Element).closest('[data-review]');
+    if (!link) return;
+    event.preventDefault();
+    router.open('finishing', root.querySelector<HTMLElement>('[data-outstanding]')!);
+  });
   render();
 
   // Another tab changed or removed this build: what this page holds is stale,
@@ -67,7 +78,7 @@ window.addEventListener('pageshow', (event) => {
 const state = pageState();
 switch (state.kind) {
   case 'loaded':
-    showBuilder(state.build, state.store);
+    showBuilder(state.build, state.store, state.characters);
     break;
   case 'unavailable':
     showView('none');

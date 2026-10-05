@@ -1987,10 +1987,10 @@ Risks:
   - [x] Step 7.4: Finishing touches step UI
 
 #### Wave 8
-- [ ] Slice 8: Finish a build
-  - [ ] Step 8.1: Outstanding items
-  - [ ] Step 8.2: Build to character, and the finish transaction
-  - [ ] Step 8.3: Review and finish
+- [x] Slice 8: Finish a build
+  - [x] Step 8.1: Outstanding items
+  - [x] Step 8.2: Build to character, and the finish transaction
+  - [x] Step 8.3: Review and finish
 
 #### Wave 9
 - [ ] Slice 9: Whole-builder verification

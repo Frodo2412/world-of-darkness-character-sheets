@@ -21,5 +21,6 @@ const next = STEP_LIST[index + 1];
 	<div class="step-pager">
 		{previous && <button type="button" data-step-go={previous.step}>Previous: {previous.title}</button>}
 		{next && <button type="button" data-step-go={next.step}>Next: {next.title}</button>}
+		{step !== 'finishing' && <a href="#finishing" class="review-link" data-review>Review and finish</a>}
 	</div>
 </section>

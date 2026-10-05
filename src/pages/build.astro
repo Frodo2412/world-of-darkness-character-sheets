@@ -27,6 +27,14 @@ import '../styles/builder.css';
 			<StepPanel step="abilities"><Abilities /></StepPanel>
 			<StepPanel step="advantages"><Advantages /></StepPanel>
 			<StepPanel step="finishing"><FinishingTouches /></StepPanel>
+			<dialog id="finish-dialog" aria-labelledby="finish-dialog-title" aria-describedby="finish-dialog-message" data-finish-dialog>
+				<h2 id="finish-dialog-title">Finish with unspent freebie points?</h2>
+				<p id="finish-dialog-message" data-finish-dialog-message></p>
+				<form method="dialog">
+					<button value="keep" autofocus>Keep editing</button>
+					<button value="finish" data-finish-confirm></button>
+				</form>
+			</dialog>
 		</div>
 		<div id="build-unreadable" hidden>
 			<h1>Build could not be read</h1>

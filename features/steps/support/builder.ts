@@ -64,6 +64,15 @@ export function buildWith(values: BuildValues = {}): V20Build {
   return build;
 }
 
+/** Opens the Finishing touches step and activates Finish. */
+export async function activateFinish(page: Page): Promise<void> {
+  await openStep(page, 'Finishing touches');
+  await page.getByRole('button', { name: 'Finish', exact: true }).click();
+}
+
+export const finishDialog = (page: Page): Locator =>
+  page.getByRole('dialog', { name: 'Finish with unspent freebie points?' });
+
 /** Saves the builds, then opens the first in the builder. */
 export async function openSavedBuild(page: Page, build: V20Build): Promise<void> {
   await saveBuilds(page, [build]);

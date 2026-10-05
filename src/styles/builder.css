@@ -315,3 +315,32 @@ html {
 .freebie-section-body {
 	padding-block: var(--space-2);
 }
+
+.review {
+	margin-block-start: var(--space-5);
+	border-block-start: 1px solid var(--color-line);
+	padding-block-start: var(--space-3);
+}
+
+.outstanding ul {
+	padding-inline-start: var(--space-4);
+}
+
+.outstanding li {
+	min-block-size: 1.5rem;
+}
+
+.outstanding-step {
+	color: var(--color-muted);
+}
+
+.finish-button[aria-disabled='true'] {
+	color: var(--color-muted);
+	cursor: not-allowed;
+}
+
+.review-link {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--control-size);
+}

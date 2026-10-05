@@ -73,11 +73,12 @@ const leave = (points: number): Step => (build) => {
   else if (over > 0) {
     const cut = Math.min(over, next.settings.extraFreebies);
     if (cut > 0) next = play(next, (b) => setExtraFreebies(b, String(b.settings.extraFreebies - cut)));
-    let burn = freebiesRemaining(next) - points;
-    const willpower = Math.min(burn, 10 - rating(next, 'willpower'));
-    if (willpower > 0) next = play(next, buyDots('willpower', willpower));
-    burn -= willpower;
-    if (burn > 0) next = play(next, buyDots('humanity', burn / 2));
+    // Burn what is left a point at a time: Herd and Fame dots, then Willpower.
+    for (const ref of ['background:Herd', 'background:Fame', 'willpower'] as BuildTraitRef[]) {
+      const burn = freebiesRemaining(next) - points;
+      const room = Math.min(burn, maximumFor(next, ref) - rating(next, ref));
+      if (room > 0) next = play(next, buyDots(ref, room));
+    }
   }
   return { status: 'applied', build: next, notices: [] };
 };
@@ -97,7 +98,31 @@ function moralityTo(ref: 'humanity' | 'willpower', value: number): Step[] {
   ];
 }
 
+/**
+ * In a complete build, rates a trait while keeping its group complete: the
+ * group's other traits give up their creation dots, then take back what is left.
+ */
+const rebalanced = (ref: BuildTraitRef, value: number): Step => (build) => {
+  const group = rankedGroupOf(ref);
+  if (!group) return setRating(build, ref, value, 'creation');
+  const prefix = ref.slice(0, ref.indexOf(':'));
+  const others = group.group.traits.map((trait) => `${prefix}:${trait}` as BuildTraitRef).filter((each) => each !== ref);
+  const floor = (each: BuildTraitRef) => rating(build, each) - build.traits[each as keyof typeof build.traits].creation;
+  let next = play(build, ...others.map((each) => creation(each, floor(each))), creation(ref, value));
+  const cap = prefix === 'ability' ? 3 : 5;
+  for (const each of others) {
+    for (let target = rating(next, each) + 1; target <= cap; target += 1) {
+      const result = setRating(next, each, target, 'creation');
+      if (result.status === 'refused') break;
+      next = result.build;
+    }
+  }
+  return { status: 'applied', build: next, notices: [] };
+};
+
 interface Seed {
+  /** A complete build is kept complete when a fact rates one of its traits. */
+  complete?: boolean;
   first: Step[];
   ranks: Step[];
   rest: Step[];
@@ -152,7 +177,7 @@ const FACTS: [RegExp, (seed: Seed, ...groups: string[]) => void][] = [
         seed.ranked.add(group);
         seed.ranks.push(rank(group, 'primary'));
       }
-      seed.rest.push(creation(ref, Number(value)));
+      seed.rest.push(seed.complete ? rebalanced(ref, Number(value)) : creation(ref, Number(value)));
     },
   ],
 ];
@@ -172,8 +197,17 @@ function facts(text: string): string[] {
   return text.split(/, | and (?=[A-Z]|the |base |a |one |two |three |no |nothing|\d)/);
 }
 
-export function seedSteps(base?: string, clanBefore?: string, clanOf?: string, list?: string): Step[] {
-  const seed: Seed = { first: [], ranks: [], rest: [], last: [], ranked: new Set(), clan: clanOf ?? clanBefore };
+export function seedSteps(base?: string, clanBefore?: string, clanOf?: string, list?: string, complete = false): Step[] {
+  const seed: Seed = {
+    complete,
+    first: [],
+    ranks: [],
+    rest: [],
+    last: [],
+    // A complete build has every group ranked already.
+    ranked: new Set(complete ? ['physical', 'social', 'mental', 'talents', 'skills', 'knowledges'] : []),
+    clan: clanOf ?? clanBefore,
+  };
   if (base) seed.first.push(generation(Number(base)));
   if (seed.clan) seed.first.push(clan(seed.clan));
   for (const fact of list ? facts(list) : []) {
@@ -186,15 +220,15 @@ export function seedSteps(base?: string, clanBefore?: string, clanOf?: string, l
 
 const orUndefined = (value?: string | null) => value ?? undefined;
 
-Given(BUILD, async ({ page }, base?: string, clanBefore?: string, clanOf?: string, list?: string) => {
+Given(BUILD, async ({ page, memory }, base?: string, clanBefore?: string, clanOf?: string, list?: string) => {
   const steps = seedSteps(orUndefined(base), orUndefined(clanBefore), orUndefined(clanOf), orUndefined(list));
-  await openPlayedFrom(page, fresh(), ...steps);
+  memory.build = await openPlayedFrom(page, fresh(), ...steps);
 });
 
 export { buyDots, leave as leaveFreebies };
 
-Given(COMPLETE, async ({ page }, base?: string, clanBefore?: string, clanOf?: string, list?: string) => {
+Given(COMPLETE, async ({ page, memory }, base?: string, clanBefore?: string, clanOf?: string, list?: string) => {
   const name = orUndefined(clanOf) ?? orUndefined(clanBefore) ?? 'Brujah';
-  const steps = seedSteps(orUndefined(base), undefined, undefined, orUndefined(list));
-  await openPlayedFrom(page, completeBuild(name), ...steps);
+  const steps = seedSteps(orUndefined(base), undefined, undefined, orUndefined(list), true);
+  memory.build = await openPlayedFrom(page, completeBuild(name), ...steps);
 });

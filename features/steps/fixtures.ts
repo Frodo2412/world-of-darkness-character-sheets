@@ -1,5 +1,6 @@
 import { test as base, createBdd } from 'playwright-bdd';
 import type { V20Character } from '../../src/domain/v20/character';
+import type { V20Build } from '../../src/domain/v20/creation/build';
 
 /** What earlier steps of a scenario did, for later steps to check against. */
 interface ScenarioMemory {
@@ -17,6 +18,8 @@ interface ScenarioMemory {
   violations?: string[];
   /** Ratings as a scenario arranged them, by trait name, to check later. */
   ratings: Map<string, number>;
+  /** The build a scenario arranged, for later steps to change or find again. */
+  build?: V20Build;
   /** The question a confirmation asked, kept after it closed. */
   asked?: string;
   /** Each place keyboard focus stopped, and whether a focus indicator was drawn there. */
