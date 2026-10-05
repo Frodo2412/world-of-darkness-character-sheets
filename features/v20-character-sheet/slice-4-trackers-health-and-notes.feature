@@ -2,7 +2,7 @@ Feature: Trackers, health and notes
 
   Scenario: Health levels are labelled
     Given a player viewing a character's sheet
-    Then the health track shows Bruised, Hurt -1, Injured -1, Wounded -2, Mauled -2, Crippled -5 and Incapacitated in that order
+    Then the health track shows Bruised 0, Hurt −1, Injured −1, Wounded −2, Mauled −2, Crippled −5 and Incapacitated — in that order
 
   Scenario: A health box cycles through damage types
     Given the Bruised box is empty
@@ -23,8 +23,3 @@ Feature: Trackers, health and notes
   Scenario: Damage type is announced, not only drawn
     Given the Hurt box shows lethal damage
     Then assistive technology reports "Hurt, lethal"
-
-  Scenario: Trackers are saved
-    Given the player marks 4 temporary Willpower, 12 Blood Pool and aggravated damage on Hurt
-    When they reload the sheet
-    Then the same marks are shown

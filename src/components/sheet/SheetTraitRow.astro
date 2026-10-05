@@ -24,7 +24,7 @@ const custom = trait === undefined;
 	data-sheet-mode-only={custom ? 'play' : undefined}
 	hidden={custom}
 >
-	<button type="button" class="trait-select" tabindex="-1" data-sheet-mode-only="play" data-show={custom ? 'trait.name' : undefined}>
+	<button type="button" class="trait-select" tabindex="-1" aria-hidden="true" data-sheet-mode-only="play" data-show={custom ? 'trait.name' : undefined}>
 		{custom ? '' : label}
 	</button>
 	{custom ? null : <span class="trait-label" data-sheet-mode-only="edit">{label}</span>}

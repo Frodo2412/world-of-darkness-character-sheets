@@ -1,15 +1,21 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import type { V20Character } from '../../src/domain/v20/character';
+import type { HealthLevelKey } from '../../src/domain/v20/traits';
 import { Given, Then, When } from './fixtures';
 import { announcements } from './support/builder';
-import { openRoster, rosterEntries, sheetField } from './support/pages';
-import { setRating } from './support/ratings';
-import { characterArranged, saveCharacters } from './support/seed';
+import { openRoster, rosterEntries, sheetAddress, sheetField } from './support/pages';
+import { rating, setRating } from './support/ratings';
+import { characterArranged, characterWith, saveCharacters } from './support/seed';
 import {
   bloodPoolCard,
   bloodTotal,
   doneButton,
   editButton,
   enterEditMode,
+  expectDamage,
+  healthCard,
+  humanityCard,
+  markDamage,
   openSavedSheet,
   sheetRoot,
   willpowerCard,
@@ -80,6 +86,50 @@ Given('another saved character with no blood per turn recorded', async ({ page, 
   await saveCharacters(page, [memory.saved[1]]);
 });
 
+Given(/^a saved character with lethal damage on (.+)$/, async ({ page, memory }, levels: string) => {
+  memory.saved = [
+    characterArranged({ name: 'Lucita' }, (character) => {
+      for (const level of levels.split(' and ')) {
+        character.health[level.toLowerCase() as HealthLevelKey] = 'lethal';
+      }
+    }),
+  ];
+  await saveCharacters(page, memory.saved);
+});
+
+Given("the player has a saved, unwounded character's sheet open in play mode", async ({ page, memory }) => {
+  memory.saved = [characterWith({ name: 'Lucita' })];
+  await openSavedSheet(page, memory.saved[0]);
+});
+
+Given('a saved character with Humanity {int} on the path {string}', async ({ page, memory }, humanity: number, path: string) => {
+  memory.saved = [
+    characterArranged({ name: 'Lucita' }, (character) => {
+      character.humanity.rating = humanity;
+      character.humanity.pathName = path;
+    }),
+  ];
+  await saveCharacters(page, memory.saved);
+});
+
+Given('another saved character with Humanity {int} and no path name', async ({ page, memory }, humanity: number) => {
+  memory.saved.push(
+    characterArranged({ name: 'Ana' }, (character) => {
+      character.humanity.rating = humanity;
+    }),
+  );
+  await saveCharacters(page, [memory.saved[1]]);
+});
+
+Given('a saved character with Humanity {int}', async ({ page, memory }, humanity: number) => {
+  memory.saved = [
+    characterArranged({ name: 'Lucita' }, (character) => {
+      character.humanity.rating = humanity;
+    }),
+  ];
+  await saveCharacters(page, memory.saved);
+});
+
 // Acting
 
 When('the player opens each character from the roster', async ({ page, memory }) => {
@@ -119,6 +169,35 @@ When(
     await button(page, name).focus();
     await page.keyboard.press('Enter');
     await page.keyboard.press('Enter');
+  },
+);
+
+When(/^they mark ([A-Z][a-z]+) until it is empty$/, async ({ page }, level: string) => {
+  await markDamage(page, level, 'empty');
+});
+
+When(
+  'they spend one blood, spend one willpower, mark bashing damage on Bruised, lethal on Hurt and aggravated on Injured',
+  async ({ page }) => {
+    await button(page, 'Spend one blood').click();
+    await button(page, 'Spend one willpower').click();
+    await markDamage(page, 'Bruised', 'bashing');
+    await markDamage(page, 'Hurt', 'lethal');
+    await markDamage(page, 'Injured', 'aggravated');
+  },
+);
+
+When('they spend one blood and mark bashing damage on Bruised', async ({ page }) => {
+  await button(page, 'Spend one blood').click();
+  await markDamage(page, 'Bruised', 'bashing');
+});
+
+When(
+  'they activate {string}, set Humanity to {int} and enter {string} as the path name',
+  async ({ page }, name: string, value: number, path: string) => {
+    await button(page, name).click();
+    await setRating(rating(page, 'Humanity'), value);
+    await sheetField(page, 'Path name').fill(path);
   },
 );
 
@@ -277,4 +356,105 @@ Then('{string} is available', async ({ page }, name: string) => {
 
 Then('keyboard focus is still on {string}', async ({ page }, name: string) => {
   await expect(button(page, name)).toBeFocused();
+});
+
+// Health
+
+/** The wound beside the Health heading, which is absent while the character is not wounded. */
+const woundReadout = (page: Page): Locator => healthCard(page).locator('[data-show="health.wound"]');
+
+Then('the Health heading shows {string}', async ({ page }, wound: string) => {
+  if (wound === '') {
+    await expect(woundReadout(page)).toBeHidden();
+    return;
+  }
+  await expect(woundReadout(page)).toHaveText(wound);
+  await expect(healthCard(page).getByRole('heading', { name: 'Health' })).toBeVisible();
+});
+
+Then('the Health heading shows no wound', async ({ page }) => {
+  await expect(woundReadout(page)).toBeHidden();
+});
+
+Then(
+  'the health legend lists {string}, {string} and {string} in that order',
+  async ({ page }, first: string, second: string, third: string) => {
+    await expect(healthCard(page).locator('.health-marks > li')).toHaveText([first, second, third]);
+    await expect(healthCard(page).getByText('Select a box to cycle', { exact: true })).toBeVisible();
+  },
+);
+
+Then('each legend entry shows its own mark image, and no two entries share one', async ({ page }) => {
+  const images = healthCard(page).locator('.health-marks > li img');
+  await expect(images).toHaveCount(3);
+  const sources = await images.evaluateAll((elements) =>
+    elements.map((image) => {
+      const loaded = image as HTMLImageElement;
+      return { source: loaded.currentSrc, drawn: loaded.complete && loaded.naturalWidth > 0 };
+    }),
+  );
+  expect(sources.every((image) => image.drawn)).toBe(true);
+  expect(new Set(sources.map((image) => image.source)).size).toBe(3);
+});
+
+Then(
+  'Bruised shows bashing, Hurt shows lethal and Injured shows aggravated damage',
+  async ({ page }) => {
+    await expectDamage(page, 'Bruised', 'bashing');
+    await expectDamage(page, 'Hurt', 'lethal');
+    await expectDamage(page, 'Injured', 'aggravated');
+  },
+);
+
+Then(
+  'the Blood Pool reads {string} and Bruised shows bashing damage',
+  async ({ page }, reading: string) => {
+    await expect(bloodTotal(page)).toHaveText(reading);
+    await expectDamage(page, 'Bruised', 'bashing');
+  },
+);
+
+// Humanity
+
+/** Opens a saved character's sheet, so each Humanity card is read in a page of its own. */
+async function openSaved(page: Page, character: V20Character): Promise<void> {
+  await page.goto(sheetAddress(character.id));
+  await expect(editButton(page)).toBeVisible();
+}
+
+const pathName = (page: Page): Locator => humanityCard(page).locator('[data-show="humanity.path"]');
+
+Then(
+  'the first Humanity card shows the number {int}, {int} of 10 dots filled and {string}',
+  async ({ page, memory }, number: number, filled: number, path: string) => {
+    await openSaved(page, memory.saved[0]);
+    await expect(humanityCard(page).locator('[data-show="humanity.number"]')).toHaveText(String(number));
+    const dots = rating(page, 'Humanity');
+    await expect(dots.locator('.rating-mark')).toHaveCount(10);
+    await expect(dots.locator('.rating-mark.is-filled')).toHaveCount(filled);
+    await expect(pathName(page)).toHaveText(path);
+  },
+);
+
+Then('the second shows the number {int} and no path name', async ({ page, memory }, number: number) => {
+  await openSaved(page, memory.saved[1]);
+  await expect(humanityCard(page).locator('[data-show="humanity.number"]')).toHaveText(String(number));
+  await expect(pathName(page)).toBeHidden();
+});
+
+Then('the Humanity rating cannot be changed and no path name field is offered', async ({ page }) => {
+  await expect(humanityCard(page)).toBeVisible();
+  await expect(page.getByRole('slider', { name: 'Humanity', exact: true })).toHaveCount(0);
+  await expect(humanityCard(page).getByRole('slider')).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: 'Path name', exact: true })).toHaveCount(0);
+});
+
+Then('no field for Bearing or Bearing modifier is offered', async ({ page }) => {
+  await expect(page.getByRole('textbox', { name: /Bearing/ })).toHaveCount(0);
+  await expect(page.getByLabel(/Bearing/)).toHaveCount(0);
+});
+
+Then('the Humanity card shows the number {int} and {string}', async ({ page }, number: number, path: string) => {
+  await expect(humanityCard(page).locator('[data-show="humanity.number"]')).toHaveText(String(number));
+  await expect(pathName(page)).toHaveText(path);
 });

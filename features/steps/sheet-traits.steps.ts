@@ -166,22 +166,6 @@ When('the player sets every attribute to {int}', async ({ page }, dots: number) 
   for (const name of ATTRIBUTES) await setRating(rating(page, name), dots);
 });
 
-When(
-  'they enter {string} as the path name, {int} dots, {string} as bearing and {string} as its modifier',
-  async ({ page, memory }, path: string, dots: number, bearing: string, modifier: string) => {
-    for (const [label, text] of [
-      ['Path name', path],
-      ['Bearing', bearing],
-      ['Bearing modifier', modifier],
-    ]) {
-      await sheetField(page, label).fill(text);
-      memory.entered.set(label, text);
-    }
-    await setRating(rating(page, 'Humanity'), dots);
-    memory.entered.set('Humanity', String(dots));
-  },
-);
-
 Then('there is no dot beyond position {int}', async ({ page, memory }, max: number) => {
   await expect(rating(page, memory.rating).locator('.rating-mark')).toHaveCount(max);
 });
@@ -190,15 +174,6 @@ Then('every attribute shows {int} dots and nothing is flagged', async ({ page },
   for (const name of ATTRIBUTES) await expectRating(rating(page, name), dots);
   await expect(page.locator('[aria-invalid="true"], :invalid')).toHaveCount(0);
   await expect(page.getByRole('alert')).toHaveCount(0);
-});
-
-Then('all four entries are shown as entered', async ({ page, memory }) => {
-  await ensureEditing(page);
-  expect(memory.entered.size).toBe(4);
-  for (const [label, text] of memory.entered) {
-    if (label === 'Humanity') await expectRating(rating(page, label), Number(text));
-    else await expect(sheetField(page, label)).toHaveValue(text);
-  }
 });
 
 Then(

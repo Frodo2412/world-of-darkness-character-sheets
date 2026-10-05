@@ -128,15 +128,15 @@ export const VIRTUES = [
   { key: 'courage', label: 'Courage' },
 ] as const;
 
-/** `penalty` is the sheet's printed text; `dicePenalty` is the same number, for arithmetic. Incapacitated has none. */
+/** `dicePenalty` is the dice a wound at that level takes off every pool. Incapacitated has none. */
 export const HEALTH_LEVELS = [
-  { key: 'bruised', label: 'Bruised', penalty: '', dicePenalty: 0 },
-  { key: 'hurt', label: 'Hurt', penalty: '-1', dicePenalty: 1 },
-  { key: 'injured', label: 'Injured', penalty: '-1', dicePenalty: 1 },
-  { key: 'wounded', label: 'Wounded', penalty: '-2', dicePenalty: 2 },
-  { key: 'mauled', label: 'Mauled', penalty: '-2', dicePenalty: 2 },
-  { key: 'crippled', label: 'Crippled', penalty: '-5', dicePenalty: 5 },
-  { key: 'incapacitated', label: 'Incapacitated', penalty: '' },
+  { key: 'bruised', label: 'Bruised', dicePenalty: 0 },
+  { key: 'hurt', label: 'Hurt', dicePenalty: 1 },
+  { key: 'injured', label: 'Injured', dicePenalty: 1 },
+  { key: 'wounded', label: 'Wounded', dicePenalty: 2 },
+  { key: 'mauled', label: 'Mauled', dicePenalty: 2 },
+  { key: 'crippled', label: 'Crippled', dicePenalty: 5 },
+  { key: 'incapacitated', label: 'Incapacitated' },
 ] as const;
 
 /** The damage a health box can hold, in the order activating it steps through. */

@@ -1,6 +1,7 @@
+import type { HealthTrack } from '../../components/controls/health-track';
 import type { RatingControl } from '../../components/controls/rating-control';
 import type { V20Character } from '../../domain/v20/character';
-import { bloodPoolMaximum } from '../../domain/v20/resources';
+import { bloodPoolMaximum, woundState } from '../../domain/v20/resources';
 import { show, showBlock } from './draw';
 
 export type Resource = 'blood' | 'willpower';
@@ -108,8 +109,48 @@ function drawWillpower(root: ParentNode, character: V20Character): void {
   setAttr(dots, 'value', String(reading.current));
 }
 
-/** Draws the Blood Pool and Willpower cards from the character; the same in play and edit mode. */
+type Wound = ReturnType<typeof woundState>;
+
+const dice = (count: number): string => `${count} ${count === 1 ? 'die' : 'dice'}`;
+
+/** The wound beside the Health heading, e.g. "Hurt · −1 die"; nothing when unwounded. */
+function woundReadout(wound: Wound): string {
+  if (wound === undefined) return '';
+  if (wound === 'incapacitated') return 'Incapacitated';
+  return `${wound.label} · \u2212${dice(wound.penalty)}`;
+}
+
+/** What changing a health box says to assistive technology, e.g. "Wounded, minus 2 dice". */
+function woundAnnouncement(wound: Wound): string {
+  if (wound === undefined) return 'No wound penalty';
+  if (wound === 'incapacitated') return 'Incapacitated';
+  return `${wound.label}, minus ${dice(wound.penalty)}`;
+}
+
+/** Writes the Health card's live region. Only a change to a health box calls this: redraws stay silent. */
+export function announceWound(root: ParentNode, character: V20Character): void {
+  root.querySelector<HTMLElement>('[data-live="health"]')!.textContent = woundAnnouncement(woundState(character));
+}
+
+function drawHealth(root: ParentNode, character: V20Character): void {
+  root.querySelector<HealthTrack>('health-track')!.damage = character.health;
+  const readout = woundReadout(woundState(character));
+  show(root, 'health.wound', readout);
+  showBlock(root, 'health.wound', readout !== '');
+}
+
+function drawHumanity(root: ParentNode, character: V20Character): void {
+  const { rating, pathName } = character.humanity;
+  show(root, 'humanity.number', String(rating));
+  setAttr(root.querySelector<RatingControl>('[data-humanity-dots]')!, 'value', String(rating));
+  show(root, 'humanity.path', pathName.trim());
+  showBlock(root, 'humanity.path', pathName.trim() !== '');
+}
+
+/** Draws the four live-resource cards from the character; the same in play and edit mode. */
 export function drawResourceCards(root: ParentNode, character: V20Character): void {
   drawBlood(root, character);
   drawWillpower(root, character);
+  drawHealth(root, character);
+  drawHumanity(root, character);
 }

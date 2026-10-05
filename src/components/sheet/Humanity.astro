@@ -1,0 +1,31 @@
+---
+import { RATING_RANGES } from '../../domain/v20/traits';
+---
+
+<section class="card resource-card humanity-card" aria-labelledby="humanity-heading">
+	<h2 id="humanity-heading" class="resource-title">Humanity</h2>
+	<!-- The play display: the number and ten read-only dots. Editing is the rating below. -->
+	<p class="humanity-figure" data-sheet-mode-only="play" data-show="humanity.number" aria-hidden="true"></p>
+	<dot-rating
+		class="humanity-dots"
+		data-sheet-mode-only="play"
+		data-humanity-dots
+		readonly
+		name="Humanity"
+		max={RATING_RANGES.humanity.max}
+		value="0"></dot-rating>
+	<p class="resource-note" data-sheet-mode-only="play" data-show="humanity.path" data-show-block="humanity.path" hidden></p>
+	<div class="resource-edit" data-sheet-mode-only="edit">
+		<span class="trait-label">Humanity</span>
+		<dot-rating
+			data-trait="humanity.rating"
+			data-label="Humanity"
+			aria-label="Humanity"
+			max={RATING_RANGES.humanity.max}
+			value="0"></dot-rating>
+	</div>
+	<label data-sheet-mode-only="edit">
+		Path name
+		<input type="text" data-text="humanity.pathName" autocomplete="off" />
+	</label>
+</section>

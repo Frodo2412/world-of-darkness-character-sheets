@@ -6,7 +6,6 @@ import { expectRatingValue, ratingLabelled } from './sheet';
 const RATING_LABELS: Record<string, string> = {
   'permanent Willpower': 'Permanent Willpower',
   Willpower: 'Permanent Willpower',
-  Humanity: 'Humanity / Path',
 };
 
 /** A rating by its scenario name, whichever mode the sheet is in. */

@@ -34,6 +34,7 @@ import {
   bloodPoolCard,
   bloodTotal,
   ensureEditing,
+  humanityCard,
   identityName,
   identitySummary,
   identityTemperament,
@@ -344,8 +345,7 @@ Then(/^the sheet shows ((?:[A-Z][\w-]* \d+(?:, | and )?)+)$/, async ({ page }, l
 });
 
 Then('the sheet shows the path {string} at {int}', async ({ page }, path: string, value: number) => {
-  await ensureEditing(page);
-  await expect(sheetField(page, 'Path name')).toHaveValue(path);
+  await expect(humanityCard(page).locator('[data-show="humanity.path"]')).toHaveText(path);
   await expectRating(rating(page, 'Humanity'), value);
 });
 

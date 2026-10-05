@@ -15,6 +15,7 @@ import {
   identityRegion,
   identitySummary,
   identityTemperament,
+  markDamage,
   openCharacterId,
   openSavedSheet,
   savedCharacter,
@@ -328,8 +329,11 @@ Then('the {string} button is still visible', async ({ page }, name: string) => {
 });
 
 Then('the last card on the sheet is fully visible', async ({ page }) => {
-  // The last card in the page, not the paragraph that follows the cards.
-  await expect(sheetRoot(page).locator('section:visible').last()).toBeInViewport({ ratio: 1 });
+  // The last card in the page, not the paragraph that follows the cards. A card can be taller
+  // than a phone screen, so what must be in view is its end: nothing cuts the page short.
+  const last = sheetRoot(page).locator('section:visible').last();
+  const lastEdge = () => last.evaluate((card) => card.getBoundingClientRect().bottom - window.innerHeight);
+  await expect.poll(lastEdge).toBeLessThanOrEqual(0);
 });
 
 // A long name
@@ -421,10 +425,12 @@ When('the browser accepts changes again', async ({ page }) => {
   await acceptWrites(page);
 });
 
-When('they mark bashing damage on Bruised', async ({ page }) => {
-  await page.getByRole('button', { name: /^Bruised, / }).click();
-  await expect(page.getByRole('button', { name: 'Bruised, bashing', exact: true })).toBeVisible();
-});
+When(
+  /^they mark (bashing|lethal|aggravated) damage on ([A-Z][a-z]+)$/,
+  async ({ page }, damage: string, level: string) => {
+    await markDamage(page, level, damage);
+  },
+);
 
 Then('the application bar shows no save status', async ({ page }) => {
   await expect(saveStatus(page)).toBeEmpty();

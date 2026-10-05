@@ -89,3 +89,26 @@ export const willpowerCard = (page: Page): Locator => card(page, 'Willpower');
 /** A stepper's reading, "<current> / <bound>". */
 export const bloodTotal = (page: Page): Locator => bloodPoolCard(page).locator('[data-show="blood.total"]');
 export const willpowerTotal = (page: Page): Locator => willpowerCard(page).locator('[data-show="willpower.total"]');
+export const healthCard = (page: Page): Locator => card(page, 'Health');
+export const humanityCard = (page: Page): Locator => card(page, 'Humanity');
+
+const DAMAGE_ORDER = ['empty', 'bashing', 'lethal', 'aggravated'];
+
+/** A health box, found by the name it reports: "<level>, <damage>". */
+export const healthBox = (page: Page, level: string): Locator =>
+  page.getByRole('button', { name: new RegExp(`^${level}, `) });
+
+/** The box reports the damage in its name and carries it as the mark drawn for it. */
+export async function expectDamage(page: Page, level: string, damage: string): Promise<void> {
+  await expect(page.getByRole('button', { name: `${level}, ${damage}`, exact: true })).toBeVisible();
+  await expect(healthBox(page, level)).toHaveAttribute('data-damage', damage);
+}
+
+/** Activates a health box, as a player does, until it holds `damage`. */
+export async function markDamage(page: Page, level: string, damage: string): Promise<void> {
+  for (let step = 0; step < DAMAGE_ORDER.length; step += 1) {
+    if ((await healthBox(page, level).getAttribute('data-damage')) === damage) break;
+    await healthBox(page, level).click();
+  }
+  await expectDamage(page, level, damage);
+}

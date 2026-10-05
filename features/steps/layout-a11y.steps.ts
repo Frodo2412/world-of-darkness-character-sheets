@@ -161,16 +161,20 @@ When(
     await tabTo(page, sheetField(page, 'Name'), memory.focusStops);
     await page.keyboard.type('Lucita');
 
-    await tabTo(page, rating(page, 'Strength'), memory.focusStops);
-    await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('ArrowRight');
-
+    // The resources sit above the traits on the page, so the keyboard reaches them first.
     await tabTo(page, page.getByRole('button', { name: 'Gain one blood', exact: true }), memory.focusStops);
     await page.keyboard.press('Enter');
     await page.keyboard.press('Enter');
 
     await tabTo(page, page.getByRole('button', { name: /^Bruised, / }), memory.focusStops);
     await page.keyboard.press('Space');
+
+    await tabTo(page, rating(page, 'Strength'), memory.focusStops);
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+
+    // On through the rest of the sheet to its last control, so every stop on the way is checked.
+    await tabTo(page, rating(page, 'Courage'), memory.focusStops);
   },
 );
 
@@ -178,7 +182,7 @@ Then('those values are shown', async ({ page }) => {
   await expect(sheetField(page, 'Name')).toHaveValue('Lucita');
   await expectRating(rating(page, 'Strength'), 3);
   await expect(bloodTotal(page)).toHaveText(/^2 \/ /);
-  await expect(page.getByRole('button', { name: 'Bruised, bashing', exact: true })).toHaveText('/');
+  await expect(page.getByRole('button', { name: 'Bruised, bashing', exact: true })).toHaveAttribute('data-damage', 'bashing');
 });
 
 Then('keyboard focus was visible at every stop', async ({ memory }) => {

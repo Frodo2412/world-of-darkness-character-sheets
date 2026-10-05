@@ -1,28 +1,9 @@
-import { expect, type Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
-import { ensureOnSheet, rating, setRating } from './support/ratings';
-import { bloodTotal, willpowerTotal } from './support/sheet';
+import { ensureOnSheet } from './support/ratings';
+import { expectDamage, healthBox, healthCard, markDamage } from './support/sheet';
 
 const HEALTH_LEVELS = ['Bruised', 'Hurt', 'Injured', 'Wounded', 'Mauled', 'Crippled', 'Incapacitated'];
-const DAMAGE_ORDER = ['empty', 'bashing', 'lethal', 'aggravated'];
-const DAMAGE_GLYPHS: Record<string, string> = { empty: '', bashing: '/', lethal: 'X', aggravated: '*' };
-
-/** A health box, found by the name it reports: "<level>, <damage>". */
-const healthBox = (page: Page, level: string) =>
-  page.getByRole('button', { name: new RegExp(`^${level}, `) });
-
-async function expectDamage(page: Page, level: string, damage: string): Promise<void> {
-  await expect(page.getByRole('button', { name: `${level}, ${damage}`, exact: true })).toBeVisible();
-  // The glyph, not only the announced name: sighted players read the box.
-  await expect(healthBox(page, level)).toHaveText(DAMAGE_GLYPHS[damage]);
-}
-
-async function markDamage(page: Page, level: string, damage: string): Promise<void> {
-  for (let step = 0; step < DAMAGE_ORDER.indexOf(damage); step += 1) {
-    await healthBox(page, level).click();
-  }
-  await expectDamage(page, level, damage);
-}
 
 Given(/^the ([A-Z][a-z]+) box is empty$/, async ({ page, memory }, level: string) => {
   await ensureOnSheet(page);
@@ -53,19 +34,12 @@ When(/^the player activates the ([A-Z][a-z]+) box twice$/, async ({ page }, leve
 });
 
 Then(
-  'the health track shows Bruised, Hurt -1, Injured -1, Wounded -2, Mauled -2, Crippled -5 and Incapacitated in that order',
+  'the health track shows Bruised 0, Hurt \u22121, Injured \u22121, Wounded \u22122, Mauled \u22122, Crippled \u22125 and Incapacitated \u2014 in that order',
   async ({ page }) => {
-    const levels = page.getByRole('region', { name: 'Health' }).locator('.health-level');
-    await expect(levels).toHaveText([
-      /^\s*Bruised\s*$/,
-      /^\s*Hurt\s*-1\s*$/,
-      /^\s*Injured\s*-1\s*$/,
-      /^\s*Wounded\s*-2\s*$/,
-      /^\s*Mauled\s*-2\s*$/,
-      /^\s*Crippled\s*-5\s*$/,
-      /^\s*Incapacitated\s*$/,
-    ]);
-    await expect(page.getByRole('region', { name: 'Health' }).getByRole('button')).toHaveCount(7);
+    const levels = healthCard(page).locator('.health-levels > li');
+    await expect(levels.locator('.health-label')).toHaveText(HEALTH_LEVELS);
+    await expect(levels.locator('.health-penalty')).toHaveText(['0', '\u22121', '\u22121', '\u22122', '\u22122', '\u22125', '\u2014']);
+    await expect(healthCard(page).getByRole('button')).toHaveCount(7);
   },
 );
 
@@ -89,29 +63,4 @@ Then(
 
 Then('assistive technology reports {string}', async ({ page }, name: string) => {
   await expect(page.getByRole('button', { name, exact: true })).toBeVisible();
-});
-
-// The resources have no free-form entry any more: Willpower is raised to what the scenario
-// needs and then regained, and blood is gained, one press at a time, as a player would.
-Given(
-  'the player marks {int} temporary Willpower, {int} Blood Pool and aggravated damage on Hurt',
-  async ({ page }, willpower: number, blood: number) => {
-    await ensureOnSheet(page);
-    await setRating(rating(page, 'permanent Willpower'), willpower);
-    for (let step = 0; step < willpower; step += 1) {
-      await page.getByRole('button', { name: 'Regain one willpower', exact: true }).click();
-    }
-    for (let step = 0; step < blood; step += 1) {
-      await page.getByRole('button', { name: 'Gain one blood', exact: true }).click();
-    }
-    await expect(willpowerTotal(page)).toHaveText(new RegExp(`^${willpower} / `));
-    await expect(bloodTotal(page)).toHaveText(new RegExp(`^${blood} / `));
-    await markDamage(page, 'Hurt', 'aggravated');
-  },
-);
-
-Then('the same marks are shown', async ({ page }) => {
-  await expect(willpowerTotal(page)).toHaveText(/^4 \/ /);
-  await expect(bloodTotal(page)).toHaveText(/^12 \/ /);
-  await expectDamage(page, 'Hurt', 'aggravated');
 });

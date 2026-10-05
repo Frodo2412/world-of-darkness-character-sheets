@@ -25,7 +25,7 @@ import {
 import { drawIdentity } from './sheet/identityCard';
 import { createMode, type Mode, type SheetMode } from './sheet/mode';
 import { drawRating } from './sheet/ratingDraw';
-import { announce, drawResourceCards, type Resource } from './sheet/resourceCards';
+import { announce, announceWound, drawResourceCards, type Resource } from './sheet/resourceCards';
 import { drawTraitCards } from './sheet/traitCards';
 import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
 
@@ -105,7 +105,6 @@ function render(character: V20Character, mode: SheetMode): void {
   drawIdentity(sheet, character);
   drawTextInputs(character);
   drawTraitRatings(character, mode);
-  healthTrack.damage = character.health;
   drawRowNames(character);
   drawRowRatings(character, mode);
   drawTraitCards(sheet, character);
@@ -164,7 +163,7 @@ function bindEditListeners(apply: Apply): void {
 
   healthTrack.addEventListener('change', (event) => {
     const { level } = (event as CustomEvent<HealthChange>).detail;
-    apply((current) => cycleHealthBox(current, level));
+    announceWound(sheet, apply((current) => cycleHealthBox(current, level)));
   });
 
   // A press says the new reading once; a redraw (a new Generation moving the maximum) stays silent.

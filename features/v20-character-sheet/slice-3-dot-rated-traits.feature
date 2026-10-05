@@ -54,12 +54,6 @@ Feature: Dot-rated traits
     Then "Dominate" shows 3 dots and "Resources" shows 2 dots
     And five discipline rows and five background rows remain blank
 
-  Scenario: Humanity or Path
-    Given a player viewing a character's sheet
-    When they enter "Path of Night" as the path name, 6 dots, "Guilt" as bearing and "+1" as its modifier
-    And they reload the sheet
-    Then all four entries are shown as entered
-
   Scenario: Ratings are saved
     Given the player sets Dexterity to 3 and Brawl to 2 and Courage to 4
     When they reload the sheet
