@@ -26,6 +26,7 @@ import { drawIdentity } from './sheet/identityCard';
 import { createMode, type Mode, type SheetMode } from './sheet/mode';
 import { drawRating } from './sheet/ratingDraw';
 import { announce, announceWound, drawResourceCards, type Resource } from './sheet/resourceCards';
+import { drawSideCards } from './sheet/sideCards';
 import { drawTraitCards } from './sheet/traitCards';
 import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
 
@@ -109,6 +110,7 @@ function render(character: V20Character, mode: SheetMode): void {
   drawRowRatings(character, mode);
   drawTraitCards(sheet, character);
   drawResourceCards(sheet, character);
+  drawSideCards(sheet, character);
 }
 
 // The roster opens a new character's sheet with this marker: start editing, and do

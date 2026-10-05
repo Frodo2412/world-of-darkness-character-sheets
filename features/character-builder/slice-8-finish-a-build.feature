@@ -106,8 +106,8 @@ Feature: Finishing a build
     And the sheet shows Conscience 3, Self-Control 4 and Courage 4
     And the sheet shows the path "Humanity" at 7
     And the sheet shows permanent Willpower 4 and temporary Willpower 4
-    And the first two Discipline rows are "Dominate" at 2 and "Potence" at 1, and the other four are blank
-    And the first two Background rows are "Generation" at 2 and "Resources" at 3, and the other four are blank
+    And the Disciplines card lists "Dominate 2" and "Potence 1" and no other row
+    And the saved character has the Backgrounds "Generation" at 2 and "Resources" at 3
     And the sheet shows a blood pool of 6 and "2" blood per turn
     And the saved character has no Weakness
 

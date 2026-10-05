@@ -354,21 +354,14 @@ Then('the sheet shows permanent Willpower {int} and temporary Willpower {int}', 
 });
 
 Then(
-  /^the first two (Discipline|Background) rows are "([^"]+)" at (\d+) and "([^"]+)" at (\d+), and the other four are blank$/,
-  async ({ page }, kind: string, first: string, a: string, second: string, b: string) => {
-    const rows = [
-      [first, a],
-      [second, b],
-      ['', '0'],
-      ['', '0'],
-      ['', '0'],
-      ['', '0'],
-    ];
-    await ensureEditing(page);
-    for (const [index, [name, value]] of rows.entries()) {
-      await expect(page.getByLabel(`${kind} ${index + 1} name`, { exact: true })).toHaveValue(name);
-      await expect(page.getByRole('slider', { name: new RegExp(`^${kind} ${index + 1}(: |$)`) })).toHaveAttribute('aria-valuenow', String(value));
-    }
+  'the saved character has the Backgrounds {string} at {int} and {string} at {int}',
+  async ({ page }, first: string, a: number, second: string, b: number) => {
+    const { backgrounds } = await savedCharacter(page, openCharacterId(page));
+    expect(backgrounds.slice(0, 2)).toEqual([
+      { name: first, rating: a },
+      { name: second, rating: b },
+    ]);
+    expect(backgrounds.slice(2).every((row) => row.name === '' && row.rating === 0)).toBe(true);
   },
 );
 

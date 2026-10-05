@@ -1,0 +1,18 @@
+---
+import { DISCIPLINE_ROWS } from '../../domain/v20/traits';
+import NamedRatingRow from './NamedRatingRow.astro';
+
+const rows = Array.from({ length: DISCIPLINE_ROWS }, (_, index) => index);
+---
+
+<section class="card side-card disciplines-card" aria-labelledby="disciplines-heading">
+	<h2 id="disciplines-heading" class="side-title">Disciplines</h2>
+	<!-- The play view: the Disciplines the player has named, drawn from the character. -->
+	<ul class="discipline-list" data-sheet-mode-only="play" data-disciplines-list></ul>
+	<p class="resource-note" data-sheet-mode-only="play" data-show-block="disciplines.empty" hidden>
+		No Disciplines recorded · edit character to add
+	</p>
+	<div class="trait-rows" data-sheet-mode-only="edit">
+		{rows.map((index) => <NamedRatingRow row={`disciplines.${index}`} label={`Discipline ${index + 1}`} />)}
+	</div>
+</section>

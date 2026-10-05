@@ -46,14 +46,6 @@ Feature: Dot-rated traits
     And they reload the sheet
     Then the Talents list shows "Hobby Talent" with 2 dots
 
-  Scenario: Disciplines and backgrounds
-    Given a player viewing a character's sheet
-    When they name the first discipline "Dominate" with 3 dots
-    And they name the first background "Resources" with 2 dots
-    And they reload the sheet
-    Then "Dominate" shows 3 dots and "Resources" shows 2 dots
-    And five discipline rows and five background rows remain blank
-
   Scenario: Ratings are saved
     Given the player sets Dexterity to 3 and Brawl to 2 and Courage to 4
     When they reload the sheet

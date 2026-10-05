@@ -127,7 +127,7 @@
    with a 5px gap in play and larger to click in edit; in play they sit in a slot
    as wide as ten dots, so a five-dot row and a ten-dot row keep their numbers
    in one column. */
-.sheet :is(.trait-row, .trait-card .rating-row, .resource-edit) {
+.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) {
 	--mark-size: 1rem;
 	--dot-gap: 0.25rem;
 	display: flex;
@@ -148,7 +148,7 @@
 	flex-wrap: nowrap;
 }
 
-.sheet :is(.trait-row, .trait-card .rating-row, .resource-edit) dot-rating {
+.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) dot-rating {
 	gap: var(--dot-gap);
 }
 
@@ -157,13 +157,13 @@
 	justify-content: flex-end;
 }
 
-.sheet :is(.trait-row, .trait-card .rating-row, .resource-edit) .rating-mark {
+.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) .rating-mark {
 	border-width: 1px;
 	border-color: var(--color-border-control);
 	background: var(--color-row);
 }
 
-.sheet :is(.trait-row, .trait-card .rating-row, .resource-edit) .rating-mark.is-filled {
+.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) .rating-mark.is-filled {
 	border-color: var(--color-text);
 	background: var(--color-text);
 }
@@ -194,6 +194,48 @@
 	font-size: var(--text-caption);
 	font-variant-numeric: tabular-nums;
 	color: var(--color-muted);
+}
+
+/* Side cards: Disciplines and Virtues, the quick references beside the traits. */
+
+.side-card {
+	display: grid;
+	align-content: start;
+	gap: 0.625rem;
+	padding: var(--space-3);
+	min-inline-size: 0;
+}
+
+.side-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-weight: 600;
+	font-size: var(--text-h2);
+	line-height: 1.1;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+/* Each Discipline is its name and rating in the display typeface, set off from the next by a divider. */
+.discipline-list {
+	display: grid;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.discipline-entry {
+	padding-block: var(--space-2);
+	font-family: var(--font-display);
+	font-size: 1.125rem;
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+.discipline-entry + .discipline-entry {
+	border-block-start: 1px solid var(--color-divider);
 }
 
 /* Live resources: Blood Pool, Willpower, Health and Humanity in one row under the
