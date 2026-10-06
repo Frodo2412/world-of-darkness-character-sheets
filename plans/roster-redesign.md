@@ -1372,17 +1372,17 @@ graph TD
   - [x] Step 1.4: One list in the frame's structure
 
 #### Wave 2
-- [ ] Slice 2: Character creator
-  - [ ] Step 2.1: The creator card starts builds and blank sheets
-  - [ ] Step 2.2: When storage refuses or is withheld
+- [x] Slice 2: Character creator
+  - [x] Step 2.1: The creator card starts builds and blank sheets
+  - [x] Step 2.2: When storage refuses or is withheld
 
 #### Wave 3
-- [ ] Slice 3: Chronicle on the sheet
-  - [ ] Step 3.1: Chronicle joins the edit-mode identity fields
+- [x] Slice 3: Chronicle on the sheet
+  - [x] Step 3.1: Chronicle joins the edit-mode identity fields
 
 #### Wave 4
 - [ ] Slice 4: Chronicle tabs
-  - [ ] Step 4.1: Chronicles in the model
+  - [x] Step 4.1: Chronicles in the model
   - [ ] Step 4.2: The tab strip
 
 #### Wave 5
