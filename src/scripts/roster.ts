@@ -1,7 +1,8 @@
 import { INITIAL_FILTER, entriesOf, view, type LibraryEntry, type LibraryFilter, type LibraryView } from '../domain/v20/library';
 import { createBuildStore, type BuildStore } from '../storage/buildStore';
 import { browserStorage, createCharacterStore, type CharacterStore } from '../storage/characterStore';
-import { createControls, type Controls } from './roster/controls';
+import { announcementOf, createAnnouncer } from './roster/announce';
+import { createControls, shortcutFor, type Controls } from './roster/controls';
 import { builderUrl, drawEntry, editSheetUrl, findTemplates } from './roster/entries';
 import { createTabStrip, type TabStrip } from './roster/tabs';
 import { STORAGE_UNAVAILABLE, clearStatus, showStatus } from './status';
@@ -16,7 +17,9 @@ const emptyMessage = document.querySelector<HTMLParagraphElement>('#roster-empty
 const tools = document.querySelector<HTMLElement>('#library-tools')!;
 const searchField = document.querySelector<HTMLInputElement>('#library-search')!;
 const noMatch = document.querySelector<HTMLElement>('#roster-no-match')!;
+const searchHint = document.querySelector<HTMLElement>('[data-slot="search-hint"]')!;
 const clearFiltersButton = document.querySelector<HTMLButtonElement>('#clear-filters')!;
+const liveRegion = document.querySelector<HTMLElement>('#library-announcements')!;
 const newCharacterButton = document.querySelector<HTMLButtonElement>('#new-character')!;
 const buildButton = document.querySelector<HTMLButtonElement>('#build-character')!;
 const templates = findTemplates(document);
@@ -56,7 +59,7 @@ const SHOWN: Record<LibraryView['state'] | 'unavailable', Parts> = {
 const partsShownFor = (state: LibraryView['state']): Parts => SHOWN[storage === undefined ? 'unavailable' : state];
 
 /** A pure redraw from the entries and the filter. The tabs and controls keep their nodes: only their state is written. */
-function render(entries: readonly LibraryEntry[], filter: LibraryFilter, tabs: TabStrip, controls: Controls): void {
+function render(entries: readonly LibraryEntry[], filter: LibraryFilter, tabs: TabStrip, controls: Controls): LibraryView {
   const current = view(entries, filter);
   const shown = partsShownFor(current.state);
   list.replaceChildren(...current.shown.map((entry) => drawEntry(templates, entry)));
@@ -71,20 +74,28 @@ function render(entries: readonly LibraryEntry[], filter: LibraryFilter, tabs: T
   list.hidden = !shown.entries;
   noMatch.hidden = !shown.noMatch;
   emptyMessage.hidden = !shown.empty;
+  return current;
 }
 
 /**
  * Draws the library. The tab strip is built here, once, from the tabs of the unfiltered view; the filter
- * is held here, and every control patches it through `change`, which redraws. The library is only ever redrawn, never re-read.
+ * is held here, and every control patches it through `change`, which redraws and says the result. That is
+ * the only path that announces: the first draw is the player arriving, not changing anything.
+ * The library is only ever redrawn, never re-read.
  */
 function open(entries: readonly LibraryEntry[]): void {
   let filter = INITIAL_FILTER;
+  const announce = createAnnouncer(liveRegion);
   const change = (patch: Partial<LibraryFilter>): void => {
     filter = { ...filter, ...patch };
-    render(entries, filter, tabs, controls);
+    announce(announcementOf(render(entries, filter, tabs, controls)));
   };
   const tabs = createTabStrip(tabStrip, library, view(entries, filter).tabs, (tab) => change({ tab }));
-  const controls = createControls({ search: searchField, clear: clearFiltersButton }, change);
+  const controls = createControls(
+    { tools, search: searchField, hint: searchHint, clear: clearFiltersButton, keys: document },
+    change,
+    shortcutFor(navigator),
+  );
   render(entries, filter, tabs, controls);
 }
 

@@ -141,6 +141,20 @@ html:has(.roster-page) header {
 	opacity: 1;
 }
 
+/* The keys that go to the field, at its right edge; a touch screen has no keys to press. */
+.search-hint {
+	flex: none;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+	white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+	.search-hint {
+		display: none;
+	}
+}
+
 /* The frame has no clear mark in the field; "Clear filters" and the keyboard do that job. */
 .search-input::-webkit-search-cancel-button {
 	display: none;

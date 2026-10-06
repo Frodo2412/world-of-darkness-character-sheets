@@ -76,6 +76,18 @@ export const noMatchState = (page: Page): Locator => page.locator('[data-slot="n
 export const clearFiltersButton = (page: Page): Locator =>
   noMatchState(page).getByRole('button', { name: 'Clear filters', exact: true });
 
+/** The keys that go to the search field, written beside it; assistive technology is not shown them. */
+export const shortcutHint = (page: Page): Locator => page.locator('[data-slot="search-hint"]');
+
+/** The library's live region: the one `role="status"` element the roster has. */
+const LIVE_REGION = '[role="status"]';
+
+/** Where the roster says what a change to its filters left. */
+export const liveRegion = (page: Page): Locator => page.locator(LIVE_REGION);
+
+/** Starts recording each time the live region is written to; see `writtenTexts`. */
+export const watchLiveRegionWrites = (page: Page): Promise<void> => watchWrites(page, LIVE_REGION);
+
 /** The row's right side, which is not drawn when there is nothing to say. */
 export const chronicleBreakdown = (page: Page): Locator => entrySlot(summaryRow(page), 'chronicle-breakdown');
 
@@ -157,6 +169,8 @@ export const ROSTER_PATH = '/';
 
 export async function openRoster(page: Page): Promise<void> {
   await page.goto(ROSTER_PATH);
+  // Watched from the start, so a scenario that asks what was announced finds everything since the page opened.
+  await watchLiveRegionWrites(page);
 }
 
 /** Waits until the page is at the roster's path exactly, and not at some address that merely ends in a slash. */

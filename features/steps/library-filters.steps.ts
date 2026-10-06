@@ -1,6 +1,7 @@
-import { expect } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import type { DataTable } from 'playwright-bdd';
 import { Given, Then, When } from './fixtures';
+import { ANNOUNCEMENT_WINDOW_MS, waitOnPageClock, writtenTexts } from './support/announcements';
 import { buildWith, saveBuilds } from './support/builder';
 import {
   chronicleBreakdown,
@@ -10,10 +11,13 @@ import {
   expectSelectedTab,
   expectStoredEntriesListed,
   expectTabs,
+  liveRegion,
   openRoster,
+  rosterButton,
   rosterEntries,
   searchField,
   selectedTab,
+  shortcutHint,
   summaryCounts,
   tab,
   tabAccessibleName,
@@ -40,7 +44,39 @@ const quotedTexts = (list: string): string[] => [...list.matchAll(/"([^"]*)"/g)]
 const chroniclesOf = (list: string): string[] =>
   [...list.matchAll(/"([^"]*)"|none/g)].map((match) => match[1] ?? '');
 
+/** What each platform name a scenario gives is called by `navigator.userAgentData`, which names platforms differently. */
+const BRAND_PLATFORM: Record<string, string> = { MacIntel: 'macOS', Win32: 'Windows' };
+
+/** The keys the page tells assistive technology about, for the hint a player is shown. */
+const KEY_SHORTCUT_OF_HINT: Record<string, string> = { '⌘ K': 'Meta+K', 'Ctrl K': 'Control+K' };
+
+/** Waits until more has been announced than `before` writes: the player's pause, as the page hears it. */
+const untilAnnounced = (page: Page, before: number): Promise<void> =>
+  expect.poll(async () => (await writtenTexts(page)).length).toBeGreaterThan(before);
+
+/** Waits for what the page announces to settle, then reads every announcement made so far. */
+async function announcedAfterPause(page: Page): Promise<string[]> {
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  return writtenTexts(page);
+}
+
 // Given
+
+// Both places a page can ask are answered before it loads, so the machine the test runs on cannot decide the outcome.
+Given('the browser reports the platform {string}', async ({ page }, platform: string) => {
+  const brand = BRAND_PLATFORM[platform];
+  if (brand === undefined) throw new Error(`no brand platform is known for "${platform}"`);
+  await page.addInitScript(
+    ({ legacy, branded }) => {
+      Object.defineProperty(navigator, 'platform', { get: () => legacy, configurable: true });
+      Object.defineProperty(navigator, 'userAgentData', {
+        get: () => ({ platform: branded, brands: [], mobile: false }),
+        configurable: true,
+      });
+    },
+    { legacy: platform, branded: brand },
+  );
+});
 
 Given('these characters and builds, created in this order', async ({ page, memory }, table: DataTable) => {
   await saveLibraryInOrder(page, memory, table.hashes() as unknown as LibraryRow[]);
@@ -137,6 +173,27 @@ When('they type {string}, then {string}, in the search field', async ({ page }, 
   const field = searchField(page);
   await field.pressSequentially(first);
   await field.pressSequentially(second);
+});
+
+// A key every 100ms, as a typist's pace: well inside the 400ms the page waits for, so a page that said
+// something at each key would be caught.
+When('they type {string} in the search field', async ({ page }, text: string) => {
+  await searchField(page).pressSequentially(text, { delay: 100 });
+});
+
+// The pause is waited for as the player's assistive technology would meet it: until the page has said something.
+When('they search for {string}, pause, and then choose {string}', async ({ page }, text: string, action: string) => {
+  const before = (await writtenTexts(page)).length;
+  await searchField(page).fill(text);
+  await untilAnnounced(page, before);
+  await rosterButton(page, action).click();
+});
+
+When('they search for {string}, pause, and then search for {string}', async ({ page }, first: string, second: string) => {
+  const before = (await writtenTexts(page)).length;
+  await searchField(page).fill(first);
+  await untilAnnounced(page, before);
+  await searchField(page).fill(second);
 });
 
 When('they clear the search field', async ({ page }) => {
@@ -236,6 +293,62 @@ Then("the search field's accessible name is {string}", async ({ page }, name: st
 
 Then('its placeholder reads {string}', async ({ page }, text: string) => {
   await expect(searchField(page)).toHaveAttribute('placeholder', text);
+});
+
+// Then: what is announced
+
+Then('nothing has been announced', async ({ page }) => {
+  // The list is drawn, and the page has had every chance to speak, before silence says anything.
+  await expectStoredEntriesListed(page);
+  await expect(liveRegion(page)).toHaveCount(1);
+  await expect(liveRegion(page)).toHaveAttribute('aria-atomic', 'true');
+  expect(await announcedAfterPause(page)).toEqual([]);
+  await expect(liveRegion(page)).toHaveText('');
+});
+
+// Once: one write of the text, and still only one after the page has had time to write another.
+Then('the roster announces {string} once', async ({ page }, text: string) => {
+  await expect.poll(() => writtenTexts(page)).toEqual([text]);
+  expect(await announcedAfterPause(page)).toEqual([text]);
+  await expect(liveRegion(page)).toHaveText(text);
+});
+
+Then('{string} is the last announcement', async ({ page }, text: string) => {
+  await expect.poll(async () => (await writtenTexts(page)).at(-1)).toBe(text);
+  expect((await announcedAfterPause(page)).at(-1)).toBe(text);
+});
+
+Then('{string} has been announced twice', async ({ page }, text: string) => {
+  const times = async (): Promise<number> => (await writtenTexts(page)).filter((written) => written === text).length;
+  await expect.poll(times).toBe(2);
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  expect(await times()).toBe(2);
+});
+
+Then('focus is still on the search field', async ({ page }) => {
+  await expect(searchField(page)).toBeFocused();
+});
+
+// The tab the player chose is the selected one, and the one a click or a key leaves focus on.
+Then('focus is still on that tab', async ({ page }) => {
+  await expect(selectedTab(page)).toHaveCount(1);
+  await expect(selectedTab(page)).toBeFocused();
+});
+
+// Then: the shortcut
+
+Then(/^focus (is in|is not in) the search field$/, async ({ page }, outcome: string) => {
+  // The hint is written by the same script that listens for the keys: once it is up, an absence says something.
+  await expect(shortcutHint(page)).toBeVisible();
+  if (outcome === 'is in') await expect(searchField(page)).toBeFocused();
+  else await expect(searchField(page)).not.toBeFocused();
+});
+
+Then('the hint beside the search field reads {string}', async ({ page }, hint: string) => {
+  await expect(shortcutHint(page)).toHaveText(hint);
+  // Drawn for the eye only; assistive technology is told the keys by the field itself.
+  await expect(shortcutHint(page)).toHaveAttribute('aria-hidden', 'true');
+  await expect(searchField(page)).toHaveAttribute('aria-keyshortcuts', KEY_SHORTCUT_OF_HINT[hint]);
 });
 
 // Then: the summary row

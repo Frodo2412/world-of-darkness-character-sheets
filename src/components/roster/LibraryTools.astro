@@ -5,6 +5,7 @@ import search from '../../assets/icons/search.svg';
 // the eye does not need: the placeholder says what to type, the label says what the field is for.
 // It is outside any form, so pressing Enter submits nothing. Later slices add the clan filter,
 // the status filter and the sort control to this row. Hidden until there is a library to browse.
+// The shortcut hint is empty and hidden until the script writes it: which keys it names depends on the platform.
 ---
 
 <div id="library-tools" class="library-tools" hidden>
@@ -18,5 +19,6 @@ import search from '../../assets/icons/search.svg';
 			autocomplete="off"
 			placeholder="Search by name, clan, or concept…"
 		/>
+		<span class="search-hint" data-slot="search-hint" aria-hidden="true" hidden></span>
 	</div>
 </div>

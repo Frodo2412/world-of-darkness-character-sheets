@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 /**
  * Records what each live region says every time it changes, as assistive
@@ -64,4 +64,22 @@ export async function writtenTexts(page: Page): Promise<string[]> {
     throw new Error('writtenTexts() was read on a page whose region is not being watched: call watchWrites(page, selector) first');
   }
   return writes.texts;
+}
+
+/**
+ * How long a page is given to say something it is going to say after a pause: the announcement's
+ * 400ms delay, and a margin for the frame it is written on.
+ */
+export const ANNOUNCEMENT_WINDOW_MS = 600;
+
+/**
+ * Waits until the page's own clock has run `milliseconds`, by polling it: a pause that is long enough
+ * for whatever is going to happen to have happened, which is what an absence or a count that is
+ * "still" the same needs. It is the page's time, so a slow test run does not shorten it.
+ */
+export async function waitOnPageClock(page: Page, milliseconds: number): Promise<void> {
+  const start = await page.evaluate(() => performance.now());
+  await expect
+    .poll(() => page.evaluate(() => performance.now()), { intervals: [50] })
+    .toBeGreaterThan(start + milliseconds);
 }

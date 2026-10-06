@@ -82,16 +82,14 @@ Feature: Search
     And "The Glass City · 3" is the selected tab
     And the search field is empty and has focus
 
-  @pending
   Scenario: Nothing is announced until the player filters
     When the player opens the roster
     Then nothing has been announced
 
-  @pending
   Scenario Outline: A change is announced once the player pauses, without moving focus
     When the player opens the roster
     And they <change>
-    Then "<announcement>" is announced once
+    Then the roster announces "<announcement>" once
     And focus is still on <control>
 
     Examples:
@@ -100,19 +98,16 @@ Feature: Search
       | type "zzz" in the search field        | No characters match. Showing 0 of 4 characters  | the search field |
       | select the tab "The Glass City · 3"   | Showing 3 of 4 characters                       | that tab         |
 
-  @pending
   Scenario: Clearing the filters is announced
     When the player opens the roster
     And they search for "zzz", pause, and then choose "Clear filters"
     Then "Showing 4 of 4 characters" is the last announcement
 
-  @pending
   Scenario: The same count is announced again
     When the player opens the roster
     And they search for "eloise", pause, and then search for "gabriel"
     Then "Showing 1 of 4 characters" has been announced twice
 
-  @pending
   Scenario Outline: The keyboard shortcut focuses search
     Given the browser reports the platform "<platform>"
     When the player opens the roster
