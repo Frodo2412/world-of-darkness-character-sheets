@@ -31,6 +31,8 @@
 	--space-row: 0.625rem;
 	--space-section: 1.125rem;
 	--space-gutter: 2rem;
+	/* The width of the design's frame (1512px): the widest the sheet is drawn. */
+	--frame-width: 94.5rem;
 	/* The page's side margin: the application bar and the sheet share it. */
 	--page-gutter: var(--space-3);
 

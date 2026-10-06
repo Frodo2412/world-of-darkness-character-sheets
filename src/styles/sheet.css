@@ -5,8 +5,15 @@
 /* The sheet runs edge to edge under the application bar: its bands carry the page
    gutter themselves, and so does anything else the page shows. Roster and builder keep `main`'s width. */
 main.sheet-page {
-	max-inline-size: none;
+	max-inline-size: var(--frame-width);
 	padding: 0;
+}
+
+/* On a screen wider than the design's frame the sheet keeps the frame's width, centred, and the
+   application bar lines up with it, so cards hold their proportions instead of stretching. */
+html:has(.sheet-page) header {
+	max-inline-size: var(--frame-width);
+	margin-inline: auto;
 }
 
 .sheet-page > :not(.sheet) {
@@ -679,6 +686,8 @@ html:has(.sheet-page) {
 	margin: 0;
 	font-family: var(--font-display);
 	font-size: 2.125rem;
+	/* The display face's default figures sit on the x-height, where a 0 reads as the letter o. */
+	font-variant-numeric: lining-nums;
 	line-height: var(--leading-tight);
 	color: var(--color-text);
 }
