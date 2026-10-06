@@ -18,6 +18,8 @@ const tools = document.querySelector<HTMLElement>('#library-tools')!;
 const searchField = document.querySelector<HTMLInputElement>('#library-search')!;
 const noMatch = document.querySelector<HTMLElement>('#roster-no-match')!;
 const searchHint = document.querySelector<HTMLElement>('[data-slot="search-hint"]')!;
+const clanSelect = document.querySelector<HTMLSelectElement>('#library-clan')!;
+const statusGroup = document.querySelector<HTMLElement>('#library-status')!;
 const clearFiltersButton = document.querySelector<HTMLButtonElement>('#clear-filters')!;
 const liveRegion = document.querySelector<HTMLElement>('#library-announcements')!;
 const newCharacterButton = document.querySelector<HTMLButtonElement>('#new-character')!;
@@ -34,7 +36,7 @@ function load(store: CharacterStore, builds: BuildStore): LibraryEntry[] {
 interface Parts {
   /** The whole labelled section, "Library" heading included. */
   section: boolean;
-  /** The tab strip and the browsing tools: how the player gets back what a filter took away. */
+  /** The tab strip and the browsing tools, the clan and status filters among them: how the player gets back what a filter took away. */
   browsing: boolean;
   /** The list card, which holds the entries, the no-match message and the summary row. */
   card: boolean;
@@ -78,7 +80,7 @@ function render(entries: readonly LibraryEntry[], filter: LibraryFilter, tabs: T
 }
 
 /**
- * Draws the library. The tab strip is built here, once, from the tabs of the unfiltered view; the filter
+ * Draws the library. The tab strip and the clan filter's options are built here, once, from the unfiltered view; the filter
  * is held here, and every control patches it through `change`, which redraws and says the result. That is
  * the only path that announces: the first draw is the player arriving, not changing anything.
  * The library is only ever redrawn, never re-read.
@@ -90,9 +92,11 @@ function open(entries: readonly LibraryEntry[]): void {
     filter = { ...filter, ...patch };
     announce(announcementOf(render(entries, filter, tabs, controls)));
   };
-  const tabs = createTabStrip(tabStrip, library, view(entries, filter).tabs, (tab) => change({ tab }));
+  const unfiltered = view(entries, filter);
+  const tabs = createTabStrip(tabStrip, library, unfiltered.tabs, (tab) => change({ tab }));
   const controls = createControls(
-    { tools, search: searchField, hint: searchHint, clear: clearFiltersButton, keys: document },
+    { tools, search: searchField, hint: searchHint, clear: clearFiltersButton, keys: document, clan: clanSelect, status: statusGroup },
+    unfiltered.clans,
     change,
     shortcutFor(navigator),
   );

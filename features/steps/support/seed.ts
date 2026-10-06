@@ -121,7 +121,8 @@ export interface LibraryRow {
   name: string;
   clan: string;
   concept: string;
-  player: string;
+  /** A table with no such column leaves it out. */
+  player?: string;
   chronicle: string;
 }
 
@@ -144,7 +145,7 @@ export async function saveLibraryInOrder(
   rows: LibraryRow[],
 ): Promise<void> {
   const idAt = (index: number): string => `ordered-${String(index + 1).padStart(4, '0')}`;
-  const characters = rows.flatMap(({ kind, name, clan, concept, player, chronicle }, index) =>
+  const characters = rows.flatMap(({ kind, name, clan, concept, player = '', chronicle }, index) =>
     kind === 'character' ? [{ ...characterWith({ name, clan, concept, player, chronicle }), id: idAt(index) }] : [],
   );
   const builds = rows.flatMap(({ kind, name, clan, concept, chronicle }, index) =>

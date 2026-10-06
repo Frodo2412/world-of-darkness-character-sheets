@@ -4,7 +4,9 @@ import { Given, Then, When } from './fixtures';
 import { ANNOUNCEMENT_WINDOW_MS, waitOnPageClock, writtenTexts } from './support/announcements';
 import { buildWith, saveBuilds } from './support/builder';
 import {
+  browsingControls,
   chronicleBreakdown,
+  clanFilter,
   clearFiltersButton,
   entryNamed,
   noMatchState,
@@ -18,6 +20,10 @@ import {
   searchField,
   selectedTab,
   shortcutHint,
+  shownStatusTexts,
+  statusFilter,
+  statusOption,
+  statusOptions,
   summaryCounts,
   tab,
   tabAccessibleName,
@@ -165,8 +171,10 @@ When('they select the tab {string}', async ({ page }, text: string) => {
 
 // What a player does in the search field. The text is entered as keys when the keys are the point,
 // and in one go when only the result is.
+// An empty search types nothing: the field starts empty, and that is what is checked once the page has drawn it.
 When('they search for {string}', async ({ page }, text: string) => {
-  await searchField(page).fill(text);
+  if (text === '') await expect(searchField(page)).toHaveValue('');
+  else await searchField(page).fill(text);
 });
 
 When('they type {string}, then {string}, in the search field', async ({ page }, first: string, second: string) => {
@@ -198,6 +206,24 @@ When('they search for {string}, pause, and then search for {string}', async ({ p
 
 When('they clear the search field', async ({ page }) => {
   await searchField(page).fill('');
+});
+
+// The select is focused first, as a player reaches it, so that choosing from it must leave focus where it is.
+// Choosing "All clans" chooses the default again; the select is as happy with that as with any other option.
+When('they filter by the clan {string}', async ({ page }, clan: string) => {
+  await clanFilter(page).focus();
+  await clanFilter(page).selectOption({ label: clan });
+});
+
+// Nothing is done; the library is drawn first so that what follows looks at the list as it starts.
+When('they change nothing', async ({ page }) => {
+  await expectStoredEntriesListed(page);
+});
+
+When('they focus the selected status', async ({ page }) => {
+  const selected = statusFilter(page).getByRole('radio', { checked: true });
+  await selected.focus();
+  await expect(selected).toBeFocused();
 });
 
 When('they press {string}', async ({ page }, key: string) => {
@@ -246,11 +272,69 @@ Then('focus has left the tab strip', async ({ page }) => {
   await expect(tabStrip(page).locator(':focus')).toHaveCount(0);
 });
 
+// Then: the clan and status filters
+
+// The guard proves `browsingControls` finds these same controls: the roster hides every one of them when it has nothing to browse.
+Then(/^the clan filter offers (.+) in that order$/, async ({ page }, list: string) => {
+  await expect(clanFilter(page)).toBeVisible();
+  await expect.poll(() => clanFilter(page).locator('option').allTextContents()).toEqual(quotedTexts(list));
+  await expect(browsingControls(page).and(clanFilter(page))).toHaveCount(1);
+  await expect(browsingControls(page).and(statusFilter(page))).toHaveCount(1);
+  await expect(browsingControls(page).and(statusOptions(page))).toHaveCount(2);
+});
+
+Then('{string} is chosen', async ({ page }, text: string) => {
+  await expect(clanFilter(page).locator('option:checked')).toHaveText(text);
+});
+
+// Matched by what each option shows ("All · 4"); its accessible name reads "All, 4".
+Then('the status filter reads {string} and {string}', async ({ page }, first: string, second: string) => {
+  await expect.poll(() => shownStatusTexts(page)).toEqual([first, second]);
+  for (const text of [first, second]) {
+    await expect(statusOption(page, text.slice(0, text.lastIndexOf(' · ')))).toHaveAccessibleName(tabAccessibleName(text));
+  }
+});
+
+Then('{string} is the selected status', async ({ page }, name: string) => {
+  await expect(statusOption(page, name)).toBeChecked();
+  await expect(statusFilter(page).getByRole('radio', { checked: true })).toHaveCount(1);
+});
+
+Then('{string} is the selected status and has focus', async ({ page }, name: string) => {
+  await expect(statusOption(page, name)).toBeChecked();
+  await expect(statusFilter(page).getByRole('radio', { checked: true })).toHaveCount(1);
+  await expect(statusOption(page, name)).toBeFocused();
+});
+
+Then('focus has left the status filter', async ({ page }) => {
+  // Focus has moved on to something, and that is not a radio of the filter.
+  await expect(page.locator(':focus')).toHaveCount(1);
+  await expect(page.locator('body')).not.toBeFocused();
+  await expect(statusFilter(page).locator(':focus')).toHaveCount(0);
+});
+
 // Then: what the roster lists
 
 Then('the roster lists only {string}', async ({ page }, name: string) => {
   await expect(rosterEntries(page)).toHaveCount(1);
   await expect(entryNamed(page, name)).toHaveCount(1);
+});
+
+Then(/^the roster lists ("[^"]*"(?: and "[^"]*")*) and nothing else$/, async ({ page }, list: string) => {
+  const names = quotedTexts(list);
+  await expect(rosterEntries(page)).toHaveCount(names.length);
+  for (const name of names) await expect(entryNamed(page, name)).toHaveCount(1);
+});
+
+// An absence only means something once the list is drawn with what the filters keep of it.
+Then('the roster lists nothing', async ({ page }) => {
+  await expect(summaryCounts(page)).toHaveText(/^Showing 0 of \d+ characters$/);
+  await expect(rosterEntries(page)).toHaveCount(0);
+});
+
+Then('the roster does not list {string}', async ({ page }, name: string) => {
+  await expect(summaryCounts(page)).toHaveText(/^Showing \d+ of \d+ characters$/);
+  await expect(entryNamed(page, name)).toHaveCount(0);
 });
 
 Then(
@@ -327,6 +411,14 @@ Then('{string} has been announced twice', async ({ page }, text: string) => {
 
 Then('focus is still on the search field', async ({ page }) => {
   await expect(searchField(page)).toBeFocused();
+});
+
+Then('focus is still on the clan filter', async ({ page }) => {
+  await expect(clanFilter(page)).toBeFocused();
+});
+
+Then('focus is still on the status option {string}', async ({ page }, name: string) => {
+  await expect(statusOption(page, name)).toBeFocused();
 });
 
 // The tab the player chose is the selected one, and the one a click or a key leaves focus on.

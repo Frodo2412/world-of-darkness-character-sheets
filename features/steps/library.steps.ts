@@ -24,6 +24,7 @@ import {
   rosterList,
   sheetAddress,
   sheetField,
+  statusOption,
   statusRegion,
   summaryCounts,
   unreadableEntries,
@@ -140,8 +141,23 @@ When("the roster is restored from the browser's back and forward cache", async (
   });
 });
 
+// The one place a player's "choose" is resolved: a status option or a button, never a guess between them.
 When('they choose {string}', async ({ page }, name: string) => {
-  await rosterButton(page, name).click();
+  const option = statusOption(page, name);
+  const button = rosterButton(page, name);
+  const matches = async (): Promise<[number, number]> => [await option.count(), await button.count()];
+  // The controls are drawn once the page has read storage, so something has to answer to the name first.
+  await expect
+    .poll(async () => (await matches()).reduce((a, b) => a + b), {
+      message: `nothing on the roster is chosen as "${name}": it is neither a status option nor a button`,
+    })
+    .toBeGreaterThan(0);
+  const [options, buttons] = await matches();
+  if (options > 0 && buttons > 0) {
+    throw new Error(`"${name}" is both a status option and a button on the roster, so "choose" cannot tell which is meant`);
+  }
+  if (options > 0) await option.check();
+  else await button.click();
 });
 
 When('they choose {string} twice', async ({ page }, name: string) => {

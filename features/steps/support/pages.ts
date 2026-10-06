@@ -76,6 +76,26 @@ export const noMatchState = (page: Page): Locator => page.locator('[data-slot="n
 export const clearFiltersButton = (page: Page): Locator =>
   noMatchState(page).getByRole('button', { name: 'Clear filters', exact: true });
 
+/** The clan filter: a native select named "Clan". */
+export const clanFilter = (page: Page): Locator => page.getByRole('combobox', { name: 'Clan', exact: true });
+
+/** The status filter: the group named "Status", which holds one radio for each status. */
+export const statusFilter = (page: Page): Locator => page.getByRole('group', { name: 'Status', exact: true });
+
+/** Every radio of the status filter, in order. */
+export const statusOptions = (page: Page): Locator => statusFilter(page).getByRole('radio');
+
+/** The radio of the status drawn as `name` ("Ready to play"): found by the label beside it, not by its count. */
+export const statusOption = (page: Page, name: string): Locator =>
+  statusFilter(page)
+    .locator('label')
+    .filter({ has: page.locator('[data-slot="status-label"]', { hasText: new RegExp(`^${escaped(name)}$`) }) })
+    .getByRole('radio');
+
+/** The text each status option shows, "All · 4", in order. */
+export const shownStatusTexts = async (page: Page): Promise<string[]> =>
+  Promise.all((await statusOptions(page).all()).map((option) => shownText(option.locator('xpath=ancestor::label'))));
+
 /** The keys that go to the search field, written beside it; assistive technology is not shown them. */
 export const shortcutHint = (page: Page): Locator => page.locator('[data-slot="search-hint"]');
 
@@ -104,19 +124,22 @@ export const selectedTab = (page: Page): Locator => tabStrip(page).getByRole('ta
 export const tabPanel = (page: Page): Locator => page.getByRole('tabpanel');
 
 /**
- * The text a tab shows, "Name · 4", read as rendered: what is drawn, its separator included, with
+ * The text an element shows, "Name · 4", read as rendered: what is drawn, its separator included, with
  * whitespace normalised. The comma that is read to assistive technology in place of the dot is
- * drawn at no size, so it is not part of what is shown.
+ * drawn at no size, so it is not part of what is shown. Tabs and status options are written alike.
  */
-export const tabText = (tab: Locator): Promise<string> =>
-  tab.evaluate((element) =>
-    [...element.querySelectorAll('span')]
+const shownText = (element: Locator): Promise<string> =>
+  element.evaluate((node) =>
+    [...node.querySelectorAll('span')]
       .filter((part) => part.childElementCount === 0 && getComputedStyle(part).fontSize !== '0px')
       .map((part) => part.textContent ?? '')
       .join('')
       .replace(/\s+/g, ' ')
       .trim(),
   );
+
+/** The text a tab shows, "Name · 4". */
+export const tabText = shownText;
 
 /** The text each tab shows, in order. */
 export const shownTabTexts = async (page: Page): Promise<string[]> =>
@@ -200,9 +223,9 @@ export const browsingControls = (page: Page): Locator =>
   page
     .getByRole('tab')
     .or(searchField(page))
-    .or(page.getByRole('combobox', { name: /clan|sort/i }))
-    .or(page.getByRole('group', { name: 'Status', exact: true }))
-    .or(page.getByRole('radio'));
+    .or(clanFilter(page))
+    .or(statusFilter(page))
+    .or(statusOptions(page));
 
 /** A button the roster offers, by its name: one of the creator's two actions, or "Clear filters". */
 export const rosterButton = (page: Page, name: string): Locator => page.getByRole('button', { name, exact: true });
