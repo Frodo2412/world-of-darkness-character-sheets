@@ -1383,13 +1383,13 @@ graph TD
   - [x] Step 3.1: Chronicle joins the edit-mode identity fields
 
 #### Wave 4
-- [ ] Slice 4: Chronicle tabs
+- [x] Slice 4: Chronicle tabs
   - [x] Step 4.1: Chronicles in the model
   - [x] Step 4.2: The tab strip
 
 #### Wave 5
 - [ ] Slice 5: Search and the result count
-  - [ ] Step 5.1: Search in the model
+  - [x] Step 5.1: Search in the model
   - [ ] Step 5.2: The search field and the no-match state
   - [ ] Step 5.3: The announcement and the shortcut
 
