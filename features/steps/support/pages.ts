@@ -1,12 +1,25 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { buildKeyFor } from '../../../src/storage/buildStore';
+import { keyFor } from '../../../src/storage/characterStore';
+import { storedKeys } from './storage';
+import { escaped } from './text';
 
 export const SHEET_ADDRESS = /\/sheet\/\?id=.+/;
 
 export const sheetAddress = (id: string): string => `/sheet/?id=${encodeURIComponent(id)}`;
 
+// This file is the one place that knows the list's markup: the steps ask for entries and
+// their parts through the functions below.
+
+/** The library list. */
+export const rosterList = (page: Page): Locator => page.getByRole('list', { name: 'Characters' });
+
 /** Every entry of the library list: characters, builds and records that could not be read. */
-export const rosterEntries = (page: Page): Locator =>
-  page.getByRole('list', { name: 'Characters' }).getByRole('listitem');
+export const rosterEntries = (page: Page): Locator => rosterList(page).getByRole('listitem');
+
+/** The heading that names an entry (all of `scope`'s, or the one called `name`). */
+export const entryHeading = (scope: Page | Locator, name?: string): Locator =>
+  scope.getByRole('heading', name === undefined ? { level: 3 } : { level: 3, name, exact: true });
 
 /** The entries of characters: the ones that offer "Open sheet", which a build or an unreadable record does not. */
 export const characterEntries = (page: Page): Locator =>
@@ -14,7 +27,25 @@ export const characterEntries = (page: Page): Locator =>
 
 /** The entry whose name (a level 3 heading) is `name`. */
 export const entryNamed = (page: Page, name: string): Locator =>
-  rosterEntries(page).filter({ has: page.getByRole('heading', { level: 3, name, exact: true }) });
+  rosterEntries(page).filter({ has: entryHeading(page, name) });
+
+/** The entries reporting a record of `kind` that could not be read. */
+export const unreadableEntries = (page: Page, kind: 'character' | 'build'): Locator =>
+  rosterEntries(page).filter({ has: entryHeading(page, `Unreadable ${kind}`) });
+
+/** Waits for the list to show every character and build the browser's storage holds. */
+export async function expectStoredEntriesListed(page: Page): Promise<void> {
+  const stored = await Promise.all([keyFor(''), buildKeyFor('')].map((prefix) => storedKeys(page, prefix)));
+  await expect(rosterEntries(page)).toHaveCount(stored.flat().length);
+}
+
+/** The entry an earlier "the entry for …" step named; a step that says "it" needs one. */
+export function currentEntry(memory: { entry?: Locator }): Locator {
+  if (memory.entry === undefined) {
+    throw new Error("no entry named yet: a 'the entry for …' step must come first");
+  }
+  return memory.entry;
+}
 
 /** The part of an entry the page marks as `slot`; the entry's markup is known only here. */
 export const entrySlot = (entry: Locator, slot: string): Locator =>
@@ -25,10 +56,10 @@ export const actionName = (label: string, entryName: string): string => `${label
 
 /** The link `label` ("Open sheet", "Edit character", "Continue") of one entry. */
 export const entryAction = (entry: Locator, label: string): Locator =>
-  entry.getByRole('link', { name: new RegExp(`^${label} for `) });
+  entry.getByRole('link', { name: new RegExp(`^${escaped(label)} for `) });
 
 /** The row under the list: "Showing X of Y characters". */
-export const summaryRow = (page: Page): Locator => page.locator('.library-summary');
+export const summaryRow = (page: Page): Locator => page.locator('[data-slot="library-summary"]');
 
 /** Follows "Open sheet" on an entry. */
 export const openSheetOf = (entry: Locator): Promise<void> => entryAction(entry, 'Open sheet').click();

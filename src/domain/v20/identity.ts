@@ -29,6 +29,7 @@ export function monogram(name: string): string {
 }
 
 const SUMMARY_SEPARATOR = ' · ';
+const TEMPERAMENT_SEPARATOR = ' / ';
 
 const joinNonBlank = (parts: readonly string[], separator: string): string =>
   parts.map((part) => part.trim()).filter((part) => part !== '').join(separator);
@@ -52,7 +53,7 @@ export function temperament(character: V20Character): string {
 
 /** Nature and Demeanor on one line from plain text, for a build as well as a character. */
 export function temperamentOf(nature: string, demeanor: string): string {
-  return joinNonBlank([nature, demeanor], ' / ');
+  return joinNonBlank([nature, demeanor], TEMPERAMENT_SEPARATOR);
 }
 
 /** "1 die", "0 dice", "7 dice". */

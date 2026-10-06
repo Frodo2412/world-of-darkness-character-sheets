@@ -1,26 +1,35 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import { buildWith, saveBuilds } from './support/builder';
+import { controlNames, linkNames } from './support/accessibility';
 import {
   SHEET_ADDRESS,
   actionName,
+  currentEntry,
   entryAction,
+  entryHeading,
   entryNamed,
   entrySlot,
+  expectStoredEntriesListed,
   openRoster,
   openSheetOf,
   rosterEntries,
+  rosterList,
+  sheetAddress,
   sheetField,
   summaryRow,
+  unreadableEntries,
 } from './support/pages';
-import { characterWith, inCreationOrder, saveCharacters } from './support/seed';
+import {
+  characterWith,
+  inCreationOrder,
+  saveCharacters,
+  saveDamagedBuild,
+  saveDamagedCharacter,
+} from './support/seed';
 import { editButton, identityName, sheetRoot } from './support/sheet';
-import { overwriteRecord, storedRecords } from './support/storage';
-
-/** The roles whose accessible name the accessibility tree lists: what a player can operate. */
-const CONTROL_ROLES = 'textbox|combobox|slider|button|link|checkbox|radio|spinbutton';
-const CONTROL_NAME = new RegExp(`^\\s*- (?:${CONTROL_ROLES}) "([^"]*)"`);
-const LINK_NAME = /^\s*- link "([^"]*)"/;
+import { storedRecords } from './support/storage';
+import { escaped } from './support/text';
 
 /** The entry a scenario has been talking about, or the only one on the roster. */
 async function theEntry(page: Page, entry: Locator | undefined): Promise<Locator> {
@@ -29,27 +38,15 @@ async function theEntry(page: Page, entry: Locator | undefined): Promise<Locator
   return rosterEntries(page);
 }
 
-/** The accessible names of the links within `scope`, as assistive technology receives them. */
-async function linkNames(scope: Locator): Promise<string[]> {
-  const tree = await scope.ariaSnapshot();
-  return tree
-    .split('\n')
-    .map((line) => LINK_NAME.exec(line)?.[1])
-    .filter((name): name is string => name !== undefined);
-}
-
 // Given
 
 Given(
   'a saved character, a build in progress, an unreadable character and an unreadable build',
   async ({ page, memory }) => {
-    const damagedBuild = buildWith();
-    await saveBuilds(page, [buildWith({ concept: { name: 'Beckett' }, clan: 'Gangrel' }), damagedBuild]);
-    await overwriteRecord(page, damagedBuild.id, 'not a build');
-
-    const damagedCharacter = characterWith({ name: 'Fatima' });
-    await saveCharacters(page, [characterWith({ name: 'Lucita', clan: 'Lasombra' }), damagedCharacter]);
-    await overwriteRecord(page, damagedCharacter.id, 'not a character');
+    await saveBuilds(page, [buildWith({ concept: { name: 'Beckett' }, clan: 'Gangrel' })]);
+    await saveDamagedBuild(page);
+    await saveCharacters(page, [characterWith({ name: 'Lucita', clan: 'Lasombra' })]);
+    await saveDamagedCharacter(page);
     memory.stored = await storedRecords(page);
   },
 );
@@ -143,7 +140,7 @@ Then('the entry for {string} shows the monogram {string}', async ({ page, memory
 });
 
 Then('it shows {string}', async ({ memory }, text: string) => {
-  await expect(entrySlot(memory.entry!, 'summary')).toHaveText(text);
+  await expect(entrySlot(currentEntry(memory), 'summary')).toHaveText(text);
 });
 
 async function expectTemperament(entry: Locator, value: string, label: string): Promise<void> {
@@ -152,15 +149,15 @@ async function expectTemperament(entry: Locator, value: string, label: string): 
 }
 
 Then('it shows {string} under {string}', async ({ memory }, value: string, label: string) => {
-  await expectTemperament(memory.entry!, value, label);
+  await expectTemperament(currentEntry(memory), value, label);
 });
 
 Then('it shows the chronicle {string}', async ({ memory }, chronicle: string) => {
-  await expect(entrySlot(memory.entry!, 'chronicle')).toHaveText(chronicle);
+  await expect(entrySlot(currentEntry(memory), 'chronicle')).toHaveText(chronicle);
 });
 
 Then('it is not marked {string}', async ({ memory }, marker: string) => {
-  await expect(memory.entry!).not.toContainText(marker);
+  await expect(currentEntry(memory)).not.toContainText(marker);
 });
 
 Then('the entry is named {string}', async ({ page, memory }, name: string) => {
@@ -170,20 +167,20 @@ Then('the entry is named {string}', async ({ page, memory }, name: string) => {
 });
 
 Then('its monogram is empty', async ({ memory }) => {
-  await expect(entrySlot(memory.entry!, 'monogram')).toHaveText('');
+  await expect(entrySlot(currentEntry(memory), 'monogram')).toHaveText('');
 });
 
 Then('it shows no summary line', async ({ memory }) => {
-  await expect(entrySlot(memory.entry!, 'summary')).toBeHidden();
+  await expect(entrySlot(currentEntry(memory), 'summary')).toBeHidden();
 });
 
 Then('it shows no summary line and no {string} label', async ({ memory }, label: string) => {
-  await expect(entrySlot(memory.entry!, 'summary')).toBeHidden();
-  await expect(memory.entry!.getByText(label)).toBeHidden();
+  await expect(entrySlot(currentEntry(memory), 'summary')).toBeHidden();
+  await expect(currentEntry(memory).getByText(label)).toBeHidden();
 });
 
 Then('it shows no {string}', async ({ memory }, text: string) => {
-  await expect(entrySlot(memory.entry!, 'temperament')).not.toContainText(text);
+  await expect(entrySlot(currentEntry(memory), 'temperament')).not.toContainText(text);
 });
 
 Then('the entry for {string} shows {string} under {string}', async ({ page, memory }, name: string, value: string, label: string) => {
@@ -223,7 +220,9 @@ Then('the entry contains no bold, italic or underlined element', async ({ page, 
 });
 
 Then('{string} appears nowhere on the page', async ({ page }, text: string) => {
-  await expect(page.locator('body')).not.toContainText(new RegExp(text));
+  // Absence only means something once what the scenario saved is on the page.
+  await expectStoredEntriesListed(page);
+  await expect(page.locator('body')).not.toContainText(new RegExp(escaped(text)));
   expect(await page.locator('body').ariaSnapshot()).not.toContain(text);
 });
 
@@ -244,7 +243,8 @@ Then('the sheet for {string} is shown in edit mode', async ({ page }, name: stri
 // Then: actions named for their entry
 
 async function expectFourDifferentActionNames(page: Page): Promise<void> {
-  const names = await linkNames(page.getByRole('list', { name: 'Characters' }));
+  await expect(rosterEntries(page)).toHaveCount(2);
+  const names = await linkNames(rosterList(page));
   expect(names).toHaveLength(4);
   expect(new Set(names).size).toBe(4);
 }
@@ -254,10 +254,9 @@ Then('the open and edit actions of the two entries have four different accessibl
 });
 
 Then("each name includes its character's name", async ({ page }) => {
-  const entries = await rosterEntries(page).all();
-  expect(entries).toHaveLength(2);
-  for (const entry of entries) {
-    const name = (await entry.getByRole('heading', { level: 3 }).textContent())!;
+  await expect(rosterEntries(page)).toHaveCount(2);
+  for (const entry of await rosterEntries(page).all()) {
+    const name = (await entryHeading(entry).textContent())!;
     const names = await linkNames(entry);
     expect(names).toHaveLength(2);
     for (const linkName of names) expect(linkName).toContain(name);
@@ -268,9 +267,9 @@ Then('the older entry is named {string} and the newer {string}', async ({ page, 
   const [first, second] = memory.saved;
   for (const [character, name] of [[first, older], [second, newer]] as const) {
     const entry = rosterEntries(page).filter({
-      has: page.locator(`a[href^="/sheet/?id=${encodeURIComponent(character.id)}"]`),
+      has: page.locator(`a[href^="${sheetAddress(character.id)}"]`),
     });
-    await expect(entry.getByRole('heading', { level: 3 })).toHaveText(name);
+    await expect(entryHeading(entry)).toHaveText(name);
   }
 });
 
@@ -300,26 +299,36 @@ Then('the message that there are no characters yet is not shown', async ({ page 
 });
 
 Then('the roster lists one unreadable character', async ({ page }) => {
-  await expect(rosterEntries(page).filter({ hasText: 'Unreadable character' })).toHaveCount(1);
+  await expect(unreadableEntries(page, 'character')).toHaveCount(1);
 });
 
 Then('the roster lists one unreadable build', async ({ page }) => {
-  await expect(rosterEntries(page).filter({ hasText: 'Unreadable build' })).toHaveCount(1);
+  await expect(unreadableEntries(page, 'build')).toHaveCount(1);
 });
 
 Then(
   "the roster lists one unreadable character with an explanation that includes its record's id",
   async ({ page, memory }) => {
-    const entry = rosterEntries(page).filter({ hasText: 'Unreadable character' });
+    const entry = unreadableEntries(page, 'character');
     await expect(entry).toHaveCount(1);
+    await expect(entrySlot(entry, 'explanation')).toBeVisible();
+    await expect(entrySlot(entry, 'explanation')).toContainText('could not be read');
     await expect(entry).toContainText(memory.damaged!.id);
   },
 );
 
+/** An unreadable entry of either kind offers nothing to operate. */
+async function expectNoActions(entries: Locator): Promise<void> {
+  await expect(entries.locator('a, button, input, select, textarea, [tabindex]')).toHaveCount(0);
+}
+
 Then('the unreadable entry offers no action', async ({ page }) => {
-  const entry = rosterEntries(page).filter({ hasText: 'Unreadable character' });
-  await expect(entry).toHaveCount(1);
-  await expect(entry.locator('a, button, input, select, textarea, [tabindex]')).toHaveCount(0);
+  await expectStoredEntriesListed(page);
+  const unreadable = [unreadableEntries(page, 'character'), unreadableEntries(page, 'build')];
+  const found = (await Promise.all(unreadable.map((entries) => entries.count()))).reduce((a, b) => a + b);
+  // Checking nothing would pass for the wrong reason.
+  expect(found).toBeGreaterThan(0);
+  for (const entries of unreadable) await expectNoActions(entries);
 });
 
 Then('the roster lists {int} entries', async ({ page }, count: number) => {
@@ -339,18 +348,17 @@ Then('every stored record is exactly as it was', async ({ page, memory }) => {
 Then(
   'no control on the page has {string} or {string} in its accessible name',
   async ({ page }, first: string, second: string) => {
-    const tree = await page.locator('body').ariaSnapshot();
-    const names = tree
-      .split('\n')
-      .map((line) => CONTROL_NAME.exec(line)?.[1])
-      .filter((name): name is string => name !== undefined);
+    // Absence only means something once what the scenario saved is on the page.
+    await expectStoredEntriesListed(page);
+    const names = await controlNames(page);
 
     // A page with nothing to operate would pass for the wrong reason.
     expect(names.length).toBeGreaterThan(0);
-    expect(names.filter((name) => [first, second].some((word) => name.toLowerCase().includes(word)))).toEqual([]);
+    const words = [first, second].map((word) => word.toLowerCase());
+    expect(names.filter((name) => words.some((word) => name.toLowerCase().includes(word)))).toEqual([]);
   },
 );
 
 Then('the page contains no dialog', async ({ page }) => {
-  await expect(page.locator('dialog')).toHaveCount(0);
+  await expect(page.locator('dialog, [role="dialog"], [role="alertdialog"]')).toHaveCount(0);
 });

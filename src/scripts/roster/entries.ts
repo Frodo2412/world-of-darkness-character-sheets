@@ -73,7 +73,7 @@ function fillReadable(item: ParentNode, entry: Readable): void {
   fillOptional(item, 'summary', entry.summary);
   slot(item, 'temperament').textContent = entry.temperament;
   slot(item, 'temperament-group').hidden = entry.temperament === '';
-  slot(item, 'chronicle').textContent = entry.chronicle === '' ? 'Unassigned' : entry.chronicle;
+  slot(item, 'chronicle').textContent = entry.chronicleLabel;
 }
 
 function fillUnreadable(item: ParentNode, kind: 'character' | 'build', id: string): void {
@@ -101,11 +101,39 @@ function fill(item: ParentNode, entry: LibraryEntry): void {
   }
 }
 
-/** One list item for `entry`. */
-export function drawEntry(templates: EntryTemplates, entry: LibraryEntry): HTMLLIElement {
+function drawAs(templates: EntryTemplates, entry: LibraryEntry): HTMLLIElement {
   const template = templates[TEMPLATE_OF[entry.kind]];
   const item = template.content.firstElementChild?.cloneNode(true);
   if (!(item instanceof HTMLLIElement)) throw new Error('An entry template must hold one list item.');
   fill(item, entry);
   return item;
+}
+
+/** The entry as the unreadable record of its kind, which has nothing left to draw wrongly. */
+function asUnreadable(entry: LibraryEntry): LibraryEntry {
+  switch (entry.kind) {
+    case 'character':
+    case 'unreadable-character':
+      return { kind: 'unreadable-character', id: entry.id };
+    case 'build':
+    case 'unreadable-build':
+      return { kind: 'unreadable-build', id: entry.id };
+  }
+}
+
+/**
+ * `draw` of `entry`, or of the unreadable record of its kind when drawing it throws (an id the
+ * address cannot hold, say): one entry that cannot be drawn must not take the list with it.
+ */
+export function drawSafely<T>(draw: (entry: LibraryEntry) => T, entry: LibraryEntry): T {
+  try {
+    return draw(entry);
+  } catch {
+    return draw(asUnreadable(entry));
+  }
+}
+
+/** One list item for `entry`. */
+export function drawEntry(templates: EntryTemplates, entry: LibraryEntry): HTMLLIElement {
+  return drawSafely((drawn) => drawAs(templates, drawn), entry);
 }

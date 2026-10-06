@@ -1,10 +1,12 @@
 import { expect, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
+import { accessibleNames } from './support/accessibility';
 import { buildWith, saveBuilds } from './support/builder';
 import {
   actionName,
   buildEntries,
   entryAction,
+  entryHeading,
   entryNamed,
   openRoster,
   rosterEntries,
@@ -14,9 +16,7 @@ import { overwriteRecord } from './support/storage';
 
 /** The accessible name of each "Continue" action on the roster. */
 const continueNames = (page: Page): Promise<string[]> =>
-  entryAction(buildEntries(page), 'Continue').evaluateAll((links) =>
-    links.map((link) => link.getAttribute('aria-label') ?? link.textContent ?? ''),
-  );
+  accessibleNames(entryAction(buildEntries(page), 'Continue'));
 
 // Given
 
@@ -69,7 +69,7 @@ Then('the roster still lists {string} as in progress', async ({ page }, name: st
 });
 
 Then('the roster lists the text {string}', async ({ page }, text: string) => {
-  await expect(rosterEntries(page).getByRole('heading', { level: 3 })).toHaveText(text);
+  await expect(entryHeading(rosterEntries(page))).toHaveText(text);
 });
 
 Then('the builder is shown', async ({ page }) => {
@@ -77,6 +77,7 @@ Then('the builder is shown', async ({ page }) => {
 });
 
 Then('the continue controls have different accessible names', async ({ page }) => {
+  await expect(entryAction(buildEntries(page), 'Continue')).toHaveCount(2);
   const names = await continueNames(page);
   expect(names).toHaveLength(2);
   expect(new Set(names).size).toBe(2);

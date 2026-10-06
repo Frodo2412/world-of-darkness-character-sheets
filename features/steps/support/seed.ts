@@ -1,6 +1,8 @@
 import type { Page } from '@playwright/test';
 import { blankCharacter, type V20Character } from '../../../src/domain/v20/character';
 import { createCharacterStore, type StoragePort } from '../../../src/storage/characterStore';
+import { buildWith, saveBuilds } from './builder';
+import { overwriteRecord, type StoredRecord } from './storage';
 
 type HeaderValues = Partial<V20Character['header']>;
 
@@ -90,4 +92,21 @@ export async function saveCharacters(page: Page, characters: V20Character[]): Pr
   await page.evaluate((entries) => {
     for (const [key, value] of entries) window.localStorage.setItem(key, value);
   }, [...records]);
+}
+
+/** A record cut off part-way through writing, as storage damage leaves it. */
+export const DAMAGED_CHARACTER_TEXT = '{"id": "broken", "header": {"name": "Fat';
+
+/** Saves a character named "Fatima", then leaves her record unreadable; the record is what is left. */
+export async function saveDamagedCharacter(page: Page): Promise<StoredRecord & { id: string }> {
+  const character = characterWith({ name: 'Fatima' });
+  await saveCharacters(page, [character]);
+  return { id: character.id, ...(await overwriteRecord(page, character.id, DAMAGED_CHARACTER_TEXT)) };
+}
+
+/** Saves a build, then leaves its record unreadable; the record is what is left. */
+export async function saveDamagedBuild(page: Page): Promise<StoredRecord & { id: string }> {
+  const build = buildWith();
+  await saveBuilds(page, [build]);
+  return { id: build.id, ...(await overwriteRecord(page, build.id, '{"id": "bro')) };
 }

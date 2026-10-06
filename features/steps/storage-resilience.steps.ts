@@ -8,9 +8,15 @@ import {
   rosterEntries,
   sheetAddress,
   sheetField,
+  unreadableEntries,
 } from './support/pages';
 import { rating, setRating } from './support/ratings';
-import { characterWith, saveCharacters } from './support/seed';
+import {
+  DAMAGED_CHARACTER_TEXT,
+  characterWith,
+  saveCharacters,
+  saveDamagedCharacter,
+} from './support/seed';
 import { ensureEditing, identityName } from './support/sheet';
 import {
   acceptWrites,
@@ -20,20 +26,13 @@ import {
   withholdStorage,
 } from './support/storage';
 
-const NOT_JSON = '{"id": "broken", "header": {"name": "Fat';
-
-const unreadableEntries = (page: Page) =>
-  rosterEntries(page).filter({ hasText: 'Unreadable character' });
-
 Given("Fatima's saved data has become unreadable", async ({ page, memory }) => {
   const fatima = memory.saved.find((character) => character.header.name === 'Fatima')!;
-  memory.damaged = { id: fatima.id, ...(await overwriteRecord(page, fatima.id, NOT_JSON)) };
+  memory.damaged = { id: fatima.id, ...(await overwriteRecord(page, fatima.id, DAMAGED_CHARACTER_TEXT)) };
 });
 
 Given('a saved character whose data has become unreadable', async ({ page, memory }) => {
-  const character = characterWith({ name: 'Fatima' });
-  await saveCharacters(page, [character]);
-  memory.damaged = { id: character.id, ...(await overwriteRecord(page, character.id, NOT_JSON)) };
+  memory.damaged = await saveDamagedCharacter(page);
 });
 
 Given('a saved record that is readable but is not a V20 character', async ({ page, memory }) => {
@@ -59,12 +58,12 @@ Then('{string} is listed and can be opened', async ({ page }, name: string) => {
 
 Then('one entry is reported as an unreadable character', async ({ page }) => {
   await openRoster(page);
-  await expect(unreadableEntries(page)).toHaveCount(1);
+  await expect(unreadableEntries(page, 'character')).toHaveCount(1);
   await expect(rosterEntries(page)).toHaveCount(2);
 });
 
 Then('the unreadable entry is still reported', async ({ page }) => {
-  await expect(unreadableEntries(page)).toHaveCount(1);
+  await expect(unreadableEntries(page, 'character')).toHaveCount(1);
 });
 
 Then('its saved data is unchanged', async ({ page, memory }) => {
@@ -72,7 +71,7 @@ Then('its saved data is unchanged', async ({ page, memory }) => {
 });
 
 Then('that entry is reported as an unreadable character', async ({ page }) => {
-  await expect(unreadableEntries(page)).toHaveCount(1);
+  await expect(unreadableEntries(page, 'character')).toHaveCount(1);
 });
 
 Then('creating a new character still works', async ({ page, memory }) => {
@@ -81,7 +80,7 @@ Then('creating a new character still works', async ({ page, memory }) => {
 
   await openRoster(page);
   await expect(rosterEntries(page)).toHaveCount(2);
-  await expect(unreadableEntries(page)).toHaveCount(1);
+  await expect(unreadableEntries(page, 'character')).toHaveCount(1);
   expect(await storedText(page, memory.damaged!.key)).toBe(memory.damaged!.text);
 });
 

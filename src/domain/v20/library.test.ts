@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { blankCharacter, setHeaderField } from './character';
 import { blankBuild, type ConceptField, type V20Build } from './creation/build';
-import { countsLine, entriesOf, INITIAL_FILTER, view } from './library';
+import { countsLine, entriesOf, INITIAL_FILTER, UNASSIGNED, view } from './library';
 import type { HeaderField } from './traits';
 
 const character = (id: string, fields: Partial<Record<HeaderField, string>> = {}) => ({
@@ -45,6 +45,7 @@ describe('entriesOf', () => {
       summary: 'Toreador · 10th generation · Antiquarian',
       temperament: 'Visionary / Bon Vivant',
       chronicle: 'The Glass City',
+      chronicleLabel: 'The Glass City',
       clan: 'Toreador',
       concept: 'Antiquarian',
       chronicleKey: 'the glass city',
@@ -60,6 +61,7 @@ describe('entriesOf', () => {
       summary: '',
       temperament: '',
       chronicle: '',
+      chronicleLabel: UNASSIGNED,
       clan: '',
       concept: '',
       chronicleKey: '',
@@ -80,20 +82,38 @@ describe('entriesOf', () => {
       characters: [character('c1', { name: 'Lucita', chronicle: '   ' })],
       builds: [],
     });
-    expect(entry).toMatchObject({ chronicle: '', chronicleKey: '' });
+    expect(entry).toMatchObject({
+      chronicle: '',
+      chronicleLabel: 'Unassigned',
+      chronicleKey: '',
+    });
   });
 
-  test('the keys fold case, accents and surrounding space', () => {
+  test('the keys ignore case and surrounding space', () => {
     const [entry] = entriesOf({
-      characters: [character('c1', { chronicle: ' Évora Nights ', clan: ' TOREADOR ' })],
+      characters: [character('c1', { chronicle: ' The Glass City ', clan: ' TOREADOR ' })],
       builds: [],
     });
     expect(entry).toMatchObject({
-      chronicle: 'Évora Nights',
-      chronicleKey: 'evora nights',
+      chronicle: 'The Glass City',
+      chronicleKey: 'the glass city',
       clan: 'TOREADOR',
       clanKey: 'toreador',
     });
+  });
+
+  test('the keys keep accents: "Élysée" and "Elysee" are different chronicles and clans', () => {
+    const entryWith = (chronicle: string, clan: string) => {
+      const [entry] = entriesOf({ characters: [character('c1', { chronicle, clan })], builds: [] });
+      return entry;
+    };
+    expect(entryWith('Élysée', 'Élysée')).toMatchObject({ chronicleKey: 'élysée', clanKey: 'élysée' });
+    expect(entryWith('Elysee', 'Elysee')).toMatchObject({ chronicleKey: 'elysee', clanKey: 'elysee' });
+  });
+
+  test('a build with a blank chronicle is labelled unassigned', () => {
+    const [entry] = entriesOf({ characters: [], builds: [build('b1', { chronicle: '  ' })] });
+    expect(entry).toMatchObject({ chronicle: '', chronicleLabel: UNASSIGNED });
   });
 
   test('a build summarises clan and concept, with no generation', () => {
@@ -118,6 +138,7 @@ describe('entriesOf', () => {
       summary: 'Gangrel · Wanderer',
       temperament: 'Loner / Scholar',
       chronicle: 'The Glass City',
+      chronicleLabel: 'The Glass City',
       clan: 'Gangrel',
       concept: 'Wanderer',
       chronicleKey: 'the glass city',
@@ -220,6 +241,36 @@ describe('entriesOf', () => {
       ).toEqual(['Lucita', 'Lucita']);
     });
 
+    test('are the same name when they differ only in case', () => {
+      expect(
+        names({
+          characters: [character('0001', { name: 'Lucita' }), character('0002', { name: 'lucita' })],
+          builds: [],
+        }),
+      ).toEqual(['Lucita', 'lucita 2']);
+    });
+
+    test('are the same name when they differ only in runs of space', () => {
+      expect(
+        names({
+          characters: [
+            character('0001', { name: 'Ana Maria' }),
+            character('0002', { name: 'Ana  Maria' }),
+          ],
+          builds: [],
+        }),
+      ).toEqual(['Ana Maria', 'Ana  Maria 2']);
+    });
+
+    test('are different names when they differ in accents', () => {
+      expect(
+        names({
+          characters: [character('0001', { name: 'Eloise' }), character('0002', { name: 'Éloïse' })],
+          builds: [],
+        }),
+      ).toEqual(['Eloise', 'Éloïse']);
+    });
+
     test('skip a number another entry already carries', () => {
       expect(
         names({
@@ -244,6 +295,19 @@ describe('entriesOf', () => {
           builds: [],
         }),
       ).toEqual(['Unnamed character', 'Unnamed character 3', 'Unnamed character 2']);
+    });
+
+    test('skip a number another entry carries, compared the same way', () => {
+      expect(
+        names({
+          characters: [
+            character('0001', { name: 'Lucita' }),
+            character('0002', { name: 'lucita' }),
+            character('0003', { name: 'LUCITA  2' }),
+          ],
+          builds: [],
+        }),
+      ).toEqual(['Lucita', 'lucita 3', 'LUCITA  2']);
     });
 
     test('ignore unreadable records', () => {
@@ -284,6 +348,16 @@ describe('view', () => {
 
   test('counts unreadable entries among those shown and stored', () => {
     expect(view(stored, INITIAL_FILTER).countsLine).toBe('Showing 3 of 3 characters');
+  });
+
+  test.each([
+    ['one unreadable record', { characters: [{ kind: 'unreadable' as const, id: '0001' }], builds: [] }],
+    ['one build', { characters: [], builds: [build('0001', { name: 'Beckett' })] }],
+  ])('is not empty when only %s is stored', (_, records) => {
+    expect(view(entriesOf(records), INITIAL_FILTER)).toMatchObject({
+      state: 'entries',
+      countsLine: 'Showing 1 of 1 characters',
+    });
   });
 
   test('is empty when nothing is stored', () => {

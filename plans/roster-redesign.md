@@ -115,7 +115,7 @@ asset URLs expire in seven days, so Step 1.1 commits all three): `search.svg` (1
 
 | Module | Role |
 | --- | --- |
-| `src/domain/v20/text.ts` (+ test) | `folded(text)`: trimmed, lower-cased, accents removed. The one "same text" rule, used for chronicles, clans, search and sorting. `monogram` in `identity.ts` reuses its accent stripping |
+| `src/domain/v20/text.ts` (+ test) | `folded(text)` (trimmed, lower-cased, accents removed) is the rule for search and sorting; `caseFolded(text)` (trimmed, lower-cased, accents kept) is the rule for chronicles, clans and repeated names, per the spec. `monogram` in `identity.ts` reuses the accent stripping |
 | `src/domain/v20/library.ts` (+ test) | The pure library model; imports nothing from `src/storage/`. See below |
 | `src/domain/v20/identity.ts` | Gains `buildSummary(clan, concept)` beside `identitySummary`, sharing its joiner |
 | `src/scripts/roster.ts` | Entry point. `load()` reads both stores once into entries; `render()` draws `view(entries, filter)`; the two create handlers |
@@ -1366,10 +1366,10 @@ graph TD
 
 #### Wave 1
 - [ ] Slice 1: One list of everything stored
-  - [ ] Step 1.1: Scenarios, gate and icons
-  - [ ] Step 1.2: Library entries in the model
-  - [ ] Step 1.3: Delete leaves the roster
-  - [ ] Step 1.4: One list in the frame's structure
+  - [x] Step 1.1: Scenarios, gate and icons
+  - [x] Step 1.2: Library entries in the model
+  - [x] Step 1.3: Delete leaves the roster
+  - [x] Step 1.4: One list in the frame's structure
 
 #### Wave 2
 - [ ] Slice 2: Character creator

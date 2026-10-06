@@ -1,12 +1,15 @@
 // The character library as the roster shows it: what is stored, as entries.
 // Pure: the page reads the stores and hands their records to `entriesOf`.
 
-import { UNNAMED_CHARACTER, type V20Character } from './character';
+import { displayName, type V20Character } from './character';
 import type { V20Build } from './creation/build';
 import { buildSummary, identitySummary, monogram, temperamentOf } from './identity';
-import { folded } from './text';
+import { caseFolded } from './text';
 
 const UNNAMED_BUILD = 'Unnamed build';
+
+/** What an entry with no chronicle is filed under. */
+export const UNASSIGNED = 'Unassigned';
 
 /** What an entry that could be read shows. */
 interface EntryDetails {
@@ -18,6 +21,8 @@ interface EntryDetails {
   temperament: string;
   /** Trimmed; empty when unassigned. */
   chronicle: string;
+  /** The chronicle as typed, or `UNASSIGNED` when it is blank. */
+  chronicleLabel: string;
   clan: string;
   concept: string;
   chronicleKey: string;
@@ -43,7 +48,7 @@ export interface LibraryRecords {
 }
 
 /** The parts of a record's text an entry is made from. */
-interface Text {
+interface EntrySource {
   id: string;
   name: string;
   nature: string;
@@ -54,18 +59,21 @@ interface Text {
   summary: string;
 }
 
-function detailsOf(text: Text, unnamed: string): EntryDetails {
+/** `displayName` is what the entry is called: the typed name, or a fallback when it is blank. */
+function detailsOf(source: EntrySource, displayName: string): EntryDetails {
+  const chronicle = source.chronicle.trim();
   return {
-    id: text.id,
-    name: text.name.trim() || unnamed,
-    monogram: monogram(text.name),
-    summary: text.summary,
-    temperament: temperamentOf(text.nature, text.demeanor),
-    chronicle: text.chronicle.trim(),
-    clan: text.clan.trim(),
-    concept: text.concept.trim(),
-    chronicleKey: folded(text.chronicle),
-    clanKey: folded(text.clan),
+    id: source.id,
+    name: displayName,
+    monogram: monogram(source.name),
+    summary: source.summary,
+    temperament: temperamentOf(source.nature, source.demeanor),
+    chronicle,
+    chronicleLabel: chronicle || UNASSIGNED,
+    clan: source.clan.trim(),
+    concept: source.concept.trim(),
+    chronicleKey: caseFolded(source.chronicle),
+    clanKey: caseFolded(source.clan),
   };
 }
 
@@ -86,7 +94,7 @@ function readCharacter(character: V20Character): LibraryEntry {
     kind: 'character',
     ...detailsOf(
       { id: character.id, name, nature, demeanor, chronicle, clan, concept, summary },
-      UNNAMED_CHARACTER,
+      displayName(character),
     ),
   };
 }
@@ -98,7 +106,7 @@ function readBuild(build: V20Build): LibraryEntry {
     kind: 'build',
     ...detailsOf(
       { id: build.id, name, nature, demeanor, chronicle, clan: build.clan, concept, summary },
-      UNNAMED_BUILD,
+      name.trim() || UNNAMED_BUILD,
     ),
   };
 }
@@ -121,7 +129,9 @@ function buildEntry(record: BuildRecord): LibraryEntry {
 const oldestFirst = (a: LibraryEntry, b: LibraryEntry): number =>
   a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 
-const nameSlot = (kind: LibraryEntry['kind'], name: string): string => `${kind}:${name}`;
+/** Names are the same when they match ignoring case and runs of space; accents count. */
+const nameSlot = (kind: LibraryEntry['kind'], name: string): string =>
+  `${kind}:${caseFolded(name).replace(/\s+/g, ' ')}`;
 
 /**
  * Repeated names made distinct within a kind ("Lucita", "Lucita 2", …), so every
@@ -151,7 +161,8 @@ function numberRepeats(entries: LibraryEntry[]): LibraryEntry[] {
 /** Every stored record as an entry, oldest first. */
 export function entriesOf({ characters, builds }: LibraryRecords): LibraryEntry[] {
   const entries = [...characters.map(characterEntry), ...builds.map(buildEntry)];
-  // Ids sort in creation order, in both stores (see `generateId`).
+  // Ids sort in creation order within a store (see `generateId`); across the two stores
+  // they do so as long as the clock moves forward.
   return numberRepeats(entries.sort(oldestFirst));
 }
 

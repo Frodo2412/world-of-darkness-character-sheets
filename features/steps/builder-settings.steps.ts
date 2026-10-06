@@ -4,20 +4,18 @@ import {
   BUILD_KEY_PREFIX,
   baseGeneration,
   builderAddress,
-  buildWith,
   enterExtraFreebies,
   extraFreebies,
   openBuildId,
   openStep,
   readout,
-  saveBuilds,
   setBaseGeneration,
   startBuild,
 } from './support/builder';
-import { characterEntries, openRoster } from './support/pages';
+import { characterEntries, openRoster, rosterList } from './support/pages';
+import { saveDamagedBuild } from './support/seed';
 import {
   acceptWrites,
-  overwriteRecord,
   refuseWrites,
   storedKeys,
   storedText,
@@ -84,9 +82,7 @@ Given(
 );
 
 Given('a saved build whose data has been damaged', async ({ page, memory }) => {
-  const build = buildWith();
-  await saveBuilds(page, [build]);
-  memory.damaged = { id: build.id, ...(await overwriteRecord(page, build.id, '{"id": "bro')) };
+  memory.damaged = await saveDamagedBuild(page);
 });
 
 Given('the browser has started refusing to store data', async ({ page }) => {
@@ -224,6 +220,10 @@ Then('the blood points per turn are {int}', async ({ page }, value: number) => {
 
 Then('the roster lists no characters', async ({ page }) => {
   await openRoster(page);
+  // Anchor first: a page still loading shows no entry either.
+  await expect(page.getByRole('heading', { level: 1, name: 'Characters' })).toBeVisible();
+  // The page keeps the list or the empty message in the markup and shows one of them.
+  await expect(rosterList(page).or(page.getByText('No characters yet')).filter({ visible: true })).toBeVisible();
   // A build in progress is an entry of its own, so the library is not empty; it holds no character.
   await expect(characterEntries(page)).toHaveCount(0);
 });
