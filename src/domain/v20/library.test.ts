@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { blankCharacter, setHeaderField } from './character';
 import { blankBuild, type ConceptField, type V20Build } from './creation/build';
-import { clearedFilter, countsLine, entriesOf, INITIAL_FILTER, UNASSIGNED, view } from './library';
+import { ALL_CLANS, clearedFilter, countsLine, entriesOf, INITIAL_FILTER, UNASSIGNED, view, type LibraryFilter } from './library';
 import type { HeaderField } from './traits';
 
 const character = (id: string, fields: Partial<Record<HeaderField, string>> = {}) => ({
@@ -708,7 +708,7 @@ describe('view: search', () => {
     builds: [build('0004', { name: 'Silas Reed', clan: 'brujah', concept: 'Broker', chronicle: 'The Glass City' })],
   });
   const searched = (search: string, tab = INITIAL_FILTER.tab) =>
-    view(stored, { tab, search }).shown.map((entry) => entry.id);
+    view(stored, { ...INITIAL_FILTER, tab, search }).shown.map((entry) => entry.id);
 
   test('the initial filter searches for nothing', () => {
     expect(INITIAL_FILTER.search).toBe('');
@@ -829,6 +829,251 @@ describe('view: search', () => {
   });
 });
 
+describe('view: clan and status', () => {
+  const stored = entriesOf({
+    characters: [
+      character('0001', { name: 'Éloïse Voss', clan: 'Toreador', concept: 'Antiquarian', chronicle: 'The Glass City' }),
+      character('0002', { name: 'Gabriel Ash', clan: 'Ventrue', concept: 'Fixer', chronicle: 'The Glass City' }),
+      character('0003', { name: 'Mara Delacroix', clan: 'Brujah', concept: 'Agitator' }),
+    ],
+    builds: [build('0004', { name: 'Silas Reed', clan: 'Brujah', concept: 'Broker', chronicle: 'The Glass City' })],
+  });
+  const glassCity = view(stored, INITIAL_FILTER).tabs.find((tab) => tab.label === 'The Glass City')!.key;
+  const unassigned = view(stored, INITIAL_FILTER).tabs.find((tab) => tab.label === UNASSIGNED)!.key;
+  const listed = (patch: Partial<LibraryFilter>, entries = stored) =>
+    view(entries, { ...INITIAL_FILTER, ...patch }).shown.map((entry) => entry.id);
+  const clansOf = (...clans: string[]) =>
+    view(
+      entriesOf({ characters: clans.map((clan, index) => character(String(index + 1).padStart(4, '0'), { clan })), builds: [] }),
+      INITIAL_FILTER,
+    ).clans;
+
+  test('the initial filter is all clans and all statuses', () => {
+    expect(INITIAL_FILTER).toMatchObject({ clan: ALL_CLANS, status: 'all' });
+  });
+
+  describe('the clans on offer', () => {
+    test('are each distinct clan, alphabetical, keyed and labelled', () => {
+      expect(view(stored, INITIAL_FILTER).clans).toEqual([
+        { key: 'brujah', label: 'Brujah' },
+        { key: 'toreador', label: 'Toreador' },
+        { key: 'ventrue', label: 'Ventrue' },
+      ]);
+    });
+
+    test('merge spellings that differ only by case or surrounding space, labelled as the oldest spells it, trimmed', () => {
+      expect(clansOf(' brujah ', 'Brujah', 'BRUJAH')).toEqual([{ key: 'brujah', label: 'brujah' }]);
+      expect(clansOf('Brujah', ' brujah ')).toEqual([{ key: 'brujah', label: 'Brujah' }]);
+    });
+
+    test('keep clans that differ by an accent apart', () => {
+      // Alphabetically they read alike, so the key settles which is first.
+      expect(clansOf('Élite', 'Elite')).toEqual([
+        { key: 'elite', label: 'Elite' },
+        { key: 'élite', label: 'Élite' },
+      ]);
+    });
+
+    test('are in alphabetical order ignoring case and accents', () => {
+      expect(clansOf('ventrue', 'Élite', 'Toreador', 'brujah', 'Assamite').map((clan) => clan.label)).toEqual([
+        'Assamite',
+        'brujah',
+        'Élite',
+        'Toreador',
+        'ventrue',
+      ]);
+    });
+
+    test('leave out blank clans', () => {
+      expect(clansOf('', '   ', 'Gangrel')).toEqual([{ key: 'gangrel', label: 'Gangrel' }]);
+      expect(clansOf('', ' ')).toEqual([]);
+    });
+
+    test('come from readable entries only, builds included', () => {
+      const entries = entriesOf({
+        characters: [{ kind: 'unreadable', id: '0001' }],
+        builds: [build('0002', { clan: 'Gangrel' }), { kind: 'unreadable', id: '0003' }],
+      });
+      expect(view(entries, INITIAL_FILTER).clans).toEqual([{ key: 'gangrel', label: 'Gangrel' }]);
+    });
+
+    test('are the whole library’s, whatever else is filtered', () => {
+      const all = view(stored, INITIAL_FILTER).clans;
+      expect(view(stored, { ...INITIAL_FILTER, tab: unassigned }).clans).toEqual(all);
+      expect(view(stored, { ...INITIAL_FILTER, search: 'zzz' }).clans).toEqual(all);
+      expect(view(stored, { ...INITIAL_FILTER, status: 'ready' }).clans).toEqual(all);
+    });
+  });
+
+  describe('a clan alone', () => {
+    test('lists only that clan, spelled any way', () => {
+      expect(listed({ clan: 'brujah' })).toEqual(['0003', '0004']);
+      expect(listed({ clan: 'ventrue' })).toEqual(['0002']);
+    });
+
+    test('lists every entry of a merged clan', () => {
+      const entries = entriesOf({
+        characters: [character('0001', { clan: ' brujah ' }), character('0002', { clan: 'BRUJAH' })],
+        builds: [build('0003', { clan: 'Brujah' })],
+      });
+      expect(listed({ clan: 'brujah' }, entries)).toEqual(['0001', '0002', '0003']);
+    });
+
+    test('does not list a clan that differs by an accent', () => {
+      const entries = entriesOf({ characters: [character('0001', { clan: 'Élite' }), character('0002', { clan: 'Elite' })], builds: [] });
+      expect(listed({ clan: 'elite' }, entries)).toEqual(['0002']);
+    });
+
+    test('is resolved to the clan itself', () => {
+      expect(view(stored, { ...INITIAL_FILTER, clan: 'brujah' }).clan).toBe('brujah');
+    });
+
+    test('that no longer exists is all clans', () => {
+      const result = view(stored, { ...INITIAL_FILTER, clan: 'nosferatu' });
+      expect(result.clan).toBe(ALL_CLANS);
+      expect(result.shown.map((entry) => entry.id)).toEqual(['0001', '0002', '0003', '0004']);
+    });
+
+    test('is all clans in a library with no clans at all', () => {
+      expect(view(inChronicles('a'), { ...INITIAL_FILTER, clan: 'brujah' })).toMatchObject({ clan: ALL_CLANS });
+    });
+
+    test('leaves out an entry with no clan, which shows only under all clans', () => {
+      const entries = entriesOf({ characters: [character('0001', { clan: '' }), character('0002', { clan: 'Gangrel' })], builds: [] });
+      expect(listed({}, entries)).toEqual(['0001', '0002']);
+      expect(listed({ clan: 'gangrel' }, entries)).toEqual(['0002']);
+      expect(listed({ clan: '' }, entries)).toEqual(['0001', '0002']);
+    });
+  });
+
+  describe('status alone', () => {
+    test('all lists every entry', () => {
+      expect(listed({ status: 'all' })).toEqual(['0001', '0002', '0003', '0004']);
+    });
+
+    test('ready lists characters only, not builds', () => {
+      expect(listed({ status: 'ready' })).toEqual(['0001', '0002', '0003']);
+    });
+  });
+
+  describe('every pair of filters combines with AND', () => {
+    test.each([
+      ['tab and clan', { tab: glassCity, clan: 'brujah' }, ['0004']],
+      ['tab and status', { tab: glassCity, status: 'ready' as const }, ['0001', '0002']],
+      ['tab and search', { tab: glassCity, search: 'x' }, ['0002']],
+      ['clan and status', { clan: 'brujah', status: 'ready' as const }, ['0003']],
+      ['clan and search', { clan: 'brujah', search: 'mara' }, ['0003']],
+      ['status and search', { status: 'ready' as const, search: 'silas' }, []],
+      ['status and search, matching a character', { status: 'ready' as const, search: 'gab' }, ['0002']],
+      ['tab and clan with no overlap', { tab: unassigned, clan: 'ventrue' }, []],
+      ['clan and search with no overlap', { clan: 'ventrue', search: 'mara' }, []],
+    ])('%s', (_, patch, ids) => {
+      expect(listed(patch)).toEqual(ids);
+    });
+
+    test('all four', () => {
+      expect(listed({ tab: glassCity, clan: 'ventrue', status: 'ready', search: 'gab' })).toEqual(['0002']);
+      expect(listed({ tab: glassCity, clan: 'brujah', status: 'ready', search: 'silas' })).toEqual([]);
+    });
+  });
+
+  describe('an unreadable entry', () => {
+    const withUnreadable = entriesOf({
+      characters: [character('0001', { name: 'Lucita', clan: 'Toreador' }), { kind: 'unreadable', id: '0002' }],
+      builds: [{ kind: 'unreadable', id: '0003' }],
+    });
+
+    test('is listed with the initial filter', () => {
+      expect(listed({}, withUnreadable)).toEqual(['0001', '0002', '0003']);
+    });
+
+    test.each([
+      ['a clan', { clan: 'toreador' }],
+      ['ready to play', { status: 'ready' as const }],
+      ['a search', { search: 'l' }],
+    ])('is left out by %s', (_, patch) => {
+      expect(listed(patch, withUnreadable)).toEqual(['0001']);
+    });
+
+    test('is listed again once the clan filter resolves to all clans', () => {
+      expect(listed({ clan: 'nosferatu' }, withUnreadable)).toEqual(['0001', '0002', '0003']);
+    });
+  });
+
+  describe('the status counts', () => {
+    const counts = (patch: Partial<LibraryFilter>, entries = stored) =>
+      view(entries, { ...INITIAL_FILTER, ...patch }).statusCounts;
+
+    test('are all and ready for the selected tab', () => {
+      expect(counts({})).toEqual({ all: 4, ready: 3 });
+      expect(counts({ tab: glassCity })).toEqual({ all: 3, ready: 2 });
+      expect(counts({ tab: unassigned })).toEqual({ all: 1, ready: 1 });
+    });
+
+    test('ignore the clan, the status and the search', () => {
+      expect(counts({ clan: 'brujah' })).toEqual({ all: 4, ready: 3 });
+      expect(counts({ status: 'ready' })).toEqual({ all: 4, ready: 3 });
+      expect(counts({ search: 'eloise' })).toEqual({ all: 4, ready: 3 });
+      expect(counts({ tab: glassCity, clan: 'toreador', status: 'ready', search: 'eloise' })).toEqual({ all: 3, ready: 2 });
+    });
+
+    test('count an unreadable entry among all but not among ready', () => {
+      const entries = entriesOf({
+        characters: [character('0001', { name: 'Lucita' }), { kind: 'unreadable', id: '0002' }],
+        builds: [build('0003', { name: 'Beckett' })],
+      });
+      expect(counts({}, entries)).toEqual({ all: 3, ready: 1 });
+    });
+
+    test('are zero in an empty library', () => {
+      expect(counts({}, [])).toEqual({ all: 0, ready: 0 });
+    });
+
+    test('follow the tab that resolves, when the chosen one is gone', () => {
+      expect(counts({ tab: 'chronicle:gone' })).toEqual({ all: 4, ready: 3 });
+    });
+  });
+
+  describe('the rest of the view', () => {
+    test('the tab counts and the tabs are the same whatever clan and status are chosen', () => {
+      const tabsFor = (patch: Partial<LibraryFilter>) => view(stored, { ...INITIAL_FILTER, ...patch }).tabs;
+      expect(tabsFor({ clan: 'brujah' })).toEqual(tabsFor({}));
+      expect(tabsFor({ status: 'ready' })).toEqual(tabsFor({}));
+      expect(tabsFor({ clan: 'ventrue', status: 'ready', search: 'zzz' })).toEqual(tabsFor({}));
+    });
+
+    test('the counts line follows all four filters', () => {
+      const line = (patch: Partial<LibraryFilter>) => view(stored, { ...INITIAL_FILTER, ...patch }).countsLine;
+      expect(line({ clan: 'brujah' })).toBe('Showing 2 of 4 characters');
+      expect(line({ status: 'ready' })).toBe('Showing 3 of 4 characters');
+      expect(line({ tab: glassCity })).toBe('Showing 3 of 4 characters');
+      expect(line({ search: 'a' })).toBe('Showing 4 of 4 characters');
+      expect(line({ tab: glassCity, clan: 'brujah', status: 'ready' })).toBe('Showing 0 of 4 characters');
+    });
+
+    test('the breakdown describes every stored entry, whatever is filtered', () => {
+      expect(view(stored, { ...INITIAL_FILTER, clan: 'ventrue', status: 'ready' }).breakdown).toBe(view(stored, INITIAL_FILTER).breakdown);
+    });
+
+    test('the state is no-match whenever something is stored and nothing is shown', () => {
+      expect(view(stored, { ...INITIAL_FILTER, clan: 'ventrue', search: 'mara' }).state).toBe('no-match');
+      expect(view(stored, { ...INITIAL_FILTER, tab: glassCity, clan: 'brujah', status: 'ready' }).state).toBe('no-match');
+      expect(view(stored, { ...INITIAL_FILTER, clan: 'ventrue' }).state).toBe('entries');
+    });
+
+    test('a library of builds alone has nothing to show under ready to play', () => {
+      const builds = entriesOf({ characters: [], builds: [build('0001', { name: 'Beckett' })] });
+      expect(view(builds, { ...INITIAL_FILTER, status: 'ready' })).toMatchObject({ state: 'no-match', shown: [] });
+    });
+
+    test('the entries handed in are not changed', () => {
+      const before = structuredClone(stored);
+      view(stored, { tab: glassCity, clan: 'brujah', status: 'ready', search: 'x' });
+      expect(stored).toEqual(before);
+    });
+  });
+});
+
 describe('view: state', () => {
   test('is entries while something is shown', () => {
     const entries = inChronicles('The Glass City', '');
@@ -855,33 +1100,48 @@ describe('view: state', () => {
   test('is no-match in a tab too, and entries again once the search is cleared', () => {
     const entries = inChronicles('The Glass City', 'Ashes', '');
     const glass = view(entries, INITIAL_FILTER).tabs.find((tab) => tab.label === 'The Glass City')!.key;
-    expect(view(entries, { tab: glass, search: 'zzz' }).state).toBe('no-match');
-    expect(view(entries, { tab: glass, search: '' }).state).toBe('entries');
+    expect(view(entries, { ...INITIAL_FILTER, tab: glass, search: 'zzz' }).state).toBe('no-match');
+    expect(view(entries, { ...INITIAL_FILTER, tab: glass, search: '' }).state).toBe('entries');
   });
 });
 
 describe('clearedFilter', () => {
-  test('empties the search and keeps the tab', () => {
-    expect(clearedFilter({ tab: 'chronicle:the glass city', search: 'zzz' })).toEqual({
-      tab: 'chronicle:the glass city',
-      search: '',
-    });
+  const chosen: LibraryFilter = { tab: 'chronicle:the glass city', clan: 'brujah', status: 'ready', search: 'zzz' };
+
+  test('empties the search, the clan and the status and keeps the tab', () => {
+    expect(clearedFilter(chosen)).toEqual({ ...INITIAL_FILTER, tab: 'chronicle:the glass city' });
   });
 
-  test('leaves a filter that searches for nothing as it was', () => {
-    expect(clearedFilter({ tab: 'unassigned', search: '' })).toEqual({ tab: 'unassigned', search: '' });
+  test.each([
+    ['the search', { ...INITIAL_FILTER, tab: 'unassigned', search: 'zzz' }],
+    ['the clan', { ...INITIAL_FILTER, tab: 'unassigned', clan: 'brujah' }],
+    ['the status', { ...INITIAL_FILTER, tab: 'unassigned', status: 'ready' as const }],
+  ])('clears %s on its own', (_, filter) => {
+    expect(clearedFilter(filter)).toEqual({ ...INITIAL_FILTER, tab: 'unassigned' });
+  });
+
+  test('leaves a filter that restricts nothing but the tab as it was', () => {
+    const filter = { ...INITIAL_FILTER, tab: 'unassigned' };
+    expect(clearedFilter(filter)).toEqual(filter);
   });
 
   test('does not change the filter it is given', () => {
-    const given = Object.freeze({ tab: 'unassigned', search: 'zzz' });
+    const given = Object.freeze({ ...chosen });
     expect(clearedFilter(given)).not.toBe(given);
-    expect(given).toEqual({ tab: 'unassigned', search: 'zzz' });
+    expect(given).toEqual(chosen);
   });
 
-  test('clears the search that left nothing to show', () => {
+  test('clears the filters that left nothing to show', () => {
     const entries = inChronicles('The Glass City', '');
-    const searching = { ...INITIAL_FILTER, search: 'zzz' };
+    const searching = { ...INITIAL_FILTER, search: 'zzz', status: 'ready' as const };
     expect(view(entries, searching).state).toBe('no-match');
     expect(view(entries, clearedFilter(searching)).state).toBe('entries');
+  });
+
+  test('clears a clan that left nothing to show', () => {
+    const entries = entriesOf({ characters: [character('0001', { clan: 'Gangrel', chronicle: 'a' }), character('0002', { clan: 'Brujah' })], builds: [] });
+    const narrowed = { ...INITIAL_FILTER, tab: view(entries, INITIAL_FILTER).tabs[1].key, clan: 'brujah' };
+    expect(view(entries, narrowed).state).toBe('no-match');
+    expect(view(entries, clearedFilter(narrowed)).shown.map((entry) => entry.id)).toEqual(['0001']);
   });
 });

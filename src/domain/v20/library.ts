@@ -173,19 +173,30 @@ const ALL_LABEL = 'All characters';
 /** The tab of entries with no chronicle. A chronicle's tab key starts with `chronicle:`, so this is never one. */
 const UNASSIGNED_TAB = 'unassigned';
 
-/** What the player has chosen to see. Later steps add clan, status and order. */
+/** The value of `LibraryFilter.clan` that lists every clan. A clan key is never blank, so it cannot be one. */
+export const ALL_CLANS = '';
+
+/** Whether to list every entry, or only the characters that are ready to play. */
+export type LibraryStatus = 'all' | 'ready';
+
+/** What the player has chosen to see. Later steps add the order. */
 export interface LibraryFilter {
   /** The key of a tab in `LibraryView.tabs`; one that no longer exists means All. */
   tab: string;
+  /** The key of a clan in `LibraryView.clans`, or `ALL_CLANS`; one that no longer exists means all clans. */
+  clan: string;
+  /** `ready` keeps characters only: not builds, and not records that could not be read. */
+  status: LibraryStatus;
   /** Text to find in an entry's name, clan or concept; blank finds everything. */
   search: string;
 }
 
-export const INITIAL_FILTER: LibraryFilter = { tab: ALL_TAB, search: '' };
+export const INITIAL_FILTER: LibraryFilter = { tab: ALL_TAB, clan: ALL_CLANS, status: 'all', search: '' };
 
-/** The filter with everything the player typed taken back; the tab they chose stays. */
+/** The filter with the search, clan and status taken back; the tab they chose stays. */
 export function clearedFilter(filter: LibraryFilter): LibraryFilter {
-  return { ...filter, search: '' };
+  const { clan, status, search } = INITIAL_FILTER;
+  return { ...filter, clan, status, search };
 }
 
 /** The summary row's left side: how many entries are shown of how many are stored. */
@@ -202,11 +213,30 @@ export interface LibraryTab {
   count: number;
 }
 
+/** One clan the filter offers. The script draws "All clans" itself, for `ALL_CLANS`. */
+export interface LibraryClan {
+  /** Stable: it names the same clan whatever else changes; never `ALL_CLANS`. */
+  key: string;
+  label: string;
+}
+
+/** How many entries each status holds, in the selected tab. */
+export interface StatusCounts {
+  all: number;
+  ready: number;
+}
+
 export interface LibraryView {
   /** All characters first, then each chronicle alphabetically, then Unassigned. */
   tabs: LibraryTab[];
   /** The key of the selected tab: `filter.tab` when that tab exists, otherwise All. */
   tab: string;
+  /** Each clan in use, alphabetically, as the oldest entry spells it. */
+  clans: LibraryClan[];
+  /** The key of the selected clan: `filter.clan` when that clan exists, otherwise `ALL_CLANS`. */
+  clan: string;
+  /** The entries of the selected tab by status, whatever the clan and the search say. */
+  statusCounts: StatusCounts;
   shown: LibraryEntry[];
   countsLine: string;
   /** The summary row's right side, describing every stored entry: empty when no chronicle exists. */
@@ -233,7 +263,7 @@ interface Group {
 
 /**
  * Groups `items` (oldest first) by their folded key, naming each group as its oldest item spells
- * it. Chronicles use it for their tabs; the clan filter's options will use it too.
+ * it. Chronicles use it for their tabs and clans for the filter's options.
  */
 function groupByKey<T>(items: readonly T[], keyOf: (item: T) => string, nameOf: (item: T) => string): Group[] {
   const groups = new Map<string, Group>();
@@ -299,10 +329,24 @@ function breakdownOf(chronicles: readonly Chronicle[], stored: number): string {
   return [`${chronicled} in ${where}`, ...(unassigned > 0 ? [`${unassigned} unassigned`] : [])].join(' · ');
 }
 
+/** A readable entry that names a clan. */
+const hasClan = (entry: LibraryEntry): entry is Extract<LibraryEntry, { clanKey: string }> =>
+  isReadable(entry) && entry.clanKey !== '';
+
+/** The clans in use, alphabetical, each named as its oldest entry spells it. */
+const clansOf = (entries: readonly LibraryEntry[]): LibraryClan[] =>
+  groupByKey(
+    entries.filter(hasClan),
+    (entry) => entry.clanKey,
+    (entry) => entry.clan,
+  )
+    .sort(alphabetically)
+    .map(({ key, name }) => ({ key, label: name }));
+
 /** Says whether an entry passes one filter. */
 type Predicate = (entry: LibraryEntry) => boolean;
 
-/** One predicate per filter; the filters combine with AND. */
+/** One predicate per filter, as a list; the filters combine with AND. */
 const keepingAll =
   (...predicates: Predicate[]): Predicate =>
   (entry) =>
@@ -313,6 +357,18 @@ const inTab =
   (tab: string): Predicate =>
   (entry) =>
     tab === ALL_TAB || tabOf(entry) === tab;
+
+/** The entries of the chosen clan; `ALL_CLANS` keeps everything. An entry with no clan, or that could not be read, has none to choose. */
+const inClan =
+  (clan: string): Predicate =>
+  (entry) =>
+    clan === ALL_CLANS || (hasClan(entry) && entry.clanKey === clan);
+
+/** Everything under `all`; under `ready` only characters: not builds, and not records that could not be read. */
+const hasStatus =
+  (status: LibraryStatus): Predicate =>
+  (entry) =>
+    status === 'all' || entry.kind === 'character';
 
 /**
  * The entries whose name (as displayed), clan or concept holds `search`, ignoring case and accents.
@@ -336,10 +392,19 @@ export function view(entries: readonly LibraryEntry[], filter: LibraryFilter): L
       : []),
   ];
   const tab = tabs.some((candidate) => candidate.key === filter.tab) ? filter.tab : ALL_TAB;
-  const shown = entries.filter(keepingAll(inTab(tab), matchesSearch(filter.search)));
+  const clans = clansOf(entries);
+  const clan = clans.some((candidate) => candidate.key === filter.clan) ? filter.clan : ALL_CLANS;
+  // The four filters are one list, so an entry is looked at once.
+  const shown = entries.filter(
+    keepingAll(inTab(tab), inClan(clan), hasStatus(filter.status), matchesSearch(filter.search)),
+  );
+  const inSelectedTab = entries.filter(inTab(tab));
   return {
     tabs,
     tab,
+    clans,
+    clan,
+    statusCounts: { all: inSelectedTab.length, ready: inSelectedTab.filter(hasStatus('ready')).length },
     shown,
     countsLine: countsLine(shown.length, entries.length),
     breakdown: breakdownOf(chronicles, entries.length),
