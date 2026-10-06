@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { buildKeyFor } from '../../../src/storage/buildStore';
 import { keyFor } from '../../../src/storage/characterStore';
+import { watchWrites } from './announcements';
 import { storedKeys } from './storage';
 import { escaped } from './text';
 
@@ -61,12 +62,30 @@ export const entryAction = (entry: Locator, label: string): Locator =>
 /** The row under the list: "Showing X of Y characters". */
 export const summaryRow = (page: Page): Locator => page.locator('[data-slot="library-summary"]');
 
+/** Follows the link `label` for the character called `name`, wherever on the page it is. */
+export const followAction = (page: Page, label: string, name: string): Promise<void> =>
+  page.getByRole('link', { name: actionName(label, name), exact: true }).click();
+
 /** Follows "Open sheet" on an entry. */
 export const openSheetOf = (entry: Locator): Promise<void> => entryAction(entry, 'Open sheet').click();
 
+/** The roster's path, as the address bar holds it. */
+export const ROSTER_PATH = '/';
+
 export async function openRoster(page: Page): Promise<void> {
-  await page.goto('/');
+  await page.goto(ROSTER_PATH);
 }
+
+/** Waits until the page is at the roster's path exactly, and not at some address that merely ends in a slash. */
+export async function expectOnRoster(page: Page): Promise<void> {
+  await expect.poll(() => new URL(page.url()).pathname).toBe(ROSTER_PATH);
+}
+
+/** The page's status message: shown only while there is something the player needs to be told. */
+export const statusRegion = (page: Page): Locator => page.getByRole('alert');
+
+/** Starts recording each time the status message is written to; see `writtenTexts`. */
+export const watchStatusWrites = (page: Page): Promise<void> => watchWrites(page, '#status-message');
 
 /** The Character creator card: the section labelled by its level 2 title. */
 export const creatorCard = (page: Page): Locator =>

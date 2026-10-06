@@ -4,11 +4,13 @@ import {
   createAction,
   createCharacter,
   entryNamed,
+  expectOnRoster,
   openRoster,
   openSheetOf,
   rosterEntries,
   sheetAddress,
   sheetField,
+  statusRegion,
   unreadableEntries,
 } from './support/pages';
 import { rating, setRating } from './support/ratings';
@@ -94,7 +96,7 @@ Then(
   },
 );
 
-const savingProblem = (page: Page) => page.getByRole('alert').filter({ hasText: /changes not saved/i });
+const savingProblem = (page: Page) => statusRegion(page).filter({ hasText: /changes not saved/i });
 
 async function change(page: Page, entered: Map<string, string>, label: string, text: string) {
   await sheetField(page, label).fill(text);
@@ -144,7 +146,7 @@ Then('they can keep editing the sheet', async ({ page, memory }) => {
 
 Then('the message is no longer shown', async ({ page }) => {
   await expect(savingProblem(page)).toBeHidden();
-  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(statusRegion(page)).toHaveCount(0);
 });
 
 Then('after a reload the latest values are shown', async ({ page, memory }) => {
@@ -157,7 +159,7 @@ Then('after a reload the latest values are shown', async ({ page, memory }) => {
 });
 
 Then('they see that characters cannot be saved in this browser', async ({ page }) => {
-  await expect(page.getByRole('alert')).toContainText('cannot be saved in this browser');
+  await expect(statusRegion(page)).toContainText('cannot be saved in this browser');
   await expect(createAction(page, 'Start with a blank sheet')).toBeDisabled();
 });
 
@@ -180,13 +182,13 @@ When('they try to create a V20 character', async ({ page }) => {
 Then(
   'they see on the sheet page that characters cannot be saved in this browser',
   async ({ page }) => {
-    await expect(page.getByRole('alert')).toContainText('cannot be saved in this browser');
+    await expect(statusRegion(page)).toContainText('cannot be saved in this browser');
     await expect(page.getByRole('heading', { name: 'Character sheet' })).toBeHidden();
     await expect(page.getByRole('heading', { name: 'Character not found' })).toBeHidden();
   },
 );
 
 Then('they see that the new character could not be saved', async ({ page }) => {
-  await expect(page.getByRole('alert')).toContainText('could not be saved');
-  await expect(page).toHaveURL(/\/$/);
+  await expect(statusRegion(page)).toContainText('could not be saved');
+  await expectOnRoster(page);
 });

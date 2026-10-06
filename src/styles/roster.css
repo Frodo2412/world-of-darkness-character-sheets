@@ -389,6 +389,10 @@ html:has(.roster-page) header {
 	cursor: not-allowed;
 }
 
+.creator-action[aria-disabled='true']:hover {
+	border-color: var(--color-border-control);
+}
+
 /* Wide enough for the library and the creator side by side (the sheet's breakpoint): the card is
    the second column, 320px, level with the top of the list, and shows its stages. */
 @media (min-width: 75rem) {
@@ -403,6 +407,11 @@ html:has(.roster-page) header {
 
 	.creator {
 		grid-area: 1 / 2;
+	}
+
+	/* With no library to show (storage withheld) the card takes the first column, not a place beside a blank one. */
+	.roster-workspace:has(.roster-library[hidden]) .creator {
+		grid-area: auto;
 	}
 
 	.creator-stages {

@@ -74,3 +74,11 @@ export async function storedRecords(page: Page): Promise<Record<string, string>>
     ),
   );
 }
+
+/** The records an earlier step remembered; a step that compares against them needs a Given that seeded storage. */
+export function currentStored(memory: { stored?: Record<string, string> }): Record<string, string> {
+  if (memory.stored === undefined) {
+    throw new Error('no stored records remembered: a Given that seeds storage must come first');
+  }
+  return memory.stored;
+}

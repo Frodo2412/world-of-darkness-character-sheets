@@ -1,7 +1,8 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import type { V20Character } from '../../src/domain/v20/character';
 import { Given, Then, When } from './fixtures';
 import { announcements, watchAnnouncements } from './support/announcements';
+import { pressUnavailable } from './support/controls';
 import { createCharacter, openRoster, openSheetOf, rosterEntries, sheetField } from './support/pages';
 import { mark, rating, setRating } from './support/ratings';
 import { characterWith, givenSaved, saveCharacters } from './support/seed';
@@ -93,26 +94,6 @@ When(/^(?:the player opens|they open) that character from the roster$/, async ({
 When('the player creates a new V20 character from the roster', async ({ page }) => {
   await createCharacter(page);
 });
-
-/** Presses an unavailable (aria-disabled) control as a player would, with the pointer at its centre. */
-async function pressUnavailable(page: Page, control: Locator): Promise<void> {
-  await control.scrollIntoViewIfNeeded();
-  const box = (await control.boundingBox())!;
-  const x = box.x + box.width / 2;
-  const y = box.y + box.height / 2;
-  // The click must reach the button itself, not something lying over it.
-  const reached = await control.evaluate(
-    (element, point) => element.contains(document.elementFromPoint(point.x, point.y)),
-    { x, y },
-  );
-  expect(reached).toBe(true);
-
-  const before = await announcements(page);
-  await page.mouse.click(x, y);
-  // Let any announcement the press would make arrive (two frames), then see that none did.
-  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
-  expect(await announcements(page)).toEqual(before);
-}
 
 When('they activate {string}', async ({ page }, name: string) => {
   const control = page.getByRole('button', { name, exact: true });

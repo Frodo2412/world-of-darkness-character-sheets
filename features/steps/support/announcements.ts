@@ -38,30 +38,30 @@ export async function announcements(page: Page): Promise<string[]> {
 }
 
 /**
- * Starts counting how often the element at `selector` is given text after having been empty, which
- * is what makes a live region speak: the same text written over itself is not spoken again. Install it
- * before the action under test.
+ * Starts recording what the element at `selector` is given each time it is written to after having
+ * been empty, which is what makes a live region speak: the same text written over itself is not
+ * spoken again. Install it before the action under test.
  */
 export async function watchWrites(page: Page, selector: string): Promise<void> {
   await page.evaluate((target) => {
     const region = document.querySelector(target)!;
-    const writes = { count: 0, empty: (region.textContent ?? '').trim() === '' };
+    const writes = { texts: [] as string[], empty: (region.textContent ?? '').trim() === '' };
     (window as unknown as { regionWrites: typeof writes }).regionWrites = writes;
     new MutationObserver(() => {
-      const empty = (region.textContent ?? '').trim() === '';
-      if (!empty && writes.empty) writes.count += 1;
-      writes.empty = empty;
+      const text = (region.textContent ?? '').trim();
+      if (text !== '' && writes.empty) writes.texts.push(text);
+      writes.empty = text === '';
     }).observe(region, { childList: true, characterData: true, subtree: true });
   }, selector);
 }
 
-/** How many times the region watched by `watchWrites` was written to after being empty. */
-export async function writeCount(page: Page): Promise<number> {
+/** The text of each write to the region watched by `watchWrites`, in order. */
+export async function writtenTexts(page: Page): Promise<string[]> {
   const writes = await page.evaluate(
-    () => (window as unknown as { regionWrites?: { count: number } }).regionWrites,
+    () => (window as unknown as { regionWrites?: { texts: string[] } }).regionWrites,
   );
   if (writes === undefined) {
-    throw new Error('writeCount() was read on a page whose region is not being watched: call watchWrites(page, selector) first');
+    throw new Error('writtenTexts() was read on a page whose region is not being watched: call watchWrites(page, selector) first');
   }
-  return writes.count;
+  return writes.texts;
 }

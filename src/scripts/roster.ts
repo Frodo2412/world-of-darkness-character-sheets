@@ -4,6 +4,7 @@ import { browserStorage, createCharacterStore, type CharacterStore } from '../st
 import { builderUrl, drawEntry, editSheetUrl, findTemplates } from './roster/entries';
 import { STORAGE_UNAVAILABLE, clearStatus, showStatus } from './status';
 
+const librarySection = document.querySelector<HTMLElement>('#library-section')!;
 const library = document.querySelector<HTMLElement>('#library')!;
 const list = document.querySelector<HTMLUListElement>('#entries')!;
 const counts = document.querySelector<HTMLElement>('#library-counts')!;
@@ -32,6 +33,8 @@ function render(entries: readonly LibraryEntry[], filter: LibraryFilter): void {
   const state = cardState(current.state);
   list.replaceChildren(...current.shown.map((entry) => drawEntry(templates, entry)));
   counts.textContent = current.countsLine;
+  // Without storage the whole labelled section goes, so no empty "Library" region is left behind.
+  librarySection.hidden = state === 'unavailable';
   library.hidden = state === 'empty' || state === 'unavailable';
   emptyMessage.hidden = state !== 'empty';
 }

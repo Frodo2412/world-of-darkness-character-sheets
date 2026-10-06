@@ -1,11 +1,11 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
-import { watchWrites, writeCount } from './support/announcements';
+import { watchAnnouncements, writtenTexts } from './support/announcements';
 import { buildWith, saveBuilds } from './support/builder';
 import { controlNames, linkNames } from './support/accessibility';
+import { pressUnavailable } from './support/controls';
 import {
   SHEET_ADDRESS,
-  actionName,
   browsingControls,
   createAction,
   creatorCard,
@@ -14,15 +14,19 @@ import {
   entryHeading,
   entryNamed,
   entrySlot,
+  expectOnRoster,
   expectStoredEntriesListed,
+  followAction,
   openRoster,
   openSheetOf,
   rosterEntries,
   rosterList,
   sheetAddress,
   sheetField,
+  statusRegion,
   summaryRow,
   unreadableEntries,
+  watchStatusWrites,
 } from './support/pages';
 import {
   characterWith,
@@ -32,7 +36,7 @@ import {
   saveDamagedCharacter,
 } from './support/seed';
 import { editButton, identityName, sheetRoot } from './support/sheet';
-import { storedRecords } from './support/storage';
+import { currentStored, storedRecords } from './support/storage';
 import { escaped } from './support/text';
 
 /** The entry a scenario has been talking about, or the only one on the roster. */
@@ -118,7 +122,7 @@ Given('a second character is saved from another page', async ({ page }) => {
 // When
 
 When('they follow {string} for {string}', async ({ page }, label: string, name: string) => {
-  await page.getByRole('link', { name: actionName(label, name), exact: true }).click();
+  await followAction(page, label, name);
 });
 
 When("they open the character's sheet and come back", async ({ page }) => {
@@ -137,19 +141,16 @@ When("the roster is restored from the browser's back and forward cache", async (
 });
 
 When('they choose {string}', async ({ page }, name: string) => {
-  await page.getByRole('button', { name, exact: true }).click();
+  await createAction(page, name).click();
 });
-
-/** The message in the page's status region, exactly as shown. */
-const statusMessage = (page: Page): Locator => page.getByRole('alert');
 
 When('they choose {string} twice', async ({ page }, name: string) => {
   // Installed before the first click, so every write to the message is seen.
-  await watchWrites(page, '#status-message');
-  await page.getByRole('button', { name, exact: true }).click();
+  await watchStatusWrites(page);
+  await createAction(page, name).click();
   // The second refusal must follow the first one's announcement, not share its frame.
-  await expect.poll(() => writeCount(page)).toBe(1);
-  await page.getByRole('button', { name, exact: true }).click();
+  await expect.poll(async () => (await writtenTexts(page)).length).toBe(1);
+  await createAction(page, name).click();
 });
 
 // Then: a create that was refused or is unavailable
@@ -159,18 +160,23 @@ Then('they see {string}', async ({ page }, text: string) => {
 });
 
 Then('they are still on the roster', async ({ page }) => {
-  await expect(page).toHaveURL(/\/$/);
+  await expectOnRoster(page);
   await expect(page.getByRole('heading', { level: 1, name: 'Characters' })).toBeVisible();
 });
 
 Then('the refusal has been announced twice', async ({ page }) => {
-  await expect.poll(() => writeCount(page)).toBe(2);
+  await expect.poll(async () => (await writtenTexts(page)).length).toBe(2);
+  // A third write that is still on its way would show in the next frame.
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve(undefined))));
+  const message = ((await statusRegion(page).textContent()) ?? '').trim();
+  expect(message).toMatch(/could not be saved\. This browser refused to store it\.$/);
+  expect(await writtenTexts(page)).toEqual([message, message]);
 });
 
 const CREATE_ACTIONS = ['Start character creator', 'Start with a blank sheet'];
 
 Then('both create actions are disabled, can still be focused and are described by the message', async ({ page }) => {
-  const message = ((await statusMessage(page).textContent()) ?? '').trim();
+  const message = ((await statusRegion(page).textContent()) ?? '').trim();
   expect(message).not.toBe('');
   for (const name of CREATE_ACTIONS) {
     const action = createAction(page, name);
@@ -185,20 +191,14 @@ Then('both create actions are disabled, can still be focused and are described b
 });
 
 Then('choosing either create action leaves them on the roster', async ({ page }) => {
-  const message = await statusMessage(page).textContent();
-  let navigated = false;
-  page.on('framenavigated', () => {
-    navigated = true;
-  });
+  const message = await statusRegion(page).textContent();
+  await watchAnnouncements(page);
   for (const name of CREATE_ACTIONS) {
-    // Forced: the action is disabled for Playwright, which would otherwise wait for it.
-    await createAction(page, name).click({ force: true });
+    // Pressed as a player does, with the pointer on the button: it is aria-disabled, so it is not "clicked" for them.
+    await pressUnavailable(page, createAction(page, name));
   }
-  // Let a click's handler, if it had one, run to its end.
-  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve(undefined))));
-  expect(navigated).toBe(false);
-  await expect(page).toHaveURL(/\/$/);
-  await expect(statusMessage(page)).toHaveText(message!);
+  await expectOnRoster(page);
+  await expect(statusRegion(page)).toHaveText(message!);
 });
 
 Then('no tabs, search field, clan filter, status filter or sort control are shown', async ({ page }) => {
@@ -384,6 +384,9 @@ Then('the roster lists {string} as in progress with clan {string}', async ({ pag
 });
 
 Then('the message that there are no characters yet is not shown', async ({ page }) => {
+  // Hidden only means something once the page has been drawn: its list, or its status message, is up.
+  await expect(page.getByRole('heading', { level: 1, name: 'Characters' })).toBeVisible();
+  await expect(rosterList(page).or(statusRegion(page)).first()).toBeVisible();
   await expect(page.getByText('No characters yet')).toBeHidden();
 });
 
@@ -422,6 +425,8 @@ Then('the unreadable entry offers no action', async ({ page }) => {
 
 Then('the roster lists {int} entries', async ({ page }, count: number) => {
   await expect(rosterEntries(page)).toHaveCount(count);
+  // An empty library says so; a list card that is merely hidden would also hold no entries.
+  if (count === 0) await expect(page.getByText('No characters yet')).toBeVisible();
 });
 
 Then('the summary row reads {string}', async ({ page }, text: string) => {
@@ -429,7 +434,7 @@ Then('the summary row reads {string}', async ({ page }, text: string) => {
 });
 
 Then('every stored record is exactly as it was', async ({ page, memory }) => {
-  expect(await storedRecords(page)).toEqual(memory.stored);
+  expect(await storedRecords(page)).toEqual(currentStored(memory));
 });
 
 // Then: nothing deletes

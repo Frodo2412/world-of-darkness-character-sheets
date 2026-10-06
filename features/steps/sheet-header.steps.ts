@@ -1,15 +1,16 @@
 import { expect, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import {
-  actionName,
   createCharacter,
+  followAction,
   openRoster,
   rosterEntries,
   sheetAddress,
   sheetField,
+  statusRegion,
 } from './support/pages';
 import { characterWith, saveCharacters } from './support/seed';
-import { doneButton, ensureEditing, identityRegion, sheetRoot } from './support/sheet';
+import { doneButton, ensureEditing, identityName, identityRegion, sheetRoot } from './support/sheet';
 import { storedRecords } from './support/storage';
 import { escaped } from './support/text';
 
@@ -69,7 +70,7 @@ Then('both entries are kept exactly as typed and nothing is flagged', async ({ p
     await expect(sheetField(page, label)).toHaveValue(text);
   }
   await expect(page.locator('[aria-invalid="true"], :invalid')).toHaveCount(0);
-  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(statusRegion(page)).toHaveCount(0);
 });
 
 Then("the second character's Name is still empty", async ({ page, memory }) => {
@@ -113,7 +114,7 @@ Then('the roster still lists no additional character', async ({ page }) => {
 /** Follows "<label>" for the character called `name` from the roster, and waits for the sheet. */
 async function followFromRoster(page: Page, label: string, name: string): Promise<void> {
   await openRoster(page);
-  await page.getByRole('link', { name: actionName(label, name), exact: true }).click();
+  await followAction(page, label, name);
 }
 
 async function editFromRoster(page: Page, name: string): Promise<void> {
@@ -172,14 +173,20 @@ Then('the Chronicle field is empty', async ({ page }) => {
   await expect(sheetField(page, 'Chronicle')).toHaveValue('');
 });
 
-Then('no Chronicle field is offered', async ({ page }) => {
-  // The sheet is drawn, so an absent field is absent from the sheet and not just not yet shown.
+/** The sheet is drawn once the character's data is: the identity shows a name, not the blank it starts as. */
+async function expectSheetDrawn(page: Page): Promise<void> {
   await expect(identityRegion(page)).toBeVisible();
+  await expect(identityName(page)).not.toHaveText(/^\s*$/);
+}
+
+Then('no Chronicle field is offered', async ({ page }) => {
+  // An absent field is absent from the sheet and not just not yet drawn.
+  await expectSheetDrawn(page);
   await expect(page.getByRole('textbox', { name: 'Chronicle', exact: true })).toHaveCount(0);
 });
 
 Then('{string} appears nowhere on the sheet', async ({ page }, text: string) => {
-  await expect(identityRegion(page)).toBeVisible();
+  await expectSheetDrawn(page);
   await expect(sheetRoot(page)).not.toContainText(new RegExp(escaped(text)));
   expect(await sheetRoot(page).ariaSnapshot()).not.toContain(text);
 });
