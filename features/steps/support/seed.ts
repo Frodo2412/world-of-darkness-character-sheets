@@ -94,6 +94,30 @@ export async function saveCharacters(page: Page, characters: V20Character[]): Pr
   }, [...records]);
 }
 
+/**
+ * Saves characters from a second page of the same browser, as another window would, then closes it.
+ * Storage is shared, so a page already open sees them only after it reads again.
+ */
+export async function saveFromAnotherPage(page: Page, characters: V20Character[]): Promise<void> {
+  const other = await page.context().newPage();
+  await saveCharacters(other, characters);
+  await other.close();
+}
+
+/** Saves one character per header, created one after the other, and remembers them. */
+export async function saveInOrder(
+  page: Page,
+  memory: { saved: V20Character[] },
+  headers: Parameters<typeof inCreationOrder>,
+): Promise<void> {
+  memory.saved = inCreationOrder(...headers);
+  await saveCharacters(page, memory.saved);
+}
+
+/** Headers that differ only in their chronicle: '' leaves it blank. */
+export const inChronicles = (chronicles: string[]): { chronicle: string }[] =>
+  chronicles.map((chronicle) => ({ chronicle }));
+
 /** A record cut off part-way through writing, as storage damage leaves it. */
 export const DAMAGED_CHARACTER_TEXT = '{"id": "broken", "header": {"name": "Fat';
 

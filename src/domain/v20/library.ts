@@ -243,13 +243,10 @@ function groupByKey<T>(items: readonly T[], keyOf: (item: T) => string, nameOf: 
 const alphabetically = (a: Group, b: Group): number =>
   folded(a.name) < folded(b.name) ? -1 : folded(a.name) > folded(b.name) ? 1 : a.key < b.key ? -1 : 1;
 
-/** The chronicles in use, alphabetical, each named as its oldest entry spells it. */
-const chroniclesOf = (entries: readonly LibraryEntry[]): Group[] =>
-  groupByKey(
-    entries.filter(hasChronicle),
-    (entry) => entry.chronicleKey,
-    (entry) => entry.chronicle,
-  ).sort(alphabetically);
+/** A chronicle's group, with the label its tab and the breakdown both show. */
+interface Chronicle extends Group {
+  label: string;
+}
 
 /** The tab of a chronicle, whatever it is called: it can never be the key of All or Unassigned. */
 const chronicleTab = (chronicleKey: string): string => `chronicle:${chronicleKey}`;
@@ -260,14 +257,37 @@ const tabOf = (entry: LibraryEntry): string =>
 
 const SPECIAL_KEYS = [caseFolded(ALL_LABEL), caseFolded(UNASSIGNED)];
 
-/** A chronicle called like a special tab is shown in quotation marks, so two tabs never read the same. */
-const labelOf = (key: string, name: string): string => (SPECIAL_KEYS.includes(key) ? `"${name}"` : name);
+/**
+ * Each chronicle's label: its name as typed, except that one called like a special tab is shown in
+ * quotation marks, and in more of them until no other chronicle reads the same ("Unassigned" typed
+ * with its own quotation marks is another chronicle, and keeps the plain spelling).
+ */
+function labelled(groups: readonly Group[]): Chronicle[] {
+  const taken = new Set(groups.filter((group) => !SPECIAL_KEYS.includes(group.key)).map((group) => caseFolded(group.name)));
+  return groups.map((group) => {
+    if (!SPECIAL_KEYS.includes(group.key)) return { ...group, label: group.name };
+    let label = `"${group.name}"`;
+    while (taken.has(caseFolded(label))) label = `"${label}"`;
+    taken.add(caseFolded(label));
+    return { ...group, label };
+  });
+}
+
+/** The chronicles in use, alphabetical, each named as its oldest entry spells it. */
+const chroniclesOf = (entries: readonly LibraryEntry[]): Chronicle[] =>
+  labelled(
+    groupByKey(
+      entries.filter(hasChronicle),
+      (entry) => entry.chronicleKey,
+      (entry) => entry.chronicle,
+    ).sort(alphabetically),
+  );
 
 /** The summary row's right side: where all stored entries stand, whichever tab is selected. */
-function breakdownOf(chronicles: readonly Group[], stored: number): string {
+function breakdownOf(chronicles: readonly Chronicle[], stored: number): string {
   if (chronicles.length === 0) return '';
   const chronicled = chronicles.reduce((total, chronicle) => total + chronicle.count, 0);
-  const where = chronicles.length === 1 ? chronicles[0].name : `${chronicles.length} chronicles`;
+  const where = chronicles.length === 1 ? chronicles[0].label : `${chronicles.length} chronicles`;
   const unassigned = stored - chronicled;
   return [`${chronicled} in ${where}`, ...(unassigned > 0 ? [`${unassigned} unassigned`] : [])].join(' · ');
 }
@@ -278,7 +298,7 @@ export function view(entries: readonly LibraryEntry[], filter: LibraryFilter): L
   const unassigned = entries.filter((entry) => tabOf(entry) === UNASSIGNED_TAB).length;
   const tabs = [
     { key: ALL_TAB, label: ALL_LABEL, count: entries.length },
-    ...chronicles.map(({ key, name, count }) => ({ key: chronicleTab(key), label: labelOf(key, name), count })),
+    ...chronicles.map(({ key, label, count }) => ({ key: chronicleTab(key), label, count })),
     ...(chronicles.length > 0 && unassigned > 0
       ? [{ key: UNASSIGNED_TAB, label: UNASSIGNED, count: unassigned }]
       : []),

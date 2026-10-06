@@ -647,9 +647,9 @@ Feature: Chronicle tabs
   Scenario: A restored page starts again from all characters
     Given saved characters "Lucita" in "The Glass City" and "Anatole" in "Ashes of Milan"
     And the player has selected the tab "Ashes of Milan · 1" on the roster
-    And the chronicle of "Anatole" is cleared from another page
+    And the chronicle of "Lucita" is cleared from another page
     When the roster is restored from the browser's back and forward cache
-    Then the tabs are "All characters · 2", "The Glass City · 1", "Unassigned · 1"
+    Then the tabs are "All characters · 2", "Ashes of Milan · 1", "Unassigned · 1"
     And "All characters · 2" is the selected tab
     And the roster lists 2 entries
 
@@ -689,7 +689,9 @@ Feature: Chronicle tabs
     Given saved characters whose chronicles are "The Glass City", "The Glass City", none
     When the player opens the roster
     And they select the tab "Unassigned · 1"
-    Then the summary row also reads "2 in The Glass City · 1 unassigned"
+    Then "Unassigned · 1" is the selected tab
+    And the roster lists only "Unnamed character 3"
+    And the summary row also reads "2 in The Glass City · 1 unassigned"
 ```
 
 **Steps:**
@@ -1383,7 +1385,7 @@ graph TD
 #### Wave 4
 - [ ] Slice 4: Chronicle tabs
   - [x] Step 4.1: Chronicles in the model
-  - [ ] Step 4.2: The tab strip
+  - [x] Step 4.2: The tab strip
 
 #### Wave 5
 - [ ] Slice 5: Search and the result count

@@ -18,6 +18,9 @@ export function nextTab(key: string, index: number, count: number): number {
   }
 }
 
+/** The keys that move between tabs. */
+const NAVIGATION_KEYS = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+
 /** One tab to draw: a stable key, its name and the count shown after it. */
 export interface TabSpec {
   key: string;
@@ -83,16 +86,21 @@ export function createTabStrip(
 
   strip.addEventListener('click', (event) => {
     const index = tabs.findIndex((tab) => tab.contains(event.target as Node));
-    if (index >= 0) onSelect(specs[index].key);
+    if (index < 0) return;
+    onSelect(specs[index].key);
+    // Safari does not focus a button it was clicked on, so a tab chosen by pointer is brought into view here.
+    tabs[index].scrollIntoView({ block: 'nearest', inline: 'nearest' });
   });
 
   strip.addEventListener('keydown', (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
     const index = tabs.findIndex((tab) => tab === event.target);
     if (index < 0) return;
+    if (!NAVIGATION_KEYS.includes(event.key)) return;
+    // Always claimed, even when the target is this tab: the browser would scroll the page for Home and End.
+    event.preventDefault();
     const target = nextTab(event.key, index, tabs.length);
     if (target === index) return;
-    event.preventDefault();
     onSelect(specs[target].key);
     tabs[target].focus();
   });

@@ -500,6 +500,73 @@ describe('view: chronicle tabs', () => {
         ['Unassigned', 1],
       ]);
     });
+
+    test.each([
+      ['Unassigned', ['"Unassigned" · 1', '""Unassigned"" · 1', 'Unassigned · 1']],
+      ['All characters', ['"All characters" · 1', '""All characters"" · 1', 'Unassigned · 1']],
+    ])('a second chronicle typed as "%s" with its quotation marks keeps its own label', (name, tabs) => {
+      expect(printed(inChronicles(`"${name}"`, name, '')).slice(1)).toEqual(tabs);
+    });
+
+    test('quotation marks are added until the label is unique', () => {
+      const labels = view(inChronicles('Unassigned', '"Unassigned"', '""Unassigned""', ''), INITIAL_FILTER).tabs.map(
+        (tab) => tab.label,
+      );
+      expect(labels).toEqual([
+        'All characters',
+        '""Unassigned""',
+        '"Unassigned"',
+        '"""Unassigned"""',
+        'Unassigned',
+      ]);
+      expect(new Set(labels).size).toBe(labels.length);
+    });
+
+    test('labels are told apart ignoring case, as the tabs would read the same', () => {
+      const labels = view(inChronicles('Unassigned', '"UNASSIGNED"', ''), INITIAL_FILTER).tabs.map(
+        (tab) => tab.label,
+      );
+      expect(new Set(labels.map((label) => label.toLowerCase())).size).toBe(labels.length);
+    });
+
+    describe('selecting the tab of such a chronicle', () => {
+      const entries = entriesOf({
+        characters: [
+          character('0001', { name: 'Anatole', chronicle: 'Unassigned' }),
+          character('0002', { name: 'Beckett', chronicle: 'All characters' }),
+          character('0003', { name: 'Fatima', chronicle: 'Ashes' }),
+          character('0004', { name: 'Lucita' }),
+        ],
+        builds: [],
+      });
+      const idsOn = (label: string) => {
+        const key = view(entries, INITIAL_FILTER).tabs.find((tab) => tab.label === label)!.key;
+        return view(entries, { tab: key }).shown.map((entry) => entry.id);
+      };
+
+      test('"Unassigned" lists that chronicle, not the blank entries', () => {
+        expect(idsOn('"Unassigned"')).toEqual(['0001']);
+        expect(idsOn('Unassigned')).toEqual(['0004']);
+      });
+
+      test('"All characters" lists that chronicle, not everything', () => {
+        expect(idsOn('"All characters"')).toEqual(['0002']);
+        expect(idsOn('All characters')).toEqual(['0001', '0002', '0003', '0004']);
+      });
+    });
+
+    test.each(['all', 'unassigned:x', 'chronicle:x', 'a:b'])(
+      'a chronicle called %j has an unquoted label, its own key and its own entries',
+      (name) => {
+        const entries = inChronicles(name, 'Other', '');
+        const { tabs } = view(entries, INITIAL_FILTER);
+        const own = tabs.filter((tab) => tab.label === name);
+        expect(own).toHaveLength(1);
+        expect(new Set(tabs.map((tab) => tab.key)).size).toBe(tabs.length);
+        expect(view(entries, { tab: own[0].key }).tab).toBe(own[0].key);
+        expect(view(entries, { tab: own[0].key }).shown.map((entry) => entry.id)).toEqual(['0001']);
+      },
+    );
   });
 });
 
@@ -535,7 +602,9 @@ describe('view: the selected tab', () => {
   });
 
   test('a tab that no longer exists resolves to All and shows everything', () => {
-    const result = view(entries, { tab: 'chronicle:gone' });
+    const goneKey = view(inChronicles('Gone', 'Ashes'), INITIAL_FILTER).tabs.find((tab) => tab.label === 'Gone')!.key;
+    expect(view(entries, INITIAL_FILTER).tabs.map((tab) => tab.key)).not.toContain(goneKey);
+    const result = view(entries, { tab: goneKey });
     expect(result.tab).toBe(INITIAL_FILTER.tab);
     expect(result.shown).toHaveLength(5);
   });
@@ -579,12 +648,18 @@ describe('view: the breakdown', () => {
     ['several chronicles and no unassigned entry', ['A', 'B'], '2 in 2 chronicles'],
     ['one chronicle spelled three ways: the oldest spelling', [' the glass city ', 'The Glass City', 'THE GLASS CITY'], '3 in the glass city'],
     ['no chronicle at all', ['', '   '], ''],
+    ['mixed spellings beside another chronicle', ['A', 'a', 'B'], '3 in 2 chronicles'],
   ])('with %s reads %j', (_, chronicles, breakdown) => {
     expect(view(inChronicles(...chronicles), INITIAL_FILTER).breakdown).toBe(breakdown);
   });
 
   test('is empty for an empty library', () => {
     expect(view([], INITIAL_FILTER).breakdown).toBe('');
+  });
+
+  test('is empty for a library holding only an unreadable record, since no chronicle exists', () => {
+    const entries = entriesOf({ characters: [{ kind: 'unreadable', id: '0001' }], builds: [] });
+    expect(view(entries, INITIAL_FILTER).breakdown).toBe('');
   });
 
   test('counts builds, and unreadable entries as unassigned', () => {
@@ -603,8 +678,16 @@ describe('view: the breakdown', () => {
     expect(result.breakdown).toBe('2 in The Glass City · 1 unassigned');
   });
 
-  test('names a chronicle called like a special tab as it is typed', () => {
-    expect(view(inChronicles('Unassigned', 'Unassigned'), INITIAL_FILTER).breakdown).toBe('2 in Unassigned');
+  test('names a single chronicle as its tab does: one called like a special tab is quoted', () => {
+    expect(view(inChronicles('Unassigned', 'Unassigned', ''), INITIAL_FILTER).breakdown).toBe(
+      '2 in "Unassigned" · 1 unassigned',
+    );
+  });
+
+  test('names a single chronicle by the same unique label as its tab', () => {
+    const result = view(inChronicles('"Unassigned"', ''), INITIAL_FILTER);
+    expect(result.breakdown).toBe('1 in "Unassigned" · 1 unassigned');
+    expect(result.tabs[1].label).toBe('"Unassigned"');
   });
 });
 

@@ -81,11 +81,19 @@ export const selectedTab = (page: Page): Locator => tabStrip(page).getByRole('ta
 export const tabPanel = (page: Page): Locator => page.getByRole('tabpanel');
 
 /**
- * The text a tab shows, "Name · 4": its name and count as drawn. The comma that is read to assistive
- * technology in their place is not shown, so the tab's text content is not what it shows.
+ * The text a tab shows, "Name · 4", read as rendered: what is drawn, its separator included, with
+ * whitespace normalised. The comma that is read to assistive technology in place of the dot is
+ * drawn at no size, so it is not part of what is shown.
  */
-export const tabText = async (tab: Locator): Promise<string> =>
-  `${await entrySlot(tab, 'tab-label').textContent()} · ${await entrySlot(tab, 'tab-count').textContent()}`;
+export const tabText = (tab: Locator): Promise<string> =>
+  tab.evaluate((element) =>
+    [...element.querySelectorAll('span')]
+      .filter((part) => part.childElementCount === 0 && getComputedStyle(part).fontSize !== '0px')
+      .map((part) => part.textContent ?? '')
+      .join('')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  );
 
 /** The text each tab shows, in order. */
 export const shownTabTexts = async (page: Page): Promise<string[]> =>
@@ -105,6 +113,24 @@ export const tabAccessibleName = (text: string): string => {
   const split = text.lastIndexOf(' · ');
   return `${text.slice(0, split)}, ${text.slice(split + 3)}`;
 };
+
+/**
+ * Waits for the strip to show exactly `expected`, in order, as "Name · 4" each, and for each tab to be
+ * named "Name, 4" to assistive technology. The browsing-controls locator has to find those same tabs.
+ */
+export async function expectTabs(page: Page, expected: string[]): Promise<void> {
+  await expect.poll(() => shownTabTexts(page)).toEqual(expected);
+  for (const text of expected) {
+    await expect(tab(page, text)).toHaveAccessibleName(tabAccessibleName(text));
+  }
+  await expect(browsingControls(page).and(tabs(page))).toHaveCount(expected.length);
+}
+
+/** Waits for the tab showing `text` to be the one selected tab. */
+export async function expectSelectedTab(page: Page, text: string): Promise<void> {
+  await expect(selectedTab(page)).toHaveCount(1);
+  await expect(tab(page, text)).toHaveAttribute('aria-selected', 'true');
+}
 
 /** Follows the link `label` for the character called `name`, wherever on the page it is. */
 export const followAction = (page: Page, label: string, name: string): Promise<void> =>

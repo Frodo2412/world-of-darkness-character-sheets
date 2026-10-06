@@ -34,6 +34,7 @@ import {
   saveCharacters,
   saveDamagedBuild,
   saveDamagedCharacter,
+  saveFromAnotherPage,
 } from './support/seed';
 import { editButton, identityName, sheetRoot } from './support/sheet';
 import { currentStored, storedRecords } from './support/storage';
@@ -114,9 +115,7 @@ Given('the player has the roster open with one saved character', async ({ page }
 });
 
 Given('a second character is saved from another page', async ({ page }) => {
-  const other = await page.context().newPage();
-  await saveCharacters(other, [characterWith({ name: 'Fatima' })]);
-  await other.close();
+  await saveFromAnotherPage(page, [characterWith({ name: 'Fatima' })]);
 });
 
 // When
