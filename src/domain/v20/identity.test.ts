@@ -1,12 +1,14 @@
 import { describe, expect, test } from 'vitest';
 import { blankCharacter, setHeaderField } from './character';
 import {
+  buildSummary,
   diceLabel,
   generationLabel,
   identitySummary,
   monogram,
   ordinal,
   temperament,
+  temperamentOf,
 } from './identity';
 import type { HeaderField } from './traits';
 
@@ -109,6 +111,21 @@ describe('identitySummary', () => {
   });
 });
 
+describe('buildSummary', () => {
+  test('joins clan and concept, with no generation', () => {
+    expect(buildSummary('Gangrel', 'Wanderer')).toBe('Gangrel · Wanderer');
+  });
+
+  test('leaves out the part that is blank', () => {
+    expect(buildSummary('Gangrel', '  ')).toBe('Gangrel');
+    expect(buildSummary('', ' Wanderer ')).toBe('Wanderer');
+  });
+
+  test('is empty when both are blank', () => {
+    expect(buildSummary('', '')).toBe('');
+  });
+});
+
 describe('temperament', () => {
   const withHeader = (fields: Partial<Record<HeaderField, string>>) =>
     (Object.entries(fields) as [HeaderField, string][]).reduce(
@@ -128,6 +145,14 @@ describe('temperament', () => {
   test('is empty when neither is entered', () => {
     expect(temperament(withHeader({ nature: '  ' }))).toBe('');
     expect(temperament(blankCharacter('c1'))).toBe('');
+  });
+});
+
+describe('temperamentOf', () => {
+  test('joins nature and demeanor from plain text', () => {
+    expect(temperamentOf('Loner', ' Scholar ')).toBe('Loner / Scholar');
+    expect(temperamentOf('', 'Scholar')).toBe('Scholar');
+    expect(temperamentOf(' ', '')).toBe('');
   });
 });
 
