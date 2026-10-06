@@ -1365,7 +1365,7 @@ graph TD
 ### Slices (grouped by wave)
 
 #### Wave 1
-- [ ] Slice 1: One list of everything stored
+- [x] Slice 1: One list of everything stored
   - [x] Step 1.1: Scenarios, gate and icons
   - [x] Step 1.2: Library entries in the model
   - [x] Step 1.3: Delete leaves the roster
