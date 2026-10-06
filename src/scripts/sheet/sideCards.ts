@@ -1,6 +1,5 @@
-import type { V20Character } from '../../domain/v20/character';
-import { namedRows } from '../../domain/v20/identity';
-import { showBlock } from './draw';
+import { namedRows, type V20Character } from '../../domain/v20/character';
+import { lookup, showBlock } from './draw';
 
 /** One line per named Discipline, "Presence 3", in the order stored; a Discipline rated 0 is still listed. */
 export function disciplineLines(character: V20Character): string[] {
@@ -10,7 +9,7 @@ export function disciplineLines(character: V20Character): string[] {
 /** Draws the Disciplines card's play list and its empty-state line. */
 export function drawSideCards(root: ParentNode, character: V20Character): void {
   const lines = disciplineLines(character);
-  const list = root.querySelector<HTMLElement>('[data-disciplines-list]')!;
+  const list = lookup(root, '[data-disciplines-list]');
 
   const shown = [...list.children].map((item) => item.textContent);
   if (shown.length !== lines.length || shown.some((text, index) => text !== lines[index])) {

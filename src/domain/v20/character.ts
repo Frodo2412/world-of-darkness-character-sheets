@@ -16,6 +16,7 @@ import {
   type AttributeKey,
   type DamageType,
   RATING_RANGE,
+  type CustomAbilityRef,
   type HeaderField,
   type HealthLevelKey,
   type NamedRowRef,
@@ -157,6 +158,18 @@ export function namedRow(character: V20Character, row: NamedRowRef): NamedRating
   return Array.isArray(rows) ? rows[Number(key)] : rows[key];
 }
 
+/** The write-in rows the player has named, in order, with trimmed names: an unnamed row is not shown in play. */
+export function namedRows(rows: readonly NamedRating[]): NamedRating[] {
+  return rows
+    .filter((row) => row.name.trim() !== '')
+    .map((row) => ({ ...row, name: row.name.trim() }));
+}
+
+/** A group's write-in ability with its trimmed name, or undefined while the player has not named it. */
+export function namedCustomAbility(character: V20Character, ability: CustomAbilityRef): NamedRating | undefined {
+  return namedRows([namedRow(character, ability)!])[0];
+}
+
 /** Changes the name, the rating or both of a write-in row. */
 export function setNamedRow(
   character: V20Character,
@@ -184,28 +197,4 @@ export function cycleHealthBox(character: V20Character, level: HealthLevelKey): 
   const position = DAMAGE_TYPES.indexOf(character.health[level]);
   const next = DAMAGE_TYPES[(position + 1) % DAMAGE_TYPES.length];
   return { ...character, health: { ...character.health, [level]: next } };
-}
-
-/**
- * One step of a resource that is held between 0 and a bound: never below 0 and
- * never raised above the bound. A stored value already above the bound is left
- * as stored and can only fall.
- */
-function boundedStep(current: number, delta: number, bound: number): number {
-  return Math.max(0, Math.min(current + delta, Math.max(current, bound)));
-}
-
-/** Spends (negative) or gains (positive) blood; `maximum` is the most it may be raised to. */
-export function stepBlood(character: V20Character, delta: number, maximum: number): V20Character {
-  const current = character.bloodPool.current;
-  return { ...character, bloodPool: { ...character.bloodPool, current: boundedStep(current, delta, maximum) } };
-}
-
-/** Spends or regains temporary Willpower, which may be raised no higher than permanent Willpower. */
-export function stepTemporaryWillpower(character: V20Character, delta: number): V20Character {
-  const { permanent, temporary } = character.willpower;
-  return {
-    ...character,
-    willpower: { ...character.willpower, temporary: boundedStep(temporary, delta, permanent) },
-  };
 }

@@ -1,4 +1,5 @@
 import type { RatingControl } from '../../components/controls/rating-control';
+import { setAttr } from './draw';
 import type { SheetMode } from './mode';
 
 export interface RatingView {
@@ -10,19 +11,15 @@ export interface RatingView {
   mode: SheetMode;
 }
 
-// An attribute or ability drawn read-only has room for five dots when its rating
-// fits in five, else all ten.
-const hasPlayScale = (ref: string): boolean => /^(attributes|abilities|customAbilities)\./.test(ref);
+/** The dots the frame draws: an attribute or ability drawn read-only has room for this many when its rating fits, else all ten. */
+export const PLAY_SCALE_DOTS = 5;
 
-// Leave a matching attribute alone so a redraw does not restart what it drives.
-function setAttr(element: Element, name: string, value: string): void {
-  if (element.getAttribute(name) !== value) element.setAttribute(name, value);
-}
+const hasPlayScale = (ref: string): boolean => /^(attributes|abilities|customAbilities)\./.test(ref);
 
 /** Draws a rating for the mode: a slider to edit, an image with a text alternative to play. */
 export function drawRating(rating: RatingControl, { ref, label, value, storedMax, mode }: RatingView): void {
   const readonly = mode === 'play';
-  setAttr(rating, 'max', String(readonly && hasPlayScale(ref) && value <= 5 ? 5 : storedMax));
+  setAttr(rating, 'max', String(readonly && hasPlayScale(ref) && value <= PLAY_SCALE_DOTS ? PLAY_SCALE_DOTS : storedMax));
   setAttr(rating, 'name', label);
   rating.value = value;
   rating.toggleAttribute('readonly', readonly);

@@ -3,10 +3,8 @@ import { blankCharacter, setHeaderField } from './character';
 import {
   diceLabel,
   generationLabel,
-  generationNumber,
   identitySummary,
   monogram,
-  namedRows,
   ordinal,
   temperament,
 } from './identity';
@@ -29,22 +27,6 @@ describe('ordinal', () => {
     [111, '111th'],
   ])('%i is %s', (n, expected) => {
     expect(ordinal(n)).toBe(expected);
-  });
-});
-
-describe('generationNumber', () => {
-  test.each([
-    ['10', 10],
-    ['10th', 10],
-    ['3rd', 3],
-    [' 9th generation ', 9],
-    ['between 8 and 9', 8],
-  ])('reads %j as %i', (text, expected) => {
-    expect(generationNumber(text)).toBe(expected);
-  });
-
-  test.each(['', '   ', 'banana'])('finds no number in %j', (text) => {
-    expect(generationNumber(text)).toBeUndefined();
   });
 });
 
@@ -146,32 +128,6 @@ describe('temperament', () => {
   test('is empty when neither is entered', () => {
     expect(temperament(withHeader({ nature: '  ' }))).toBe('');
     expect(temperament(blankCharacter('c1'))).toBe('');
-  });
-});
-
-describe('namedRows', () => {
-  test('keeps the rows with a name, in order, with their ratings', () => {
-    const rows = [
-      { name: 'Dominate', rating: 3 },
-      { name: '', rating: 0 },
-      { name: 'Potence', rating: 1 },
-    ];
-    expect(namedRows(rows)).toEqual([
-      { name: 'Dominate', rating: 3 },
-      { name: 'Potence', rating: 1 },
-    ]);
-  });
-
-  test('drops a row whose name is only spaces, whatever its rating', () => {
-    expect(namedRows([{ name: '   ', rating: 4 }])).toEqual([]);
-  });
-
-  test('keeps a named row rated zero and trims its name', () => {
-    expect(namedRows([{ name: '  Hobby Talent ', rating: 0 }])).toEqual([{ name: 'Hobby Talent', rating: 0 }]);
-  });
-
-  test('is empty when there are no rows', () => {
-    expect(namedRows([])).toEqual([]);
   });
 });
 

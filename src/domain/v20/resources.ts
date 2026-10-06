@@ -1,17 +1,17 @@
 // The rules behind the live resources on the play view: what the Blood Pool
-// can hold and how wounded the character is. Computed on every draw, never stored.
+// can hold, how far each resource may be stepped and how wounded the character
+// is. Computed on every draw, never stored.
 
-import { namedRow, traitValue, type V20Character } from './character';
-import { GENERATION_TABLE } from './generations';
-import { generationNumber, namedRows } from './identity';
+import { namedCustomAbility, traitValue, type V20Character } from './character';
+import { GENERATION_TABLE, generationNumber } from './generations';
 import {
   ABILITY_GROUPS,
   ATTRIBUTE_GROUPS,
   BLOOD_POOL_RANGE,
   HEALTH_LEVELS,
-  type AbilityGroupKey,
   type AbilityKey,
   type AttributeKey,
+  type CustomAbilityRef,
   type HealthLevelKey,
 } from './traits';
 
@@ -43,12 +43,15 @@ export interface Wound {
   penalty: number;
 }
 
+/** A wound, incapacitated (its own state, not a number), or none. */
+export type WoundState = Wound | 'incapacitated' | undefined;
+
 /**
  * The wound the health track shows: the most severe level holding any damage,
  * whatever the damage type and wherever the gaps are. Incapacitated is its own
  * state, not a number; none when the track is empty or only Bruised is marked.
  */
-export function woundState(character: V20Character): Wound | 'incapacitated' | undefined {
+export function woundState(character: V20Character): WoundState {
   const worst = [...HEALTH_LEVELS].reverse().find((level) => character.health[level.key] !== 'empty');
   if (worst === undefined) return undefined;
   if (!('dicePenalty' in worst)) return 'incapacitated';
@@ -59,7 +62,7 @@ export function woundState(character: V20Character): Wound | 'incapacitated' | u
 /** What a dice pool is built from: at most one attribute and one ability, named as the sheet's rows are. */
 export interface PoolSelection {
   attribute?: `attributes.${AttributeKey}`;
-  ability?: `abilities.${AbilityKey}` | `customAbilities.${AbilityGroupKey}`;
+  ability?: `abilities.${AbilityKey}` | CustomAbilityRef;
 }
 
 export interface PoolTerm {
@@ -71,7 +74,7 @@ export interface DicePool {
   attribute?: PoolTerm;
   ability?: PoolTerm;
   /** Dice the wound takes off, when it takes any. */
-  wound?: number;
+  woundPenalty?: number;
   /** Only when both an attribute and an ability are selected. */
   total?: number;
   incapacitated: boolean;
@@ -89,7 +92,7 @@ function abilityTerm(character: V20Character, ability: NonNullable<PoolSelection
     const fixed = ability as `abilities.${AbilityKey}`;
     return { label: TRAIT_LABELS.get(fixed)!, rating: traitValue(character, fixed) };
   }
-  const [named] = namedRows([namedRow(character, ability as `customAbilities.${AbilityGroupKey}`)!]);
+  const named = namedCustomAbility(character, ability as CustomAbilityRef);
   return named && { label: named.name, rating: named.rating };
 }
 
@@ -107,7 +110,50 @@ export function dicePool(character: V20Character, selection: PoolSelection): Dic
   const pool: DicePool = { incapacitated };
   if (attribute) pool.attribute = attribute;
   if (ability) pool.ability = ability;
-  if (penalty > 0) pool.wound = penalty;
+  if (penalty > 0) pool.woundPenalty = penalty;
   if (attribute && ability) pool.total = incapacitated ? 0 : Math.max(0, attribute.rating + ability.rating - penalty);
   return pool;
+}
+
+export type Resource = 'blood' | 'willpower';
+
+/** Where a stepped resource stands and which way it can still move. */
+export interface ResourceReading {
+  current: number;
+  /** The most it can be raised to: the generation's maximum, or permanent Willpower. */
+  maximum: number;
+  canSpend: boolean;
+  canGain: boolean;
+  /** Stored above the maximum: shown as stored, and able only to fall. */
+  over: boolean;
+  /** Blood only: the Generation text gave no recognised generation and the sheet's own maximum stands in. */
+  assumed: boolean;
+}
+
+function readingOf(current: number, maximum: number, assumed = false): ResourceReading {
+  return { current, maximum, canSpend: current > 0, canGain: current < maximum, over: current > maximum, assumed };
+}
+
+/** The reading of a stepped resource: the one rule its steppers, its announcement and its card all follow. */
+export function resourceReading(character: V20Character, resource: Resource): ResourceReading {
+  if (resource === 'willpower') return readingOf(character.willpower.temporary, character.willpower.permanent);
+  const { maximum, assumed } = bloodPoolMaximum(character);
+  return readingOf(character.bloodPool.current, maximum, assumed);
+}
+
+/** One step of a resource: never below 0 and never raised above its maximum, but a stored excess is left and can only fall. */
+function boundedStep(reading: ResourceReading, delta: number): number {
+  return Math.max(0, Math.min(reading.current + delta, Math.max(reading.current, reading.maximum)));
+}
+
+/** Spends (negative) or gains (positive) blood, up to what the generation allows. */
+export function stepBlood(character: V20Character, delta: number): V20Character {
+  const current = boundedStep(resourceReading(character, 'blood'), delta);
+  return { ...character, bloodPool: { ...character.bloodPool, current } };
+}
+
+/** Spends or regains temporary Willpower, which may be raised no higher than permanent Willpower. */
+export function stepTemporaryWillpower(character: V20Character, delta: number): V20Character {
+  const temporary = boundedStep(resourceReading(character, 'willpower'), delta);
+  return { ...character, willpower: { ...character.willpower, temporary } };
 }

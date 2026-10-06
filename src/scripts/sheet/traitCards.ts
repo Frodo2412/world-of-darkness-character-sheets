@@ -1,27 +1,28 @@
 import type { RatingControl } from '../../components/controls/rating-control';
-import { namedRow, traitValue, type V20Character } from '../../domain/v20/character';
-import { namedRows } from '../../domain/v20/identity';
-import { RATING_RANGE, type NamedRowRef, type TraitRef } from '../../domain/v20/traits';
-import { show } from './draw';
+import { namedCustomAbility, traitValue, type V20Character } from '../../domain/v20/character';
+import type { PoolSelection } from '../../domain/v20/resources';
+import { RATING_RANGE, type CustomAbilityRef, type TraitRef } from '../../domain/v20/traits';
+import { lookup, lookupAll, setAttr, show } from './draw';
 import type { SheetMode } from './mode';
-import { drawRating } from './ratingDraw';
+import { PLAY_SCALE_DOTS, drawRating } from './ratingDraw';
 
-const isCustomAbility = (key: string): key is NamedRowRef => key.startsWith('customAbilities.');
+const isCustomAbility = (key: string): key is CustomAbilityRef => key.startsWith('customAbilities.');
 
 // A custom ability's play row is shown only once the player has named it.
-function drawCustomAbility(row: HTMLElement, key: NamedRowRef, character: V20Character): void {
-  const [named] = namedRows([namedRow(character, key)!]);
+function drawCustomAbility(row: HTMLElement, key: CustomAbilityRef, character: V20Character): void {
+  const named = namedCustomAbility(character, key);
+  const dots = lookup<RatingControl>(row, 'dot-rating');
   row.hidden = named === undefined;
   if (named === undefined) {
     // A stale ten-dot scale must not outlive the name that showed it.
-    row.querySelector('dot-rating')!.setAttribute('max', '5');
+    dots.setAttribute('max', String(PLAY_SCALE_DOTS));
     return;
   }
 
   show(row, 'trait.name', named.name);
   show(row, 'trait.number', String(named.rating));
   // Always read-only: the write-in row beside it is what edits this rating.
-  drawRating(row.querySelector<RatingControl>('dot-rating')!, {
+  drawRating(dots, {
     ref: key,
     label: named.name,
     value: named.rating,
@@ -33,7 +34,7 @@ function drawCustomAbility(row: HTMLElement, key: NamedRowRef, character: V20Cha
 
 // The value the name button is described by, on the scale its dots drew: "4 of 5", "6 of 10".
 function describeValue(row: HTMLElement, value: number): void {
-  show(row, 'trait.value', `${value} of ${row.querySelector<RatingControl>('dot-rating')!.max}`);
+  show(row, 'trait.value', `${value} of ${lookup<RatingControl>(row, 'dot-rating').max}`);
 }
 
 /**
@@ -41,18 +42,34 @@ function describeValue(row: HTMLElement, value: number): void {
  * value: the dots are then not read out a second time. Editing exposes the slider.
  */
 function drawSelectable(row: HTMLElement, mode: SheetMode): void {
-  const dots = row.querySelector('dot-rating');
-  if (row.querySelector('.trait-select') === null || dots === null) return;
+  const [select] = lookupAll(row, '.trait-select');
+  if (select === undefined) return;
+  const dots = lookup(row, 'dot-rating');
   if (mode === 'play') dots.setAttribute('aria-hidden', 'true');
   else dots.removeAttribute('aria-hidden');
 }
 
+/** Which rows show as chosen for the dice pool: the row is filled, and its button is pressed. */
+function drawSelected(row: HTMLElement, selection: PoolSelection): void {
+  const key = row.dataset.traitKey;
+  const selected = key === selection.attribute || key === selection.ability;
+  row.classList.toggle('is-selected', selected);
+  const [select] = lookupAll(row, '.trait-select');
+  if (select !== undefined) setAttr(select, 'aria-pressed', String(selected));
+}
+
 /**
- * Draws the number beside each trait's dots, and the play row of each named custom
- * ability. The dots themselves are drawn with the rest of the ratings.
+ * Draws the number beside each trait's dots, the play row of each named custom
+ * ability and which rows are chosen for the dice pool. The dots themselves are
+ * drawn with the rest of the ratings.
  */
-export function drawTraitCards(root: ParentNode, character: V20Character, mode: SheetMode): void {
-  for (const row of root.querySelectorAll<HTMLElement>('[data-trait-key]')) {
+export function drawTraitCards(
+  root: ParentNode,
+  character: V20Character,
+  mode: SheetMode,
+  selection: PoolSelection,
+): void {
+  for (const row of lookupAll(root, '[data-trait-key]')) {
     const key = row.dataset.traitKey!;
     if (isCustomAbility(key)) {
       drawCustomAbility(row, key, character);
@@ -62,5 +79,6 @@ export function drawTraitCards(root: ParentNode, character: V20Character, mode: 
       describeValue(row, value);
     }
     drawSelectable(row, mode);
+    drawSelected(row, selection);
   }
 }

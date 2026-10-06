@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { blankCharacter, type V20Character } from '../../domain/v20/character';
 import type { DamageType, HealthLevelKey } from '../../domain/v20/traits';
-import { woundChange } from './resourceCards';
+import { BLOOD_SEGMENT_LIMIT, trackerForm, woundChange } from './resourceCards';
 
 const marked = (damage: Partial<Record<HealthLevelKey, DamageType>>): V20Character => {
   const character = blankCharacter('abc');
@@ -44,5 +44,18 @@ describe('woundChange', () => {
 
   test('is not announced when a lesser level is marked under a worse wound', () => {
     expect(woundChange(marked({ crippled: 'lethal' }), marked({ crippled: 'lethal', hurt: 'bashing' }))).toBeUndefined();
+  });
+});
+
+describe('trackerForm', () => {
+  test('is one segment each up to the limit, which is 20', () => {
+    expect(BLOOD_SEGMENT_LIMIT).toBe(20);
+    expect(trackerForm(20)).toBe('segments');
+    expect(trackerForm(13)).toBe('segments');
+  });
+
+  test('is one bar above the limit', () => {
+    expect(trackerForm(21)).toBe('bar');
+    expect(trackerForm(50)).toBe('bar');
   });
 });

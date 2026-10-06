@@ -43,7 +43,7 @@ describe('poolReadout', () => {
   });
 
   test('takes the wound off with a true minus sign', () => {
-    expect(poolReadout(pool({ attribute: intelligence, ability: investigation, wound: 1, total: 6 }))).toMatchObject({
+    expect(poolReadout(pool({ attribute: intelligence, ability: investigation, woundPenalty: 1, total: 6 }))).toMatchObject({
       formula: 'Intelligence 4 + Investigation 3 − wound 1',
       total: '6 dice',
     });
@@ -54,7 +54,7 @@ describe('poolReadout', () => {
   });
 
   test('leaves the wound out until both are selected', () => {
-    expect(poolReadout(pool({ attribute: intelligence, wound: 2 })).formula).toBe('Intelligence 4');
+    expect(poolReadout(pool({ attribute: intelligence, woundPenalty: 2 })).formula).toBe('Intelligence 4');
   });
 
   test('says the character cannot act once something is selected', () => {
@@ -80,7 +80,7 @@ describe('poolAnnouncement', () => {
   });
 
   test('includes the wound', () => {
-    expect(poolAnnouncement(pool({ attribute: intelligence, ability: investigation, wound: 1, total: 6 }))).toBe(
+    expect(poolAnnouncement(pool({ attribute: intelligence, ability: investigation, woundPenalty: 1, total: 6 }))).toBe(
       'Dice pool: Intelligence 4 + Investigation 3 − wound 1, 6 dice',
     );
   });

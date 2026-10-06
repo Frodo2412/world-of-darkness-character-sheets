@@ -20,6 +20,9 @@ html:has(.sheet-page) {
 
 .sheet {
 	line-height: var(--leading-compact);
+	/* The dots of a read-only rating: 8px with a 5px gap. */
+	--compact-mark: 0.5rem;
+	--compact-gap: 0.3125rem;
 }
 
 /* A card's edge is drawn inside its box, as the frame does, so its padding is the space around what it holds. */
@@ -48,10 +51,6 @@ html:has(.sheet-page) {
 	color: var(--color-muted);
 	white-space: nowrap;
 	min-block-size: var(--control-size);
-}
-
-.sheet label:has(textarea) {
-	display: block;
 }
 
 .sheet label input {
@@ -172,13 +171,15 @@ html:has(.sheet-page) {
 }
 
 .sheet[data-sheet-mode='play'] :is(.trait-row, .trait-card .rating-row) {
-	--mark-size: 0.5rem;
-	--dot-gap: 0.3125rem;
+	--mark-size: var(--compact-mark);
+	--dot-gap: var(--compact-gap);
 	--dots-width: calc(var(--dots) * var(--mark-size) + (var(--dots) - 1) * var(--dot-gap));
 	flex-wrap: nowrap;
 }
 
-.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) dot-rating {
+/* The compact dots of a row, and of the read-only Willpower and Humanity displays, share one look. */
+.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) dot-rating,
+.sheet :is(.willpower-dots, .humanity-dots) {
 	gap: var(--dot-gap);
 }
 
@@ -187,13 +188,13 @@ html:has(.sheet-page) {
 	justify-content: flex-end;
 }
 
-.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) .rating-mark {
+.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit, .willpower-dots, .humanity-dots) .rating-mark {
 	border-width: 1px;
 	border-color: var(--color-border-control);
 	background: var(--color-row);
 }
 
-.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) .rating-mark.is-filled {
+.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit, .willpower-dots, .humanity-dots) .rating-mark.is-filled {
 	border-color: var(--color-text);
 	background: var(--color-text);
 }
@@ -324,9 +325,6 @@ html:has(.sheet-page) {
 
 /* The Selected pool card: the formula, what is still needed, and the total. */
 .pool-head {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
 	gap: var(--space-2);
 }
 
@@ -454,11 +452,18 @@ html:has(.sheet-page) {
 	flex-basis: 15rem;
 }
 
-.resource-head {
+/* A card's heading band: a name beside what goes with it, or a line of notes beside its figure. */
+.resource-head,
+.resource-foot,
+.pool-head {
 	display: flex;
-	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
+}
+
+.resource-head,
+.resource-foot {
+	flex-wrap: wrap;
 	gap: var(--space-1) var(--space-2);
 }
 
@@ -489,14 +494,6 @@ html:has(.sheet-page) {
 .resource-flag {
 	font-weight: 600;
 	color: var(--color-accent-text);
-}
-
-.resource-foot {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--space-1) var(--space-2);
 }
 
 .stepper {
@@ -563,22 +560,12 @@ html:has(.sheet-page) {
 	background: var(--color-accent);
 }
 
-/* The read-only play displays of Willpower (temporary filled out of permanent) and Humanity: 8px dots. */
+/* The read-only play displays of Willpower (temporary filled out of permanent) and Humanity: 8px dots,
+   drawn like a row's (see the compact dots above). */
 .willpower-dots,
 .humanity-dots {
-	--mark-size: 0.5rem;
-	gap: 0.3125rem;
-}
-
-:is(.willpower-dots, .humanity-dots) .rating-mark {
-	border-width: 1px;
-	border-color: var(--color-border-control);
-	background: var(--color-row);
-}
-
-:is(.willpower-dots, .humanity-dots) .rating-mark.is-filled {
-	border-color: var(--color-text);
-	background: var(--color-text);
+	--mark-size: var(--compact-mark);
+	--dot-gap: var(--compact-gap);
 }
 
 /* Health: seven boxes with their level and penalty beneath, the wound beside the
@@ -715,7 +702,7 @@ html:has(.sheet-page) {
    away): its padding, a control-sized button and its border, plus some air. The
    strip's own button is left out: it sits in that margin, so scrolling it into
    view would send the page back up. */
-.sheet[data-sheet-mode='edit'] :is(input, textarea, select, button, dot-rating, [tabindex]):not(.edit-strip *) {
+.sheet[data-sheet-mode='edit'] :is(input, select, button, dot-rating, [tabindex]):not(.edit-strip *) {
 	scroll-margin-block-start: calc(var(--control-size) + var(--space-2) * 2 + var(--space-4));
 }
 
@@ -830,7 +817,7 @@ html:has(.sheet-page) {
 
 	.stepper,
 	.health-box {
-		--control-size: 2.75rem;
+		--control-size: var(--touch-target);
 	}
 
 	.health-box {
@@ -838,7 +825,7 @@ html:has(.sheet-page) {
 	}
 
 	.sheet[data-sheet-mode='play'] .trait-row {
-		min-block-size: 2.75rem;
+		min-block-size: var(--touch-target);
 	}
 
 	.health-levels {

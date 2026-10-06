@@ -22,3 +22,9 @@ export const GENERATION_TABLE: readonly GenerationRow[] = [
   { generation: 12, maxTrait: 5, bloodPoolMax: 11, bloodPerTurn: 1 },
   { generation: 13, maxTrait: 5, bloodPoolMax: 10, bloodPerTurn: 1 },
 ];
+
+/** The first whole number in what the player typed ("10", "10th", "3rd generation"), if any. */
+export function generationNumber(text: string): number | undefined {
+  const digits = text.match(/\d+/);
+  return digits ? Number(digits[0]) : undefined;
+}

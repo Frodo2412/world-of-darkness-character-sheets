@@ -1,6 +1,13 @@
 import { describe, expect, test } from 'vitest';
-import { blankCharacter, setHeaderField, type V20Character } from './character';
-import { bloodPoolMaximum, dicePool, woundState } from './resources';
+import { blankCharacter, setHeaderField, setText, setTrait, type V20Character } from './character';
+import {
+  bloodPoolMaximum,
+  dicePool,
+  resourceReading,
+  stepBlood,
+  stepTemporaryWillpower,
+  woundState,
+} from './resources';
 import type { DamageType, HealthLevelKey } from './traits';
 
 const withGeneration = (generation: string): V20Character =>
@@ -159,26 +166,26 @@ describe('dicePool', () => {
     ['mauled', 2, 5],
     ['crippled', 5, 2],
   ])('damage on %s takes %i off the total, leaving %i', (level, penalty, total) => {
-    expect(dicePool(withHealth({ [level]: 'lethal' }), both)).toMatchObject({ wound: penalty, total, incapacitated: false });
+    expect(dicePool(withHealth({ [level]: 'lethal' }), both)).toMatchObject({ woundPenalty: penalty, total, incapacitated: false });
   });
 
   test('a bruise alone takes nothing off and adds no wound term', () => {
     const pool = dicePool(withHealth({ bruised: 'bashing' }), both);
     expect(pool.total).toBe(7);
-    expect(pool).not.toHaveProperty('wound');
+    expect(pool).not.toHaveProperty('woundPenalty');
   });
 
   test('a wound is named even before the pool is complete, with no total', () => {
     expect(dicePool(withHealth({ hurt: 'lethal' }), { attribute: 'attributes.intelligence' })).toEqual({
       attribute: { label: 'Intelligence', rating: 4 },
-      wound: 1,
+      woundPenalty: 1,
       incapacitated: false,
     });
   });
 
   test('the total never goes below zero', () => {
     const pool = dicePool(withHealth({ crippled: 'lethal' }), { attribute: 'attributes.strength', ability: 'abilities.brawl' });
-    expect(pool).toMatchObject({ wound: 5, total: 0 });
+    expect(pool).toMatchObject({ woundPenalty: 5, total: 0 });
   });
 
   test('an incapacitated character has a total of zero once both are selected, and no wound term', () => {
@@ -226,3 +233,129 @@ describe('dicePool', () => {
     expect(original).toEqual(withHealth({ hurt: 'lethal' }));
   });
 });
+
+describe('resourceReading', () => {
+  const blood = (generation: string, current: number): V20Character =>
+    setTrait(withGeneration(generation), 'bloodPool.current', current);
+  const willpower = (permanent: number, temporary: number): V20Character =>
+    setTrait(setTrait(blankCharacter('abc'), 'willpower.permanent', permanent), 'willpower.temporary', temporary);
+
+  test("reads blood against the generation's maximum", () => {
+    expect(resourceReading(blood('10th', 8), 'blood')).toEqual({
+      current: 8,
+      maximum: 13,
+      canSpend: true,
+      canGain: true,
+      over: false,
+      assumed: false,
+    });
+  });
+
+  test('says the blood maximum is assumed when Generation is not recognised', () => {
+    expect(resourceReading(blood('banana', 8), 'blood')).toMatchObject({ maximum: 50, assumed: true });
+  });
+
+  test.each([
+    { current: 0, canSpend: false, canGain: true, over: false, why: 'empty can only be gained' },
+    { current: 13, canSpend: true, canGain: false, over: false, why: 'full can only be spent' },
+    { current: 20, canSpend: true, canGain: false, over: true, why: 'above the maximum can only fall' },
+  ])('blood: $why', ({ current, canSpend, canGain, over }) => {
+    expect(resourceReading(blood('10th', current), 'blood')).toMatchObject({ canSpend, canGain, over });
+  });
+
+  test('reads temporary Willpower against permanent Willpower', () => {
+    expect(resourceReading(willpower(6, 4), 'willpower')).toEqual({
+      current: 4,
+      maximum: 6,
+      canSpend: true,
+      canGain: true,
+      over: false,
+      assumed: false,
+    });
+  });
+
+  test.each([
+    { permanent: 6, temporary: 0, canSpend: false, canGain: true, over: false },
+    { permanent: 6, temporary: 6, canSpend: true, canGain: false, over: false },
+    { permanent: 3, temporary: 8, canSpend: true, canGain: false, over: true },
+    { permanent: 0, temporary: 0, canSpend: false, canGain: false, over: false },
+  ])('Willpower $temporary of $permanent', ({ permanent, temporary, canSpend, canGain, over }) => {
+    expect(resourceReading(willpower(permanent, temporary), 'willpower')).toMatchObject({ canSpend, canGain, over });
+  });
+});
+
+describe('stepBlood', () => {
+  const withBlood = (current: number, generation = '10th') =>
+    setTrait(withGeneration(generation), 'bloodPool.current', current);
+
+  test.each([
+    { current: 8, delta: -1, expected: 7, why: 'spends one' },
+    { current: 8, delta: 1, expected: 9, why: 'gains one' },
+    { current: 0, delta: -1, expected: 0, why: 'does not go below zero' },
+    { current: 0, delta: 1, expected: 1, why: 'gains from empty' },
+    { current: 13, delta: 1, expected: 13, why: "does not gain past the generation's maximum" },
+    { current: 13, delta: -1, expected: 12, why: 'spends from full' },
+    { current: 12, delta: 1, expected: 13, why: 'gains up to the maximum' },
+    { current: 20, delta: 1, expected: 20, why: 'leaves a stored excess as stored when gaining' },
+    { current: 20, delta: -1, expected: 19, why: 'lets a stored excess fall' },
+  ])('$why', ({ current, delta, expected }) => {
+    expect(stepBlood(withBlood(current), delta).bloodPool.current).toBe(expected);
+  });
+
+  test('takes its maximum from Generation', () => {
+    expect(stepBlood(withBlood(10, '13th'), 1).bloodPool.current).toBe(10);
+    expect(stepBlood(withBlood(10, '12th'), 1).bloodPool.current).toBe(11);
+  });
+
+  test('leaves every other value as it was', () => {
+    const original = setText(withBlood(8), 'bloodPool.perTurn', '1');
+
+    expect(stepBlood(original, -1)).toEqual({ ...original, bloodPool: { current: 7, perTurn: '1' } });
+  });
+
+  test('does not change the character it was given', () => {
+    const original = withBlood(8);
+
+    stepBlood(original, -1);
+
+    expect(original).toEqual(withBlood(8));
+  });
+});
+
+describe('stepTemporaryWillpower', () => {
+  const withWillpower = (permanent: number, temporary: number) => {
+    const character = setTrait(blankCharacter('abc'), 'willpower.permanent', permanent);
+    return setTrait(character, 'willpower.temporary', temporary);
+  };
+
+  test.each([
+    { permanent: 6, temporary: 4, delta: -1, expected: 3, why: 'spends one' },
+    { permanent: 6, temporary: 4, delta: 1, expected: 5, why: 'regains one' },
+    { permanent: 6, temporary: 0, delta: -1, expected: 0, why: 'does not go below zero' },
+    { permanent: 6, temporary: 0, delta: 1, expected: 1, why: 'regains from empty' },
+    { permanent: 6, temporary: 6, delta: 1, expected: 6, why: 'does not regain past permanent' },
+    { permanent: 6, temporary: 5, delta: 1, expected: 6, why: 'regains up to permanent' },
+    { permanent: 6, temporary: 6, delta: -1, expected: 5, why: 'spends from full' },
+    { permanent: 3, temporary: 8, delta: 1, expected: 8, why: 'leaves a stored excess as stored when regaining' },
+    { permanent: 3, temporary: 8, delta: -1, expected: 7, why: 'lets a stored excess fall' },
+    { permanent: 0, temporary: 0, delta: 1, expected: 0, why: 'regains nothing when permanent is zero' },
+    { permanent: 0, temporary: 0, delta: -1, expected: 0, why: 'spends nothing when permanent is zero and temporary is empty' },
+  ])('$why', ({ permanent, temporary, delta, expected }) => {
+    expect(stepTemporaryWillpower(withWillpower(permanent, temporary), delta).willpower.temporary).toBe(expected);
+  });
+
+  test('leaves permanent Willpower and the rest of the character as they were', () => {
+    const original = withWillpower(6, 4);
+
+    expect(stepTemporaryWillpower(original, 1)).toEqual({ ...original, willpower: { permanent: 6, temporary: 5 } });
+  });
+
+  test('does not change the character it was given', () => {
+    const original = withWillpower(6, 4);
+
+    stepTemporaryWillpower(original, -1);
+
+    expect(original).toEqual(withWillpower(6, 4));
+  });
+});
+

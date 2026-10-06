@@ -55,7 +55,9 @@
 	--text-h1: 2rem;
 
 	--mark-size: 1.125rem;
-	--control-size: 2.75rem;
+	/* The least a pressed control is: 44px. */
+	--touch-target: 2.75rem;
+	--control-size: var(--touch-target);
 	/* The sheet's stepper buttons and health boxes, and its trait rows. */
 	--control-compact: 1.8125rem;
 	--icon-mark: 0.8125rem;
@@ -285,8 +287,7 @@ button:disabled {
 	cursor: not-allowed;
 }
 
-input[type='text'],
-textarea {
+input[type='text'] {
 	font: inherit;
 	color: var(--color-text);
 	background: transparent;
@@ -296,13 +297,6 @@ textarea {
 	padding: var(--space-1) var(--space-1);
 	min-inline-size: 0;
 	inline-size: 100%;
-}
-
-textarea {
-	border: 1px solid var(--color-border-control);
-	border-radius: var(--radius-badge);
-	padding: var(--space-2);
-	resize: vertical;
 }
 
 .status-message {

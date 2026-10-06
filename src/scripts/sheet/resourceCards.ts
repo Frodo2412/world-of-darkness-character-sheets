@@ -2,76 +2,65 @@ import type { HealthTrack } from '../../components/controls/health-track';
 import type { RatingControl } from '../../components/controls/rating-control';
 import type { V20Character } from '../../domain/v20/character';
 import { diceLabel } from '../../domain/v20/identity';
-import { bloodPoolMaximum, woundState } from '../../domain/v20/resources';
-import { show, showBlock } from './draw';
-
-export type Resource = 'blood' | 'willpower';
+import {
+  resourceReading,
+  woundState,
+  type Resource,
+  type ResourceReading,
+  type WoundState,
+} from '../../domain/v20/resources';
+import { MINUS_SIGN, lookup, lookupAll, setAttr, show, showBlock, showOptional } from './draw';
 
 /** More segments than this and a pool is drawn as one proportional bar. */
-const SEGMENT_LIMIT = 20;
+export const BLOOD_SEGMENT_LIMIT = 20;
+
+export type TrackerForm = 'segments' | 'bar';
+
+/** How a pool of this size is drawn: a segment each while there are few, else one bar. */
+export const trackerForm = (maximum: number): TrackerForm => (maximum <= BLOOD_SEGMENT_LIMIT ? 'segments' : 'bar');
 
 const NAMES: Record<Resource, string> = { blood: 'Blood Pool', willpower: 'Willpower' };
 
-interface Reading {
-  current: number;
-  /** The most it can be raised to: the generation's maximum, or permanent Willpower. */
-  bound: number;
-}
-
-function readingOf(character: V20Character, resource: Resource): Reading {
-  return resource === 'blood'
-    ? { current: character.bloodPool.current, bound: bloodPoolMaximum(character).maximum }
-    : { current: character.willpower.temporary, bound: character.willpower.permanent };
-}
-
 /** What a stepper press says to assistive technology, e.g. "Blood Pool 7 of 13". */
 function announcement(character: V20Character, resource: Resource): string {
-  const { current, bound } = readingOf(character, resource);
-  return `${NAMES[resource]} ${current} of ${bound}`;
+  const { current, maximum } = resourceReading(character, resource);
+  return `${NAMES[resource]} ${current} of ${maximum}`;
 }
 
 /** Writes a resource card's live region. Only a stepper press calls this: redraws stay silent. */
 export function announce(root: ParentNode, character: V20Character, resource: Resource): void {
-  root.querySelector<HTMLElement>(`[data-live="${resource}"]`)!.textContent = announcement(character, resource);
-}
-
-// Leave a matching attribute alone so a redraw does not restart what it drives.
-function setAttr(element: Element, name: string, value: string): void {
-  if (element.getAttribute(name) !== value) element.setAttribute(name, value);
+  lookup(root, `[data-live="${resource}"]`).textContent = announcement(character, resource);
 }
 
 /** A stepper at its bound stays focusable and says so; its button is never replaced. */
-function drawStepper(root: ParentNode, resource: Resource, { current, bound }: Reading): void {
-  const buttons = root.querySelectorAll<HTMLButtonElement>(`[data-resource="${resource}"][data-step]`);
-  for (const button of buttons) {
-    const spending = Number(button.dataset.step) < 0;
-    const atBound = spending ? current <= 0 : current >= bound;
-    if (atBound) setAttr(button, 'aria-disabled', 'true');
-    else button.removeAttribute('aria-disabled');
+function drawStepper(root: ParentNode, resource: Resource, { current, maximum, canSpend, canGain, over }: ResourceReading): void {
+  for (const button of lookupAll<HTMLButtonElement>(root, `[data-resource="${resource}"][data-step]`)) {
+    const available = Number(button.dataset.step) < 0 ? canSpend : canGain;
+    if (available) button.removeAttribute('aria-disabled');
+    else setAttr(button, 'aria-disabled', 'true');
   }
-  show(root, `${resource}.total`, `${current} / ${bound}`);
-  showBlock(root, `${resource}.over`, current > bound);
+  show(root, `${resource}.total`, `${current} / ${maximum}`);
+  showBlock(root, `${resource}.over`, over);
 }
 
-const segmentCount = (tracker: Element): number => tracker.querySelectorAll('.blood-segment').length;
-
-function drawSegments(tracker: HTMLElement, { current, bound }: Reading): void {
-  if (tracker.dataset.form !== 'segments' || segmentCount(tracker) !== bound) {
+// A tracker holds only its own segments (or its one bar), so its children are what is drawn.
+function drawSegments(tracker: HTMLElement, { current, maximum }: ResourceReading): void {
+  if (tracker.dataset.form !== 'segments' || tracker.children.length !== maximum) {
     tracker.dataset.form = 'segments';
     tracker.replaceChildren(
-      ...Array.from({ length: bound }, () => {
+      ...Array.from({ length: maximum }, () => {
         const segment = document.createElement('span');
         segment.className = 'blood-segment';
         return segment;
       }),
     );
   }
-  tracker.querySelectorAll('.blood-segment').forEach((segment, index) => {
+  [...tracker.children].forEach((segment, index) => {
     segment.classList.toggle('is-filled', index < current);
   });
 }
 
-function drawBar(tracker: HTMLElement, { current, bound }: Reading): void {
+function drawBar(tracker: HTMLElement, { current, maximum }: ResourceReading): void {
   if (tracker.dataset.form !== 'bar') {
     tracker.dataset.form = 'bar';
     const bar = document.createElement('span');
@@ -81,48 +70,44 @@ function drawBar(tracker: HTMLElement, { current, bound }: Reading): void {
     bar.append(fill);
     tracker.replaceChildren(bar);
   }
-  const share = Math.min(1, current / bound);
-  tracker.querySelector<HTMLElement>('.blood-bar-fill')!.style.inlineSize = `${share * 100}%`;
+  const fill = tracker.firstElementChild!.firstElementChild as HTMLElement;
+  fill.style.inlineSize = `${Math.min(1, current / maximum) * 100}%`;
 }
 
 function drawBlood(root: ParentNode, character: V20Character): void {
-  const reading = readingOf(character, 'blood');
-  const { assumed, maximum } = bloodPoolMaximum(character);
+  const reading = resourceReading(character, 'blood');
   const perTurn = character.bloodPool.perTurn.trim();
 
   drawStepper(root, 'blood', reading);
-  show(root, 'blood.perTurn', `${perTurn} blood / turn`);
-  showBlock(root, 'blood.perTurn', perTurn !== '');
-  show(root, 'blood.assumed', `Generation not recognised · maximum assumed ${maximum}`);
-  showBlock(root, 'blood.assumed', assumed);
+  showOptional(root, 'blood.perTurn', perTurn === '' ? '' : `${perTurn} blood / turn`);
+  show(root, 'blood.assumed', `Generation not recognised · maximum assumed ${reading.maximum}`);
+  showBlock(root, 'blood.assumed', reading.assumed);
 
-  const tracker = root.querySelector<HTMLElement>('[data-blood-tracker]')!;
-  if (reading.bound <= SEGMENT_LIMIT) drawSegments(tracker, reading);
+  const tracker = lookup(root, '[data-blood-tracker]');
+  if (trackerForm(reading.maximum) === 'segments') drawSegments(tracker, reading);
   else drawBar(tracker, reading);
 }
 
 function drawWillpower(root: ParentNode, character: V20Character): void {
-  const reading = readingOf(character, 'willpower');
+  const reading = resourceReading(character, 'willpower');
   drawStepper(root, 'willpower', reading);
 
-  const dots = root.querySelector<RatingControl>('[data-willpower-dots]')!;
+  const dots = lookup<RatingControl>(root, '[data-willpower-dots]');
   // With no permanent Willpower there is nothing to draw: the "0 / 0" total says it.
-  dots.hidden = reading.bound === 0;
-  setAttr(dots, 'max', String(reading.bound));
+  dots.hidden = reading.maximum === 0;
+  setAttr(dots, 'max', String(reading.maximum));
   setAttr(dots, 'value', String(reading.current));
 }
 
-type Wound = ReturnType<typeof woundState>;
-
 /** The wound beside the Health heading, e.g. "Hurt · −1 die"; nothing when unwounded. */
-function woundReadout(wound: Wound): string {
+function woundReadout(wound: WoundState): string {
   if (wound === undefined) return '';
   if (wound === 'incapacitated') return 'Incapacitated';
-  return `${wound.label} · \u2212${diceLabel(wound.penalty)}`;
+  return `${wound.label} · ${MINUS_SIGN}${diceLabel(wound.penalty)}`;
 }
 
 /** What changing a health box says to assistive technology, e.g. "Wounded, minus 2 dice". */
-function woundAnnouncement(wound: Wound): string {
+function woundAnnouncement(wound: WoundState): string {
   if (wound === undefined) return 'No wound penalty';
   if (wound === 'incapacitated') return 'Incapacitated';
   return `${wound.label}, minus ${diceLabel(wound.penalty)}`;
@@ -137,22 +122,19 @@ export function woundChange(before: V20Character, after: V20Character): string |
 /** Writes the Health card's live region. Only a change to a health box calls this: redraws stay silent. */
 export function announceWound(root: ParentNode, before: V20Character, after: V20Character): void {
   const text = woundChange(before, after);
-  if (text !== undefined) root.querySelector<HTMLElement>('[data-live="health"]')!.textContent = text;
+  if (text !== undefined) lookup(root, '[data-live="health"]').textContent = text;
 }
 
 function drawHealth(root: ParentNode, character: V20Character): void {
-  root.querySelector<HealthTrack>('health-track')!.damage = character.health;
-  const readout = woundReadout(woundState(character));
-  show(root, 'health.wound', readout);
-  showBlock(root, 'health.wound', readout !== '');
+  lookup<HealthTrack>(root, 'health-track').damage = character.health;
+  showOptional(root, 'health.wound', woundReadout(woundState(character)));
 }
 
 function drawHumanity(root: ParentNode, character: V20Character): void {
   const { rating, pathName } = character.humanity;
   show(root, 'humanity.number', String(rating));
-  setAttr(root.querySelector<RatingControl>('[data-humanity-dots]')!, 'value', String(rating));
-  show(root, 'humanity.path', pathName.trim());
-  showBlock(root, 'humanity.path', pathName.trim() !== '');
+  setAttr(lookup<RatingControl>(root, '[data-humanity-dots]'), 'value', String(rating));
+  showOptional(root, 'humanity.path', pathName.trim());
 }
 
 /** Draws the four live-resource cards from the character; the same in play and edit mode. */

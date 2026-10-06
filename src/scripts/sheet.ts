@@ -8,14 +8,12 @@ import {
   setNamedRow,
   setText,
   setTrait,
-  stepBlood,
-  stepTemporaryWillpower,
   textValue,
   traitValue,
   type V20Character,
 } from '../domain/v20/character';
 import { RATING_RANGE, rangeOf, type NamedRowRef, type TextRef, type TraitRef } from '../domain/v20/traits';
-import { bloodPoolMaximum } from '../domain/v20/resources';
+import { stepBlood, stepTemporaryWillpower, type Resource } from '../domain/v20/resources';
 import {
   browserStorage,
   createCharacterStore,
@@ -27,7 +25,7 @@ import { createMode, type Mode, type SheetMode } from './sheet/mode';
 import { createPool, type PoolRow } from './sheet/pool';
 import { announcePool, drawPoolCard } from './sheet/poolCard';
 import { drawRating } from './sheet/ratingDraw';
-import { announce, announceWound, drawResourceCards, type Resource } from './sheet/resourceCards';
+import { announce, announceWound, drawResourceCards } from './sheet/resourceCards';
 import { drawSideCards } from './sheet/sideCards';
 import { drawTraitCards } from './sheet/traitCards';
 import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
@@ -36,16 +34,15 @@ type Update = (character: V20Character) => V20Character;
 type Apply = (update: Update) => V20Character;
 
 const STEPS: Record<Resource, (character: V20Character, delta: number) => V20Character> = {
-  blood: (character, delta) => stepBlood(character, delta, bloodPoolMaximum(character).maximum),
+  blood: stepBlood,
   willpower: stepTemporaryWillpower,
 };
 
 const sheet = document.querySelector<HTMLElement>('#sheet')!;
 const notFound = document.querySelector<HTMLElement>('#sheet-not-found')!;
 const unreadable = document.querySelector<HTMLElement>('#sheet-unreadable')!;
-type TextInput = HTMLInputElement | HTMLTextAreaElement;
 
-const textInputs = sheet.querySelectorAll<TextInput>('[data-text]');
+const textInputs = sheet.querySelectorAll<HTMLInputElement>('[data-text]');
 
 const traitRatings = sheet.querySelectorAll<RatingControl>('[data-trait]');
 const rowNames = sheet.querySelectorAll<HTMLInputElement>('[data-row-name]');
@@ -56,12 +53,12 @@ const stepperButtons = sheet.querySelectorAll<HTMLButtonElement>('[data-step]');
 // What is chosen for the dice pool: kept here, never saved, and cleared whenever the mode changes.
 const pool = createPool();
 
-const textFieldOf = (input: TextInput): TextRef => input.dataset.text as TextRef;
+const textFieldOf = (input: HTMLInputElement): TextRef => input.dataset.text as TextRef;
 
 const traitOf = (rating: RatingControl): TraitRef => rating.dataset.trait as TraitRef;
 
 // Leave a matching input alone so typing does not move the caret.
-function showText(input: TextInput, text: string): void {
+function showText(input: HTMLInputElement, text: string): void {
   if (input.value !== text) input.value = text;
 }
 
@@ -113,7 +110,7 @@ function render(character: V20Character, mode: SheetMode): void {
   drawTraitRatings(character, mode);
   drawRowNames(character);
   drawRowRatings(character, mode);
-  drawTraitCards(sheet, character, mode);
+  drawTraitCards(sheet, character, mode, pool.selection());
   drawResourceCards(sheet, character);
   drawSideCards(sheet, character);
   drawPoolCard(sheet, character, pool.selection());
@@ -133,27 +130,33 @@ function startMode(): Mode {
   return createMode(sheet, startsEditing ? 'edit' : 'play');
 }
 
-/** Wires every control on the sheet to `apply`, the one path an edit takes. */
-function bindEditListeners(apply: Apply): void {
+function bindTextInputs(apply: Apply): void {
   for (const input of textInputs) {
     input.addEventListener('input', () => {
       apply((current) => setText(current, textFieldOf(input), input.value));
     });
   }
+}
 
+function bindTraitRatings(apply: Apply): void {
   for (const rating of traitRatings) {
     rating.addEventListener('change', (event) => {
       const { value } = (event as CustomEvent<RatingChange>).detail;
       apply((current) => setTrait(current, traitOf(rating), value));
     });
   }
+}
 
+function bindRowNames(apply: Apply): void {
   for (const input of rowNames) {
     input.addEventListener('input', () => {
       const row = input.dataset.rowName as NamedRowRef;
       apply((current) => setNamedRow(current, row, { name: input.value }));
     });
   }
+}
+
+function bindRowRatings(apply: Apply): void {
   for (const rating of rowRatings) {
     rating.addEventListener('change', (event) => {
       const row = rating.dataset.rowRating as NamedRowRef;
@@ -161,7 +164,9 @@ function bindEditListeners(apply: Apply): void {
       apply((current) => setNamedRow(current, row, { rating: value }));
     });
   }
+}
 
+function bindHealthTrack(apply: Apply): void {
   healthTrack.addEventListener('change', (event) => {
     const { level } = (event as CustomEvent<HealthChange>).detail;
     let before!: V20Character;
@@ -173,8 +178,10 @@ function bindEditListeners(apply: Apply): void {
     // The wound moves the pool's total: say the pool again so its status text matches its card.
     announcePool(sheet, after, pool.selection());
   });
+}
 
-  // A press says the new reading once; a redraw (a new Generation moving the maximum) stays silent.
+// A press says the new reading once; a redraw (a new Generation moving the maximum) stays silent.
+function bindSteppers(apply: Apply): void {
   for (const button of stepperButtons) {
     button.addEventListener('click', () => {
       if (button.getAttribute('aria-disabled') === 'true') return;
@@ -183,6 +190,16 @@ function bindEditListeners(apply: Apply): void {
       announce(sheet, changed, resource);
     });
   }
+}
+
+/** Wires every control on the sheet to `apply`, the one path an edit takes. */
+function bindEditListeners(apply: Apply): void {
+  bindTextInputs(apply);
+  bindTraitRatings(apply);
+  bindRowNames(apply);
+  bindRowRatings(apply);
+  bindHealthTrack(apply);
+  bindSteppers(apply);
 }
 
 function showSheet(loaded: V20Character, store: CharacterStore): void {

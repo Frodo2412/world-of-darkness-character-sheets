@@ -1,6 +1,7 @@
 // How a character's identity reads on the play view: wording only, no rules.
 
-import type { NamedRating, V20Character } from './character';
+import type { V20Character } from './character';
+import { generationNumber } from './generations';
 
 /** "1st", "2nd", "3rd", "4th", "11th", "21st": English ordinal suffixes. */
 export function ordinal(n: number): string {
@@ -8,12 +9,6 @@ export function ordinal(n: number): string {
   if (lastTwo >= 11 && lastTwo <= 13) return `${n}th`;
   const suffix = { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] ?? 'th';
   return `${n}${suffix}`;
-}
-
-/** The first whole number in what the player typed ("10", "10th", "3rd generation"), if any. */
-export function generationNumber(text: string): number | undefined {
-  const digits = text.match(/\d+/);
-  return digits ? Number(digits[0]) : undefined;
 }
 
 /** "10th generation" when a number is readable, else the text as typed; empty when blank. */
@@ -51,13 +46,6 @@ export function identitySummary(character: V20Character): string {
 export function temperament(character: V20Character): string {
   const { nature, demeanor } = character.header;
   return joinNonBlank([nature, demeanor], ' / ');
-}
-
-/** The write-in rows the player has named, in order, with trimmed names: an unnamed row is not shown in play. */
-export function namedRows(rows: readonly NamedRating[]): NamedRating[] {
-  return rows
-    .filter((row) => row.name.trim() !== '')
-    .map((row) => ({ ...row, name: row.name.trim() }));
 }
 
 /** "1 die", "0 dice", "7 dice". */

@@ -1,7 +1,7 @@
 import type { V20Character } from '../../domain/v20/character';
 import { diceLabel } from '../../domain/v20/identity';
 import { dicePool, type DicePool, type PoolSelection } from '../../domain/v20/resources';
-import { show, showBlock } from './draw';
+import { MINUS_SIGN, lookup, showBlock, showOptional } from './draw';
 
 export interface PoolReadout {
   formula: string;
@@ -11,13 +11,11 @@ export interface PoolReadout {
   incapacitated: boolean;
 }
 
-const MINUS = '−';
-
 /** The terms the player chose, and the wound once there is a whole pool to take it from. */
-function formulaOf({ attribute, ability, wound, total }: DicePool): string {
+function formulaOf({ attribute, ability, woundPenalty, total }: DicePool): string {
   const terms = [attribute, ability].filter((term) => term !== undefined).map((term) => `${term.label} ${term.rating}`);
   const formula = terms.join(' + ');
-  return total !== undefined && wound !== undefined ? `${formula} ${MINUS} wound ${wound}` : formula;
+  return total !== undefined && woundPenalty !== undefined ? `${formula} ${MINUS_SIGN} wound ${woundPenalty}` : formula;
 }
 
 function promptOf({ attribute, ability }: DicePool): string {
@@ -44,29 +42,17 @@ export function poolAnnouncement(pool: DicePool): string {
 
 /** Writes the card's live region: the pool when a selection completes it, else nothing, so the next one is heard afresh. */
 export function announcePool(root: ParentNode, character: V20Character, selection: PoolSelection): void {
-  const region = root.querySelector<HTMLElement>('[data-live="pool"]')!;
+  const region = lookup(root, '[data-live="pool"]');
   const text = poolAnnouncement(dicePool(character, selection));
   // Said again only when it differs, so a health change that leaves the total alone stays silent.
   if (region.textContent !== text) region.textContent = text;
 }
 
-/** Draws the Selected pool card, and which rows show as pressed, from the character and the selection. */
+/** Draws the Selected pool card from the character and the selection; the rows' selected state is drawn with the rows. */
 export function drawPoolCard(root: ParentNode, character: V20Character, selection: PoolSelection): void {
   const { formula, prompt, total, incapacitated } = poolReadout(dicePool(character, selection));
-  for (const [name, text] of [
-    ['pool.formula', formula],
-    ['pool.prompt', prompt],
-    ['pool.total', total],
-  ]) {
-    show(root, name, text);
-    showBlock(root, name, text !== '');
-  }
+  showOptional(root, 'pool.formula', formula);
+  showOptional(root, 'pool.prompt', prompt);
+  showOptional(root, 'pool.total', total);
   showBlock(root, 'pool.incapacitated', incapacitated);
-
-  const selected: (string | undefined)[] = [selection.attribute, selection.ability];
-  for (const row of root.querySelectorAll<HTMLElement>('[data-trait-key]')) {
-    const isSelected = selected.includes(row.dataset.traitKey);
-    row.classList.toggle('is-selected', isSelected);
-    row.querySelector('.trait-select')?.setAttribute('aria-pressed', String(isSelected));
-  }
 }

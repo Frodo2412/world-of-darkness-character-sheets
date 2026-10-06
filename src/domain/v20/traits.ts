@@ -172,9 +172,12 @@ export function rangeOf(trait: TraitRef): Range {
   return RATING_RANGES[section];
 }
 
+/** Names the write-in ability of one ability group. */
+export type CustomAbilityRef = `customAbilities.${AbilityGroupKey}`;
+
 /** Names one write-in row: a rating whose name the player supplies. */
 export type NamedRowRef =
-  | `customAbilities.${AbilityGroupKey}`
+  | CustomAbilityRef
   | `disciplines.${number}`
   | `backgrounds.${number}`;
 
