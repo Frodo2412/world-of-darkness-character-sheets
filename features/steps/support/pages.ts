@@ -19,6 +19,10 @@ export async function createCharacter(page: Page): Promise<void> {
   await expect(page).toHaveURL(SHEET_ADDRESS);
 }
 
+/** How far the page reaches beyond the screen's width; 0 when it does not scroll sideways. */
+export const horizontalOverflow = (page: Page): Promise<number> =>
+  page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+
 export const sheetField = (page: Page, label: string): Locator =>
   page.getByLabel(label, { exact: true });
 

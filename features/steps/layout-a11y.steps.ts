@@ -2,7 +2,14 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import { startBuild } from './support/builder';
-import { SHEET_ADDRESS, createCharacter, openRoster, sheetAddress, sheetField } from './support/pages';
+import {
+  SHEET_ADDRESS,
+  createCharacter,
+  horizontalOverflow,
+  openRoster,
+  sheetAddress,
+  sheetField,
+} from './support/pages';
 import { expectRating, rating } from './support/ratings';
 import { characterWith, saveCharacters } from './support/seed';
 import { bloodTotal, doneButton, editButton, isEditing } from './support/sheet';
@@ -37,10 +44,7 @@ Given(
 );
 
 Then('the page does not scroll sideways', async ({ page }) => {
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBe(0);
+  expect(await horizontalOverflow(page)).toBe(0);
 });
 
 Then('every control offered in play mode is visible and can be activated', async ({ page }) => {

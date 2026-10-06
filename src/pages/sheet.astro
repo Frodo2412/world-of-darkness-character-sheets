@@ -15,12 +15,13 @@ import '../styles/sheet.css';
 ---
 
 <Layout title="Character sheet">
-	<main>
+	<main class="sheet-page">
 		<StatusMessage />
 		<!-- Spoken when the mode changes; in the page from load so it is already a live region. -->
 		<p id="mode-announcement" class="visually-hidden" role="status"></p>
 		<div id="sheet" class="sheet" hidden>
-			<h1>Character sheet</h1>
+			<!-- The page's one heading for the sheet itself; the identity below is the visible title. -->
+			<h1 class="visually-hidden">Character sheet</h1>
 			<Identity />
 			<div class="resources-row">
 				<BloodPool />

@@ -1,6 +1,17 @@
 /* The sheet: the identity, the live resources, then the workspace: Attributes and
    Abilities as cards of three, with Disciplines and Virtues in a column beside them.
-   Everything is one column on a phone. */
+   Everything is one column on a phone. The breakpoints are at the end of the file, each written once. */
+
+/* The sheet runs edge to edge under the application bar: its bands carry the page
+   gutter themselves, and so does anything else the page shows. Roster and builder keep `main`'s width. */
+main.sheet-page {
+	max-inline-size: none;
+	padding: 0;
+}
+
+.sheet-page > :not(.sheet) {
+	margin-inline: var(--page-gutter);
+}
 
 /* One mode at a time: the sheet root says which, and what belongs to the other
    is removed from the page, the accessibility tree and the tab order. */
@@ -13,12 +24,6 @@
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
 	gap: var(--space-3) var(--space-5);
-}
-
-@media (min-width: 60rem) {
-	.columns {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-	}
 }
 
 .sheet label {
@@ -99,12 +104,6 @@
 	gap: var(--space-3);
 }
 
-@media (min-width: 60rem) {
-	.trait-cards {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-	}
-}
-
 .trait-card {
 	display: grid;
 	align-content: start;
@@ -127,8 +126,8 @@
 
 /* A row: the trait's name, its dots and, in play, its number. The dots are 8px
    with a 5px gap in play and larger to click in edit; in play they sit in a slot
-   as wide as ten dots, so a five-dot row and a ten-dot row keep their numbers
-   in one column. */
+   as wide as the card's widest rating (five dots, or ten when one row is rated
+   above five), so the rows of a card keep their numbers in one column. */
 .sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) {
 	--mark-size: 1rem;
 	--dot-gap: 0.25rem;
@@ -144,9 +143,18 @@
 	border-radius: var(--radius-row);
 }
 
+.sheet[data-sheet-mode='play'] .trait-card {
+	--dots: 5;
+}
+
+.sheet[data-sheet-mode='play'] .trait-card:has(dot-rating[max='10']) {
+	--dots: 10;
+}
+
 .sheet[data-sheet-mode='play'] :is(.trait-row, .trait-card .rating-row) {
 	--mark-size: 0.5rem;
 	--dot-gap: 0.3125rem;
+	--dots-width: calc(var(--dots) * var(--mark-size) + (var(--dots) - 1) * var(--dot-gap));
 	flex-wrap: nowrap;
 }
 
@@ -155,7 +163,7 @@
 }
 
 .sheet[data-sheet-mode='play'] .trait-row dot-rating {
-	inline-size: calc(10 * var(--mark-size) + 9 * var(--dot-gap));
+	inline-size: var(--dots-width);
 	justify-content: flex-end;
 }
 
@@ -205,7 +213,7 @@
 	align-items: center;
 	margin-inline: -0.625rem;
 	/* Clear of the dots and the number beside it, so a long name wraps before them. */
-	padding-inline: 0.625rem calc(0.625rem * 3 + 10 * var(--mark-size) + 9 * var(--dot-gap) + 2ch);
+	padding-inline: 0.625rem calc(0.625rem * 3 + var(--dots-width) + 2ch);
 	border-radius: var(--radius-row);
 }
 
@@ -262,6 +270,7 @@
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
 	gap: 0 var(--space-3);
+	padding: 0 var(--page-gutter) var(--space-4);
 }
 
 .workspace-side {
@@ -269,53 +278,6 @@
 	align-content: start;
 	gap: 1.125rem;
 	margin-block-start: var(--side-offset);
-}
-
-@media (min-width: 75rem) {
-	.workspace {
-		grid-template-columns: minmax(0, 1fr) 20rem;
-		grid-template-rows: auto 1fr;
-	}
-
-	.workspace-traits {
-		grid-area: 1 / 1 / 3 / 2;
-	}
-
-	.pool-card {
-		grid-area: 1 / 2;
-		margin-block-start: var(--side-offset);
-	}
-
-	.workspace-side {
-		grid-area: 2 / 2;
-	}
-
-	/* Under the pool card, not the section label. */
-	.sheet[data-sheet-mode='play'] .workspace-side {
-		margin-block-start: 1.125rem;
-	}
-}
-
-/* No room beside the traits: the pool card stays at the top of the screen while the traits scroll
-   under it, and a row that takes keyboard focus is scrolled clear of it. */
-@media (max-width: 74.9375rem) {
-	:root {
-		/* The most of the screen the pool card may take while it is held in view. */
-		--pool-cap: 11rem;
-	}
-
-	.pool-card {
-		position: sticky;
-		inset-block-start: 0;
-		z-index: 1;
-		max-block-size: var(--pool-cap);
-		overflow-y: auto;
-		margin-block-start: var(--space-3);
-	}
-
-	html:has(.sheet[data-sheet-mode='play']) {
-		scroll-padding-block-start: calc(var(--pool-cap) + var(--space-2));
-	}
 }
 
 /* Side cards: Disciplines and Virtues, the quick references beside the traits. */
@@ -434,7 +396,7 @@
 	flex-wrap: wrap;
 	align-items: flex-start;
 	gap: var(--space-3);
-	margin-block-start: var(--space-3);
+	padding: var(--space-card) var(--page-gutter);
 }
 
 .resource-card {
@@ -453,7 +415,8 @@
 }
 
 .health-card {
-	flex: 1 1 24rem;
+	/* Room for seven levels in a line: 72px each, 6px apart, inside the card's edge and padding. */
+	flex: 1 1 35.375rem;
 	gap: 0.625rem;
 }
 
@@ -716,7 +679,7 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--space-3);
-	padding-block: var(--space-2);
+	padding: var(--space-2) var(--page-gutter);
 	background: var(--color-page);
 	border-block-end: 1px solid var(--color-line);
 }
@@ -747,8 +710,9 @@
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: var(--space-3) var(--space-4);
-	padding-block: var(--space-card);
+	gap: var(--space-card);
+	min-block-size: 4.75rem;
+	padding: var(--space-2) var(--page-gutter);
 	border-block-end: 1px solid var(--color-line);
 }
 
@@ -794,7 +758,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: var(--space-3) var(--space-4);
+	gap: var(--space-3) var(--space-gutter);
 }
 
 .identity-temperament {
@@ -818,5 +782,96 @@
 }
 
 .identity-fields {
-	padding-block: var(--space-3);
+	padding: var(--space-3) var(--page-gutter);
+}
+
+/* Breakpoints. Each is written once, after the rules it adjusts. */
+
+/* A phone: the bands stack, the health levels become a list, and what is pressed is at least 44px. */
+@media (max-width: 47.9375rem) {
+	.identity-actions {
+		flex: 1 1 100%;
+		justify-content: space-between;
+	}
+
+	.stepper,
+	.health-box {
+		--control-size: 2.75rem;
+	}
+
+	.health-box {
+		min-block-size: var(--control-size);
+	}
+
+	.sheet[data-sheet-mode='play'] .trait-row {
+		min-block-size: 2.75rem;
+	}
+
+	.health-levels {
+		grid-template-columns: minmax(0, 1fr);
+		gap: var(--space-1);
+	}
+
+	.health-levels > li {
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		justify-items: start;
+		gap: var(--space-2);
+		text-align: start;
+	}
+}
+
+/* Three cards to a row, the identity's fields three to a row. */
+@media (min-width: 60rem) {
+	.columns,
+	.trait-cards {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 75rem) {
+	.workspace {
+		grid-template-columns: minmax(0, 1fr) 20rem;
+		grid-template-rows: auto 1fr;
+	}
+
+	.workspace-traits {
+		grid-area: 1 / 1 / 3 / 2;
+	}
+
+	.pool-card {
+		grid-area: 1 / 2;
+		margin-block-start: var(--side-offset);
+	}
+
+	.workspace-side {
+		grid-area: 2 / 2;
+	}
+
+	/* Under the pool card, not the section label. */
+	.sheet[data-sheet-mode='play'] .workspace-side {
+		margin-block-start: 1.125rem;
+	}
+}
+
+/* No room beside the traits: the pool card stays at the top of the screen while the traits scroll
+   under it, and a row that takes keyboard focus is scrolled clear of it. */
+@media (max-width: 74.9375rem) {
+	:root {
+		/* The most of the screen the pool card may take while it is held in view. */
+		--pool-cap: 11rem;
+	}
+
+	.pool-card {
+		position: sticky;
+		inset-block-start: 0;
+		z-index: 1;
+		max-block-size: var(--pool-cap);
+		overflow-y: auto;
+		margin-block-start: var(--space-3);
+	}
+
+	html:has(.sheet[data-sheet-mode='play']) {
+		scroll-padding-block-start: calc(var(--pool-cap) + var(--space-2));
+	}
 }
