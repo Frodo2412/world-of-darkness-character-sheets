@@ -2,7 +2,7 @@
 
 **Created**: 2026-10-05
 **Branch**: `feat/sheet-play-view-redesign`
-**Status**: in-progress
+**Status**: implemented
 **Gherkin persistence**: features
 **Spec**: `docs/specs/sheet-play-view-redesign.md`
 **Design**: Figma `TAvjmr6RE0rHV8kz56Ffs0`, frame `5:2725`

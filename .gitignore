@@ -42,3 +42,6 @@ pnpm-debug.log*
 .repowise/
 .codegraph/
 /docs/references/sourcebooks/
+
+# dev-team review reports
+.dev-team-reports/
