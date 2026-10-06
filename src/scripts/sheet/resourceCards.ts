@@ -127,9 +127,16 @@ function woundAnnouncement(wound: Wound): string {
   return `${wound.label}, minus ${dice(wound.penalty)}`;
 }
 
+/** What a change to a health box says, or nothing when the wound it announces is the one it already did. */
+export function woundChange(before: V20Character, after: V20Character): string | undefined {
+  const text = woundAnnouncement(woundState(after));
+  return text === woundAnnouncement(woundState(before)) ? undefined : text;
+}
+
 /** Writes the Health card's live region. Only a change to a health box calls this: redraws stay silent. */
-export function announceWound(root: ParentNode, character: V20Character): void {
-  root.querySelector<HTMLElement>('[data-live="health"]')!.textContent = woundAnnouncement(woundState(character));
+export function announceWound(root: ParentNode, before: V20Character, after: V20Character): void {
+  const text = woundChange(before, after);
+  if (text !== undefined) root.querySelector<HTMLElement>('[data-live="health"]')!.textContent = text;
 }
 
 function drawHealth(root: ParentNode, character: V20Character): void {

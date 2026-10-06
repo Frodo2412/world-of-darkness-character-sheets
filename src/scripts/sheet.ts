@@ -156,7 +156,12 @@ function bindEditListeners(apply: Apply): void {
 
   healthTrack.addEventListener('change', (event) => {
     const { level } = (event as CustomEvent<HealthChange>).detail;
-    announceWound(sheet, apply((current) => cycleHealthBox(current, level)));
+    let before!: V20Character;
+    const after = apply((current) => {
+      before = current;
+      return cycleHealthBox(current, level);
+    });
+    announceWound(sheet, before, after);
   });
 
   // A press says the new reading once; a redraw (a new Generation moving the maximum) stays silent.

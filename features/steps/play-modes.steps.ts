@@ -191,8 +191,15 @@ Then('the sheet is in play mode', async ({ page }) => {
   await expect(sheetField(page, 'Name')).toBeHidden();
 });
 
+const times = async (page: Page, message: string): Promise<number> =>
+  (await announcements(page)).filter((entry) => entry === message).length;
+
+// Once, not just at least once: a repeat would be read out twice. A repeat can arrive a
+// moment after the first, so the page is given a moment to make one before it is counted.
 Then('assistive technology is told {string}', async ({ page }, message: string) => {
-  await expect.poll(() => announcements(page)).toContain(message);
+  await expect.poll(() => times(page, message)).toBeGreaterThan(0);
+  await page.evaluate(() => new Promise((settled) => setTimeout(settled, 150)));
+  expect(await times(page, message)).toBe(1);
 });
 
 Then("that character's sheet is in edit mode", async ({ page }) => {
