@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { blankCharacter, setHeaderField } from './character';
 import {
+  diceLabel,
   generationLabel,
   generationNumber,
   identitySummary,
@@ -171,5 +172,20 @@ describe('namedRows', () => {
 
   test('is empty when there are no rows', () => {
     expect(namedRows([])).toEqual([]);
+  });
+});
+
+describe('diceLabel', () => {
+  test('is singular for one die', () => {
+    expect(diceLabel(1)).toBe('1 die');
+  });
+
+  test.each([
+    [0, '0 dice'],
+    [2, '2 dice'],
+    [7, '7 dice'],
+    [13, '13 dice'],
+  ])('is plural for %i', (count, label) => {
+    expect(diceLabel(count)).toBe(label);
   });
 });

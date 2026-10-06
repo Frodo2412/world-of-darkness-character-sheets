@@ -59,3 +59,8 @@ export function namedRows(rows: readonly NamedRating[]): NamedRating[] {
     .filter((row) => row.name.trim() !== '')
     .map((row) => ({ ...row, name: row.name.trim() }));
 }
+
+/** "1 die", "0 dice", "7 dice". */
+export function diceLabel(count: number): string {
+  return `${count} ${count === 1 ? 'die' : 'dice'}`;
+}

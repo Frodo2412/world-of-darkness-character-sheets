@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { blankCharacter, setHeaderField, type V20Character } from './character';
-import { bloodPoolMaximum, woundState } from './resources';
+import { bloodPoolMaximum, dicePool, woundState } from './resources';
 import type { DamageType, HealthLevelKey } from './traits';
 
 const withGeneration = (generation: string): V20Character =>
@@ -105,5 +105,124 @@ describe('woundState', () => {
     woundState(original);
 
     expect(original).toEqual(marked({ hurt: 'lethal', incapacitated: 'bashing' }));
+  });
+});
+
+describe('dicePool', () => {
+  const character = (): V20Character => {
+    const base = blankCharacter('abc');
+    return {
+      ...base,
+      attributes: { ...base.attributes, intelligence: 4, strength: 1 },
+      abilities: { ...base.abilities, investigation: 3, brawl: 0 },
+      customAbilities: { ...base.customAbilities, knowledges: { name: 'Art History', rating: 2 } },
+    };
+  };
+  const withHealth = (damage: Partial<Record<HealthLevelKey, DamageType>>): V20Character => {
+    const base = character();
+    return { ...base, health: { ...base.health, ...damage } };
+  };
+
+  test('names nothing and totals nothing when nothing is selected', () => {
+    expect(dicePool(character(), {})).toEqual({ incapacitated: false });
+  });
+
+  test('names only the attribute when only an attribute is selected, with no total', () => {
+    expect(dicePool(character(), { attribute: 'attributes.intelligence' })).toEqual({
+      attribute: { label: 'Intelligence', rating: 4 },
+      incapacitated: false,
+    });
+  });
+
+  test('names only the ability when only an ability is selected, with no total', () => {
+    expect(dicePool(character(), { ability: 'abilities.investigation' })).toEqual({
+      ability: { label: 'Investigation', rating: 3 },
+      incapacitated: false,
+    });
+  });
+
+  test('adds the attribute and the ability when both are selected', () => {
+    expect(dicePool(character(), { attribute: 'attributes.intelligence', ability: 'abilities.investigation' })).toEqual({
+      attribute: { label: 'Intelligence', rating: 4 },
+      ability: { label: 'Investigation', rating: 3 },
+      total: 7,
+      incapacitated: false,
+    });
+  });
+
+  const both = { attribute: 'attributes.intelligence', ability: 'abilities.investigation' } as const;
+
+  test.each<[HealthLevelKey, number, number]>([
+    ['hurt', 1, 6],
+    ['injured', 1, 6],
+    ['wounded', 2, 5],
+    ['mauled', 2, 5],
+    ['crippled', 5, 2],
+  ])('damage on %s takes %i off the total, leaving %i', (level, penalty, total) => {
+    expect(dicePool(withHealth({ [level]: 'lethal' }), both)).toMatchObject({ wound: penalty, total, incapacitated: false });
+  });
+
+  test('a bruise alone takes nothing off and adds no wound term', () => {
+    const pool = dicePool(withHealth({ bruised: 'bashing' }), both);
+    expect(pool.total).toBe(7);
+    expect(pool).not.toHaveProperty('wound');
+  });
+
+  test('a wound is named even before the pool is complete, with no total', () => {
+    expect(dicePool(withHealth({ hurt: 'lethal' }), { attribute: 'attributes.intelligence' })).toEqual({
+      attribute: { label: 'Intelligence', rating: 4 },
+      wound: 1,
+      incapacitated: false,
+    });
+  });
+
+  test('the total never goes below zero', () => {
+    const pool = dicePool(withHealth({ crippled: 'lethal' }), { attribute: 'attributes.strength', ability: 'abilities.brawl' });
+    expect(pool).toMatchObject({ wound: 5, total: 0 });
+  });
+
+  test('an incapacitated character has a total of zero once both are selected, and no wound term', () => {
+    const pool = dicePool(withHealth({ incapacitated: 'lethal' }), both);
+    expect(pool).toEqual({
+      attribute: { label: 'Intelligence', rating: 4 },
+      ability: { label: 'Investigation', rating: 3 },
+      total: 0,
+      incapacitated: true,
+    });
+  });
+
+  test('an incapacitated character with one selection is flagged and has no total', () => {
+    expect(dicePool(withHealth({ incapacitated: 'lethal' }), { attribute: 'attributes.intelligence' })).toEqual({
+      attribute: { label: 'Intelligence', rating: 4 },
+      incapacitated: true,
+    });
+  });
+
+  test('an incapacitated character with nothing selected is still flagged', () => {
+    expect(dicePool(withHealth({ incapacitated: 'lethal' }), {})).toEqual({ incapacitated: true });
+  });
+
+  test('a named custom ability is a term under the name the player gave it', () => {
+    expect(dicePool(character(), { attribute: 'attributes.intelligence', ability: 'customAbilities.knowledges' })).toMatchObject({
+      ability: { label: 'Art History', rating: 2 },
+      total: 6,
+    });
+  });
+
+  test('a custom ability named with only spaces counts as not selected', () => {
+    const base = character();
+    const unnamed = { ...base, customAbilities: { ...base.customAbilities, knowledges: { name: '   ', rating: 4 } } };
+    expect(dicePool(unnamed, { attribute: 'attributes.intelligence', ability: 'customAbilities.knowledges' })).toEqual({
+      attribute: { label: 'Intelligence', rating: 4 },
+      incapacitated: false,
+    });
+  });
+
+  test('does not change the character it was given', () => {
+    const original = withHealth({ hurt: 'lethal' });
+
+    dicePool(original, both);
+
+    expect(original).toEqual(withHealth({ hurt: 'lethal' }));
   });
 });

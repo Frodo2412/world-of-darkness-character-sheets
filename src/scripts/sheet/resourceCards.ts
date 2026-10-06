@@ -1,6 +1,7 @@
 import type { HealthTrack } from '../../components/controls/health-track';
 import type { RatingControl } from '../../components/controls/rating-control';
 import type { V20Character } from '../../domain/v20/character';
+import { diceLabel } from '../../domain/v20/identity';
 import { bloodPoolMaximum, woundState } from '../../domain/v20/resources';
 import { show, showBlock } from './draw';
 
@@ -111,20 +112,18 @@ function drawWillpower(root: ParentNode, character: V20Character): void {
 
 type Wound = ReturnType<typeof woundState>;
 
-const dice = (count: number): string => `${count} ${count === 1 ? 'die' : 'dice'}`;
-
 /** The wound beside the Health heading, e.g. "Hurt · −1 die"; nothing when unwounded. */
 function woundReadout(wound: Wound): string {
   if (wound === undefined) return '';
   if (wound === 'incapacitated') return 'Incapacitated';
-  return `${wound.label} · \u2212${dice(wound.penalty)}`;
+  return `${wound.label} · \u2212${diceLabel(wound.penalty)}`;
 }
 
 /** What changing a health box says to assistive technology, e.g. "Wounded, minus 2 dice". */
 function woundAnnouncement(wound: Wound): string {
   if (wound === undefined) return 'No wound penalty';
   if (wound === 'incapacitated') return 'Incapacitated';
-  return `${wound.label}, minus ${dice(wound.penalty)}`;
+  return `${wound.label}, minus ${diceLabel(wound.penalty)}`;
 }
 
 /** What a change to a health box says, or nothing when the wound it announces is the one it already did. */
