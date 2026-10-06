@@ -14,7 +14,7 @@ import {
   setBaseGeneration,
   startBuild,
 } from './support/builder';
-import { openRoster, rosterEntries } from './support/pages';
+import { characterEntries, openRoster } from './support/pages';
 import {
   acceptWrites,
   overwriteRecord,
@@ -224,8 +224,8 @@ Then('the blood points per turn are {int}', async ({ page }, value: number) => {
 
 Then('the roster lists no characters', async ({ page }) => {
   await openRoster(page);
-  await expect(page.getByText('No characters yet')).toBeVisible();
-  await expect(rosterEntries(page)).toHaveCount(0);
+  // A build in progress is an entry of its own, so the library is not empty; it holds no character.
+  await expect(characterEntries(page)).toHaveCount(0);
 });
 
 Then('they see a way to build a character', async ({ page }) => {

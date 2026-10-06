@@ -1,22 +1,33 @@
 ---
+import EntryTemplates from '../components/roster/EntryTemplates.astro';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
+import '../styles/roster.css';
 ---
 
 <Layout title="Characters">
-	<main>
-		<h1 id="roster-heading">Characters</h1>
+	<main class="roster-page">
+		<div class="roster-intro">
+			<h1 id="roster-heading">Characters</h1>
+			<p>Your Kindred, their stories, and the nights still to come.</p>
+		</div>
 		<StatusMessage />
 		<div class="roster-actions">
 			<button type="button" id="new-character">New V20 character</button>
 			<button type="button" id="build-character">Build a character</button>
 		</div>
 		<p id="roster-empty" class="roster-empty" hidden>No characters yet. Create one to get started.</p>
-		<ul id="roster" class="roster" aria-labelledby="roster-heading" hidden></ul>
-		<section id="builds-section" aria-labelledby="builds-heading" hidden>
-			<h2 id="builds-heading">Builds in progress</h2>
-			<ul id="builds" class="roster" aria-labelledby="builds-heading"></ul>
-		</section>
+		<div id="library" class="library" hidden>
+			<div class="library-heading">
+				<span class="library-title">Available characters</span>
+				<span>Vampire: The Masquerade · V20</span>
+			</div>
+			<ul id="entries" class="entries" aria-labelledby="roster-heading"></ul>
+			<div class="library-summary">
+				<p id="library-counts"></p>
+			</div>
+		</div>
+		<EntryTemplates />
 	</main>
 </Layout>
 

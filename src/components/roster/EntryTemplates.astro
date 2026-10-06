@@ -1,0 +1,81 @@
+---
+import arrowRight from '../../assets/icons/arrow-right.svg';
+import pencil from '../../assets/icons/pencil.svg';
+
+// One template per kind of entry, so the icons resolve through Astro. `entries.ts` clones one
+// and fills its `data-slot` elements with text. A template holds no `id`: it is cloned.
+---
+
+<template data-entry-template="character">
+	<li class="entry">
+		<div class="entry-identity">
+			<div class="entry-who">
+				<div class="entry-monogram" aria-hidden="true" data-slot="monogram"></div>
+				<div class="entry-details">
+					<h3 class="entry-name" data-slot="name"></h3>
+					<p class="entry-summary" data-slot="summary"></p>
+				</div>
+			</div>
+			<div class="entry-actions">
+				<div class="entry-temperament" data-slot="temperament-group">
+					<span class="entry-label">Nature / Demeanor</span>
+					<span data-slot="temperament"></span>
+				</div>
+				<a class="button entry-edit" data-slot="edit">
+					<img src={pencil.src} alt="" width="14" height="14" />
+					Edit character
+				</a>
+			</div>
+		</div>
+		<div class="entry-meta">
+			<span class="entry-tags">
+				<span class="entry-chronicle" data-slot="chronicle"></span>
+			</span>
+			<a class="entry-open" data-slot="open">
+				Open sheet
+				<img src={arrowRight.src} alt="" width="12" height="12" />
+			</a>
+		</div>
+	</li>
+</template>
+
+<template data-entry-template="build">
+	<li class="entry">
+		<div class="entry-identity">
+			<div class="entry-who">
+				<div class="entry-monogram" aria-hidden="true" data-slot="monogram"></div>
+				<div class="entry-details">
+					<h3 class="entry-name" data-slot="name"></h3>
+					<p class="entry-summary" data-slot="summary"></p>
+				</div>
+			</div>
+			<div class="entry-actions">
+				<div class="entry-temperament" data-slot="temperament-group">
+					<span class="entry-label">Nature / Demeanor</span>
+					<span data-slot="temperament"></span>
+				</div>
+			</div>
+		</div>
+		<div class="entry-meta">
+			<span class="entry-tags">
+				<span class="entry-chronicle" data-slot="chronicle"></span>
+				<span class="entry-progress">In progress</span>
+			</span>
+			<a class="entry-open" data-slot="continue">
+				Continue
+				<img src={arrowRight.src} alt="" width="12" height="12" />
+			</a>
+		</div>
+	</li>
+</template>
+
+<template data-entry-template="unreadable">
+	<li class="entry entry-unreadable">
+		<div class="entry-identity">
+			<div class="entry-details">
+				<h3 class="entry-name" data-slot="name"></h3>
+				<p class="entry-summary" data-slot="explanation"></p>
+			</div>
+		</div>
+	</li>
+</template>

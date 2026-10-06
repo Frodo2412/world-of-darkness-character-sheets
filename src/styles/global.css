@@ -51,10 +51,12 @@
 	--text-caption: 0.6875rem;
 	--text-small: 0.75rem;
 	--text-body: 0.8125rem;
+	--text-overline: 0.625rem;
 	--text-figure: 1.75rem;
 	--text-h3: 1.375rem;
 	--text-h2: 1.625rem;
 	--text-h1: 2rem;
+	--text-display: 2.5rem;
 
 	--mark-size: 1.125rem;
 	/* The least a pressed control is: 44px. */
@@ -249,7 +251,6 @@ a {
 
 /* A card: a surface set off from the page by a decorative edge. Each selector adds its own padding and layout. */
 .card,
-.roster > li,
 dialog {
 	background: var(--color-surface);
 	border: 1px solid var(--color-line);
@@ -309,58 +310,6 @@ input[type='text'] {
 	color: var(--color-text);
 	padding: var(--space-2) var(--space-3);
 	margin-block: var(--space-3);
-}
-
-/* Roster */
-
-.roster-actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--space-2);
-}
-
-.roster {
-	list-style: none;
-	padding: 0;
-	margin-block: var(--space-4) 0;
-	display: grid;
-	gap: var(--space-2);
-}
-
-.roster > li {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--space-2) var(--space-3);
-	padding: var(--space-2) var(--space-3);
-}
-
-.roster a {
-	font-family: var(--font-display);
-	font-size: var(--text-h2);
-	min-block-size: var(--control-size);
-	display: inline-flex;
-	align-items: center;
-}
-
-.roster span {
-	color: var(--color-muted);
-}
-
-/* A build's name is its title; "Continue" is an ordinary link beside it. */
-#builds strong {
-	font-family: var(--font-display);
-	font-size: var(--text-h2);
-	font-weight: 600;
-}
-
-#builds a {
-	font-family: var(--font-body);
-	font-size: var(--text-body);
-}
-
-.roster-empty {
-	color: var(--color-muted);
 }
 
 dialog {

@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import type { V20Character } from '../../src/domain/v20/character';
 import { Given, Then, When } from './fixtures';
 import { announcements, watchAnnouncements } from './support/announcements';
-import { createCharacter, openRoster, rosterEntries, sheetField } from './support/pages';
+import { createCharacter, openRoster, openSheetOf, rosterEntries, sheetField } from './support/pages';
 import { mark, rating, setRating } from './support/ratings';
 import { characterWith, givenSaved, saveCharacters } from './support/seed';
 import {
@@ -81,7 +81,7 @@ Given(
 
 async function openFirstFromRoster(page: Page): Promise<void> {
   await openRoster(page);
-  await rosterEntries(page).getByRole('link').first().click();
+  await openSheetOf(rosterEntries(page).first());
   await expect(editButton(page).or(doneButton(page))).toBeVisible();
   await watchAnnouncements(page);
 }

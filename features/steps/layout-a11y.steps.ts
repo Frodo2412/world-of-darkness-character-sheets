@@ -6,6 +6,7 @@ import { startBuild } from './support/builder';
 import {
   SHEET_ADDRESS,
   createCharacter,
+  entryNamed,
   horizontalOverflow,
   openRoster,
   sheetAddress,
@@ -67,9 +68,9 @@ Then('every control offered in play mode is visible and can be activated', async
     await expect(editButton(page)).toBeVisible();
   }
   const all = await controls(page).all();
-  // The roster shows two create buttons and a link per character;
-  // the sheet shows about a hundred fields, ratings and boxes.
-  expect(all.length).toBeGreaterThanOrEqual(4);
+  // The roster shows two create buttons and, for each of its two characters, the links
+  // "Edit character" and "Open sheet"; the sheet shows about a hundred fields, ratings and boxes.
+  expect(all.length).toBeGreaterThanOrEqual(6);
   const { width } = page.viewportSize()!;
   for (const control of all) {
     await control.scrollIntoViewIfNeeded();
@@ -109,7 +110,7 @@ Given(
       case 'roster with characters':
         await saveCharacters(page, SAVED.map(characterWith));
         await openRoster(page);
-        await expect(page.getByRole('link', { name: 'Lucita' })).toBeVisible();
+        await expect(entryNamed(page, 'Lucita')).toBeVisible();
         break;
       case 'sheet':
         await createCharacter(page);

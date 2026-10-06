@@ -14,6 +14,18 @@ export function characterWith(header: HeaderValues): V20Character {
   return character;
 }
 
+/**
+ * Characters created one after the other: the ids are explicit and strictly ascending, the
+ * order the app gives them, so a scenario that needs "older" and "newer" does not lean on
+ * how many seeds an earlier scenario happened to make.
+ */
+export function inCreationOrder(...headers: HeaderValues[]): V20Character[] {
+  return headers.map((header, index) => ({
+    ...characterWith(header),
+    id: `ordered-${String(index + 1).padStart(4, '0')}`,
+  }));
+}
+
 /** As `characterWith`, then `arrange` changes whatever else a scenario needs saved. */
 export function characterArranged(
   header: HeaderValues,

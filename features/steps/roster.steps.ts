@@ -1,6 +1,13 @@
 import { expect } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
-import { SHEET_ADDRESS, createCharacter, openRoster, rosterEntries } from './support/pages';
+import {
+  SHEET_ADDRESS,
+  createCharacter,
+  entryNamed,
+  openRoster,
+  openSheetOf,
+  rosterEntries,
+} from './support/pages';
 import { characterWith, saveCharacters } from './support/seed';
 
 
@@ -62,7 +69,7 @@ Then('the sheet for a new blank character is shown', async ({ page }) => {
 Then('the roster lists one character shown as {string}', async ({ page }, name: string) => {
   await openRoster(page);
   await expect(rosterEntries(page)).toHaveCount(1);
-  await expect(rosterEntries(page).getByRole('link', { name })).toBeVisible();
+  await expect(entryNamed(page, name)).toBeVisible();
 });
 
 Then('two separate characters are listed', async ({ page }) => {
@@ -73,22 +80,22 @@ Then('opening each one shows a different sheet address', async ({ page }) => {
   const addresses: string[] = [];
   for (const position of [0, 1]) {
     await openRoster(page);
-    await rosterEntries(page).nth(position).getByRole('link').click();
+    await openSheetOf(rosterEntries(page).nth(position));
     await expect(page).toHaveURL(SHEET_ADDRESS);
     addresses.push(page.url());
   }
   expect(addresses[0]).not.toBe(addresses[1]);
 });
 
-Then(
-  'the entry shows {string}, {string} and {string}',
-  async ({ page }, name: string, clan: string, player: string) => {
-    const entry = rosterEntries(page).filter({ hasText: name });
-    await expect(entry).toHaveCount(1);
-    await expect(entry).toContainText(clan);
-    await expect(entry).toContainText(player);
-  },
-);
+Then('the entry shows {string} and {string}', async ({ page }, name: string, clan: string) => {
+  await expect(rosterEntries(page)).toHaveCount(1);
+  await expect(entryNamed(page, name)).toContainText(clan);
+});
+
+Then('the entry does not show {string}', async ({ page }, text: string) => {
+  await expect(rosterEntries(page)).toHaveCount(1);
+  await expect(rosterEntries(page)).not.toContainText(text);
+});
 
 Then('the roster shows the empty state', async ({ page }) => {
   await expect(page.getByText('No characters yet')).toBeVisible();

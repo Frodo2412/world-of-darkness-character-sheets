@@ -2,7 +2,9 @@ import { expect, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import {
   createCharacter,
+  entryNamed,
   openRoster,
+  openSheetOf,
   rosterEntries,
   sheetAddress,
   sheetField,
@@ -51,7 +53,7 @@ When('the player opens its sheet address', async ({ page, memory }) => {
 });
 
 Then('{string} is listed and can be opened', async ({ page }, name: string) => {
-  await rosterEntries(page).getByRole('link', { name }).click();
+  await openSheetOf(entryNamed(page, name));
   await expect(identityName(page)).toHaveText(name);
 });
 

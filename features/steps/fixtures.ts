@@ -1,3 +1,4 @@
+import type { Locator } from '@playwright/test';
 import { test as base, createBdd } from 'playwright-bdd';
 import type { V20Character } from '../../src/domain/v20/character';
 import type { V20Build } from '../../src/domain/v20/creation/build';
@@ -14,6 +15,10 @@ interface ScenarioMemory {
   healthLevel: string;
   /** A stored record the scenario damaged, with the exact text it was left holding. */
   damaged?: { id: string; key: string; text: string };
+  /** Every record in storage as a scenario left it, to check later that nothing changed it. */
+  stored?: Record<string, string>;
+  /** The roster entry the scenario is talking about, for steps that say "it". */
+  entry?: Locator;
   /** Accessibility rule ids the page broke, with the elements that broke them. */
   violations?: string[];
   /** Ratings as a scenario arranged them, by trait name, to check later. */

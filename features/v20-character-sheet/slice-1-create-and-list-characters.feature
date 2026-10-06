@@ -21,7 +21,8 @@ Feature: Character roster
   Scenario: Roster shows identifying details
     Given a saved character named "Lucita" of clan "Lasombra" played by "Ana"
     When the player opens the roster
-    Then the entry shows "Lucita", "Lasombra" and "Ana"
+    Then the entry shows "Lucita" and "Lasombra"
+    And the entry does not show "Ana"
 
   Scenario: Roster survives a reload
     Given a player who has created a character

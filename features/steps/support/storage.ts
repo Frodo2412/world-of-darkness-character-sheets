@@ -63,3 +63,14 @@ export async function storedKeys(page: Page, prefix: string): Promise<string[]> 
     prefix,
   );
 }
+
+/** Every stored record, by key, exactly as stored. */
+export async function storedRecords(page: Page): Promise<Record<string, string>> {
+  return page.evaluate(() =>
+    Object.fromEntries(
+      Array.from({ length: window.localStorage.length }, (_, index) => window.localStorage.key(index)!).map(
+        (key) => [key, window.localStorage.getItem(key)!],
+      ),
+    ),
+  );
+}

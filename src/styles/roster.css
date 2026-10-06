@@ -1,0 +1,262 @@
+/* The roster: the page introduction, then one bordered list of everything stored.
+   Written for a 320px phone first and widened at the sheet's breakpoint (48rem).
+   Colours, typefaces and type sizes come from the tokens in global.css, never from values here. */
+
+/* The page holds the design's width, as the sheet does, and carries the page gutter itself. */
+main.roster-page {
+	max-inline-size: var(--frame-width);
+	padding: 0 var(--page-gutter) var(--space-5);
+}
+
+html:has(.roster-page) header {
+	max-inline-size: var(--frame-width);
+	margin-inline: auto;
+}
+
+/* Introduction */
+
+.roster-intro {
+	/* 28px above, 24px below. */
+	padding-block: calc(var(--space-4) + var(--space-1)) var(--space-4);
+}
+
+.roster-intro h1 {
+	margin: 0;
+	font-size: var(--text-display);
+	line-height: var(--leading-tight);
+}
+
+.roster-intro p {
+	margin: var(--space-1) 0 0;
+	font-size: var(--text-body);
+	color: var(--color-muted);
+}
+
+.roster-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	margin-block-end: var(--space-3);
+}
+
+.roster-empty {
+	color: var(--color-muted);
+}
+
+/* The list card */
+
+.library {
+	/* 20px: beside every row's content; 14px: below an entry's metadata and around the summary. */
+	--entry-gutter: calc(var(--space-3) + var(--space-1));
+	--entry-pad: calc(var(--space-row) + var(--space-1));
+	/* 80px: the monogram's width and gap, so the metadata lines up with the name. */
+	--entry-indent: calc(var(--entry-gutter) + 3rem + var(--space-card));
+	--entry-action-height: 2rem;
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+	overflow: hidden;
+}
+
+.library-heading,
+.library-summary {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	background: var(--color-surface);
+	color: var(--color-muted);
+}
+
+.library-heading {
+	padding: var(--space-card) var(--entry-gutter);
+	border-block-end: var(--stroke) solid var(--color-line);
+	font-size: var(--text-overline);
+	text-transform: uppercase;
+}
+
+.library-title {
+	letter-spacing: 0.8px;
+}
+
+.library-summary {
+	padding: var(--entry-pad) var(--entry-gutter);
+	font-size: var(--text-caption);
+}
+
+.library-summary p {
+	margin: 0;
+}
+
+.entries {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+/* An entry: who it is and what to do with it, then where it belongs. */
+
+.entry {
+	min-inline-size: 0;
+	background: var(--color-page);
+	border-block-end: var(--stroke) solid var(--color-line);
+}
+
+.entry-identity {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-card) var(--entry-gutter);
+	padding: var(--space-card) var(--entry-gutter);
+}
+
+.entry-who {
+	/* On a phone the name has the whole row and the actions wrap beneath it. */
+	flex: 1 1 100%;
+	display: flex;
+	align-items: center;
+	gap: var(--space-card);
+	min-inline-size: 0;
+}
+
+.entry-monogram {
+	flex: none;
+	display: grid;
+	place-items: center;
+	inline-size: 3rem;
+	block-size: 3.25rem;
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
+	font-family: var(--font-display);
+	font-size: 1.875rem;
+	color: var(--color-muted);
+}
+
+.entry-details {
+	display: grid;
+	gap: var(--space-1);
+	min-inline-size: 0;
+}
+
+.entry-name {
+	margin: 0;
+	font-size: var(--text-figure);
+	line-height: 1.1;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.entry-summary {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.entry-actions {
+	flex: 1 1 100%;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-card) var(--entry-gutter);
+	min-inline-size: 0;
+}
+
+.entry-temperament {
+	display: grid;
+	gap: var(--space-1);
+	min-inline-size: 0;
+	overflow-wrap: anywhere;
+}
+
+.entry-label {
+	font-size: var(--text-caption);
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.entry-edit {
+	gap: var(--space-2);
+	/* 10px above and below, 14px beside, the stroke inside. */
+	padding: calc(var(--space-row) - var(--stroke)) calc(var(--space-row) + var(--space-1) - var(--stroke));
+	min-block-size: var(--entry-action-height);
+	line-height: var(--leading-tight);
+	font-weight: 600;
+	font-size: var(--text-small);
+}
+
+.entry-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	padding: 0 var(--entry-gutter) var(--entry-pad) var(--entry-indent);
+	font-size: var(--text-caption);
+}
+
+.entry-tags {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1) var(--space-2);
+	min-inline-size: 0;
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.entry-progress {
+	color: var(--color-accent-text);
+}
+
+.entry-open {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	min-block-size: var(--entry-action-height);
+	margin-inline-start: auto;
+	font-weight: 600;
+	color: var(--color-text);
+	text-decoration: none;
+}
+
+.entry-open:hover {
+	text-decoration: underline;
+}
+
+/* A record that could not be read: its explanation, and nothing to do. */
+.entry-unreadable .entry-identity {
+	padding-block: var(--entry-pad);
+}
+
+/* From a tablet up an entry is one row of 86px, the actions beside the name, and the targets
+   need no more than 24px. */
+@media (min-width: 48rem) {
+	.entry-identity {
+		flex-wrap: nowrap;
+		min-block-size: 5.375rem;
+		padding-block: 0;
+	}
+
+	.entry-who {
+		flex: 1 1 auto;
+	}
+
+	.entry-actions {
+		flex: none;
+		justify-content: flex-end;
+	}
+
+	.entry-unreadable .entry-identity {
+		padding-block: var(--entry-pad);
+	}
+
+	.entry-edit,
+	.entry-open {
+		--entry-action-height: 1.5rem;
+	}
+}
