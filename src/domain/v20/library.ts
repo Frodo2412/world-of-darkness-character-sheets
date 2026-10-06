@@ -173,13 +173,20 @@ const ALL_LABEL = 'All characters';
 /** The tab of entries with no chronicle. A chronicle's tab key starts with `chronicle:`, so this is never one. */
 const UNASSIGNED_TAB = 'unassigned';
 
-/** What the player has chosen to see. Later steps add search text, clan, status and order. */
+/** What the player has chosen to see. Later steps add clan, status and order. */
 export interface LibraryFilter {
   /** The key of a tab in `LibraryView.tabs`; one that no longer exists means All. */
   tab: string;
+  /** Text to find in an entry's name, clan or concept; blank finds everything. */
+  search: string;
 }
 
-export const INITIAL_FILTER: LibraryFilter = { tab: ALL_TAB };
+export const INITIAL_FILTER: LibraryFilter = { tab: ALL_TAB, search: '' };
+
+/** The filter with everything the player typed taken back; the tab they chose stays. */
+export function clearedFilter(filter: LibraryFilter): LibraryFilter {
+  return { ...filter, search: '' };
+}
 
 /** The summary row's left side: how many entries are shown of how many are stored. */
 export function countsLine(shown: number, stored: number): string {
@@ -204,8 +211,8 @@ export interface LibraryView {
   countsLine: string;
   /** The summary row's right side, describing every stored entry: empty when no chronicle exists. */
   breakdown: string;
-  /** `empty` when nothing is stored at all. */
-  state: 'entries' | 'empty';
+  /** `empty` when nothing is stored at all; `no-match` when something is, and the filters leave nothing to show. */
+  state: 'entries' | 'empty' | 'no-match';
 }
 
 /** An entry that could be read, and so has a chronicle (possibly blank). */
@@ -292,6 +299,31 @@ function breakdownOf(chronicles: readonly Chronicle[], stored: number): string {
   return [`${chronicled} in ${where}`, ...(unassigned > 0 ? [`${unassigned} unassigned`] : [])].join(' · ');
 }
 
+/** Says whether an entry passes one filter. */
+type Predicate = (entry: LibraryEntry) => boolean;
+
+/** One predicate per filter; the filters combine with AND. */
+const keepingAll =
+  (...predicates: Predicate[]): Predicate =>
+  (entry) =>
+    predicates.every((passes) => passes(entry));
+
+/** The entries listed under `tab`; All lists everything. */
+const inTab =
+  (tab: string): Predicate =>
+  (entry) =>
+    tab === ALL_TAB || tabOf(entry) === tab;
+
+/**
+ * The entries whose name (as displayed), clan or concept holds `search`, ignoring case and accents.
+ * A blank search keeps everything. An entry that could not be read has no text, so only a blank search keeps it.
+ */
+const matchesSearch = (search: string): Predicate => {
+  const wanted = folded(search);
+  return (entry) =>
+    wanted === '' || (isReadable(entry) && [entry.name, entry.clan, entry.concept].some((text) => folded(text).includes(wanted)));
+};
+
 /** What the roster draws for `entries` (oldest first) under `filter`. */
 export function view(entries: readonly LibraryEntry[], filter: LibraryFilter): LibraryView {
   const chronicles = chroniclesOf(entries);
@@ -304,13 +336,13 @@ export function view(entries: readonly LibraryEntry[], filter: LibraryFilter): L
       : []),
   ];
   const tab = tabs.some((candidate) => candidate.key === filter.tab) ? filter.tab : ALL_TAB;
-  const shown = entries.filter((entry) => tab === ALL_TAB || tabOf(entry) === tab);
+  const shown = entries.filter(keepingAll(inTab(tab), matchesSearch(filter.search)));
   return {
     tabs,
     tab,
     shown,
     countsLine: countsLine(shown.length, entries.length),
     breakdown: breakdownOf(chronicles, entries.length),
-    state: entries.length === 0 ? 'empty' : 'entries',
+    state: entries.length === 0 ? 'empty' : shown.length === 0 ? 'no-match' : 'entries',
   };
 }

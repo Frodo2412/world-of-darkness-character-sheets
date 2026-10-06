@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { blankCharacter, setHeaderField } from './character';
 import { blankBuild, type ConceptField, type V20Build } from './creation/build';
-import { countsLine, entriesOf, INITIAL_FILTER, UNASSIGNED, view } from './library';
+import { clearedFilter, countsLine, entriesOf, INITIAL_FILTER, UNASSIGNED, view } from './library';
 import type { HeaderField } from './traits';
 
 const character = (id: string, fields: Partial<Record<HeaderField, string>> = {}) => ({
@@ -541,7 +541,7 @@ describe('view: chronicle tabs', () => {
       });
       const idsOn = (label: string) => {
         const key = view(entries, INITIAL_FILTER).tabs.find((tab) => tab.label === label)!.key;
-        return view(entries, { tab: key }).shown.map((entry) => entry.id);
+        return view(entries, { ...INITIAL_FILTER, tab: key }).shown.map((entry) => entry.id);
       };
 
       test('"Unassigned" lists that chronicle, not the blank entries', () => {
@@ -563,8 +563,8 @@ describe('view: chronicle tabs', () => {
         const own = tabs.filter((tab) => tab.label === name);
         expect(own).toHaveLength(1);
         expect(new Set(tabs.map((tab) => tab.key)).size).toBe(tabs.length);
-        expect(view(entries, { tab: own[0].key }).tab).toBe(own[0].key);
-        expect(view(entries, { tab: own[0].key }).shown.map((entry) => entry.id)).toEqual(['0001']);
+        expect(view(entries, { ...INITIAL_FILTER, tab: own[0].key }).tab).toBe(own[0].key);
+        expect(view(entries, { ...INITIAL_FILTER, tab: own[0].key }).shown.map((entry) => entry.id)).toEqual(['0001']);
       },
     );
   });
@@ -582,7 +582,7 @@ describe('view: the selected tab', () => {
   };
   const entries = entriesOf(records);
   const keyOf = (label: string) => view(entries, INITIAL_FILTER).tabs.find((tab) => tab.label === label)!.key;
-  const idsOn = (label: string) => view(entries, { tab: keyOf(label) }).shown.map((entry) => entry.id);
+  const idsOn = (label: string) => view(entries, { ...INITIAL_FILTER, tab: keyOf(label) }).shown.map((entry) => entry.id);
 
   test('All shows everything', () => {
     expect(idsOn('All characters')).toEqual(['0001', '0002', '0003', '0004', '0005']);
@@ -598,13 +598,13 @@ describe('view: the selected tab', () => {
   });
 
   test('the resolved tab is the selected one', () => {
-    expect(view(entries, { tab: keyOf('Ashes of Milan') }).tab).toBe(keyOf('Ashes of Milan'));
+    expect(view(entries, { ...INITIAL_FILTER, tab: keyOf('Ashes of Milan') }).tab).toBe(keyOf('Ashes of Milan'));
   });
 
   test('a tab that no longer exists resolves to All and shows everything', () => {
     const goneKey = view(inChronicles('Gone', 'Ashes'), INITIAL_FILTER).tabs.find((tab) => tab.label === 'Gone')!.key;
     expect(view(entries, INITIAL_FILTER).tabs.map((tab) => tab.key)).not.toContain(goneKey);
-    const result = view(entries, { tab: goneKey });
+    const result = view(entries, { ...INITIAL_FILTER, tab: goneKey });
     expect(result.tab).toBe(INITIAL_FILTER.tab);
     expect(result.shown).toHaveLength(5);
   });
@@ -612,29 +612,29 @@ describe('view: the selected tab', () => {
   test('the Unassigned tab resolves to All once no chronicle exists to set it apart', () => {
     const unassignedKey = keyOf('Unassigned');
     const bare = inChronicles('', '');
-    expect(view(bare, { tab: unassignedKey })).toMatchObject({ tab: INITIAL_FILTER.tab });
-    expect(view(bare, { tab: unassignedKey }).shown).toHaveLength(2);
+    expect(view(bare, { ...INITIAL_FILTER, tab: unassignedKey })).toMatchObject({ tab: INITIAL_FILTER.tab });
+    expect(view(bare, { ...INITIAL_FILTER, tab: unassignedKey }).shown).toHaveLength(2);
   });
 
   test('counts stay the same whichever tab is selected', () => {
-    const counts = (tab: string) => view(entries, { tab }).tabs.map((t) => t.count);
+    const counts = (tab: string) => view(entries, { ...INITIAL_FILTER, tab }).tabs.map((t) => t.count);
     expect(counts(keyOf('Ashes of Milan'))).toEqual(counts(INITIAL_FILTER.tab));
   });
 
   test('the counts line is shown of stored', () => {
     expect(view(entries, INITIAL_FILTER).countsLine).toBe('Showing 5 of 5 characters');
-    expect(view(entries, { tab: keyOf('Ashes of Milan') }).countsLine).toBe('Showing 1 of 5 characters');
-    expect(view(entries, { tab: keyOf('Unassigned') }).countsLine).toBe('Showing 2 of 5 characters');
+    expect(view(entries, { ...INITIAL_FILTER, tab: keyOf('Ashes of Milan') }).countsLine).toBe('Showing 1 of 5 characters');
+    expect(view(entries, { ...INITIAL_FILTER, tab: keyOf('Unassigned') }).countsLine).toBe('Showing 2 of 5 characters');
   });
 
   test('the state is about what is stored, not what the tab shows', () => {
-    expect(view(entries, { tab: keyOf('Ashes of Milan') }).state).toBe('entries');
+    expect(view(entries, { ...INITIAL_FILTER, tab: keyOf('Ashes of Milan') }).state).toBe('entries');
   });
 
   test('the entries handed in are not changed', () => {
     const before = structuredClone(entries);
     const given = [...entries];
-    view(given, { tab: keyOf('Unassigned') });
+    view(given, { ...INITIAL_FILTER, tab: keyOf('Unassigned') });
     expect(given).toEqual(before);
     expect(entries).toEqual(before);
   });
@@ -673,7 +673,7 @@ describe('view: the breakdown', () => {
   test('does not follow the selected tab', () => {
     const entries = inChronicles('The Glass City', 'The Glass City', '');
     const unassigned = view(entries, INITIAL_FILTER).tabs.find((tab) => tab.label === 'Unassigned')!;
-    const result = view(entries, { tab: unassigned.key });
+    const result = view(entries, { ...INITIAL_FILTER, tab: unassigned.key });
     expect(result.shown).toHaveLength(1);
     expect(result.breakdown).toBe('2 in The Glass City · 1 unassigned');
   });
@@ -691,3 +691,197 @@ describe('view: the breakdown', () => {
   });
 });
 
+
+describe('view: search', () => {
+  const stored = entriesOf({
+    characters: [
+      character('0001', {
+        name: 'Éloïse Voss',
+        clan: 'Toreador',
+        concept: 'Antiquarian',
+        player: 'Ana',
+        chronicle: 'The Glass City',
+      }),
+      character('0002', { name: 'Gabriel Ash', clan: 'Ventrue', concept: 'Fixer', chronicle: 'The Glass City' }),
+      character('0003', { name: 'Mara Delacroix', clan: 'Brujah', concept: 'Agitator' }),
+    ],
+    builds: [build('0004', { name: 'Silas Reed', clan: 'brujah', concept: 'Broker', chronicle: 'The Glass City' })],
+  });
+  const searched = (search: string, tab = INITIAL_FILTER.tab) =>
+    view(stored, { tab, search }).shown.map((entry) => entry.id);
+
+  test('the initial filter searches for nothing', () => {
+    expect(INITIAL_FILTER.search).toBe('');
+  });
+
+  test.each([
+    ['name', 'voss', ['0001']],
+    ['clan', 'ventrue', ['0002']],
+    ['concept', 'agitat', ['0003']],
+    ['the name of a build', 'silas', ['0004']],
+    ['the clan of a build and of a character, spelled differently', 'brujah', ['0003', '0004']],
+    ['the concept of a build', 'broker', ['0004']],
+    ['text in the middle of a field', 'ntiqua', ['0001']],
+    ['no field', 'zzz', []],
+  ])('finds by %s', (_, search, ids) => {
+    expect(searched(search)).toEqual(ids);
+  });
+
+  test.each([
+    ['the player', 'Ana'],
+    ['the chronicle', 'Glass'],
+  ])('does not look at %s', (_, search) => {
+    expect(searched(search)).toEqual([]);
+  });
+
+  describe('ignores case and accents, whichever side has them', () => {
+    const idsFor = (name: string, search: string) =>
+      view(entriesOf({ characters: [character('0001', { name })], builds: [] }), { ...INITIAL_FILTER, search }).shown.map(
+        (entry) => entry.id,
+      );
+
+    test.each([
+      ['Éloïse Voss', 'eloise'],
+      ['Éloïse Voss', 'ELOISE'],
+      ['Éloïse Voss', 'éLoÏsE'],
+      ['Eloise', 'ÉLOÏSE'],
+      ['Eloise', 'éloïse'],
+    ])('%s is found by %s', (name, search) => {
+      expect(idsFor(name, search)).toEqual(['0001']);
+    });
+  });
+
+  test.each([
+    ['spaces around it', '  voss  '],
+    ['capitals', 'VOSS'],
+  ])('is trimmed and case-folded: %s', (_, search) => {
+    expect(searched(search)).toEqual(['0001']);
+  });
+
+  test.each(['', ' ', '   ', '\t'])('a search of only blanks (%j) matches everything', (search) => {
+    expect(searched(search)).toEqual(['0001', '0002', '0003', '0004']);
+  });
+
+  test('is found by the name as displayed, numbered when repeated', () => {
+    const unnamed = entriesOf({ characters: [character('0001'), character('0002')], builds: [] });
+    const ids = (search: string) => view(unnamed, { ...INITIAL_FILTER, search }).shown.map((entry) => entry.id);
+    expect(ids('unnamed')).toEqual(['0001', '0002']);
+    expect(ids('2')).toEqual(['0002']);
+    expect(ids('character 2')).toEqual(['0002']);
+  });
+
+  describe('with a tab', () => {
+    const glassCity = view(stored, INITIAL_FILTER).tabs.find((tab) => tab.label === 'The Glass City')!.key;
+
+    test('keeps only the entries both the tab and the search keep', () => {
+      expect(searched('x', glassCity)).toEqual(['0002']);
+    });
+
+    test('a search that matches only outside the tab finds nothing in it', () => {
+      expect(searched('mara', glassCity)).toEqual([]);
+      expect(searched('mara')).toEqual(['0003']);
+    });
+
+    test('an empty search leaves the tab as it was', () => {
+      expect(searched('', glassCity)).toEqual(['0001', '0002', '0004']);
+    });
+  });
+
+  describe('an unreadable entry', () => {
+    const withUnreadable = entriesOf({
+      characters: [character('0001', { name: 'Lucita' }), { kind: 'unreadable', id: '0002' }],
+      builds: [{ kind: 'unreadable', id: '0003' }],
+    });
+    const ids = (search: string) => view(withUnreadable, { ...INITIAL_FILTER, search }).shown.map((entry) => entry.id);
+
+    test('matches an empty search', () => {
+      expect(ids('')).toEqual(['0001', '0002', '0003']);
+      expect(ids('   ')).toEqual(['0001', '0002', '0003']);
+    });
+
+    test.each(['e', 'unreadable', 'character', 'build', '0002'])('does not match %j', (search) => {
+      expect(ids(search)).not.toContain('0002');
+      expect(ids(search)).not.toContain('0003');
+    });
+  });
+
+  test('the tab counts and the tab list are the same whatever is searched', () => {
+    const tabsFor = (search: string) => view(stored, { ...INITIAL_FILTER, search }).tabs;
+    expect(tabsFor('eloise')).toEqual(tabsFor(''));
+    expect(tabsFor('zzz')).toEqual(tabsFor(''));
+  });
+
+  test('the counts line reads shown of stored, so it follows the search', () => {
+    const line = (search: string) => view(stored, { ...INITIAL_FILTER, search }).countsLine;
+    expect(line('eloise')).toBe('Showing 1 of 4 characters');
+    expect(line('e')).toBe('Showing 4 of 4 characters');
+    expect(line('zzz')).toBe('Showing 0 of 4 characters');
+  });
+
+  test('the breakdown describes every stored entry, whatever is searched', () => {
+    expect(view(stored, { ...INITIAL_FILTER, search: 'zzz' }).breakdown).toBe(view(stored, INITIAL_FILTER).breakdown);
+  });
+
+  test('the entries handed in are not changed', () => {
+    const before = structuredClone(stored);
+    view(stored, { ...INITIAL_FILTER, search: 'eloise' });
+    expect(stored).toEqual(before);
+  });
+});
+
+describe('view: state', () => {
+  test('is entries while something is shown', () => {
+    const entries = inChronicles('The Glass City', '');
+    expect(view(entries, INITIAL_FILTER).state).toBe('entries');
+    expect(view(entries, { ...INITIAL_FILTER, search: 'a' }).state).toBe('entries');
+  });
+
+  test('is empty when nothing is stored, whatever is searched', () => {
+    expect(view([], INITIAL_FILTER).state).toBe('empty');
+    expect(view([], { ...INITIAL_FILTER, search: 'zzz' }).state).toBe('empty');
+  });
+
+  test('is no-match when something is stored and the search leaves nothing to show', () => {
+    const result = view(inChronicles('The Glass City', ''), { ...INITIAL_FILTER, search: 'zzz' });
+    expect(result).toMatchObject({ state: 'no-match', shown: [], countsLine: 'Showing 0 of 2 characters' });
+  });
+
+  test('is no-match for a library of unreadable records, which no search matches', () => {
+    const entries = entriesOf({ characters: [{ kind: 'unreadable', id: '0001' }], builds: [] });
+    expect(view(entries, { ...INITIAL_FILTER, search: 'x' }).state).toBe('no-match');
+    expect(view(entries, INITIAL_FILTER).state).toBe('entries');
+  });
+
+  test('is no-match in a tab too, and entries again once the search is cleared', () => {
+    const entries = inChronicles('The Glass City', 'Ashes', '');
+    const glass = view(entries, INITIAL_FILTER).tabs.find((tab) => tab.label === 'The Glass City')!.key;
+    expect(view(entries, { tab: glass, search: 'zzz' }).state).toBe('no-match');
+    expect(view(entries, { tab: glass, search: '' }).state).toBe('entries');
+  });
+});
+
+describe('clearedFilter', () => {
+  test('empties the search and keeps the tab', () => {
+    expect(clearedFilter({ tab: 'chronicle:the glass city', search: 'zzz' })).toEqual({
+      tab: 'chronicle:the glass city',
+      search: '',
+    });
+  });
+
+  test('leaves a filter that searches for nothing as it was', () => {
+    expect(clearedFilter({ tab: 'unassigned', search: '' })).toEqual({ tab: 'unassigned', search: '' });
+  });
+
+  test('does not change the filter it is given', () => {
+    const given = Object.freeze({ tab: 'unassigned', search: 'zzz' });
+    expect(clearedFilter(given)).not.toBe(given);
+    expect(given).toEqual({ tab: 'unassigned', search: 'zzz' });
+  });
+
+  test('clears the search that left nothing to show', () => {
+    const entries = inChronicles('The Glass City', '');
+    const searching = { ...INITIAL_FILTER, search: 'zzz' };
+    expect(view(entries, searching).state).toBe('no-match');
+    expect(view(entries, clearedFilter(searching)).state).toBe('entries');
+  });
+});
