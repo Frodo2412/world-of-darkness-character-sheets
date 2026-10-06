@@ -11,6 +11,7 @@ describe('poolReadout', () => {
   test('asks for both when nothing is selected, with no formula and no total', () => {
     expect(poolReadout(pool({}))).toEqual({
       formula: '',
+      specialties: '',
       prompt: 'Select an attribute and an ability',
       total: '',
       incapacitated: false,
@@ -36,10 +37,21 @@ describe('poolReadout', () => {
   test('adds the two and totals them, with nothing left to ask', () => {
     expect(poolReadout(pool({ attribute: intelligence, ability: investigation, total: 7 }))).toEqual({
       formula: 'Intelligence 4 + Investigation 3',
+      specialties: '',
       prompt: '',
       total: '7 dice',
       incapacitated: false,
     });
+  });
+
+  test('names the specialty of each chosen trait that has one', () => {
+    const attribute = { ...intelligence, specialty: 'Art history' };
+    expect(poolReadout(pool({ attribute, ability: investigation, total: 7 })).specialties).toBe('Intelligence · Art history');
+
+    const ability = { ...investigation, specialty: 'Forgeries' };
+    expect(poolReadout(pool({ attribute, ability, total: 7 })).specialties).toBe(
+      'Intelligence · Art history, Investigation · Forgeries',
+    );
   });
 
   test('takes the wound off with a true minus sign', () => {

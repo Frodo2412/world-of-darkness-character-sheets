@@ -67,17 +67,6 @@ Given(
   },
 );
 
-Given('a saved character whose blood per turn is {string}', async ({ page, memory }, perTurn: string) => {
-  await givenSaved(page, memory, { name: 'Lucita' }, (character) => {
-    character.bloodPool.perTurn = perTurn;
-  });
-});
-
-Given('another saved character with no blood per turn recorded', async ({ page, memory }) => {
-  memory.saved.push(characterArranged({ name: 'Ana' }, () => {}));
-  await saveCharacters(page, [memory.saved[1]]);
-});
-
 Given(/^a saved character with lethal damage on (.+)$/, async ({ page, memory }, levels: string) => {
   await givenSaved(page, memory, { name: 'Lucita' }, (character) => {
     for (const level of levels.split(' and ')) {
@@ -190,14 +179,6 @@ When('they enter {string} as Generation', async ({ page }, text: string) => {
 });
 
 When(
-  'they enter {string} as Blood per turn and reload the sheet',
-  async ({ page }, text: string) => {
-    await sheetField(page, 'Blood per turn').fill(text);
-    await page.reload();
-  },
-);
-
-When(
   'they activate {string} and set permanent Willpower to {int}',
   async ({ page }, name: string, value: number) => {
     await button(page, name).click();
@@ -270,12 +251,9 @@ Then('assistive technology was told nothing about the Blood Pool', async ({ page
   await region.evaluate((element) => void (element.textContent = ''));
 });
 
-Then('the first Blood Pool card shows {string}', async ({ memory }, text: string) => {
-  expect(memory.visited[0]).toContain(text);
-});
-
-Then('the second shows no per-turn text', async ({ memory }) => {
-  expect(memory.visited[1]).not.toContain('/ turn');
+Then('the Blood Pool card shows no per-turn text', async ({ page }) => {
+  await expect(bloodPoolCard(page)).toBeVisible();
+  await expect(bloodPoolCard(page).getByText('/ turn')).toHaveCount(0);
 });
 
 Then('no Blood per turn field is offered', async ({ page }) => {

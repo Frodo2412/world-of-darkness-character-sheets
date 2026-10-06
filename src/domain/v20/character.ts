@@ -21,6 +21,7 @@ import {
   type HealthLevelKey,
   type NamedRowRef,
   type Range,
+  type SpecialtyRef,
   type TextRef,
   type TraitRef,
   type VirtueKey,
@@ -41,6 +42,8 @@ export interface V20Character {
   attributes: Record<AttributeKey, number>;
   abilities: Record<AbilityKey, number>;
   customAbilities: Record<AbilityGroupKey, NamedRating>;
+  /** What the player wrote as a trait's specialty; a trait without one has no entry. */
+  specialties: Partial<Record<SpecialtyRef, string>>;
   disciplines: NamedRating[];
   backgrounds: NamedRating[];
   virtues: Record<VirtueKey, number>;
@@ -76,6 +79,7 @@ export function blankCharacter(id: string): V20Character {
     attributes: recordOf(ATTRIBUTE_KEYS, () => ATTRIBUTE_DEFAULT),
     abilities: recordOf(ABILITY_KEYS, () => 0),
     customAbilities: recordOf(keysOf(ABILITY_GROUPS), blankRow),
+    specialties: {},
     disciplines: blankRows(DISCIPLINE_ROWS),
     backgrounds: blankRows(BACKGROUND_ROWS),
     virtues: recordOf(keysOf(VIRTUES), () => VIRTUE_DEFAULT),
@@ -143,6 +147,22 @@ export function setTrait(character: V20Character, trait: TraitRef, value: number
     ...character,
     [section]: { ...(character[section] as object), [key]: clamp(value, rangeOf(trait)) },
   };
+}
+
+/** A trait's specialty as typed, or '' when it has none. */
+export function specialtyText(character: V20Character, trait: SpecialtyRef): string {
+  return character.specialties[trait] ?? '';
+}
+
+/** A trait's specialty trimmed for display, or undefined when it has none. */
+export function specialtyOf(character: V20Character, trait: SpecialtyRef): string | undefined {
+  return specialtyText(character, trait).trim() || undefined;
+}
+
+/** Sets a trait's specialty to exactly what was typed; clearing the text removes it. */
+export function setSpecialty(character: V20Character, trait: SpecialtyRef, text: string): V20Character {
+  const { [trait]: _removed, ...rest } = character.specialties;
+  return { ...character, specialties: text === '' ? rest : { ...rest, [trait]: text } };
 }
 
 type NamedRows = NamedRating[] | Record<string, NamedRating>;

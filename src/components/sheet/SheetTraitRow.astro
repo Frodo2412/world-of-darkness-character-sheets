@@ -1,5 +1,5 @@
 ---
-import { rangeOf, type AbilityGroupKey, type TraitRef } from '../../domain/v20/traits';
+import { rangeOf, type AbilityGroupKey, type SpecialtyRef, type TraitRef } from '../../domain/v20/traits';
 
 interface Props {
 	/** A fixed trait. Leave out for a group's custom ability, which has only a play row. */
@@ -15,12 +15,15 @@ const custom = trait === undefined;
 const key = custom ? `customAbilities.${customGroup}` : trait;
 // The name button is described by the rating, so assistive technology hears "Strength, 2 of 5" and not the dots too.
 const valueId = `${key.replace('.', '-')}-value`;
+// Attributes and abilities can carry a specialty; a virtue (a quick-reference row) and a custom ability cannot.
+const specialty = custom || plain ? undefined : (trait as SpecialtyRef);
 ---
 
 <!--
 	One row per trait. In play the name button chooses the trait for a dice pool: it is
 	pressed while chosen and described by its rating. A quick-reference row (plain) has no
-	button. A custom ability's play row has no edit control of its own (the write-in row
+	button. A row whose trait has a specialty is marked after its name, and has a field for it
+	while editing. A custom ability's play row has no edit control of its own (the write-in row
 	beside it is that); it is drawn from the character and hidden while the ability has no name.
 -->
 <div
@@ -47,6 +50,19 @@ const valueId = `${key.replace('.', '-')}-value`;
 		)
 	}
 	{custom ? null : <span class="trait-label" data-sheet-mode-only={plain ? undefined : 'edit'}>{label}</span>}
+	{
+		specialty === undefined ? null : (
+			<input
+				type="text"
+				class="trait-specialty"
+				data-specialty={specialty}
+				aria-label={`${label} specialty`}
+				placeholder="Specialty"
+				autocomplete="off"
+				data-sheet-mode-only="edit"
+			/>
+		)
+	}
 	{
 		custom ? (
 			<dot-rating max="5" value="0" readonly />

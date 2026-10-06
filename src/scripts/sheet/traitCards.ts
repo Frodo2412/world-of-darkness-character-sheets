@@ -1,7 +1,7 @@
 import type { RatingControl } from '../../components/controls/rating-control';
-import { namedCustomAbility, traitValue, type V20Character } from '../../domain/v20/character';
+import { namedCustomAbility, specialtyOf, traitValue, type V20Character } from '../../domain/v20/character';
 import type { PoolSelection } from '../../domain/v20/resources';
-import { RATING_RANGE, type CustomAbilityRef, type TraitRef } from '../../domain/v20/traits';
+import { RATING_RANGE, type CustomAbilityRef, type SpecialtyRef, type TraitRef } from '../../domain/v20/traits';
 import { lookup, lookupAll, setAttr, show } from './draw';
 import type { SheetMode } from './mode';
 import { PLAY_SCALE_DOTS, drawRating } from './ratingDraw';
@@ -32,9 +32,12 @@ function drawCustomAbility(row: HTMLElement, key: CustomAbilityRef, character: V
   describeValue(row, named.rating);
 }
 
-// The value the name button is described by, on the scale its dots drew: "4 of 5", "6 of 10".
-function describeValue(row: HTMLElement, value: number): void {
-  show(row, 'trait.value', `${value} of ${lookup<RatingControl>(row, 'dot-rating').max}`);
+const hasSpecialty = (key: string): key is SpecialtyRef => /^(attributes|abilities)\./.test(key);
+
+// The value the name button is described by, on the scale its dots drew, and the specialty: "4 of 5, specialty Art history".
+function describeValue(row: HTMLElement, value: number, specialty?: string): void {
+  const rated = `${value} of ${lookup<RatingControl>(row, 'dot-rating').max}`;
+  show(row, 'trait.value', specialty === undefined ? rated : `${rated}, specialty ${specialty}`);
 }
 
 /**
@@ -75,8 +78,11 @@ export function drawTraitCards(
       drawCustomAbility(row, key, character);
     } else {
       const value = traitValue(character, key as TraitRef);
+      const specialty = hasSpecialty(key) ? specialtyOf(character, key) : undefined;
       show(row, 'trait.number', String(value));
-      describeValue(row, value);
+      describeValue(row, value, specialty);
+      // The mark after the name is drawn by the stylesheet.
+      row.classList.toggle('has-specialty', specialty !== undefined);
     }
     drawSelectable(row, mode);
     drawSelected(row, selection);

@@ -108,16 +108,74 @@ Then('no other Discipline row is shown', async ({ page, memory }) => {
   await expect(disciplinesCard(page).getByRole('textbox')).toHaveCount(0);
 });
 
-Then('the Disciplines card shows no power list and no expand control', async ({ page, memory }) => {
+Then('the Disciplines card shows no power list and no expand control', async ({ page }) => {
   const card = disciplinesCard(page);
-  await expect(card.getByRole('button')).toHaveCount(0);
-  await expect(card.locator('[aria-expanded], details')).toHaveCount(0);
-  // Its list items are the named Disciplines and nothing else: no powers listed beneath them.
-  const named = memory.saved[0].disciplines
-    .filter((row) => row.name.trim() !== '')
-    .map((row) => `${row.name.trim()} ${row.rating}`);
-  await expect(card.getByRole('listitem')).toHaveText(named);
+  await expect(listedDisciplines(page)).not.toHaveCount(0);
+  await expect(card.locator('details, summary, [aria-expanded]')).toHaveCount(0);
+  await expect(card.locator('.power')).toHaveCount(0);
 });
+
+// Powers
+
+/** A Discipline that opens, found by the name on its line. */
+const disciplineNamed = (page: Page, name: string): Locator =>
+  disciplinesCard(page).locator('details').filter({ has: page.locator('summary', { hasText: new RegExp(`^${escaped(name)} \\d+$`) }) });
+
+const powerNamed = (page: Page, name: string): Locator =>
+  disciplinesCard(page).locator('.power').filter({ has: page.locator('.power-name', { hasText: new RegExp(`^${escaped(name)}$`) }) });
+
+Given(
+  'a saved character with Charisma {int}, Appearance {int}, Performance {int}, Intimidation {int}, Empathy {int} and the Disciplines {string} rated {int} and {string} rated {int}',
+  async (
+    { page, memory },
+    charisma: number,
+    appearance: number,
+    performance: number,
+    intimidation: number,
+    empathy: number,
+    first: string,
+    a: number,
+    second: string,
+    b: number,
+  ) => {
+    await givenSaved(page, memory, { name: 'Lucita', clan: 'Lasombra' }, (character) => {
+      Object.assign(character.attributes, { charisma, appearance });
+      Object.assign(character.abilities, { performance, intimidation, empathy });
+      character.disciplines[0] = { name: first, rating: a };
+      character.disciplines[1] = { name: second, rating: b };
+    });
+  },
+);
+
+When('they open the Discipline {string}', async ({ page }, name: string) => {
+  await disciplineNamed(page, name).locator('summary').click();
+});
+
+Then(
+  '{string} lists the powers {string}, {string} and {string}',
+  async ({ page }, discipline: string, first: string, second: string, third: string) => {
+    await expect(disciplineNamed(page, discipline).locator('.power-name')).toHaveText([first, second, third]);
+  },
+);
+
+Then('the power {string} shows {string} and {string}', async ({ page }, power: string, detail: string, dice: string) => {
+  await expect(powerNamed(page, power).locator('.power-detail')).toHaveText(detail);
+  await expect(powerNamed(page, power).locator('.power-dice')).toHaveText(dice);
+  await expect(powerNamed(page, power)).toBeVisible();
+});
+
+Then('the power {string} shows {string} and no dice', async ({ page }, power: string, detail: string) => {
+  await expect(powerNamed(page, power).locator('.power-detail')).toHaveText(detail);
+  await expect(powerNamed(page, power).locator('.power-dice')).toHaveCount(0);
+});
+
+Then(
+  'the powers of {string} are shown and the powers of {string} are not',
+  async ({ page }, open: string, closed: string) => {
+    await expect(disciplineNamed(page, open).locator('.power').first()).toBeVisible();
+    await expect(disciplineNamed(page, closed).locator('.power').first()).toBeHidden();
+  },
+);
 
 Then('the Disciplines card says {string}', async ({ page }, line: string) => {
   await expect(disciplinesCard(page).getByText(line, { exact: true })).toBeVisible();

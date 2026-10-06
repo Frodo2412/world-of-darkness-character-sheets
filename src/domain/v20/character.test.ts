@@ -9,7 +9,10 @@ import {
   namedRows,
   setHeaderField,
   setNamedRow,
+  setSpecialty,
   setText,
+  specialtyOf,
+  specialtyText,
   textValue,
   setTrait,
   traitValue,
@@ -700,5 +703,37 @@ describe('setNamedRow with a rating it was not asked to change', () => {
     const renamed = setNamedRow(stored, 'disciplines.0', { name: 'Presence' });
 
     expect(renamed.disciplines[0]).toEqual({ name: 'Presence', rating: 12 });
+  });
+});
+
+describe('specialties', () => {
+  test('a blank character has none', () => {
+    const character = blankCharacter('abc');
+
+    expect(character.specialties).toEqual({});
+    expect(specialtyText(character, 'attributes.strength')).toBe('');
+    expect(specialtyOf(character, 'attributes.strength')).toBeUndefined();
+  });
+
+  test('a specialty is kept as typed and read trimmed', () => {
+    const character = setSpecialty(blankCharacter('abc'), 'abilities.academics', ' Art history ');
+
+    expect(specialtyText(character, 'abilities.academics')).toBe(' Art history ');
+    expect(specialtyOf(character, 'abilities.academics')).toBe('Art history');
+    expect(specialtyOf(character, 'abilities.occult')).toBeUndefined();
+  });
+
+  test('clearing the text removes the specialty', () => {
+    const named = setSpecialty(blankCharacter('abc'), 'abilities.academics', 'Art history');
+
+    expect(setSpecialty(named, 'abilities.academics', '').specialties).toEqual({});
+  });
+
+  test('does not change the character it was given', () => {
+    const original = blankCharacter('abc');
+
+    setSpecialty(original, 'attributes.wits', 'Ambushes');
+
+    expect(original).toEqual(blankCharacter('abc'));
   });
 });

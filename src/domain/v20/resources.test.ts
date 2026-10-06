@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { blankCharacter, setHeaderField, setText, setTrait, type V20Character } from './character';
+import { blankCharacter, setHeaderField, setSpecialty, setText, setTrait, type V20Character } from './character';
 import {
+  bloodPerTurn,
   bloodPoolMaximum,
   dicePool,
   resourceReading,
@@ -49,6 +50,49 @@ describe('bloodPoolMaximum', () => {
     bloodPoolMaximum(original);
 
     expect(original).toEqual(withGeneration('10th'));
+  });
+});
+
+describe('bloodPerTurn', () => {
+  test.each([
+    [4, 10],
+    [5, 8],
+    [6, 6],
+    [7, 4],
+    [8, 3],
+    [9, 2],
+    [10, 1],
+    [13, 1],
+    [15, 1],
+  ])('generation %i may spend %i a turn', (generation, perTurn) => {
+    expect(bloodPerTurn(withGeneration(String(generation)))).toBe(perTurn);
+  });
+
+  test.each(['', 'banana', '3', '16'])('%j gives no recognised generation, so there is none to show', (text) => {
+    expect(bloodPerTurn(withGeneration(text))).toBeUndefined();
+  });
+
+  test('follows the Generation text, not the per-turn text stored with the character', () => {
+    expect(bloodPerTurn(setText(withGeneration('8th'), 'bloodPool.perTurn', '1'))).toBe(3);
+  });
+});
+
+describe('dicePool with specialties', () => {
+  const selection = { attribute: 'attributes.intelligence', ability: 'abilities.investigation' } as const;
+
+  test('a term carries its trait\'s specialty, trimmed', () => {
+    const character = setSpecialty(blankCharacter('abc'), 'attributes.intelligence', '  Art history ');
+
+    const pool = dicePool(character, selection);
+
+    expect(pool.attribute).toEqual({ label: 'Intelligence', rating: 1, specialty: 'Art history' });
+    expect(pool.ability).toEqual({ label: 'Investigation', rating: 0 });
+  });
+
+  test('a specialty of only spaces is none', () => {
+    const character = setSpecialty(blankCharacter('abc'), 'abilities.investigation', '   ');
+
+    expect(dicePool(character, selection).ability).toEqual({ label: 'Investigation', rating: 0 });
   });
 });
 

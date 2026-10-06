@@ -6,13 +6,15 @@ import {
   cycleHealthBox,
   namedRow,
   setNamedRow,
+  setSpecialty,
   setText,
   setTrait,
+  specialtyText,
   textValue,
   traitValue,
   type V20Character,
 } from '../domain/v20/character';
-import { RATING_RANGE, rangeOf, type NamedRowRef, type TextRef, type TraitRef } from '../domain/v20/traits';
+import { RATING_RANGE, rangeOf, type NamedRowRef, type SpecialtyRef, type TextRef, type TraitRef } from '../domain/v20/traits';
 import { stepBlood, stepTemporaryWillpower, type Resource } from '../domain/v20/resources';
 import {
   browserStorage,
@@ -46,6 +48,7 @@ const textInputs = sheet.querySelectorAll<HTMLInputElement>('[data-text]');
 
 const traitRatings = sheet.querySelectorAll<RatingControl>('[data-trait]');
 const rowNames = sheet.querySelectorAll<HTMLInputElement>('[data-row-name]');
+const specialtyInputs = sheet.querySelectorAll<HTMLInputElement>('[data-specialty]');
 const healthTrack = sheet.querySelector<HealthTrack>('health-track')!;
 const rowRatings = sheet.querySelectorAll<RatingControl>('[data-row-rating]');
 const stepperButtons = sheet.querySelectorAll<HTMLButtonElement>('[data-step]');
@@ -87,6 +90,12 @@ function drawRowNames(character: V20Character): void {
   }
 }
 
+function drawSpecialties(character: V20Character): void {
+  for (const input of specialtyInputs) {
+    showText(input, specialtyText(character, input.dataset.specialty as SpecialtyRef));
+  }
+}
+
 function drawRowRatings(character: V20Character, mode: SheetMode): void {
   for (const rating of rowRatings) {
     const ref = rating.dataset.rowRating as NamedRowRef;
@@ -110,6 +119,7 @@ function render(character: V20Character, mode: SheetMode): void {
   drawTextInputs(character);
   drawTraitRatings(character, mode);
   drawRowNames(character);
+  drawSpecialties(character);
   drawRowRatings(character, mode);
   drawTraitCards(sheet, character, mode, pool.selection());
   drawResourceCards(sheet, character);
@@ -157,6 +167,14 @@ function bindRowNames(apply: Apply): void {
   }
 }
 
+function bindSpecialties(apply: Apply): void {
+  for (const input of specialtyInputs) {
+    input.addEventListener('input', () => {
+      apply((current) => setSpecialty(current, input.dataset.specialty as SpecialtyRef, input.value));
+    });
+  }
+}
+
 function bindRowRatings(apply: Apply): void {
   for (const rating of rowRatings) {
     rating.addEventListener('change', (event) => {
@@ -198,6 +216,7 @@ function bindEditListeners(apply: Apply): void {
   bindTextInputs(apply);
   bindTraitRatings(apply);
   bindRowNames(apply);
+  bindSpecialties(apply);
   bindRowRatings(apply);
   bindHealthTrack(apply);
   bindSteppers(apply);

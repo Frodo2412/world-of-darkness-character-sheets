@@ -172,6 +172,9 @@ export function rangeOf(trait: TraitRef): Range {
   return RATING_RANGES[section];
 }
 
+/** Names a trait that can carry a specialty: any attribute or fixed ability. */
+export type SpecialtyRef = `attributes.${AttributeKey}` | `abilities.${AbilityKey}`;
+
 /** Names the write-in ability of one ability group. */
 export type CustomAbilityRef = `customAbilities.${AbilityGroupKey}`;
 

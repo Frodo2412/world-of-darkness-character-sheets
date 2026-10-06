@@ -27,10 +27,13 @@ The same visual language (colors, typefaces, cards, buttons, application bar) is
 to the roster and the character builder so the app looks like one product. Their layout
 and behavior do not change.
 
-Out of scope: the "Disciplines and power detail" frame, Discipline power lists and their
-dice counts, the Backgrounds / Merits & Flaws / Inventory / History & Relationships tabs,
-the session label, the settings icon, any stored-data schema change, a light theme, and
-new roster or builder behavior.
+Out of scope: the "Disciplines and power detail" frame, the Backgrounds / Merits & Flaws /
+Inventory / History & Relationships tabs, the session label, the settings icon, a light
+theme, and new roster or builder behavior.
+
+**Amendment (2026-10-06).** Three omissions were reversed after the frame and the build
+were compared: Discipline power lists with their dice, specialties, and a blood-per-turn
+figure that follows the generation. They are specified below and marked *(amended)*.
 
 ## Architecture Specification
 
@@ -43,7 +46,7 @@ at runtime, and each typeface declares a system fallback stack.
 
 | Component | Change | Constraint |
 | --- | --- | --- |
-| Character model (`src/domain/v20/`) | New pure functions: blood pool maximum from the Generation text, current wound penalty from the health track, dice pool from an attribute, an ability and a wound penalty, and a temporary-willpower step that respects permanent | Pure TypeScript, no DOM. `V20Character` and `schemaVersion` are unchanged; no migration |
+| Character model (`src/domain/v20/`) | New pure functions: blood pool maximum from the Generation text, current wound penalty from the health track, dice pool from an attribute, an ability and a wound penalty, and a temporary-willpower step that respects permanent | Pure TypeScript, no DOM. *(amended)* `V20Character` gains `specialties`; `schemaVersion` stays 1 and a record saved without the field is read as having none |
 | Character store (`src/storage/`) | None | Stored records are read and written exactly as today, including fields the new sheet no longer shows |
 | Design tokens (`src/styles/global.css`) | Colors, typefaces, type scale, radii and spacing replaced with the Figma values; shared card, button and application-bar styles | One token set for all three pages. No color has its only definition outside `:root` |
 | Layout (`src/layouts/Layout.astro`) | Renders the application bar on every page | The bar's identity links to the roster |
@@ -74,8 +77,9 @@ starts in play mode. The one exception is a character created with the roster's
 | Blood Pool current, temporary Willpower, Health boxes | Editable | Editable |
 | Name, Clan, Generation, Concept, Nature, Demeanor | Read-only text | Text inputs |
 | Attributes, Abilities, custom abilities | Read-only dots; selectable for the pool | Editable dots (custom: name + dots) |
-| Disciplines | Named rows only, read-only | All 6 write-in rows, name + dots |
-| Virtues, Humanity rating, path name, permanent Willpower, blood per turn | Read-only | Editable |
+| Disciplines | Named rows only, read-only; *(amended)* each opens to list its powers | All 6 write-in rows, name + dots |
+| Virtues, Humanity rating, path name, permanent Willpower | Read-only | Editable |
+| Specialties *(amended)* | A mark after the trait's name; named in the Selected pool | A text field on every attribute and fixed ability row |
 
 **Derived values.**
 
@@ -83,6 +87,17 @@ starts in play mode. The one exception is a character created with the roster's
   maximum (13th and higher 10, 12th 11, 11th 12, 10th 13, 9th 14, 8th 15, 7th 20, 6th 30,
   5th 40, 4th 50). With no readable number, or one outside 4–15, the maximum is the
   sheet's existing Blood Pool maximum.
+- *Blood per turn (amended)*: the same generation selects the V20 blood per turn (10th and
+  higher 1, 9th 2, 8th 3, 7th 4, 6th 6, 5th 8, 4th 10). With no recognised generation
+  none is shown. It is never entered by hand; the stored per-turn text is kept but unused.
+- *Discipline powers (amended)*: a named Discipline rated 1 or more that matches the
+  built-in catalogue (the builder's seventeen Disciplines, matched ignoring case and
+  spacing) lists its powers up to its rating, at most five. A power that rolls an
+  attribute + an ability shows that dice pool, less the wound penalty; any other power
+  shows what it uses instead ("No roll", "Manipulation + Courage"). The catalogue is
+  the System entries of V20 chapter four. Celerity, Fortitude
+  and Potence show a one-line note; Thaumaturgy and Necromancy, learned by path, list no
+  powers. A Discipline the catalogue does not know shows its name and rating only.
 - *Wound penalty*: the penalty of the most severe health level holding any damage; none
   when the track is empty or only Bruised is marked. Incapacitated is its own state, not
   a number.
@@ -112,8 +127,7 @@ announced to assistive technology.
 2. Colors, typefaces, type sizes, corner radii and spacing on the sheet match the Figma
    frame's values; a side-by-side screenshot comparison at 1512px shows no structural
    difference other than the omissions listed under Out of scope.
-3. No tab bar, session label, settings icon, Discipline power list or expand chevron is
-   rendered.
+3. No tab bar, session label or settings icon is rendered.
 4. The roster and builder render with the same application bar, colors, typefaces, card
    and button styles as the sheet; every existing roster and builder scenario still
    passes. Builder scenarios that assert on sheet content are adapted to the play view;
@@ -139,8 +153,8 @@ announced to assistive technology.
 
 12. Blood Pool shows current / maximum, with the maximum derived from Generation per the
     table above, a tracker (one segment per point for a maximum of 20 or fewer, a single
-    proportional bar above that) filled up to current, and the stored blood-per-turn
-    text when present.
+    proportional bar above that) filled up to current, and *(amended)* the blood per
+    turn derived from Generation, with no field to enter it.
 13. Blood Pool − and + change current by one; − is unavailable at 0 and + at the maximum.
     A stored current above the maximum is shown as stored, and only − is available.
 14. Willpower shows temporary / permanent and permanent as dots. − and + change temporary
@@ -170,6 +184,11 @@ announced to assistive technology.
 
 21. Disciplines lists each named Discipline with its rating in play mode, and shows an
     empty-state line when none is named; edit mode shows all six write-in rows.
+    *(amended)* A Discipline in the catalogue opens to show its powers with their dice;
+    the first starts open, and one the player opened stays open when the dice change.
+21a. *(amended)* Every attribute and fixed ability has a specialty field in edit mode. In
+    play a trait with a specialty is marked after its name, its button's description ends
+    ", specialty <text>", and the Selected pool names the specialty of each chosen trait.
 22. Virtues shows the three virtues with their ratings.
 23. A custom ability with a name appears as the last row of its group in play mode; an
     unnamed one does not. Edit mode always shows the write-in row for each group.
@@ -223,6 +242,7 @@ All gap and ambiguity findings from the Ambiguity Resolution Protocol, with thei
 | Light theme | `inferable` | inference | The app is dark-only today and the design is dark-only |
 | Criterion 4 required builder scenarios to pass with unchanged steps, but six assert on sheet content | `requires-stakeholder-input` | human | Amended at plan approval: those scenarios are adapted and listed in the plan |
 | Criterion 12 required one tracker segment per blood point, which draws 50 boxes at the fallback maximum | `requires-stakeholder-input` | human | Amended at plan approval: a single bar above a maximum of 20 |
+| Discipline powers, specialties and blood per turn, first omitted | `requires-stakeholder-input` | human | Amended 2026-10-06: built-in power catalogue for the builder's Disciplines; a specialty on any attribute or fixed ability, with no rating gate; blood per turn derived from Generation |
 | Tests asserting exact pixel values per token | `LOW_VALUE` (skipped) | inference | No branching logic; covered by the screenshot comparison in criterion 2 |
 
 ## Consistency Gate

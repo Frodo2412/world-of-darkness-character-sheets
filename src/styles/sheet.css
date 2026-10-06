@@ -213,6 +213,30 @@ html:has(.sheet-page) {
 	overflow-wrap: anywhere;
 }
 
+/* While editing, a trait's specialty is written between its name and its dots. */
+.sheet .trait-row .trait-specialty {
+	flex: 1 1 6rem;
+	min-inline-size: 0;
+	min-block-size: 0;
+	padding-block: 0.125rem;
+	font-size: var(--text-caption);
+}
+
+/* With the specialty beside the name, the dots take a line of their own: the row needs air above and below. */
+.sheet[data-sheet-mode='edit'] .trait-row:has(> .trait-specialty) {
+	padding-block: var(--space-2);
+}
+
+/* In play a trait with a specialty carries a mark after its name; the specialty itself is in the name's description. */
+.trait-row.has-specialty > .trait-select::after {
+	content: '✧';
+	content: '✧' / '';
+	margin-inline-start: var(--space-2);
+	font-weight: 400;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+}
+
 /* In play the name is a button that chooses the trait for a dice pool. It looks like the name it holds. */
 .trait-select {
 	font: inherit;
@@ -356,6 +380,12 @@ html:has(.sheet-page) {
 	overflow-wrap: anywhere;
 }
 
+.pool-specialties {
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
 .pool-prompt {
 	color: var(--color-muted);
 }
@@ -393,10 +423,79 @@ html:has(.sheet-page) {
 	overflow-wrap: anywhere;
 }
 
-.discipline-entry + .discipline-entry {
+.discipline + .discipline {
 	margin-block-start: var(--space-row);
 	padding-block-start: var(--space-row);
 	border-block-start: var(--stroke) solid var(--color-divider);
+}
+
+/* A Discipline with powers opens to list them: its line is the control, with a chevron at its end. */
+summary.discipline-entry {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+	list-style: none;
+	cursor: pointer;
+	border-radius: var(--radius-row);
+}
+
+summary.discipline-entry::-webkit-details-marker {
+	display: none;
+}
+
+summary.discipline-entry::after {
+	content: '';
+	flex: none;
+	inline-size: 0.4375rem;
+	block-size: 0.4375rem;
+	margin-inline-end: 0.25rem;
+	border: solid var(--color-muted);
+	border-width: 0 1.5px 1.5px 0;
+	transform: translateY(-25%) rotate(45deg);
+}
+
+details[open] > summary.discipline-entry::after {
+	transform: translateY(25%) rotate(-135deg);
+}
+
+.discipline-note {
+	margin: var(--space-2) 0 0;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+}
+
+.power-list {
+	display: grid;
+	gap: var(--space-2);
+	margin: var(--space-2) 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* A power: its name with the dice to roll at the row's end, and under the name where they come from. */
+.power {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.125rem var(--space-2);
+}
+
+.power-name {
+	overflow-wrap: anywhere;
+}
+
+.power-dice {
+	grid-area: 1 / 2 / span 2;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.power-detail {
+	grid-column: 1;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
 }
 
 /* Rows in a side card sit apart. A virtue is its name and five dots, taller and rounder than a trait row, with no number. */

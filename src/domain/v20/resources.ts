@@ -2,8 +2,8 @@
 // can hold, how far each resource may be stepped and how wounded the character
 // is. Computed on every draw, never stored.
 
-import { namedCustomAbility, traitValue, type V20Character } from './character';
-import { GENERATION_TABLE, generationNumber } from './generations';
+import { namedCustomAbility, specialtyOf, traitValue, type V20Character } from './character';
+import { GENERATION_TABLE, generationNumber, type GenerationRow } from './generations';
 import {
   ABILITY_GROUPS,
   ATTRIBUTE_GROUPS,
@@ -25,15 +25,24 @@ export interface BloodPoolMaximum {
   assumed: boolean;
 }
 
-/** The most blood the character can hold, read from the Generation text. */
-export function bloodPoolMaximum(character: V20Character): BloodPoolMaximum {
+/** What the Generation text fixes for the character, or undefined when it gives no recognised generation. */
+function generationRow(character: V20Character): GenerationRow | undefined {
   const generation = generationNumber(character.header.generation);
   const row = GENERATION_TABLE.find((candidate) => candidate.generation === generation);
-  if (row) return { maximum: row.bloodPoolMax, assumed: false };
-  if (generation !== undefined && generation > LEAST_POTENT.generation && generation <= LAST_RECOGNISED_GENERATION) {
-    return { maximum: LEAST_POTENT.bloodPoolMax, assumed: false };
-  }
-  return { maximum: BLOOD_POOL_RANGE.max, assumed: true };
+  if (row) return row;
+  const pastTable = generation !== undefined && generation > LEAST_POTENT.generation && generation <= LAST_RECOGNISED_GENERATION;
+  return pastTable ? LEAST_POTENT : undefined;
+}
+
+/** The most blood the character can hold, read from the Generation text. */
+export function bloodPoolMaximum(character: V20Character): BloodPoolMaximum {
+  const row = generationRow(character);
+  return row ? { maximum: row.bloodPoolMax, assumed: false } : { maximum: BLOOD_POOL_RANGE.max, assumed: true };
+}
+
+/** The blood the character may spend in a turn, read from the Generation text; undefined when it gives no recognised generation. */
+export function bloodPerTurn(character: V20Character): number | undefined {
+  return generationRow(character)?.bloodPerTurn;
 }
 
 export interface Wound {
@@ -68,6 +77,8 @@ export interface PoolSelection {
 export interface PoolTerm {
   label: string;
   rating: number;
+  /** The trait's specialty, when the player has recorded one. */
+  specialty?: string;
 }
 
 export interface DicePool {
@@ -87,21 +98,22 @@ const TRAIT_LABELS = new Map<string, string>(
   ],
 );
 
+function fixedTerm(character: V20Character, trait: `attributes.${AttributeKey}` | `abilities.${AbilityKey}`): PoolTerm {
+  const term: PoolTerm = { label: TRAIT_LABELS.get(trait)!, rating: traitValue(character, trait) };
+  const specialty = specialtyOf(character, trait);
+  if (specialty !== undefined) term.specialty = specialty;
+  return term;
+}
+
 function abilityTerm(character: V20Character, ability: NonNullable<PoolSelection['ability']>): PoolTerm | undefined {
-  if (ability.startsWith('abilities.')) {
-    const fixed = ability as `abilities.${AbilityKey}`;
-    return { label: TRAIT_LABELS.get(fixed)!, rating: traitValue(character, fixed) };
-  }
+  if (ability.startsWith('abilities.')) return fixedTerm(character, ability as `abilities.${AbilityKey}`);
   const named = namedCustomAbility(character, ability as CustomAbilityRef);
   return named && { label: named.name, rating: named.rating };
 }
 
 /** The dice pool of the selected attribute and ability, less what the wound takes off. */
 export function dicePool(character: V20Character, selection: PoolSelection): DicePool {
-  const attribute = selection.attribute && {
-    label: TRAIT_LABELS.get(selection.attribute)!,
-    rating: traitValue(character, selection.attribute),
-  };
+  const attribute = selection.attribute && fixedTerm(character, selection.attribute);
   const ability = selection.ability && abilityTerm(character, selection.ability);
   const wound = woundState(character);
   const incapacitated = wound === 'incapacitated';

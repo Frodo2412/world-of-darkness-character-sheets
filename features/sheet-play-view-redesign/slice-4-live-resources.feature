@@ -67,20 +67,31 @@ Feature: Live resources
     Then the Blood Pool reads "5 / 15"
     And assistive technology was told nothing about the Blood Pool
 
-  Scenario: Blood per turn is shown only when recorded
-    Given a saved character whose blood per turn is "1"
-    And another saved character with no blood per turn recorded
-    When the player opens each character from the roster
-    Then the first Blood Pool card shows "1 blood / turn"
-    And the second shows no per-turn text
+  Scenario Outline: Blood per turn follows the generation
+    Given a saved character with generation "<generation>" and 5 blood
+    And the player has that character's sheet open in play mode
+    Then the Blood Pool card shows "<per turn> blood / turn"
 
-  Scenario: Blood per turn can be edited
-    Given the player is editing a saved character
-    When they enter "3" as Blood per turn and reload the sheet
+    Examples:
+      | generation | per turn |
+      | 13th       | 1        |
+      | 10th       | 1        |
+      | 9          | 2        |
+      | 8th        | 3        |
+      | 4          | 10       |
+
+  Scenario: No blood per turn is shown for a generation that is not recognised
+    Given a saved character with generation "banana" and 5 blood
+    And the player has that character's sheet open in play mode
+    Then the Blood Pool card shows no per-turn text
+
+  Scenario: Changing the generation changes the blood per turn
+    Given the player is editing a saved character with generation "13" and 5 blood
+    When they enter "8" as Generation
     Then the Blood Pool card shows "3 blood / turn"
 
-  Scenario: Blood per turn cannot be changed in play mode
-    Given the player has a saved character's sheet open in play mode
+  Scenario: Blood per turn is never entered by hand
+    Given the player is editing a saved character
     Then no Blood per turn field is offered
 
   Scenario: Spending and regaining willpower

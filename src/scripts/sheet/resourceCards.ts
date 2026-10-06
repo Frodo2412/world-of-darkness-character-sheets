@@ -3,6 +3,7 @@ import type { RatingControl } from '../../components/controls/rating-control';
 import type { V20Character } from '../../domain/v20/character';
 import { diceLabel } from '../../domain/v20/identity';
 import {
+  bloodPerTurn,
   resourceReading,
   woundState,
   type Resource,
@@ -76,10 +77,10 @@ function drawBar(tracker: HTMLElement, { current, maximum }: ResourceReading): v
 
 function drawBlood(root: ParentNode, character: V20Character): void {
   const reading = resourceReading(character, 'blood');
-  const perTurn = character.bloodPool.perTurn.trim();
+  const perTurn = bloodPerTurn(character);
 
   drawStepper(root, 'blood', reading);
-  showOptional(root, 'blood.perTurn', perTurn === '' ? '' : `${perTurn} blood / turn`);
+  showOptional(root, 'blood.perTurn', perTurn === undefined ? '' : `${perTurn} blood / turn`);
   show(root, 'blood.assumed', `Generation not recognised · maximum assumed ${reading.maximum}`);
   showBlock(root, 'blood.assumed', reading.assumed);
 
