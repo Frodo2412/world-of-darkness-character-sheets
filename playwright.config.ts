@@ -14,6 +14,9 @@ const testDir = defineBddConfig({
   // A Given and a Then may share wording ("Brawl is rated 3" sets it up or
   // checks it), so steps are matched by keyword as well as text.
   matchKeywords: true,
+  // Scenarios approved but not yet built carry @pending and are not generated.
+  // Each build step removes the tag from the scenarios it binds.
+  tags: 'not @pending',
 });
 
 export default defineConfig({
