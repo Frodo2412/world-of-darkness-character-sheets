@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { V20Character } from '../../src/domain/v20/character';
 import { Given, Then, When } from './fixtures';
-import { announcements } from './support/announcements';
+import { announcements, watchAnnouncements } from './support/announcements';
 import { createCharacter, openRoster, rosterEntries, sheetField } from './support/pages';
 import { mark, rating, setRating } from './support/ratings';
 import { characterWith, givenSaved, saveCharacters } from './support/seed';
@@ -83,6 +83,7 @@ async function openFirstFromRoster(page: Page): Promise<void> {
   await openRoster(page);
   await rosterEntries(page).getByRole('link').first().click();
   await expect(editButton(page).or(doneButton(page))).toBeVisible();
+  await watchAnnouncements(page);
 }
 
 When(/^(?:the player opens|they open) that character from the roster$/, async ({ page }) => {
@@ -216,7 +217,7 @@ const times = async (page: Page, message: string): Promise<number> =>
 // moment after the first, so the page is given a moment to make one before it is counted.
 Then('assistive technology is told {string}', async ({ page }, message: string) => {
   await expect.poll(() => times(page, message)).toBeGreaterThan(0);
-  // 150 ms: a duplicate write comes on the next task or two, so this is ample; the check was seen to fail with one injected.
+  // Mutation-checked: with a duplicate write injected 30 ms after the first, this wait makes the check fail and, without it, the check passes. 150 ms leaves ample margin over that.
   await page.evaluate(() => new Promise((settled) => setTimeout(settled, 150)));
   expect(await times(page, message)).toBe(1);
 });

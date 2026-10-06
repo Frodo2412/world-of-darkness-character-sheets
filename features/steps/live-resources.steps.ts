@@ -3,7 +3,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import type { V20Character } from '../../src/domain/v20/character';
 import type { HealthLevelKey } from '../../src/domain/v20/traits';
 import { Given, Then, When } from './fixtures';
-import { announcements } from './support/announcements';
+import { announcements, watchAnnouncements } from './support/announcements';
 import { openRoster, rosterEntries, sheetAddress, sheetField } from './support/pages';
 import { rating, setRating } from './support/ratings';
 import { characterArranged, characterWith, givenSaved, saveCharacters } from './support/seed';
@@ -121,6 +121,7 @@ When('the player opens each character from the roster', async ({ page, memory })
     await openRoster(page);
     await rosterEntries(page).nth(position).getByRole('link').click();
     await expect(editButton(page).or(doneButton(page))).toBeVisible();
+    await watchAnnouncements(page);
     memory.visited.push(await bloodPoolCard(page).innerText());
   }
 });

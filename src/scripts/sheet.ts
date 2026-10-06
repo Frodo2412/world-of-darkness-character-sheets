@@ -94,9 +94,10 @@ function drawRowRatings(character: V20Character, mode: SheetMode): void {
     if (row === undefined) continue;
     // A write-in rating is announced with the name the player gave it.
     const label = rating.dataset.label!;
+    const name = row.name.trim();
     drawRating(rating, {
       ref,
-      label: row.name ? `${label}: ${row.name}` : label,
+      label: name ? `${label}: ${name}` : label,
       value: row.rating,
       storedMax: RATING_RANGE.max,
       mode,

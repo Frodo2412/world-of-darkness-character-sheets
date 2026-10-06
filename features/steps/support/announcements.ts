@@ -25,7 +25,14 @@ export async function watchAnnouncements(page: Page): Promise<void> {
   });
 }
 
-/** Everything announced since the page was watched. */
+/**
+ * Everything announced since the page was watched. A page that was never watched (or was
+ * navigated since) would report nothing whatever happened, so asking for it is an error.
+ */
 export async function announcements(page: Page): Promise<string[]> {
-  return page.evaluate(() => (window as unknown as { announcements?: string[] }).announcements ?? []);
+  const log = await page.evaluate(() => (window as unknown as { announcements?: string[] }).announcements);
+  if (log === undefined) {
+    throw new Error('announcements() was read on a page that is not being watched: call watchAnnouncements(page) after opening it');
+  }
+  return log;
 }
