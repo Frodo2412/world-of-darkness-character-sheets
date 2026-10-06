@@ -2,7 +2,7 @@
 
 **Created**: 2026-10-05
 **Branch**: `feat/sheet-play-view-redesign`
-**Status**: approved
+**Status**: in-progress
 **Gherkin persistence**: features
 **Spec**: `docs/specs/sheet-play-view-redesign.md`
 **Design**: Figma `TAvjmr6RE0rHV8kz56Ffs0`, frame `5:2725`
@@ -1211,15 +1211,15 @@ graph TD
   - [x] Step 5.2: Virtues card and the workspace grid
 
 #### Wave 6
-- [ ] Slice 6: Selected pool
-  - [ ] Step 6.1: Dice pool in the domain
-  - [ ] Step 6.2: Selectable rows and the Selected pool card
+- [x] Slice 6: Selected pool
+  - [x] Step 6.1: Dice pool in the domain
+  - [x] Step 6.2: Selectable rows and the Selected pool card
 
 #### Wave 7
-- [ ] Slice 7: Layout, accessibility and visual verification
-  - [ ] Step 7.1: Responsive layout
-  - [ ] Step 7.2: Accessibility and keyboard verification
-  - [ ] Step 7.3: Visual comparison against the Figma frame
+- [x] Slice 7: Layout, accessibility and visual verification
+  - [x] Step 7.1: Responsive layout
+  - [x] Step 7.2: Accessibility and keyboard verification
+  - [x] Step 7.3: Visual comparison against the Figma frame
 
 ## Plan Review Summary
 
