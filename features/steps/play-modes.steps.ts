@@ -25,8 +25,8 @@ import {
 } from './support/sheet';
 import { acceptWrites, refuseWrites } from './support/storage';
 
-const IDENTITY_FIELDS = ['Name', 'Clan', 'Generation', 'Concept', 'Nature', 'Demeanor'];
-const HIDDEN_FIELDS = ['Player', 'Chronicle', 'Sire'];
+const IDENTITY_FIELDS = ['Name', 'Clan', 'Generation', 'Concept', 'Chronicle', 'Nature', 'Demeanor'];
+const HIDDEN_FIELDS = ['Player', 'Sire'];
 
 // Arranging
 
@@ -175,13 +175,13 @@ Then('no identity text field is offered', async ({ page }) => {
 // Edit mode
 
 Then(
-  'Name, Clan, Generation, Concept, Nature and Demeanor can be edited',
+  'Name, Clan, Generation, Concept, Chronicle, Nature and Demeanor can be edited',
   async ({ page }) => {
     for (const label of IDENTITY_FIELDS) await expect(sheetField(page, label)).toBeEditable();
   },
 );
 
-Then('there is no field for Player, Chronicle or Sire', async ({ page }) => {
+Then('there is no field for Player or Sire', async ({ page }) => {
   await expect(identityRegion(page)).toBeVisible();
   for (const label of HIDDEN_FIELDS) await expect(sheetField(page, label)).toHaveCount(0);
 });
@@ -377,9 +377,9 @@ const HIDDEN_VALUES = {
 };
 
 Given(
-  'a saved character with {string} as Player, {string} as Chronicle, {string} as Sire, three lines of Notes with leading spaces, a Weakness, an Experience value, a Bearing, a Bearing modifier and a Background {string} rated {int}',
-  async ({ page, memory }, player: string, chronicle: string, sire: string, background: string, rated: number) => {
-    await givenSaved(page, memory, { name: 'Fatima', player, chronicle, sire }, (character) => {
+  'a saved character with {string} as Player, {string} as Sire, three lines of Notes with leading spaces, a Weakness, an Experience value, a Bearing, a Bearing modifier and a Background {string} rated {int}',
+  async ({ page, memory }, player: string, sire: string, background: string, rated: number) => {
+    await givenSaved(page, memory, { name: 'Fatima', player, sire }, (character) => {
       character.notes = HIDDEN_VALUES.notes;
       character.weakness = HIDDEN_VALUES.weakness;
       character.experience = HIDDEN_VALUES.experience;

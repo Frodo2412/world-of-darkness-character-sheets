@@ -20,8 +20,8 @@ Feature: Play and edit modes
   Scenario: Entering edit mode makes the identity editable
     Given the player has a saved character's sheet open in play mode
     When they activate "Edit character"
-    Then Name, Clan, Generation, Concept, Nature and Demeanor can be edited
-    And there is no field for Player, Chronicle or Sire
+    Then Name, Clan, Generation, Concept, Chronicle, Nature and Demeanor can be edited
+    And there is no field for Player or Sire
     And the sheet is marked "Editing"
     And the edit button now reads "Done editing"
     And keyboard focus is on the Name field
@@ -106,7 +106,7 @@ Feature: Play and edit modes
     And the whole name can be read
 
   Scenario: Values in hidden fields survive saving in either mode
-    Given a saved character with "Ana" as Player, "Madrid by Night" as Chronicle, "Moncada" as Sire, three lines of Notes with leading spaces, a Weakness, an Experience value, a Bearing, a Bearing modifier and a Background "Resources" rated 2
+    Given a saved character with "Ana" as Player, "Moncada" as Sire, three lines of Notes with leading spaces, a Weakness, an Experience value, a Bearing, a Bearing modifier and a Background "Resources" rated 2
     When the player opens that character and marks bashing damage on Bruised
     And they enter edit mode, enter "Lucita" as Name and reload the sheet
     Then the saved character still holds every one of those values exactly
