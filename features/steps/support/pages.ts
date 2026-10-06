@@ -65,6 +65,17 @@ export const summaryRow = (page: Page): Locator => page.locator('[data-slot="lib
 /** The row's left side: "Showing X of Y characters". */
 export const summaryCounts = (page: Page): Locator => entrySlot(summaryRow(page), 'library-counts');
 
+/** The search box, by the role and name a player meets it with. */
+export const searchField = (page: Page): Locator =>
+  page.getByRole('searchbox', { name: 'Search characters', exact: true });
+
+/** The list card's message for a filter that leaves nothing, with its way back. */
+export const noMatchState = (page: Page): Locator => page.locator('[data-slot="no-match"]');
+
+/** The button of the no-match state that takes every filter back. */
+export const clearFiltersButton = (page: Page): Locator =>
+  noMatchState(page).getByRole('button', { name: 'Clear filters', exact: true });
+
 /** The row's right side, which is not drawn when there is nothing to say. */
 export const chronicleBreakdown = (page: Page): Locator => entrySlot(summaryRow(page), 'chronicle-breakdown');
 
@@ -124,6 +135,8 @@ export async function expectTabs(page: Page, expected: string[]): Promise<void> 
     await expect(tab(page, text)).toHaveAccessibleName(tabAccessibleName(text));
   }
   await expect(browsingControls(page).and(tabs(page))).toHaveCount(expected.length);
+  // The tabs are only shown with the rest of the browsing tools, so the guard has to find the search field too.
+  await expect(browsingControls(page).and(searchField(page))).toHaveCount(1);
 }
 
 /** Waits for the tab showing `text` to be the one selected tab. */
@@ -172,11 +185,13 @@ export const createAction = (page: Page, name: string): Locator =>
 export const browsingControls = (page: Page): Locator =>
   page
     .getByRole('tab')
-    .or(page.getByRole('searchbox'))
-    .or(page.getByRole('textbox', { name: /search/i }))
+    .or(searchField(page))
     .or(page.getByRole('combobox', { name: /clan|sort/i }))
     .or(page.getByRole('group', { name: 'Status', exact: true }))
     .or(page.getByRole('radio'));
+
+/** A button the roster offers, by its name: one of the creator's two actions, or "Clear filters". */
+export const rosterButton = (page: Page, name: string): Locator => page.getByRole('button', { name, exact: true });
 
 /** Creates a character from the roster and ends on its sheet. */
 export async function createCharacter(page: Page): Promise<void> {

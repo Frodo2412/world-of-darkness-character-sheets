@@ -1,6 +1,7 @@
 import { INITIAL_FILTER, entriesOf, view, type LibraryEntry, type LibraryFilter, type LibraryView } from '../domain/v20/library';
 import { createBuildStore, type BuildStore } from '../storage/buildStore';
 import { browserStorage, createCharacterStore, type CharacterStore } from '../storage/characterStore';
+import { createControls, type Controls } from './roster/controls';
 import { builderUrl, drawEntry, editSheetUrl, findTemplates } from './roster/entries';
 import { createTabStrip, type TabStrip } from './roster/tabs';
 import { STORAGE_UNAVAILABLE, clearStatus, showStatus } from './status';
@@ -12,6 +13,10 @@ const tabStrip = document.querySelector<HTMLElement>('#chronicle-tabs')!;
 const counts = document.querySelector<HTMLElement>('#library-counts')!;
 const breakdown = document.querySelector<HTMLElement>('#library-breakdown')!;
 const emptyMessage = document.querySelector<HTMLParagraphElement>('#roster-empty')!;
+const tools = document.querySelector<HTMLElement>('#library-tools')!;
+const searchField = document.querySelector<HTMLInputElement>('#library-search')!;
+const noMatch = document.querySelector<HTMLElement>('#roster-no-match')!;
+const clearFiltersButton = document.querySelector<HTMLButtonElement>('#clear-filters')!;
 const newCharacterButton = document.querySelector<HTMLButtonElement>('#new-character')!;
 const buildButton = document.querySelector<HTMLButtonElement>('#build-character')!;
 const templates = findTemplates(document);
@@ -22,40 +27,65 @@ function load(store: CharacterStore, builds: BuildStore): LibraryEntry[] {
   return entriesOf({ characters: store.list(), builds: builds.list() });
 }
 
-/**
- * What the list card shows, chosen here and nowhere else: nothing when the browser withholds storage
- * (there is no library to be empty), otherwise whatever the model says. The model never learns of storage.
- */
-function cardState(state: LibraryView['state']): LibraryView['state'] | 'unavailable' {
-  return storage === undefined ? 'unavailable' : state;
+/** What the library column shows for a state of the library. */
+interface Parts {
+  /** The whole labelled section, "Library" heading included. */
+  section: boolean;
+  /** The tab strip and the browsing tools: how the player gets back what a filter took away. */
+  browsing: boolean;
+  /** The list card, which holds the entries, the no-match message and the summary row. */
+  card: boolean;
+  entries: boolean;
+  noMatch: boolean;
+  empty: boolean;
 }
 
-/** A pure redraw from the entries and the filter. The tabs keep their nodes: only their state is written. */
-function render(entries: readonly LibraryEntry[], filter: LibraryFilter, tabs: TabStrip): void {
+/**
+ * Which parts of the library column each state shows: the one place a state is turned into what is
+ * drawn. `unavailable` is the browser withholding storage, so there is no library to be empty; the
+ * model never learns of storage and says `entries`, `empty` or `no-match`.
+ */
+const SHOWN: Record<LibraryView['state'] | 'unavailable', Parts> = {
+  entries: { section: true, browsing: true, card: true, entries: true, noMatch: false, empty: false },
+  'no-match': { section: true, browsing: true, card: true, entries: false, noMatch: true, empty: false },
+  empty: { section: true, browsing: false, card: false, entries: false, noMatch: false, empty: true },
+  // Without storage the whole labelled section goes, so no empty "Library" region is left behind.
+  unavailable: { section: false, browsing: false, card: false, entries: false, noMatch: false, empty: false },
+};
+
+const partsShownFor = (state: LibraryView['state']): Parts => SHOWN[storage === undefined ? 'unavailable' : state];
+
+/** A pure redraw from the entries and the filter. The tabs and controls keep their nodes: only their state is written. */
+function render(entries: readonly LibraryEntry[], filter: LibraryFilter, tabs: TabStrip, controls: Controls): void {
   const current = view(entries, filter);
-  const state = cardState(current.state);
+  const shown = partsShownFor(current.state);
   list.replaceChildren(...current.shown.map((entry) => drawEntry(templates, entry)));
   counts.textContent = current.countsLine;
   breakdown.textContent = current.breakdown;
   breakdown.hidden = current.breakdown === '';
-  tabs.sync(current.tab, state === 'entries');
-  // Without storage the whole labelled section goes, so no empty "Library" region is left behind.
-  librarySection.hidden = state === 'unavailable';
-  library.hidden = state === 'empty' || state === 'unavailable';
-  emptyMessage.hidden = state !== 'empty';
+  tabs.sync(current.tab, shown.browsing);
+  controls.sync(current, filter);
+  librarySection.hidden = !shown.section;
+  tools.hidden = !shown.browsing;
+  library.hidden = !shown.card;
+  list.hidden = !shown.entries;
+  noMatch.hidden = !shown.noMatch;
+  emptyMessage.hidden = !shown.empty;
 }
 
 /**
  * Draws the library. The tab strip is built here, once, from the tabs of the unfiltered view; the filter
- * is held here, and choosing a tab patches it and redraws. The library is only ever redrawn, never re-read.
+ * is held here, and every control patches it through `change`, which redraws. The library is only ever redrawn, never re-read.
  */
 function open(entries: readonly LibraryEntry[]): void {
   let filter = INITIAL_FILTER;
-  const tabs = createTabStrip(tabStrip, library, view(entries, filter).tabs, (tab) => {
-    filter = { ...filter, tab };
-    render(entries, filter, tabs);
-  });
-  render(entries, filter, tabs);
+  const change = (patch: Partial<LibraryFilter>): void => {
+    filter = { ...filter, ...patch };
+    render(entries, filter, tabs, controls);
+  };
+  const tabs = createTabStrip(tabStrip, library, view(entries, filter).tabs, (tab) => change({ tab }));
+  const controls = createControls({ search: searchField, clear: clearFiltersButton }, change);
+  render(entries, filter, tabs, controls);
 }
 
 /**

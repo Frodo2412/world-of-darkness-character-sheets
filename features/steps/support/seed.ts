@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { blankCharacter, type V20Character } from '../../../src/domain/v20/character';
+import { CLAN_NAMES } from '../../../src/domain/v20/creation/rules';
 import { createCharacterStore, type StoragePort } from '../../../src/storage/characterStore';
 import { buildWith, saveBuilds } from './builder';
 import { overwriteRecord, type StoredRecord } from './storage';
@@ -112,6 +113,46 @@ export async function saveInOrder(
 ): Promise<void> {
   memory.saved = inCreationOrder(...headers);
   await saveCharacters(page, memory.saved);
+}
+
+/** One row of a scenario's table of what is saved: a character or a build in progress. */
+export interface LibraryRow {
+  kind: 'character' | 'build';
+  name: string;
+  clan: string;
+  concept: string;
+  player: string;
+  chronicle: string;
+}
+
+/**
+ * A build holds one of the clans the builder offers, spelled as it spells them; a record with any
+ * other spelling is one the app cannot read. A table that writes a build's clan in another case
+ * ("brujah") means that clan, so it is stored as the builder would.
+ */
+const clanAsBuilt = (clan: string): string =>
+  CLAN_NAMES.find((name) => name.toLowerCase() === clan.trim().toLowerCase()) ?? clan;
+
+/**
+ * Characters and builds created one after the other, as the table lists them: the ids are
+ * explicit and strictly ascending across both stores, which is the order the roster lists
+ * them in. A build has no player, so that column is ignored for one.
+ */
+export async function saveLibraryInOrder(
+  page: Page,
+  memory: { saved: V20Character[] },
+  rows: LibraryRow[],
+): Promise<void> {
+  const idAt = (index: number): string => `ordered-${String(index + 1).padStart(4, '0')}`;
+  const characters = rows.flatMap(({ kind, name, clan, concept, player, chronicle }, index) =>
+    kind === 'character' ? [{ ...characterWith({ name, clan, concept, player, chronicle }), id: idAt(index) }] : [],
+  );
+  const builds = rows.flatMap(({ kind, name, clan, concept, chronicle }, index) =>
+    kind === 'build' ? [{ ...buildWith({ clan: clanAsBuilt(clan), concept: { name, concept, chronicle } }), id: idAt(index) }] : [],
+  );
+  memory.saved = characters;
+  await saveCharacters(page, characters);
+  await saveBuilds(page, builds);
 }
 
 /** Headers that differ only in their chronicle: '' leaves it blank. */

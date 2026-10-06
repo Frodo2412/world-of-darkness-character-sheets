@@ -1,6 +1,7 @@
 ---
 import CharacterCreator from '../components/roster/CharacterCreator.astro';
 import EntryTemplates from '../components/roster/EntryTemplates.astro';
+import LibraryTools from '../components/roster/LibraryTools.astro';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
 import '../styles/roster.css';
@@ -19,12 +20,17 @@ import '../styles/roster.css';
 			<section id="library-section" class="roster-library" aria-labelledby="library-label">
 				<h2 id="library-label" class="visually-hidden">Library</h2>
 				<p id="roster-empty" class="roster-empty" hidden>No characters yet. Create one to get started.</p>
+				<LibraryTools />
 				<div id="library" class="library" hidden>
 					<div class="library-heading">
 						<span class="library-title">Available characters</span>
 						<span>Vampire: The Masquerade · V20</span>
 					</div>
 					<ul id="entries" class="entries" aria-labelledby="roster-heading"></ul>
+					<div id="roster-no-match" class="no-match" data-slot="no-match" hidden>
+						<p>No characters match.</p>
+						<button id="clear-filters" type="button" class="button">Clear filters</button>
+					</div>
 					<div class="library-summary" data-slot="library-summary">
 						<p id="library-counts" data-slot="library-counts"></p>
 						<p id="library-breakdown" data-slot="chronicle-breakdown" hidden></p>

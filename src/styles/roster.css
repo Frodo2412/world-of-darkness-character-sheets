@@ -94,6 +94,68 @@ html:has(.roster-page) header {
 	outline-offset: -3px;
 }
 
+/* The browsing tools: one row above the list card, 16px clear of it. The search field takes the width
+   the other controls leave, so the clan filter of a later slice sits to its right, 12px away. */
+
+.library-tools {
+	display: flex;
+	align-items: stretch;
+	gap: var(--space-card);
+	margin-block-end: var(--space-3);
+}
+
+/* The field is drawn by this box, the input inside it having no edge of its own. The input fills the
+   box's height, so the whole field is the target and not a line of text within it. */
+.search-field {
+	flex: 1 1 0;
+	display: flex;
+	align-items: center;
+	/* 10px between the icon and the text. */
+	gap: var(--space-row);
+	min-inline-size: 0;
+	padding-inline: var(--space-card);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.search-field img {
+	flex: none;
+}
+
+.search-input {
+	flex: 1 1 auto;
+	min-inline-size: 0;
+	padding: var(--space-card) 0;
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	font: inherit;
+	font-size: var(--text-small);
+	color: var(--color-text);
+	appearance: none;
+}
+
+.search-input::placeholder {
+	color: var(--color-muted);
+	opacity: 1;
+}
+
+/* The frame has no clear mark in the field; "Clear filters" and the keyboard do that job. */
+.search-input::-webkit-search-cancel-button {
+	display: none;
+}
+
+/* The ring is drawn round the whole field, which is what the player sees as the control. */
+.search-input:focus-visible {
+	outline: none;
+}
+
+.search-field:focus-within {
+	outline: 3px solid var(--color-focus);
+	outline-offset: 2px;
+}
+
 /* The workspace: the creator card above the library; from 75rem the card is the second column.
    The card comes first in the document at every width, so its place is set here, not by `order`. */
 
@@ -273,6 +335,24 @@ html:has(.roster-page) header {
 	list-style: none;
 	margin: 0;
 	padding: 0;
+}
+
+/* A filter that leaves nothing: the message and the way back, in the place the entries were. */
+.no-match {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-3);
+	padding: var(--space-5) var(--entry-gutter);
+	background: var(--color-page);
+	border-block-end: var(--stroke) solid var(--color-line);
+	text-align: center;
+}
+
+.no-match p {
+	margin: 0;
+	font-size: var(--text-body);
+	color: var(--color-muted);
 }
 
 /* An entry: who it is and what to do with it, then where it belongs. */

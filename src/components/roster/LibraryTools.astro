@@ -1,0 +1,22 @@
+---
+import search from '../../assets/icons/search.svg';
+
+// The browsing tools above the list card. The search field is a native search box, named by a label
+// the eye does not need: the placeholder says what to type, the label says what the field is for.
+// It is outside any form, so pressing Enter submits nothing. Later slices add the clan filter,
+// the status filter and the sort control to this row. Hidden until there is a library to browse.
+---
+
+<div id="library-tools" class="library-tools" hidden>
+	<div class="search-field">
+		<img src={search.src} alt="" width="16" height="16" />
+		<label for="library-search" class="visually-hidden">Search characters</label>
+		<input
+			id="library-search"
+			class="search-input"
+			type="search"
+			autocomplete="off"
+			placeholder="Search by name, clan, or concept…"
+		/>
+	</div>
+</div>

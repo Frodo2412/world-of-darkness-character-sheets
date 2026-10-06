@@ -4,12 +4,15 @@ import { Given, Then, When } from './fixtures';
 import { buildWith, saveBuilds } from './support/builder';
 import {
   chronicleBreakdown,
+  clearFiltersButton,
   entryNamed,
+  noMatchState,
   expectSelectedTab,
   expectStoredEntriesListed,
   expectTabs,
   openRoster,
   rosterEntries,
+  searchField,
   selectedTab,
   summaryCounts,
   tab,
@@ -24,8 +27,10 @@ import {
   characterWith,
   inChronicles,
   saveCharacters,
+  saveLibraryInOrder,
   saveFromAnotherPage,
   saveInOrder,
+  type LibraryRow,
 } from './support/seed';
 
 /** The texts a step lists in double quotes: `"A", "B"` is A and B. */
@@ -36,6 +41,10 @@ const chroniclesOf = (list: string): string[] =>
   [...list.matchAll(/"([^"]*)"|none/g)].map((match) => match[1] ?? '');
 
 // Given
+
+Given('these characters and builds, created in this order', async ({ page, memory }, table: DataTable) => {
+  await saveLibraryInOrder(page, memory, table.hashes() as unknown as LibraryRow[]);
+});
 
 Given('saved characters {string} and {string} with no chronicle', async ({ page, memory }, first: string, second: string) => {
   await saveInOrder(page, memory, [{ name: first }, { name: second }]);
@@ -118,6 +127,22 @@ When('they select the tab {string}', async ({ page }, text: string) => {
   await tab(page, text).click();
 });
 
+// What a player does in the search field. The text is entered as keys when the keys are the point,
+// and in one go when only the result is.
+When('they search for {string}', async ({ page }, text: string) => {
+  await searchField(page).fill(text);
+});
+
+When('they type {string}, then {string}, in the search field', async ({ page }, first: string, second: string) => {
+  const field = searchField(page);
+  await field.pressSequentially(first);
+  await field.pressSequentially(second);
+});
+
+When('they clear the search field', async ({ page }) => {
+  await searchField(page).fill('');
+});
+
 When('they press {string}', async ({ page }, key: string) => {
   await page.keyboard.press(key);
 });
@@ -179,6 +204,39 @@ Then(
     await expect(unreadableEntries(page, 'character')).toHaveCount(1);
   },
 );
+
+// Then: the search
+
+Then('the roster shows {string}', async ({ page }, text: string) => {
+  await expect(noMatchState(page)).toBeVisible();
+  await expect(noMatchState(page)).toContainText(text);
+});
+
+Then('the roster shows {string} and offers {string}', async ({ page }, text: string, action: string) => {
+  await expect(noMatchState(page)).toContainText(text);
+  await expect(clearFiltersButton(page)).toBeVisible();
+  await expect(clearFiltersButton(page)).toHaveText(action);
+});
+
+Then('the roster lists no unreadable character', async ({ page }) => {
+  // The list is drawn, with what the search keeps of it, before an absence says anything.
+  await expect(summaryCounts(page)).toHaveText(/^Showing \d+ of \d+ characters$/);
+  await expect(unreadableEntries(page, 'character')).toHaveCount(0);
+});
+
+Then('the search field is empty and has focus', async ({ page }) => {
+  await expect(searchField(page)).toHaveValue('');
+  await expect(searchField(page)).toBeFocused();
+});
+
+Then("the search field's accessible name is {string}", async ({ page }, name: string) => {
+  await expect(searchField(page)).toBeVisible();
+  await expect(searchField(page)).toHaveAccessibleName(name);
+});
+
+Then('its placeholder reads {string}', async ({ page }, text: string) => {
+  await expect(searchField(page)).toHaveAttribute('placeholder', text);
+});
 
 // Then: the summary row
 

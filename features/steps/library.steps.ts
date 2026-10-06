@@ -20,6 +20,7 @@ import {
   openRoster,
   openSheetOf,
   rosterEntries,
+  rosterButton,
   rosterList,
   sheetAddress,
   sheetField,
@@ -140,7 +141,7 @@ When("the roster is restored from the browser's back and forward cache", async (
 });
 
 When('they choose {string}', async ({ page }, name: string) => {
-  await createAction(page, name).click();
+  await rosterButton(page, name).click();
 });
 
 When('they choose {string} twice', async ({ page }, name: string) => {

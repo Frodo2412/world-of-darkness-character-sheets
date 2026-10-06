@@ -8,7 +8,6 @@ Feature: Search
       | character | Mara Delacroix | Brujah   | Agitator    | Ana    |                |
       | build     | Silas Reed     | brujah   | Broker      |        | The Glass City |
 
-  @pending
   Scenario Outline: Search finds by name, clan or concept, ignoring case and accents
     When the player opens the roster
     And they search for "<text>"
@@ -20,7 +19,6 @@ Feature: Search
       | VENTRUE | Gabriel Ash    |
       | agitat  | Mara Delacroix |
 
-  @pending
   Scenario: The list narrows while typing and returns when cleared
     When the player opens the roster
     And they type "g", then "a", in the search field
@@ -28,7 +26,6 @@ Feature: Search
     When they clear the search field
     Then the roster lists 4 entries
 
-  @pending
   Scenario Outline: Search does not look at the player or the chronicle
     When the player opens the roster
     And they search for "<text>"
@@ -39,13 +36,11 @@ Feature: Search
       | Ana   |
       | Glass |
 
-  @pending
   Scenario: A search of only spaces matches everything
     When the player opens the roster
     And they search for "   "
     Then the roster lists 4 entries
 
-  @pending
   Scenario: Search works within the selected tab
     When the player opens the roster
     And they select the tab "The Glass City · 3"
@@ -53,22 +48,19 @@ Feature: Search
     Then the roster lists only "Gabriel Ash"
     And the summary row reads "Showing 1 of 4 characters"
 
-  @pending
   Scenario: Tab counts do not change while searching
     When the player opens the roster
     And they search for "eloise"
     Then the tabs are "All characters · 4", "The Glass City · 3", "Unassigned · 1"
 
-  @pending
   Scenario: An unreadable record is left out while searching
-    Given a saved character whose data has been damaged
+    Given a saved character whose data has become unreadable
     When the player opens the roster
     And they search for "e"
     Then the roster lists no unreadable character
     When they clear the search field
     Then the roster lists one unreadable character
 
-  @pending
   Scenario Outline: The summary row counts what is shown
     When the player opens the roster
     And they search for "<text>"
@@ -80,7 +72,6 @@ Feature: Search
       | e      | Showing 4 of 4 characters |
       | zzz    | Showing 0 of 4 characters |
 
-  @pending
   Scenario: Clearing a search that matched nothing
     When the player opens the roster
     And they select the tab "The Glass City · 3"
@@ -136,7 +127,6 @@ Feature: Search
       | Win32    | Control+K | is in     | Ctrl K |
       | Win32    | Meta+K    | is not in | Ctrl K |
 
-  @pending
   Scenario: The search field is named for what it does
     When the player opens the roster
     Then the search field's accessible name is "Search characters"
