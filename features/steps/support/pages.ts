@@ -59,8 +59,52 @@ export const actionName = (label: string, entryName: string): string => `${label
 export const entryAction = (entry: Locator, label: string): Locator =>
   entry.getByRole('link', { name: new RegExp(`^${escaped(label)} for `) });
 
-/** The row under the list: "Showing X of Y characters". */
+/** The row under the list: "Showing X of Y characters" on its left, the chronicle breakdown on its right. */
 export const summaryRow = (page: Page): Locator => page.locator('[data-slot="library-summary"]');
+
+/** The row's left side: "Showing X of Y characters". */
+export const summaryCounts = (page: Page): Locator => entrySlot(summaryRow(page), 'library-counts');
+
+/** The row's right side, which is not drawn when there is nothing to say. */
+export const chronicleBreakdown = (page: Page): Locator => entrySlot(summaryRow(page), 'chronicle-breakdown');
+
+/** The chronicle tab strip. */
+export const tabStrip = (page: Page): Locator => page.getByRole('tablist', { name: 'Chronicles', exact: true });
+
+/** Every tab of the strip, in order. */
+export const tabs = (page: Page): Locator => tabStrip(page).getByRole('tab');
+
+/** The selected tab. */
+export const selectedTab = (page: Page): Locator => tabStrip(page).getByRole('tab', { selected: true });
+
+/** The one panel the tabs control: the list card, while there are tabs. */
+export const tabPanel = (page: Page): Locator => page.getByRole('tabpanel');
+
+/**
+ * The text a tab shows, "Name · 4": its name and count as drawn. The comma that is read to assistive
+ * technology in their place is not shown, so the tab's text content is not what it shows.
+ */
+export const tabText = async (tab: Locator): Promise<string> =>
+  `${await entrySlot(tab, 'tab-label').textContent()} · ${await entrySlot(tab, 'tab-count').textContent()}`;
+
+/** The text each tab shows, in order. */
+export const shownTabTexts = async (page: Page): Promise<string[]> =>
+  Promise.all((await tabs(page).all()).map(tabText));
+
+/** The tab that shows `text` ("Name · 4"). */
+export function tab(page: Page, text: string): Locator {
+  const split = text.lastIndexOf(' · ');
+  const exactly = (shown: string): { hasText: RegExp } => ({ hasText: new RegExp(`^${escaped(shown)}$`) });
+  return tabs(page)
+    .filter({ has: page.locator('[data-slot="tab-label"]', exactly(text.slice(0, split))) })
+    .filter({ has: page.locator('[data-slot="tab-count"]', exactly(text.slice(split + 3))) });
+}
+
+/** What a tab showing `text` is called to assistive technology: "Name, 4". */
+export const tabAccessibleName = (text: string): string => {
+  const split = text.lastIndexOf(' · ');
+  return `${text.slice(0, split)}, ${text.slice(split + 3)}`;
+};
 
 /** Follows the link `label` for the character called `name`, wherever on the page it is. */
 export const followAction = (page: Page, label: string, name: string): Promise<void> =>

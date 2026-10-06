@@ -2,12 +2,15 @@ import { INITIAL_FILTER, entriesOf, view, type LibraryEntry, type LibraryFilter,
 import { createBuildStore, type BuildStore } from '../storage/buildStore';
 import { browserStorage, createCharacterStore, type CharacterStore } from '../storage/characterStore';
 import { builderUrl, drawEntry, editSheetUrl, findTemplates } from './roster/entries';
+import { createTabStrip, type TabStrip } from './roster/tabs';
 import { STORAGE_UNAVAILABLE, clearStatus, showStatus } from './status';
 
 const librarySection = document.querySelector<HTMLElement>('#library-section')!;
 const library = document.querySelector<HTMLElement>('#library')!;
 const list = document.querySelector<HTMLUListElement>('#entries')!;
+const tabStrip = document.querySelector<HTMLElement>('#chronicle-tabs')!;
 const counts = document.querySelector<HTMLElement>('#library-counts')!;
+const breakdown = document.querySelector<HTMLElement>('#library-breakdown')!;
 const emptyMessage = document.querySelector<HTMLParagraphElement>('#roster-empty')!;
 const newCharacterButton = document.querySelector<HTMLButtonElement>('#new-character')!;
 const buildButton = document.querySelector<HTMLButtonElement>('#build-character')!;
@@ -27,16 +30,32 @@ function cardState(state: LibraryView['state']): LibraryView['state'] | 'unavail
   return storage === undefined ? 'unavailable' : state;
 }
 
-/** A pure redraw from the entries and the filter. */
-function render(entries: readonly LibraryEntry[], filter: LibraryFilter): void {
+/** A pure redraw from the entries and the filter. The tabs keep their nodes: only their state is written. */
+function render(entries: readonly LibraryEntry[], filter: LibraryFilter, tabs: TabStrip): void {
   const current = view(entries, filter);
   const state = cardState(current.state);
   list.replaceChildren(...current.shown.map((entry) => drawEntry(templates, entry)));
   counts.textContent = current.countsLine;
+  breakdown.textContent = current.breakdown;
+  breakdown.hidden = current.breakdown === '';
+  tabs.sync(current.tab, state === 'entries');
   // Without storage the whole labelled section goes, so no empty "Library" region is left behind.
   librarySection.hidden = state === 'unavailable';
   library.hidden = state === 'empty' || state === 'unavailable';
   emptyMessage.hidden = state !== 'empty';
+}
+
+/**
+ * Draws the library. The tab strip is built here, once, from the tabs of the unfiltered view; the filter
+ * is held here, and choosing a tab patches it and redraws. The library is only ever redrawn, never re-read.
+ */
+function open(entries: readonly LibraryEntry[]): void {
+  let filter = INITIAL_FILTER;
+  const tabs = createTabStrip(tabStrip, library, view(entries, filter).tabs, (tab) => {
+    filter = { ...filter, tab };
+    render(entries, filter, tabs);
+  });
+  render(entries, filter, tabs);
 }
 
 /**
@@ -63,7 +82,7 @@ function createAndOpen(create: () => string | undefined, failure: string, addres
 }
 
 function start(store: CharacterStore, builds: BuildStore): void {
-  render(load(store, builds), INITIAL_FILTER);
+  open(load(store, builds));
 
   newCharacterButton.addEventListener('click', () =>
     createAndOpen(
@@ -101,7 +120,7 @@ if (storage === undefined) {
     button.setAttribute('aria-disabled', 'true');
     button.setAttribute('aria-describedby', 'status-message');
   }
-  render([], INITIAL_FILTER);
+  open([]);
 } else {
   start(createCharacterStore(storage), createBuildStore(storage));
 }

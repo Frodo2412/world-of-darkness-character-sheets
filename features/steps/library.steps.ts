@@ -24,7 +24,7 @@ import {
   sheetAddress,
   sheetField,
   statusRegion,
-  summaryRow,
+  summaryCounts,
   unreadableEntries,
   watchStatusWrites,
 } from './support/pages';
@@ -430,7 +430,7 @@ Then('the roster lists {int} entries', async ({ page }, count: number) => {
 });
 
 Then('the summary row reads {string}', async ({ page }, text: string) => {
-  await expect(summaryRow(page)).toHaveText(text);
+  await expect(summaryCounts(page)).toHaveText(text);
 });
 
 Then('every stored record is exactly as it was', async ({ page, memory }) => {

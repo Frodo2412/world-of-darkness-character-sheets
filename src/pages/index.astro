@@ -12,6 +12,7 @@ import '../styles/roster.css';
 			<h1 id="roster-heading">Characters</h1>
 			<p>Your Kindred, their stories, and the nights still to come.</p>
 		</div>
+		<div id="chronicle-tabs" class="tab-strip" role="tablist" aria-label="Chronicles" hidden></div>
 		<StatusMessage />
 		<div class="roster-workspace">
 			<CharacterCreator />
@@ -25,7 +26,8 @@ import '../styles/roster.css';
 					</div>
 					<ul id="entries" class="entries" aria-labelledby="roster-heading"></ul>
 					<div class="library-summary" data-slot="library-summary">
-						<p id="library-counts"></p>
+						<p id="library-counts" data-slot="library-counts"></p>
+						<p id="library-breakdown" data-slot="chronicle-breakdown" hidden></p>
 					</div>
 				</div>
 			</section>

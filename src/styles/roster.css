@@ -32,6 +32,68 @@ html:has(.roster-page) header {
 	color: var(--color-muted);
 }
 
+/* The chronicle tabs: one row under the introduction, its edge running the page's full width.
+   When the tabs are wider than the screen the strip scrolls sideways within itself; the page does not. */
+
+.tab-strip {
+	display: flex;
+	/* 28px between one tab's text and the next, the tabs' own padding taken off. */
+	gap: calc(var(--space-4) + var(--space-1) - 2 * var(--space-2));
+	/* 48px, the edge inside it. */
+	block-size: 3rem;
+	/* Reaches the page's sides; the first tab's text starts at the gutter, its padding hanging into it. */
+	margin-inline: calc(var(--page-gutter) * -1);
+	padding-inline: calc(var(--page-gutter) - var(--space-2)) var(--page-gutter);
+	overflow-x: auto;
+	border-block-end: var(--stroke) solid var(--color-line);
+	/* The workspace's gap again, between the strip and the cards. */
+	margin-block-end: var(--space-4);
+}
+
+.tab {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	min-block-size: 0;
+	/* Beside the text, so the selected tab's background does not touch it. */
+	padding: 0 var(--space-2);
+	background: transparent;
+	/* 2px: invisible until selected, so choosing a tab does not move the text. */
+	border: 0;
+	border-block-end: 2px solid var(--color-page);
+	border-radius: var(--radius-button) var(--radius-button) 0 0;
+	font-size: var(--text-body);
+	font-weight: 400;
+	color: var(--color-muted);
+	white-space: nowrap;
+}
+
+/* A button's hover would colour the edge; a tab's edge only shows which one is selected. */
+.tab:hover:not(:disabled) {
+	border-color: var(--color-page);
+	color: var(--color-text);
+}
+
+.tab[aria-selected='true'],
+.tab[aria-selected='true']:hover:not(:disabled) {
+	background: var(--color-surface);
+	border-color: var(--color-focus);
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+/* Read by assistive technology, not drawn. `.visually-hidden` positions its element, and Chrome puts a gap
+   before a positioned element when it works out a name: "All characters , 4". Text with no size takes no
+   room and is not positioned. */
+.tab-comma {
+	font-size: 0;
+}
+
+/* The strip clips what overflows it, so the focus ring is drawn inside the tab. */
+.tab:focus-visible {
+	outline-offset: -3px;
+}
+
 /* The workspace: the creator card above the library; from 75rem the card is the second column.
    The card comes first in the document at every width, so its place is set here, not by `order`. */
 
