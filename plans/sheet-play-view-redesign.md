@@ -1196,19 +1196,19 @@ graph TD
   - [x] Step 2.4: Save status in the application bar
 
 #### Wave 3
-- [ ] Slice 3: Attribute and ability cards
-  - [ ] Step 3.1: Trait cards
+- [x] Slice 3: Attribute and ability cards
+  - [x] Step 3.1: Trait cards
 
 #### Wave 4
-- [ ] Slice 4: Live resources
-  - [ ] Step 4.1: Resource rules in the domain
-  - [ ] Step 4.2: Blood Pool and Willpower cards
-  - [ ] Step 4.3: Health and Humanity cards and the resources row
+- [x] Slice 4: Live resources
+  - [x] Step 4.1: Resource rules in the domain
+  - [x] Step 4.2: Blood Pool and Willpower cards
+  - [x] Step 4.3: Health and Humanity cards and the resources row
 
 #### Wave 5
-- [ ] Slice 5: Disciplines and Virtues cards
-  - [ ] Step 5.1: Disciplines card
-  - [ ] Step 5.2: Virtues card and the workspace grid
+- [x] Slice 5: Disciplines and Virtues cards
+  - [x] Step 5.1: Disciplines card
+  - [x] Step 5.2: Virtues card and the workspace grid
 
 #### Wave 6
 - [ ] Slice 6: Selected pool
