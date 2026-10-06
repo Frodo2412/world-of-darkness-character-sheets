@@ -729,7 +729,7 @@ Feature: Search
       | character | Éloïse Voss    | Toreador | Antiquarian | Ana    | The Glass City |
       | character | Gabriel Ash    | Ventrue  | Fixer       | Bruno  | The Glass City |
       | character | Mara Delacroix | Brujah   | Agitator    | Ana    |                |
-      | build     | Silas Reed     | brujah   | Broker      |        | The Glass City |
+      | build     | Silas Reed     | Brujah   | Broker      |        | The Glass City |
 
   Scenario Outline: Search finds by name, clan or concept, ignoring case and accents
     When the player opens the roster
@@ -895,14 +895,14 @@ Feature: Clan and status filters
       | character | Éloïse Voss    | Toreador | Antiquarian | The Glass City |
       | character | Gabriel Ash    | Ventrue  | Fixer       | The Glass City |
       | character | Mara Delacroix | Brujah   | Agitator    |                |
-      | build     | Silas Reed     | brujah   | Broker      | The Glass City |
+      | build     | Silas Reed     | Brujah   | Broker      | The Glass City |
 
   Scenario: The clan filter offers the clans present
     When the player opens the roster
     Then the clan filter offers "All clans", "Brujah", "Toreador", "Ventrue" in that order
     And "All clans" is chosen
 
-  Scenario: Choosing a clan lists only that clan, however it is spelled
+  Scenario: Choosing a clan lists only that clan
     When the player opens the roster
     And they choose the clan "Brujah"
     Then the roster lists "Mara Delacroix" and "Silas Reed" and nothing else
@@ -1390,8 +1390,8 @@ graph TD
 #### Wave 5
 - [ ] Slice 5: Search and the result count
   - [x] Step 5.1: Search in the model
-  - [ ] Step 5.2: The search field and the no-match state
-  - [ ] Step 5.3: The announcement and the shortcut
+  - [x] Step 5.2: The search field and the no-match state
+  - [x] Step 5.3: The announcement and the shortcut
 
 #### Wave 6
 - [ ] Slice 6: Clan and status filters

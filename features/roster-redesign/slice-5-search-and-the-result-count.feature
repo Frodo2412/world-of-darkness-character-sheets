@@ -6,7 +6,7 @@ Feature: Search
       | character | Éloïse Voss    | Toreador | Antiquarian | Ana    | The Glass City |
       | character | Gabriel Ash    | Ventrue  | Fixer       | Bruno  | The Glass City |
       | character | Mara Delacroix | Brujah   | Agitator    | Ana    |                |
-      | build     | Silas Reed     | brujah   | Broker      |        | The Glass City |
+      | build     | Silas Reed     | Brujah   | Broker      |        | The Glass City |
 
   Scenario Outline: Search finds by name, clan or concept, ignoring case and accents
     When the player opens the roster

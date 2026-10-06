@@ -6,7 +6,7 @@ Feature: Clan and status filters
       | character | Éloïse Voss    | Toreador | Antiquarian | The Glass City |
       | character | Gabriel Ash    | Ventrue  | Fixer       | The Glass City |
       | character | Mara Delacroix | Brujah   | Agitator    |                |
-      | build     | Silas Reed     | brujah   | Broker      | The Glass City |
+      | build     | Silas Reed     | Brujah   | Broker      | The Glass City |
 
   @pending
   Scenario: The clan filter offers the clans present
@@ -15,7 +15,7 @@ Feature: Clan and status filters
     And "All clans" is chosen
 
   @pending
-  Scenario: Choosing a clan lists only that clan, however it is spelled
+  Scenario: Choosing a clan lists only that clan
     When the player opens the roster
     And they choose the clan "Brujah"
     Then the roster lists "Mara Delacroix" and "Silas Reed" and nothing else

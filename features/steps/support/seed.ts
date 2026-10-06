@@ -125,13 +125,13 @@ export interface LibraryRow {
   chronicle: string;
 }
 
-/**
- * A build holds one of the clans the builder offers, spelled as it spells them; a record with any
- * other spelling is one the app cannot read. A table that writes a build's clan in another case
- * ("brujah") means that clan, so it is stored as the builder would.
- */
-const clanAsBuilt = (clan: string): string =>
-  CLAN_NAMES.find((name) => name.toLowerCase() === clan.trim().toLowerCase()) ?? clan;
+/** The builder only lets a build hold one of its clans, spelled as it spells them; the store reads any other as damaged. */
+function assertBuildable(clan: string): string {
+  if (clan !== '' && !(CLAN_NAMES as readonly string[]).includes(clan)) {
+    throw new Error(`a build cannot be of clan "${clan}": the builder allows ${CLAN_NAMES.join(', ')}`);
+  }
+  return clan;
+}
 
 /**
  * Characters and builds created one after the other, as the table lists them: the ids are
@@ -148,7 +148,7 @@ export async function saveLibraryInOrder(
     kind === 'character' ? [{ ...characterWith({ name, clan, concept, player, chronicle }), id: idAt(index) }] : [],
   );
   const builds = rows.flatMap(({ kind, name, clan, concept, chronicle }, index) =>
-    kind === 'build' ? [{ ...buildWith({ clan: clanAsBuilt(clan), concept: { name, concept, chronicle } }), id: idAt(index) }] : [],
+    kind === 'build' ? [{ ...buildWith({ clan: assertBuildable(clan), concept: { name, concept, chronicle } }), id: idAt(index) }] : [],
   );
   memory.saved = characters;
   await saveCharacters(page, characters);
