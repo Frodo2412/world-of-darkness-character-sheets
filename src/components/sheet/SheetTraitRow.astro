@@ -12,25 +12,38 @@ interface Props {
 
 const { trait, customGroup, label, plain = false } = Astro.props;
 const custom = trait === undefined;
+const key = custom ? `customAbilities.${customGroup}` : trait;
+// The name button is described by the rating, so assistive technology hears "Strength, 2 of 5" and not the dots too.
+const valueId = `${key.replace('.', '-')}-value`;
 ---
 
 <!--
-	One row per trait. The name button is for choosing a trait for a dice pool and does
-	nothing yet: it is out of the tab order and has no pressed state. A custom ability's
-	play row has no edit control of its own (the write-in row beside it is that); it is
-	drawn from the character and hidden while the ability has no name.
+	One row per trait. In play the name button chooses the trait for a dice pool: it is
+	pressed while chosen and described by its rating. A quick-reference row (plain) has no
+	button. A custom ability's play row has no edit control of its own (the write-in row
+	beside it is that); it is drawn from the character and hidden while the ability has no name.
 -->
 <div
 	class="trait-row"
-	data-trait-key={custom ? `customAbilities.${customGroup}` : trait}
+	data-trait-key={key}
 	data-sheet-mode-only={custom ? 'play' : undefined}
 	hidden={custom}
 >
 	{
 		plain ? null : (
-			<button type="button" class="trait-select" tabindex="-1" aria-hidden="true" data-sheet-mode-only="play" data-show={custom ? 'trait.name' : undefined}>
-				{custom ? '' : label}
-			</button>
+			<>
+				<button
+					type="button"
+					class="trait-select"
+					aria-pressed="false"
+					aria-describedby={valueId}
+					data-sheet-mode-only="play"
+					data-show={custom ? 'trait.name' : undefined}
+				>
+					{custom ? '' : label}
+				</button>
+				<span id={valueId} class="visually-hidden" data-sheet-mode-only="play" data-show="trait.value" />
+			</>
 		)
 	}
 	{custom ? null : <span class="trait-label" data-sheet-mode-only={plain ? undefined : 'edit'}>{label}</span>}

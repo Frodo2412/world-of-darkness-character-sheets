@@ -6,6 +6,7 @@ import Disciplines from '../components/sheet/Disciplines.astro';
 import Health from '../components/sheet/Health.astro';
 import Humanity from '../components/sheet/Humanity.astro';
 import Identity from '../components/sheet/Identity.astro';
+import SelectedPool from '../components/sheet/SelectedPool.astro';
 import Virtues from '../components/sheet/Virtues.astro';
 import Willpower from '../components/sheet/Willpower.astro';
 import StatusMessage from '../components/StatusMessage.astro';
@@ -28,6 +29,8 @@ import '../styles/sheet.css';
 				<Humanity />
 			</div>
 			<div class="workspace">
+				<!-- First in the markup so that a narrow screen shows it above the traits; the stylesheet puts it at the top of the side column when wide. -->
+				<SelectedPool />
 				<div class="workspace-traits">
 					<Attributes />
 					<Abilities />

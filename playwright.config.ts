@@ -18,6 +18,7 @@ const testDir = defineBddConfig({
     'features/sheet-play-view-redesign/slice-3-*.feature',
     'features/sheet-play-view-redesign/slice-4-*.feature',
     'features/sheet-play-view-redesign/slice-5-*.feature',
+    'features/sheet-play-view-redesign/slice-6-*.feature',
   ],
   steps: 'features/steps/**/*.ts',
   missingSteps: 'fail-on-gen',

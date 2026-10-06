@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { ABILITY_GROUPS } from '../../src/domain/v20/traits';
 import { Given, Then } from './fixtures';
 import { characterArranged, characterWith, saveCharacters } from './support/seed';
-import { openSavedSheet } from './support/sheet';
+import { expectReadAs, openSavedSheet, visibleDots } from './support/sheet';
 
 const section = (page: Page, name: string): Locator => page.getByRole('region', { name, exact: true });
 
@@ -64,15 +64,13 @@ Then('the Abilities heading carries the hint {string}', async ({ page }, hint: s
 
 /** The row a rating belongs to, found from its accessible name. */
 const rowOfRating = (page: Page, name: string): Locator =>
-  page
-    .getByRole('img', { name: new RegExp(`^${name} \\d+ of \\d+$`) })
-    .locator('xpath=ancestor::*[@data-trait-key][1]');
+  visibleDots(page, new RegExp(`^${name} \\d+ of \\d+$`)).locator('xpath=ancestor::*[@data-trait-key][1]');
 
 Then(
   '{word} shows {int} filled dots out of {int} and the number {int}',
   async ({ page }, name: string, filled: number, dots: number, number: number) => {
     const row = rowOfRating(page, name);
-    const control = row.getByRole('img');
+    const control = row.locator('dot-rating');
     await expect(control.locator('.rating-mark')).toHaveCount(dots);
     await expect(control.locator('.rating-mark.is-filled')).toHaveCount(filled);
     await expect(row.locator('[data-show="trait.number"]')).toHaveText(String(number));
@@ -80,8 +78,7 @@ Then(
 );
 
 Then('{word} reads {string} to assistive technology', async ({ page }, name: string, reads: string) => {
-  const control = rowOfRating(page, name).getByRole('img');
-  await expect(control).toHaveAccessibleName(reads);
+  await expectReadAs(rowOfRating(page, name), name, reads);
 });
 
 Given(
@@ -105,7 +102,7 @@ Then('the Strength and Dexterity numbers line up', async ({ page }) => {
   expect(Math.round(strength.x + strength.width)).toBe(Math.round(dexterity.x + dexterity.width));
   expect(strength.y).toBeLessThan(dexterity.y);
   // The dots of a five-dot and a ten-dot rating share one slot, so nothing else shifts either.
-  const [strengthDots, dexterityDots] = await Promise.all(rows.map((row) => boxOf(row.getByRole('img'))));
+  const [strengthDots, dexterityDots] = await Promise.all(rows.map((row) => boxOf(row.locator('dot-rating'))));
   expect(Math.round(strengthDots.width)).toBe(Math.round(dexterityDots.width));
   expect(Math.round(strengthDots.x)).toBe(Math.round(dexterityDots.x));
 });
@@ -131,7 +128,7 @@ Then('the Talents list ends with {string} rated {int}', async ({ page }, name: s
   await expect(rows).toHaveCount(11);
   const last = rows.last();
   await expect(rowName(last)).toHaveText(name);
-  await expect(last.getByRole('img')).toHaveAccessibleName(`${name} ${rated} of 5`);
+  await expectReadAs(last, name, `${name} ${rated} of 5`);
   await expect(last.locator('[data-show="trait.number"]')).toHaveText(String(rated));
 });
 

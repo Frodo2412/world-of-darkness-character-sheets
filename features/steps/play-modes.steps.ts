@@ -10,6 +10,7 @@ import {
   editButton,
   enterEditMode,
   expectRatingValue,
+  expectReadAs,
   identityMonogram,
   identityName,
   identityRegion,
@@ -237,8 +238,9 @@ Given("the player has that character's sheet open in play mode", async ({ page, 
 });
 
 When('the player clicks the fourth Strength dot and the fourth Brawl dot', async ({ page }) => {
-  await mark(rating(page, 'Strength'), 4).click();
-  await mark(rating(page, 'Brawl'), 4).click();
+  // The row's name button lies over its dots, so the click lands on it: forced, as a player's would be.
+  await mark(rating(page, 'Strength'), 4).click({ force: true });
+  await mark(rating(page, 'Brawl'), 4).click({ force: true });
 });
 
 When(
@@ -279,8 +281,8 @@ Then('keyboard focus never landed on the Strength or Brawl rating', async ({ pag
 Then(
   'Strength reads {string} and Brawl reads {string} to assistive technology',
   async ({ page }, strength: string, brawl: string) => {
-    await expect(page.getByRole('img', { name: strength, exact: true })).toBeVisible();
-    await expect(page.getByRole('img', { name: brawl, exact: true })).toBeVisible();
+    await expectReadAs(rating(page, 'Strength').locator('xpath=ancestor::*[@data-trait-key][1]'), 'Strength', strength);
+    await expectReadAs(rating(page, 'Brawl').locator('xpath=ancestor::*[@data-trait-key][1]'), 'Brawl', brawl);
   },
 );
 

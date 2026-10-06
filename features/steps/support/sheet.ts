@@ -42,14 +42,20 @@ export async function ensureEditing(page: Page): Promise<void> {
   if (!(await isEditing(page))) await enterEditMode(page);
 }
 
+/** The read-only dots drawn for a name, whether or not they are exposed to assistive technology. */
+export const visibleDots = (scope: Page | Locator, name: RegExp): Locator =>
+  scope.getByRole('img', { name, includeHidden: true }).filter({ visible: true });
+
 /**
  * A rating by its label, in either mode: a slider while editing, an image named
- * "<label> <value> of <max>" in play mode.
+ * "<label> <value> of <max>" in play mode (hidden from assistive technology on a row
+ * whose button reads out the same, so found whether or not it is exposed).
  */
 export const ratingLabelled = (page: Page, label: string): Locator =>
   page
     .getByRole('slider', { name: label, exact: true })
-    .or(page.getByRole('img', { name: new RegExp(`^${escaped(label)} \\d+ of \\d+$`) }));
+    // While a row's button is live it carries the name and value, and its dots are hidden from assistive technology.
+    .or(visibleDots(page, new RegExp(`^${escaped(label)} \\d+ of \\d+$`)));
 
 /** Checks the dots drawn and, for a slider, the value it reports. */
 export async function expectRatingValue(control: Locator, value: number): Promise<void> {
@@ -91,6 +97,28 @@ export const bloodTotal = (page: Page): Locator => bloodPoolCard(page).locator('
 export const willpowerTotal = (page: Page): Locator => willpowerCard(page).locator('[data-show="willpower.total"]');
 export const healthCard = (page: Page): Locator => card(page, 'Health');
 export const humanityCard = (page: Page): Locator => card(page, 'Humanity');
+export const selectedPoolCard = (page: Page): Locator => card(page, 'Selected pool');
+
+/** The button that chooses an attribute or ability for the dice pool, by the trait's name. */
+export const traitButton = (page: Page, name: string): Locator =>
+  page.getByRole('button', { name, exact: true });
+
+/**
+ * What assistive technology reads for a trait's row in play mode: its button is named for the
+ * trait and described by the value, and the dots are hidden so the value is not said twice.
+ * `reads` is the two together, "<name> <value> of <max>".
+ */
+export async function expectReadAs(row: Locator, name: string, reads: string): Promise<void> {
+  const button = row.getByRole('button');
+  await expect(button).toHaveAccessibleName(name);
+  await expect(button).toHaveAccessibleDescription(reads.slice(name.length + 1));
+  expect(reads.startsWith(`${name} `)).toBe(true);
+  await expect(row.locator('dot-rating')).toHaveAttribute('aria-hidden', 'true');
+}
+
+/** The row a trait's button is in. */
+export const traitRow = (page: Page, name: string): Locator =>
+  traitButton(page, name).locator('xpath=ancestor::*[@data-trait-key][1]');
 
 const DAMAGE_ORDER = ['empty', 'bashing', 'lethal', 'aggravated'];
 

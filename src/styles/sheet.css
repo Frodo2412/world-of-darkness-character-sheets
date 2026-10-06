@@ -87,6 +87,8 @@
 
 .trait-hint {
 	margin: 0;
+	/* As tall as the section label, so a hint does not push the cards down. */
+	line-height: 1.2;
 	font-size: var(--text-caption);
 	color: var(--color-muted);
 }
@@ -175,7 +177,7 @@
 	overflow-wrap: anywhere;
 }
 
-/* Looks like the name it holds: it is a button only so a later step can make it choose the trait. */
+/* In play the name is a button that chooses the trait for a dice pool. It looks like the name it holds. */
 .trait-select {
 	font: inherit;
 	color: inherit;
@@ -184,7 +186,61 @@
 	padding: 0;
 	min-block-size: 0;
 	text-align: start;
-	cursor: default;
+	cursor: pointer;
+}
+
+/* A selectable row is one button the size of the row, so the whole row is the pointer target
+   and the focus ring. The dots and the number lie over it and let clicks through. */
+.sheet[data-sheet-mode='play'] .trait-row:has(> .trait-select) {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: 0 0.625rem;
+}
+
+.sheet[data-sheet-mode='play'] .trait-row > .trait-select {
+	grid-area: 1 / 1 / 2 / -1;
+	align-self: stretch;
+	display: flex;
+	align-items: center;
+	margin-inline: -0.625rem;
+	/* Clear of the dots and the number beside it, so a long name wraps before them. */
+	padding-inline: 0.625rem calc(0.625rem * 3 + 10 * var(--mark-size) + 9 * var(--dot-gap) + 2ch);
+	border-radius: var(--radius-row);
+}
+
+.sheet[data-sheet-mode='play'] .trait-row:has(> .trait-select) :is(dot-rating, .trait-number) {
+	grid-row: 1;
+	position: relative;
+	pointer-events: none;
+}
+
+.sheet[data-sheet-mode='play'] .trait-row:has(> .trait-select) dot-rating {
+	grid-column: 2;
+}
+
+.sheet[data-sheet-mode='play'] .trait-row:has(> .trait-select) .trait-number {
+	grid-column: 3;
+}
+
+/* Chosen for the dice pool: the row filled, an accent edge, a strong name, accent dots and number. */
+.sheet .trait-row.is-selected {
+	background: var(--color-selected);
+	border-inline-start-color: var(--color-accent);
+}
+
+.sheet .trait-row.is-selected .trait-select {
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.sheet .trait-row.is-selected .rating-mark.is-filled {
+	border-color: var(--color-accent);
+	background: var(--color-accent);
+}
+
+.sheet .trait-row.is-selected .trait-number {
+	color: var(--color-accent-text);
 }
 
 .trait-number {
@@ -196,10 +252,13 @@
 	color: var(--color-muted);
 }
 
-/* The workspace: the trait cards, and at wide widths a 320px column of quick references
-   beside them. With no room the column drops below the traits. */
+/* The workspace: the trait cards, and at wide widths a 320px column beside them: the
+   Selected pool card, then the quick references. The pool card comes first in the markup,
+   so with no room it sits above the traits, held in view, and the rest drops below them. */
 
 .workspace {
+	/* Level with the trait cards, below the section label: the label's line and its gap. */
+	--side-offset: calc(var(--space-3) + 1.4375rem);
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
 	gap: 0 var(--space-3);
@@ -209,13 +268,53 @@
 	display: grid;
 	align-content: start;
 	gap: 1.125rem;
-	/* Level with the trait cards, below the section label: the label's line and its gap. */
-	margin-block-start: calc(var(--space-3) + 1.4375rem);
+	margin-block-start: var(--side-offset);
 }
 
 @media (min-width: 75rem) {
 	.workspace {
 		grid-template-columns: minmax(0, 1fr) 20rem;
+		grid-template-rows: auto 1fr;
+	}
+
+	.workspace-traits {
+		grid-area: 1 / 1 / 3 / 2;
+	}
+
+	.pool-card {
+		grid-area: 1 / 2;
+		margin-block-start: var(--side-offset);
+	}
+
+	.workspace-side {
+		grid-area: 2 / 2;
+	}
+
+	/* Under the pool card, not the section label. */
+	.sheet[data-sheet-mode='play'] .workspace-side {
+		margin-block-start: 1.125rem;
+	}
+}
+
+/* No room beside the traits: the pool card stays at the top of the screen while the traits scroll
+   under it, and a row that takes keyboard focus is scrolled clear of it. */
+@media (max-width: 74.9375rem) {
+	:root {
+		/* The most of the screen the pool card may take while it is held in view. */
+		--pool-cap: 11rem;
+	}
+
+	.pool-card {
+		position: sticky;
+		inset-block-start: 0;
+		z-index: 1;
+		max-block-size: var(--pool-cap);
+		overflow-y: auto;
+		margin-block-start: var(--space-3);
+	}
+
+	html:has(.sheet[data-sheet-mode='play']) {
+		scroll-padding-block-start: calc(var(--pool-cap) + var(--space-2));
 	}
 }
 
@@ -239,6 +338,51 @@
 	letter-spacing: normal;
 	text-transform: none;
 	color: var(--color-text-strong);
+}
+
+/* The Selected pool card: the formula, what is still needed, and the total. */
+.pool-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
+.side-title.pool-title {
+	font-weight: 400;
+	color: var(--color-text);
+}
+
+.pool-body {
+	display: grid;
+	gap: 0.3125rem;
+}
+
+.pool-body > p {
+	margin: 0;
+}
+
+.pool-formula {
+	font-size: 0.875rem;
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+.pool-prompt {
+	color: var(--color-muted);
+}
+
+.pool-total {
+	font-size: var(--text-figure);
+	line-height: 1.1;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-muted);
+}
+
+.pool-flag {
+	font-weight: 600;
+	font-size: var(--text-small);
+	color: var(--color-accent-text);
 }
 
 /* The column is too narrow for a name beside ten dots: the name takes a line of its own. */

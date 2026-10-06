@@ -24,6 +24,8 @@ import {
 } from '../storage/characterStore';
 import { drawIdentity } from './sheet/identityCard';
 import { createMode, type Mode, type SheetMode } from './sheet/mode';
+import { createPool, type PoolRow } from './sheet/pool';
+import { announcePool, drawPoolCard } from './sheet/poolCard';
 import { drawRating } from './sheet/ratingDraw';
 import { announce, announceWound, drawResourceCards, type Resource } from './sheet/resourceCards';
 import { drawSideCards } from './sheet/sideCards';
@@ -50,6 +52,9 @@ const rowNames = sheet.querySelectorAll<HTMLInputElement>('[data-row-name]');
 const healthTrack = sheet.querySelector<HealthTrack>('health-track')!;
 const rowRatings = sheet.querySelectorAll<RatingControl>('[data-row-rating]');
 const stepperButtons = sheet.querySelectorAll<HTMLButtonElement>('[data-step]');
+
+// What is chosen for the dice pool: kept here, never saved, and cleared whenever the mode changes.
+const pool = createPool();
 
 const textFieldOf = (input: TextInput): TextRef => input.dataset.text as TextRef;
 
@@ -108,9 +113,10 @@ function render(character: V20Character, mode: SheetMode): void {
   drawTraitRatings(character, mode);
   drawRowNames(character);
   drawRowRatings(character, mode);
-  drawTraitCards(sheet, character);
+  drawTraitCards(sheet, character, mode);
   drawResourceCards(sheet, character);
   drawSideCards(sheet, character);
+  drawPoolCard(sheet, character, pool.selection());
 }
 
 // The roster opens a new character's sheet with this marker: start editing, and do
@@ -194,6 +200,20 @@ function showSheet(loaded: V20Character, store: CharacterStore): void {
     if (event.key === null || event.key === keyFor(character.id)) window.location.reload();
   });
 
+  // Choosing a trait redraws and says the pool once it is whole.
+  sheet.addEventListener('click', (event) => {
+    const row = (event.target as Element).closest('.trait-select')?.closest<HTMLElement>('[data-trait-key]');
+    if (row === null || row === undefined) return;
+    pool.toggle(row.dataset.traitKey as PoolRow);
+    render(character, mode.current());
+    announcePool(sheet, character, pool.selection());
+  });
+
+  // A mode change forgets the selection, and the pool said for it; the redraw after shows none.
+  mode.onChange(() => {
+    pool.clear();
+    announcePool(sheet, character, pool.selection());
+  });
   mode.onChange((next) => render(character, next));
   render(character, mode.current());
   sheet.hidden = false;
