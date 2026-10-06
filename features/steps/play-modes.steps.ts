@@ -21,6 +21,7 @@ import {
   openSavedSheet,
   savedCharacter,
   sheetRoot,
+  tabRoundThePage,
 } from './support/sheet';
 import { acceptWrites, refuseWrites } from './support/storage';
 
@@ -246,21 +247,7 @@ When('the player clicks the fourth Strength dot and the fourth Brawl dot', async
 When(
   'the player presses the Tab key until focus has gone round the whole page once',
   async ({ page, memory }) => {
-    const tabStops = await page.evaluate(
-      () =>
-        [...document.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), input, textarea, select, [tabindex]')]
-          .filter((element) => element.tabIndex >= 0 && element.checkVisibility())
-          .length,
-    );
-    memory.tabbedControls = [];
-    for (let presses = 0; presses <= tabStops; presses += 1) {
-      await page.keyboard.press('Tab');
-      const control = await page.evaluate(() => {
-        const focused = document.activeElement as HTMLElement;
-        return focused.dataset.trait ?? focused.getAttribute('aria-label') ?? focused.tagName.toLowerCase();
-      });
-      memory.tabbedControls.push(control);
-    }
+    memory.tabbedControls = await tabRoundThePage(page);
   },
 );
 

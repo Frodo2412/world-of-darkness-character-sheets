@@ -140,3 +140,24 @@ export async function markDamage(page: Page, level: string, damage: string): Pro
   }
   await expectDamage(page, level, damage);
 }
+
+/** Presses Tab once for every control in the tab order and names where focus stopped: its rating reference, its label or its tag. */
+export async function tabRoundThePage(page: Page): Promise<string[]> {
+  const tabStops = await page.evaluate(
+    () =>
+      [...document.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), input, textarea, select, [tabindex]')]
+        .filter((element) => element.tabIndex >= 0 && element.checkVisibility())
+        .length,
+  );
+  const stops: string[] = [];
+  for (let presses = 0; presses <= tabStops; presses += 1) {
+    await page.keyboard.press('Tab');
+    stops.push(
+      await page.evaluate(() => {
+        const focused = document.activeElement as HTMLElement;
+        return focused.dataset.trait ?? focused.getAttribute('aria-label') ?? focused.tagName.toLowerCase();
+      }),
+    );
+  }
+  return stops;
+}

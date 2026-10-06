@@ -22,13 +22,3 @@ Feature: Layout and accessibility
       | sheet                     |
       | character not found       |
       | delete confirmation       |
-
-  Scenario: The whole sheet can be completed from the keyboard
-    Given a player viewing a new character's sheet
-    When they use only the keyboard to enter a Name, set Strength to 3, mark 2 Blood Pool and mark bashing damage on Bruised
-    Then those values are shown
-    And keyboard focus was visible at every stop
-
-  Scenario: Every control has a name
-    Given a player viewing a character's sheet
-    Then every text field, rating, tracker and health box has an accessible name unique within the sheet

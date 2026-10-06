@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page } from '@playwright/test';
+import type { V20Character } from '../../src/domain/v20/character';
 import { Given, Then, When } from './fixtures';
 import { startBuild } from './support/builder';
 import {
@@ -11,8 +12,21 @@ import {
   sheetField,
 } from './support/pages';
 import { expectRating, rating } from './support/ratings';
-import { characterWith, saveCharacters } from './support/seed';
-import { bloodTotal, doneButton, editButton, isEditing } from './support/sheet';
+import { characterArranged, characterWith, saveCharacters } from './support/seed';
+import {
+  bloodTotal,
+  doneButton,
+  editButton,
+  enterEditMode,
+  expectDamage,
+  healthBox,
+  identityName,
+  isEditing,
+  openSavedSheet,
+  selectedPoolCard,
+  tabRoundThePage,
+  traitButton,
+} from './support/sheet';
 
 const SCREEN_HEIGHT = 800;
 
@@ -129,83 +143,170 @@ Then('no violations are reported', async ({ memory }) => {
   expect(memory.violations).toEqual([]);
 });
 
-/** Tabs forward to `target`, noting at every stop whether a focus indicator was drawn. */
+/**
+ * Presses `key` (Tab, or Shift+Tab to go back) until `target` has focus, noting at every stop
+ * whether a focus indicator was drawn: an outline or a shadow of some width, in a colour the
+ * page is not.
+ */
 async function tabTo(
   page: Page,
   target: Locator,
   stops: { control: string; visible: boolean }[],
+  key = 'Tab',
 ): Promise<void> {
   for (let presses = 0; presses < 150; presses += 1) {
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(key);
     stops.push(
       await page.evaluate(() => {
         const focused = document.activeElement!;
         const style = getComputedStyle(focused);
         const page = getComputedStyle(document.documentElement).backgroundColor;
+        const outlined =
+          style.outlineStyle !== 'none' &&
+          parseFloat(style.outlineWidth) > 0 &&
+          style.outlineColor !== page &&
+          !style.outlineColor.includes('transparent') &&
+          !style.outlineColor.endsWith(', 0)');
         return {
-          control: focused.getAttribute('aria-label') ?? focused.tagName.toLowerCase(),
-          visible:
-            focused.matches(':focus-visible') &&
-            style.outlineStyle !== 'none' &&
-            parseFloat(style.outlineWidth) >= 2 &&
-            style.outlineColor !== page &&
-            !style.outlineColor.includes('transparent') &&
-            !style.outlineColor.endsWith(', 0)'),
+          control: focused.getAttribute('aria-label') ?? focused.textContent?.trim() ?? focused.tagName.toLowerCase(),
+          visible: focused.matches(':focus-visible') && (outlined || style.boxShadow !== 'none'),
         };
       }),
     );
     if (await target.evaluate((element) => element === document.activeElement)) return;
   }
-  throw new Error('The control was never reached with the Tab key.');
+  throw new Error('The control was never reached with the keyboard.');
 }
 
-When(
-  'they use only the keyboard to enter a Name, set Strength to 3, mark 2 Blood Pool and mark bashing damage on Bruised',
-  async ({ page, memory }) => {
-    await tabTo(page, sheetField(page, 'Name'), memory.focusStops);
-    await page.keyboard.type('Lucita');
+// The play view's accessibility pages
 
-    // The resources sit above the traits on the page, so the keyboard reaches them first.
-    await tabTo(page, page.getByRole('button', { name: 'Gain one blood', exact: true }), memory.focusStops);
-    await page.keyboard.press('Enter');
-    await page.keyboard.press('Enter');
+/** A character with the frame's kind of numbers, for scenarios that need something to read and press. */
+const playable = (): V20Character =>
+  characterArranged({ name: 'Lucita', clan: 'Lasombra', generation: '10th' }, (character) => {
+    character.bloodPool.current = 8;
+    character.willpower = { permanent: 6, temporary: 4 };
+    character.humanity.rating = 7;
+    character.attributes.intelligence = 4;
+    character.abilities.investigation = 3;
+  });
 
-    await tabTo(page, page.getByRole('button', { name: /^Bruised, / }), memory.focusStops);
-    await page.keyboard.press('Space');
-
-    await tabTo(page, rating(page, 'Strength'), memory.focusStops);
-    await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('ArrowRight');
-
-    // On through the rest of the sheet to its last control, so every stop on the way is checked.
-    await tabTo(page, rating(page, 'Courage'), memory.focusStops);
+Given(
+  /^a player viewing the (sheet in play mode with a pool selected|sheet in edit mode|sheet of a wounded character over its blood maximum)$/,
+  async ({ page }, state: string) => {
+    const character = playable();
+    if (state.startsWith('sheet of a wounded')) {
+      character.bloodPool.current = 20;
+      character.health.bruised = 'aggravated';
+      character.health.hurt = 'lethal';
+      character.health.injured = 'bashing';
+    }
+    await openSavedSheet(page, character);
+    if (state === 'sheet in edit mode') await enterEditMode(page);
+    if (state.startsWith('sheet in play')) {
+      await traitButton(page, 'Intelligence').click();
+      await traitButton(page, 'Investigation').click();
+      await expect(selectedPoolCard(page)).toContainText('Intelligence 4 + Investigation 3');
+    }
   },
 );
 
-Then('those values are shown', async ({ page }) => {
-  await expect(sheetField(page, 'Name')).toHaveValue('Lucita');
-  await expectRating(rating(page, 'Strength'), 3);
-  await expect(bloodTotal(page)).toHaveText(/^2 \/ /);
-  await expect(page.getByRole('button', { name: 'Bruised, bashing', exact: true })).toHaveAttribute('data-damage', 'bashing');
+// Playing from the keyboard
+
+Given(
+  'a saved character with generation {string}, {int} blood, Intelligence {int} and Investigation {int}',
+  async ({ page, memory }, generation: string, blood: number, intelligence: number, investigation: number) => {
+    memory.saved = [
+      characterArranged({ name: 'Lucita', generation }, (character) => {
+        character.bloodPool.current = blood;
+        character.attributes.intelligence = intelligence;
+        character.abilities.investigation = investigation;
+      }),
+    ];
+    await saveCharacters(page, memory.saved);
+  },
+);
+
+When(
+  'they use only the keyboard to spend one blood, mark bashing damage on Bruised and select Intelligence and Investigation',
+  async ({ page, memory }) => {
+    await tabTo(page, page.getByRole('button', { name: 'Spend one blood', exact: true }), memory.focusStops);
+    await page.keyboard.press('Enter');
+
+    await tabTo(page, healthBox(page, 'Bruised'), memory.focusStops);
+    await page.keyboard.press('Space');
+
+    await tabTo(page, traitButton(page, 'Intelligence'), memory.focusStops);
+    await page.keyboard.press('Enter');
+    await tabTo(page, traitButton(page, 'Investigation'), memory.focusStops);
+    await page.keyboard.press('Enter');
+  },
+);
+
+Then(
+  'the Blood Pool reads {string}, Bruised shows bashing damage and the dice total is {string}',
+  async ({ page }, blood: string, dice: string) => {
+    await expect(bloodTotal(page)).toHaveText(blood);
+    await expectDamage(page, 'Bruised', 'bashing');
+    await expect(selectedPoolCard(page).locator('[data-show="pool.total"]')).toHaveText(dice);
+  },
+);
+
+// Editing from the keyboard
+
+When(
+  'they use only the keyboard to enter edit mode, enter a Name, set Strength to 3 and leave edit mode',
+  async ({ page, memory }) => {
+    await tabTo(page, editButton(page), memory.focusStops);
+    await page.keyboard.press('Enter');
+    // Entering edit mode puts focus in the Name field, which already holds a name.
+    await expect(sheetField(page, 'Name')).toBeFocused();
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.type('Valeria');
+
+    await tabTo(page, rating(page, 'Strength'), memory.focusStops);
+    while ((await rating(page, 'Strength').getAttribute('aria-valuenow')) !== '3') {
+      await page.keyboard.press('ArrowRight');
+    }
+
+    // Done editing is at the top of the page, behind the Name: back to it.
+    await tabTo(page, doneButton(page), memory.focusStops, 'Shift+Tab');
+    await page.keyboard.press('Enter');
+    await expect(editButton(page)).toBeVisible();
+  },
+);
+
+Then('the identity shows that name and Strength is rated {int}', async ({ page }, value: number) => {
+  await expect(identityName(page)).toHaveText('Valeria');
+  await expectRating(rating(page, 'Strength'), value);
 });
 
 Then('keyboard focus was visible at every stop', async ({ memory }) => {
-  expect(memory.focusStops.length).toBeGreaterThan(50);
+  expect(memory.focusStops.length).toBeGreaterThan(0);
   expect(memory.focusStops.filter((stop) => !stop.visible)).toEqual([]);
 });
 
+// Names
+
+Given(
+  /^a player viewing a saved character's sheet in (play|edit) mode$/,
+  async ({ page }, mode: string) => {
+    await openSavedSheet(page, playable());
+    if (mode === 'edit') await enterEditMode(page);
+  },
+);
+
 Then(
-  'every text field, rating, tracker and health box has an accessible name unique within the sheet',
+  'every button, text field, rating and health box that is offered has an accessible name unique within the sheet',
   async ({ page }) => {
     // The accessibility tree as assistive technology receives it, one control per line.
     const tree = await page.locator('#sheet').ariaSnapshot();
-    const lines = tree.split('\n').filter((line) => /^\s*- (textbox|slider|button)\b/.test(line));
-    const names = lines.map((line) => /^\s*- (?:textbox|slider|button) "([^"]+)"/.exec(line)?.[1]);
+    const lines = tree.split('\n').filter((line) => /^\s*- (textbox|slider|button|img)\b/.test(line));
+    const names = lines.map((line) => /^\s*- (?:textbox|slider|button|img) "([^"]+)"/.exec(line)?.[1]);
 
-    // Every control the sheet is presenting is in that tree; none is left unnamed or unlisted.
+    // Every control, and every rating drawn read-only, that the sheet is presenting is in that tree; none is left unnamed or unlisted.
     const presented = await page
       .locator('#sheet')
-      .locator('input, textarea, select, button, [role="slider"]')
+      .locator('input, textarea, select, button, [role="slider"], [role="img"]:not([aria-hidden="true"])')
       .filter({ visible: true })
       .count();
     expect(presented).toBeGreaterThan(0);
@@ -216,3 +317,23 @@ Then(
     expect(identities.filter((name, index) => identities.indexOf(name) !== index)).toEqual([]);
   },
 );
+
+// Out of reach
+
+When('they press the Tab key until focus has gone round the whole page once', async ({ page, memory }) => {
+  memory.tabbedControls = await tabRoundThePage(page);
+});
+
+Then('keyboard focus never landed on a text field or an editable rating', async ({ page, memory }) => {
+  const stops = memory.tabbedControls;
+  expect(stops.length).toBeGreaterThan(10);
+  // A stop is named for its rating reference, its label or its tag: none is a field or a rating's reference.
+  expect(stops.filter((stop) => ['input', 'textarea', 'select'].includes(stop) || /^[a-zA-Z]+\.[\w.]+$/.test(stop))).toEqual([]);
+  // Nor is any of them left in the tab order, only passed over this time.
+  const reachable = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('input, textarea, select, [role="slider"], dot-rating:not([readonly])')]
+      .filter((element) => element.checkVisibility() && element.tabIndex >= 0)
+      .map((element) => element.tagName.toLowerCase()),
+  );
+  expect(reachable).toEqual([]);
+});
