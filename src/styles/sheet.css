@@ -142,7 +142,7 @@ html:has(.sheet-page) {
 
 /* A row: the trait's name, its dots and, in play, its number. The dots are 8px
    with a 5px gap in play and larger to click in edit; in play they sit in a slot
-   as wide as the card's widest rating (five dots, or ten when one row is rated
+   as wide as the card's widest rating (five dots, or ten when a shown row is rated
    above five), so the rows of a card keep their numbers in one column. */
 .sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) {
 	--mark-size: 1rem;
@@ -166,7 +166,8 @@ html:has(.sheet-page) {
 	--dots: 5;
 }
 
-.sheet[data-sheet-mode='play'] .trait-card:has(dot-rating[max='10']) {
+/* Only a row that is shown counts: not an unnamed custom ability's play row, nor the edit-only write-in rating. */
+.sheet[data-sheet-mode='play'] .trait-card:has(.trait-row:not([hidden]) > dot-rating[max='10']) {
 	--dots: 10;
 }
 

@@ -12,7 +12,11 @@ const isCustomAbility = (key: string): key is NamedRowRef => key.startsWith('cus
 function drawCustomAbility(row: HTMLElement, key: NamedRowRef, character: V20Character): void {
   const [named] = namedRows([namedRow(character, key)!]);
   row.hidden = named === undefined;
-  if (named === undefined) return;
+  if (named === undefined) {
+    // A stale ten-dot scale must not outlive the name that showed it.
+    row.querySelector('dot-rating')!.setAttribute('max', '5');
+    return;
+  }
 
   show(row, 'trait.name', named.name);
   show(row, 'trait.number', String(named.rating));

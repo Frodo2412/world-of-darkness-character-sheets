@@ -44,7 +44,10 @@ export function poolAnnouncement(pool: DicePool): string {
 
 /** Writes the card's live region: the pool when a selection completes it, else nothing, so the next one is heard afresh. */
 export function announcePool(root: ParentNode, character: V20Character, selection: PoolSelection): void {
-  root.querySelector<HTMLElement>('[data-live="pool"]')!.textContent = poolAnnouncement(dicePool(character, selection));
+  const region = root.querySelector<HTMLElement>('[data-live="pool"]')!;
+  const text = poolAnnouncement(dicePool(character, selection));
+  // Said again only when it differs, so a health change that leaves the total alone stays silent.
+  if (region.textContent !== text) region.textContent = text;
 }
 
 /** Draws the Selected pool card, and which rows show as pressed, from the character and the selection. */

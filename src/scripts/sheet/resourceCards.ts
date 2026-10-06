@@ -106,6 +106,8 @@ function drawWillpower(root: ParentNode, character: V20Character): void {
   drawStepper(root, 'willpower', reading);
 
   const dots = root.querySelector<RatingControl>('[data-willpower-dots]')!;
+  // With no permanent Willpower there is nothing to draw: the "0 / 0" total says it.
+  dots.hidden = reading.bound === 0;
   setAttr(dots, 'max', String(reading.bound));
   setAttr(dots, 'value', String(reading.current));
 }

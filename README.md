@@ -3,16 +3,17 @@
 Interactive character sheets for World of Darkness games, kept in your browser.
 
 The first sheet is **Vampire: The Masquerade 20th Anniversary Edition (V20)**. You get a
-roster of characters and, for each one, an interactive version of **page 1** of the
-official sheet: the header, attributes, abilities, disciplines, backgrounds, virtues,
-Humanity/Path, Willpower, Blood Pool, health, weakness, experience and notes. A
-step-by-step **builder** creates a new character by the V20 creation rules.
+roster of characters and, for each one, a **play view** of **page 1** of the official
+sheet: the character's identity, attributes, abilities, Disciplines, virtues, Humanity,
+Willpower, Blood Pool and health, with a dice-pool calculator. A step-by-step
+**builder** creates a new character by the V20 creation rules.
 
 ## What it does and does not do
 
 - **The sheet is a record, not a rules engine.** It accepts anything the printed sheet
-  can hold and does not check creation points, clan disciplines, generation limits or
-  wound penalties. The rules are applied only while building a character (below).
+  can hold and does not check creation points, clan disciplines or generation limits.
+  The rules are applied only while building a character (below); the sheet itself only
+  derives the Blood Pool maximum from Generation and the wound penalty in the dice pool.
 - **Saved automatically, in this browser only.** Every change is written to the
   browser's `localStorage`. There is no account, no server and no sync: characters do
   not follow you to another browser or device, and clearing site data removes them.
@@ -48,10 +49,23 @@ as you go, and builds in progress are listed on the roster to continue or delete
 
 ## Using the sheet
 
-Dots and boxes: activate a dot to set the rating to it; activate the current dot again
-to lower the rating by one. From the keyboard, focus a rating and use the arrow keys,
-Page Up/Down, Home and End. Health boxes step through bashing (`/`), lethal (`X`),
-aggravated (`*`) and empty.
+The sheet opens in **play mode**, for use at the table. Only the Blood Pool, Willpower
+and Health change there (the steppers spend and regain blood and temporary Willpower;
+health boxes step through bashing (`/`), lethal (`X`), aggravated (`*`) and empty).
+Everything else is read-only. Select one attribute and one ability to see a dice pool,
+less any wound penalty; the selection is never saved.
+
+**Edit character** switches to **edit mode**, where every field can be changed: the
+header, ratings, write-in abilities and Disciplines, permanent Willpower, Humanity and
+the path name, and blood per turn. **Done editing** returns to play mode.
+
+Dots and boxes in edit mode: activate a dot to set the rating to it; activate the
+current dot again to lower the rating by one. From the keyboard, focus a rating and use
+the arrow keys, Page Up/Down, Home and End.
+
+Player, Chronicle, Sire, Backgrounds, Notes, Weakness, Experience and Bearing are kept
+in the saved data but are no longer shown. The design is in
+[`docs/specs/sheet-play-view-redesign.md`](docs/specs/sheet-play-view-redesign.md).
 
 ## Running it
 

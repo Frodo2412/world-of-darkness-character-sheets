@@ -115,8 +115,8 @@ Given(
     memory.saved = [
       characterArranged({ name: 'Lucita' }, (character) => {
         character.customAbilities.talents = { name, rating: rated };
-        // A rating on a row with no name is not enough to list it.
-        character.customAbilities.skills = { name: '   ', rating: 3 };
+        // A rating on a row with no name is not enough to list it, nor to widen its card's dot slot.
+        character.customAbilities.skills = { name: '   ', rating: 8 };
       }),
     ];
     await saveCharacters(page, memory.saved);
@@ -132,11 +132,27 @@ Then('the Talents list ends with {string} rated {int}', async ({ page }, name: s
   await expect(last.locator('[data-show="trait.number"]')).toHaveText(String(rated));
 });
 
+/** No shown row is rated above five, so a card's dot slot is five dots wide, not ten. */
+async function expectFiveDotSlot(group: Locator): Promise<void> {
+  const slot = await group.locator('.trait-row:visible dot-rating').first().evaluate((dots) => {
+    const marks = [...dots.querySelectorAll('.rating-mark')];
+    const gap = parseFloat(getComputedStyle(dots).columnGap);
+    return {
+      marks: marks.length,
+      width: dots.getBoundingClientRect().width,
+      drawn: marks.length * marks[0].getBoundingClientRect().width + (marks.length - 1) * gap,
+    };
+  });
+  expect(slot.marks).toBe(5);
+  expect(slot.width).toBeCloseTo(slot.drawn, 1);
+}
+
 Then('the Skills and Knowledges lists show only their ten fixed abilities', async ({ page }) => {
   for (const name of ['Skills', 'Knowledges']) {
     const group = page.getByRole('group', { name, exact: true });
     await expect(shownRows(group)).toHaveCount(10);
     await expect(group.locator('[data-trait-key^="customAbilities."]:visible')).toHaveCount(0);
+    await expectFiveDotSlot(group);
   }
 });
 

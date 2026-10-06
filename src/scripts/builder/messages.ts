@@ -1,5 +1,6 @@
 // The builder's three message channels:
-//  1. save status — the page's `#status-message`, written only from here;
+//  1. save status — the page's `#status-message`, written from here and from `../status`
+//     (which the sheet uses too);
 //  2. refusals and notices — a polite `[data-notice]` slot beside the controls,
 //     named by the refused control's `aria-describedby`;
 //  3. budgets — each readout is its own live region, written only when it changes.

@@ -132,6 +132,8 @@ Then('it shows no dice total', async ({ page }) => {
 
 Then('the dice total is {string}', async ({ page }, text: string) => {
   await expect(total(page)).toHaveText(text);
+  // What is said matches what is shown, also after a health change moves the total.
+  await expect(page.locator('[data-live="pool"]')).toHaveText(`Dice pool: ${await formula(page).textContent()}, ${text}`);
 });
 
 Then('the Attributes heading carries the hint {string}', async ({ page }, hint: string) => {

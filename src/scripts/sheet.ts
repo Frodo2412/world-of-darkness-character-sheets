@@ -126,7 +126,9 @@ const EDIT_MARKER = '#edit';
 function startMode(): Mode {
   const startsEditing = window.location.hash === EDIT_MARKER;
   if (startsEditing) {
-    history.replaceState(null, '', window.location.pathname + window.location.search);
+    const url = new URL(window.location.href);
+    url.hash = '';
+    history.replaceState(null, '', url);
   }
   return createMode(sheet, startsEditing ? 'edit' : 'play');
 }
@@ -168,6 +170,8 @@ function bindEditListeners(apply: Apply): void {
       return cycleHealthBox(current, level);
     });
     announceWound(sheet, before, after);
+    // The wound moves the pool's total: say the pool again so its status text matches its card.
+    announcePool(sheet, after, pool.selection());
   });
 
   // A press says the new reading once; a redraw (a new Generation moving the maximum) stays silent.
