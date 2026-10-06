@@ -1,11 +1,12 @@
+import { readFileSync } from 'node:fs';
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { V20Character } from '../../src/domain/v20/character';
 import type { HealthLevelKey } from '../../src/domain/v20/traits';
 import { Given, Then, When } from './fixtures';
-import { announcements } from './support/builder';
+import { announcements } from './support/announcements';
 import { openRoster, rosterEntries, sheetAddress, sheetField } from './support/pages';
 import { rating, setRating } from './support/ratings';
-import { characterArranged, characterWith, saveCharacters } from './support/seed';
+import { characterArranged, characterWith, givenSaved, saveCharacters } from './support/seed';
 import {
   bloodPoolCard,
   bloodTotal,
@@ -17,7 +18,6 @@ import {
   humanityCard,
   markDamage,
   openSavedSheet,
-  sheetRoot,
   willpowerCard,
   willpowerTotal,
 } from './support/sheet';
@@ -29,37 +29,28 @@ const button = (page: Page, name: string): Locator => page.getByRole('button', {
 Given(
   'a saved character with generation {string} and {int} blood',
   async ({ page, memory }, generation: string, blood: number) => {
-    memory.saved = [
-      characterArranged({ name: 'Lucita', generation }, (character) => {
-        character.bloodPool.current = blood;
-      }),
-    ];
-    await saveCharacters(page, memory.saved);
+    await givenSaved(page, memory, { name: 'Lucita', generation }, (character) => {
+      character.bloodPool.current = blood;
+    });
   },
 );
 
 Given(
   'a saved character with permanent Willpower {int} and temporary Willpower {int}',
   async ({ page, memory }, permanent: number, temporary: number) => {
-    memory.saved = [
-      characterArranged({ name: 'Lucita' }, (character) => {
-        character.willpower = { permanent, temporary };
-      }),
-    ];
-    await saveCharacters(page, memory.saved);
+    await givenSaved(page, memory, { name: 'Lucita' }, (character) => {
+      character.willpower = { permanent, temporary };
+    });
   },
 );
 
 Given(
   'a saved character with generation {string}, {int} blood, permanent Willpower {int} and temporary Willpower {int}',
   async ({ page, memory }, generation: string, blood: number, permanent: number, temporary: number) => {
-    memory.saved = [
-      characterArranged({ name: 'Lucita', generation }, (character) => {
-        character.bloodPool.current = blood;
-        character.willpower = { permanent, temporary };
-      }),
-    ];
-    await saveCharacters(page, memory.saved);
+    await givenSaved(page, memory, { name: 'Lucita', generation }, (character) => {
+      character.bloodPool.current = blood;
+      character.willpower = { permanent, temporary };
+    });
   },
 );
 
@@ -77,8 +68,9 @@ Given(
 );
 
 Given('a saved character whose blood per turn is {string}', async ({ page, memory }, perTurn: string) => {
-  memory.saved = [characterArranged({ name: 'Lucita' }, (character) => void (character.bloodPool.perTurn = perTurn))];
-  await saveCharacters(page, memory.saved);
+  await givenSaved(page, memory, { name: 'Lucita' }, (character) => {
+    character.bloodPool.perTurn = perTurn;
+  });
 });
 
 Given('another saved character with no blood per turn recorded', async ({ page, memory }) => {
@@ -87,14 +79,11 @@ Given('another saved character with no blood per turn recorded', async ({ page, 
 });
 
 Given(/^a saved character with lethal damage on (.+)$/, async ({ page, memory }, levels: string) => {
-  memory.saved = [
-    characterArranged({ name: 'Lucita' }, (character) => {
-      for (const level of levels.split(' and ')) {
-        character.health[level.toLowerCase() as HealthLevelKey] = 'lethal';
-      }
-    }),
-  ];
-  await saveCharacters(page, memory.saved);
+  await givenSaved(page, memory, { name: 'Lucita' }, (character) => {
+    for (const level of levels.split(' and ')) {
+      character.health[level.toLowerCase() as HealthLevelKey] = 'lethal';
+    }
+  });
 });
 
 Given("the player has a saved, unwounded character's sheet open in play mode", async ({ page, memory }) => {
@@ -103,13 +92,10 @@ Given("the player has a saved, unwounded character's sheet open in play mode", a
 });
 
 Given('a saved character with Humanity {int} on the path {string}', async ({ page, memory }, humanity: number, path: string) => {
-  memory.saved = [
-    characterArranged({ name: 'Lucita' }, (character) => {
-      character.humanity.rating = humanity;
-      character.humanity.pathName = path;
-    }),
-  ];
-  await saveCharacters(page, memory.saved);
+  await givenSaved(page, memory, { name: 'Lucita' }, (character) => {
+    character.humanity.rating = humanity;
+    character.humanity.pathName = path;
+  });
 });
 
 Given('another saved character with Humanity {int} and no path name', async ({ page, memory }, humanity: number) => {
@@ -122,12 +108,9 @@ Given('another saved character with Humanity {int} and no path name', async ({ p
 });
 
 Given('a saved character with Humanity {int}', async ({ page, memory }, humanity: number) => {
-  memory.saved = [
-    characterArranged({ name: 'Lucita' }, (character) => {
-      character.humanity.rating = humanity;
-    }),
-  ];
-  await saveCharacters(page, memory.saved);
+  await givenSaved(page, memory, { name: 'Lucita' }, (character) => {
+    character.humanity.rating = humanity;
+  });
 });
 
 // Acting
@@ -138,7 +121,7 @@ When('the player opens each character from the roster', async ({ page, memory })
     await openRoster(page);
     await rosterEntries(page).nth(position).getByRole('link').click();
     await expect(editButton(page).or(doneButton(page))).toBeVisible();
-    memory.visited.push(await sheetRoot(page).innerText());
+    memory.visited.push(await bloodPoolCard(page).innerText());
   }
 });
 
@@ -235,11 +218,7 @@ Then(
   },
 );
 
-Then('the Blood Pool card says {string}', async ({ page }, text: string) => {
-  await expect(bloodPoolCard(page).getByText(text, { exact: true })).toBeVisible();
-});
-
-Then('the Blood Pool card shows {string}', async ({ page }, text: string) => {
+Then(/^the Blood Pool card (?:says|shows) "([^"]*)"$/, async ({ page }, text: string) => {
   await expect(bloodPoolCard(page).getByText(text, { exact: true })).toBeVisible();
 });
 
@@ -281,7 +260,13 @@ Then('the blood tracker is completely filled', async ({ page }) => {
 });
 
 Then('assistive technology was told nothing about the Blood Pool', async ({ page }) => {
-  expect((await announcements(page)).filter((message) => /Blood Pool/.test(message))).toEqual([]);
+  expect((await announcements(page)).filter((message) => /blood pool/i.test(message))).toEqual([]);
+
+  // Positive control: the watcher does hear the Blood Pool's live region, so the silence above means something.
+  const region = page.locator('[data-live="blood"]');
+  await region.evaluate((element) => void (element.textContent = 'Watcher check'));
+  await expect.poll(() => announcements(page)).toContain('Watcher check');
+  await region.evaluate((element) => void (element.textContent = ''));
 });
 
 Then('the first Blood Pool card shows {string}', async ({ memory }, text: string) => {
@@ -337,16 +322,11 @@ Then('permanent Willpower cannot be changed', async ({ page }) => {
 
 const unavailable = (control: Locator) => expect(control).toHaveAttribute('aria-disabled', 'true');
 
-Then('{string} is reported as unavailable', async ({ page }, name: string) => {
+Then(/^"([^"]*)" is (?:reported as )?unavailable$/, async ({ page }, name: string) => {
   const control = button(page, name);
   await unavailable(control);
   // Never the disabled attribute: that would drop keyboard focus from the button.
   await expect(control).not.toHaveAttribute('disabled');
-});
-
-Then('{string} is unavailable', async ({ page }, name: string) => {
-  await unavailable(button(page, name));
-  await expect(button(page, name)).not.toHaveAttribute('disabled');
 });
 
 Then('{string} is available', async ({ page }, name: string) => {
@@ -385,16 +365,23 @@ Then(
 );
 
 Then('each legend entry shows its own mark image, and no two entries share one', async ({ page }) => {
-  const images = healthCard(page).locator('.health-marks > li img');
-  await expect(images).toHaveCount(3);
-  const sources = await images.evaluateAll((elements) =>
-    elements.map((image) => {
-      const loaded = image as HTMLImageElement;
+  const entries = healthCard(page).locator('.health-marks > li');
+  await expect(entries).toHaveCount(3);
+  const sources: string[] = [];
+  for (const label of ['Bashing', 'Lethal', 'Aggravated']) {
+    const image = entries.filter({ hasText: label }).locator('img');
+    await expect(image).toHaveCount(1);
+    const { source, drawn } = await image.evaluate((element) => {
+      const loaded = element as HTMLImageElement;
       return { source: loaded.currentSrc, drawn: loaded.complete && loaded.naturalWidth > 0 };
-    }),
-  );
-  expect(sources.every((image) => image.drawn)).toBe(true);
-  expect(new Set(sources.map((image) => image.source)).size).toBe(3);
+    });
+    expect(drawn).toBe(true);
+    // The file served is the one for this label: the same bytes as the icon the boxes are drawn from.
+    const served = await (await page.request.get(source)).text();
+    expect(served).toBe(readFileSync(`src/assets/icons/${label.toLowerCase()}.svg`, 'utf8'));
+    sources.push(source);
+  }
+  expect(new Set(sources).size).toBe(3);
 });
 
 Then(

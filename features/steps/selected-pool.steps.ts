@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
-import { characterArranged, saveCharacters } from './support/seed';
+import { givenSaved } from './support/seed';
 import { selectedPoolCard, traitButton, traitRow } from './support/sheet';
 
 const formula = (page: Page): Locator => selectedPoolCard(page).locator('[data-show="pool.formula"]');
@@ -23,17 +23,14 @@ Given(
     custom: string,
     rated: number,
   ) => {
-    memory.saved = [
-      characterArranged({ name: 'Lucita', clan: 'Lasombra' }, (character) => {
-        character.attributes.intelligence = intelligence;
-        character.attributes.strength = strength;
-        character.abilities.investigation = investigation;
-        character.abilities.brawl = brawl;
-        character.abilities.law = law;
-        character.customAbilities.knowledges = { name: custom, rating: rated };
-      }),
-    ];
-    await saveCharacters(page, memory.saved);
+    await givenSaved(page, memory, { name: 'Lucita', clan: 'Lasombra' }, (character) => {
+      character.attributes.intelligence = intelligence;
+      character.attributes.strength = strength;
+      character.abilities.investigation = investigation;
+      character.abilities.brawl = brawl;
+      character.abilities.law = law;
+      character.customAbilities.knowledges = { name: custom, rating: rated };
+    });
   },
 );
 
@@ -43,22 +40,14 @@ Given('the sheet is shown on a {int} pixel wide screen', async ({ page }, width:
 
 // Acting
 
-When('they select {word}', async ({ page }, name: string) => {
+When('they select {word}( again)', async ({ page }, name: string) => {
   await traitButton(page, name).click();
 });
 
-When('they select {word} again', async ({ page }, name: string) => {
-  await traitButton(page, name).click();
-});
-
-When('they select {word} and {word}', async ({ page }, first: string, second: string) => {
+// The second trait is a bare word, or a quoted name that has spaces.
+When(/^they select (\w+) and ("[^"]*"|\w+)$/, async ({ page }, first: string, second: string) => {
   await traitButton(page, first).click();
-  await traitButton(page, second).click();
-});
-
-When('they select {word} and {string}', async ({ page }, first: string, second: string) => {
-  await traitButton(page, first).click();
-  await traitButton(page, second).click();
+  await traitButton(page, second.replace(/^"|"$/g, '')).click();
 });
 
 When(
@@ -79,8 +68,11 @@ When(/^they move keyboard focus to (\w+) and press (Enter|Space)$/, async ({ pag
 async function isCovered(row: Locator): Promise<boolean> {
   return row.evaluate((element) => {
     const rect = element.getBoundingClientRect();
-    const held = [document.querySelector('.pool-card'), document.querySelector('.app-bar')]
-      .filter((part): part is Element => part !== null && part.checkVisibility())
+    const parts = [document.querySelector('.pool-card'), document.querySelector('.app-bar')];
+    // A check that cannot find what it checks against would pass for the wrong reason.
+    if (parts.some((part) => part === null)) throw new Error('The Selected pool card or the application bar was not found.');
+    const held = parts
+      .filter((part): part is Element => part!.checkVisibility())
       .map((part) => part.getBoundingClientRect());
     // A row flush with the bottom edge is in view; allow for the fraction of a pixel it may stand off by.
     const hidden = rect.top < 0 || rect.bottom > window.innerHeight + 1;

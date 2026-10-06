@@ -12,7 +12,7 @@ import {
   sheetField,
 } from './support/pages';
 import { expectRating, rating } from './support/ratings';
-import { characterArranged, characterWith, saveCharacters } from './support/seed';
+import { characterArranged, characterWith, givenSaved, saveCharacters } from './support/seed';
 import {
   bloodTotal,
   doneButton,
@@ -24,7 +24,6 @@ import {
   isEditing,
   openSavedSheet,
   selectedPoolCard,
-  tabRoundThePage,
   traitButton,
 } from './support/sheet';
 
@@ -145,8 +144,7 @@ Then('no violations are reported', async ({ memory }) => {
 
 /**
  * Presses `key` (Tab, or Shift+Tab to go back) until `target` has focus, noting at every stop
- * whether a focus indicator was drawn: an outline or a shadow of some width, in a colour the
- * page is not.
+ * whether a focus indicator was drawn: an outline of some width, in a colour the page is not.
  */
 async function tabTo(
   page: Page,
@@ -169,7 +167,7 @@ async function tabTo(
           !style.outlineColor.endsWith(', 0)');
         return {
           control: focused.getAttribute('aria-label') ?? focused.textContent?.trim() ?? focused.tagName.toLowerCase(),
-          visible: focused.matches(':focus-visible') && (outlined || style.boxShadow !== 'none'),
+          visible: focused.matches(':focus-visible') && outlined,
         };
       }),
     );
@@ -215,14 +213,11 @@ Given(
 Given(
   'a saved character with generation {string}, {int} blood, Intelligence {int} and Investigation {int}',
   async ({ page, memory }, generation: string, blood: number, intelligence: number, investigation: number) => {
-    memory.saved = [
-      characterArranged({ name: 'Lucita', generation }, (character) => {
-        character.bloodPool.current = blood;
-        character.attributes.intelligence = intelligence;
-        character.abilities.investigation = investigation;
-      }),
-    ];
-    await saveCharacters(page, memory.saved);
+    await givenSaved(page, memory, { name: 'Lucita', generation }, (character) => {
+      character.bloodPool.current = blood;
+      character.attributes.intelligence = intelligence;
+      character.abilities.investigation = investigation;
+    });
   },
 );
 
@@ -264,9 +259,12 @@ When(
     await page.keyboard.type('Valeria');
 
     await tabTo(page, rating(page, 'Strength'), memory.focusStops);
-    while ((await rating(page, 'Strength').getAttribute('aria-valuenow')) !== '3') {
+    // Strength starts at 1, so two presses; the bound is a few more, not a loop that could run for ever.
+    for (let presses = 0; presses < 5; presses += 1) {
+      if ((await rating(page, 'Strength').getAttribute('aria-valuenow')) === '3') break;
       await page.keyboard.press('ArrowRight');
     }
+    await expect(rating(page, 'Strength')).toHaveAttribute('aria-valuenow', '3');
 
     // Done editing is at the top of the page, behind the Name: back to it.
     await tabTo(page, doneButton(page), memory.focusStops, 'Shift+Tab');
@@ -319,10 +317,6 @@ Then(
 );
 
 // Out of reach
-
-When('they press the Tab key until focus has gone round the whole page once', async ({ page, memory }) => {
-  memory.tabbedControls = await tabRoundThePage(page);
-});
 
 Then('keyboard focus never landed on a text field or an editable rating', async ({ page, memory }) => {
   const stops = memory.tabbedControls;

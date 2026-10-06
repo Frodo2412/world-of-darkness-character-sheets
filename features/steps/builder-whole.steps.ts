@@ -5,9 +5,9 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page } from '@playwright/test';
 import { completeBuild, creation, generation } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When } from './fixtures';
+import { announcements } from './support/announcements';
 import {
   activateFinish,
-  announcements,
   builderAddress,
   buildWith,
   enterExtraFreebies,

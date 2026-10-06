@@ -1,24 +1,23 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { Given, Then } from './fixtures';
 import { horizontalOverflow } from './support/pages';
-import { characterArranged } from './support/seed';
-import { enterEditMode, identityRegion, openSavedSheet } from './support/sheet';
+import { crowdedCharacter } from './support/seed';
+import { boxOf, card, enterEditMode, identityRegion, openSavedSheet } from './support/sheet';
 
 const SCREEN_HEIGHT = 900;
 
-interface Box {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-async function boxOf(locator: Locator): Promise<Box> {
-  await expect(locator).toBeVisible();
-  return (await locator.boundingBox())!;
-}
-
-const card = (page: Page, name: string): Locator => page.getByRole('region', { name, exact: true });
+/** The nine cards of the sheet, in reading order. */
+const CARDS = [
+  'Blood Pool',
+  'Willpower',
+  'Health',
+  'Humanity',
+  'Selected pool',
+  'Attributes',
+  'Abilities',
+  'Disciplines',
+  'Virtues',
+];
 
 // Arranging
 
@@ -28,21 +27,13 @@ Given(
     await page.setViewportSize({ width: Number(width), height: SCREEN_HEIGHT });
     // Names and ratings long enough to crowd a narrow card.
     memory.saved = [
-      characterArranged(
-        {
-          name: 'Fatima al-Faqadi of the Web of Knives',
-          clan: 'Assamite',
-          generation: '10th',
-          concept: 'Antiquarian',
-          nature: 'Visionary',
-          demeanor: 'Bon Vivant',
-        },
-        (character) => {
-          character.attributes.manipulation = 4;
-          character.abilities.investigation = 3;
-          character.abilities.intimidation = 2;
-        },
-      ),
+      crowdedCharacter({
+        name: 'Fatima al-Faqadi of the Web of Knives',
+        clan: 'Assamite',
+        concept: 'Antiquarian',
+        nature: 'Visionary',
+        demeanor: 'Bon Vivant',
+      }),
     ];
     await openSavedSheet(page, memory.saved[0]);
     if (mode === 'edit') await enterEditMode(page);
@@ -114,10 +105,9 @@ Then('the page is no wider than the screen', async ({ page }) => {
 
 Then("every card's box lies within the screen width", async ({ page }) => {
   const { width } = page.viewportSize()!;
-  const cards = await page.locator('#sheet .card:visible').all();
-  expect(cards.length).toBeGreaterThanOrEqual(9);
-  for (const each of cards) {
-    const box = (await each.boundingBox())!;
+  // The nine named cards, not a count that a missing card could still reach.
+  for (const name of CARDS) {
+    const box = await boxOf(card(page, name));
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(width);
   }
@@ -136,17 +126,7 @@ Then(
         }))
         .filter(({ name }) => name !== 'Character'),
     );
-    expect(drawn.map(({ name }) => name)).toEqual([
-      'Blood Pool',
-      'Willpower',
-      'Health',
-      'Humanity',
-      'Selected pool',
-      'Attributes',
-      'Abilities',
-      'Disciplines',
-      'Virtues',
-    ]);
+    expect(drawn.map(({ name }) => name)).toEqual(CARDS);
     const tops = drawn.map(({ top }) => top);
     expect(tops).toEqual([...tops].sort((a, b) => a - b));
   },
@@ -172,10 +152,20 @@ Then('no text on the sheet is wider than the element that holds it', async ({ pa
         // Inline boxes have no width of their own; a box a pixel wide is one hidden on purpose.
         return display !== 'inline' && display !== 'contents' && element.clientWidth > 1 && element.checkVisibility();
       })
-      .filter((element) => element.scrollWidth > element.clientWidth)
+      // A text field scrolls a value longer than itself by design; its box is checked below instead.
+      .filter((element) => !(element instanceof HTMLInputElement) && element.scrollWidth > element.clientWidth)
       .map((element) => `${element.tagName.toLowerCase()}.${element.className}`),
   );
   expect(overflowing).toEqual([]);
+
+  // A text field holding a long value stays inside the card that holds it.
+  const spilling = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLInputElement>('#sheet input')]
+      .filter((input) => input.checkVisibility())
+      .filter((input) => input.getBoundingClientRect().right > input.closest('.card, .identity-fields')!.getBoundingClientRect().right)
+      .map((input) => input.getAttribute('aria-label') ?? input.dataset.text),
+  );
+  expect(spilling).toEqual([]);
 });
 
 // Touch targets

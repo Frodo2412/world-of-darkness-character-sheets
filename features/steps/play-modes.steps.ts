@@ -1,10 +1,10 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import type { V20Character } from '../../src/domain/v20/character';
 import { Given, Then, When } from './fixtures';
-import { announcements } from './support/builder';
+import { announcements } from './support/announcements';
 import { createCharacter, openRoster, rosterEntries, sheetField } from './support/pages';
 import { mark, rating, setRating } from './support/ratings';
-import { characterArranged, characterWith, saveCharacters } from './support/seed';
+import { characterWith, givenSaved, saveCharacters } from './support/seed';
 import {
   doneButton,
   editButton,
@@ -85,11 +85,7 @@ async function openFirstFromRoster(page: Page): Promise<void> {
   await expect(editButton(page).or(doneButton(page))).toBeVisible();
 }
 
-When('the player opens that character from the roster', async ({ page }) => {
-  await openFirstFromRoster(page);
-});
-
-When('they open that character from the roster', async ({ page }) => {
+When(/^(?:the player opens|they open) that character from the roster$/, async ({ page }) => {
   await openFirstFromRoster(page);
 });
 
@@ -97,10 +93,30 @@ When('the player creates a new V20 character from the roster', async ({ page }) 
   await createCharacter(page);
 });
 
+/** Presses an unavailable (aria-disabled) control as a player would, with the pointer at its centre. */
+async function pressUnavailable(page: Page, control: Locator): Promise<void> {
+  await control.scrollIntoViewIfNeeded();
+  const box = (await control.boundingBox())!;
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  // The click must reach the button itself, not something lying over it.
+  const reached = await control.evaluate(
+    (element, point) => element.contains(document.elementFromPoint(point.x, point.y)),
+    { x, y },
+  );
+  expect(reached).toBe(true);
+
+  const before = await announcements(page);
+  await page.mouse.click(x, y);
+  // Let any announcement the press would make arrive (two frames), then see that none did.
+  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  expect(await announcements(page)).toEqual(before);
+}
+
 When('they activate {string}', async ({ page }, name: string) => {
   const control = page.getByRole('button', { name, exact: true });
-  // An unavailable control (aria-disabled) is still pressed, as a player would; it must do nothing.
-  await control.click({ force: (await control.getAttribute('aria-disabled')) === 'true' });
+  if ((await control.getAttribute('aria-disabled')) === 'true') await pressUnavailable(page, control);
+  else await control.click();
   if (name === 'Edit character') {
     // Ratings become sliders, and focus goes to the first field rather than to a control that changed role.
     await expect(page.getByRole('img', { name: /^Strength \d+ of \d+$/ })).toHaveCount(0);
@@ -200,6 +216,7 @@ const times = async (page: Page, message: string): Promise<number> =>
 // moment after the first, so the page is given a moment to make one before it is counted.
 Then('assistive technology is told {string}', async ({ page }, message: string) => {
   await expect.poll(() => times(page, message)).toBeGreaterThan(0);
+  // 150 ms: a duplicate write comes on the next task or two, so this is ample; the check was seen to fail with one injected.
   await page.evaluate(() => new Promise((settled) => setTimeout(settled, 150)));
   expect(await times(page, message)).toBe(1);
 });
@@ -215,23 +232,17 @@ Then("that character's sheet is in edit mode", async ({ page }) => {
 Given(
   'a saved character whose Strength is rated {int} and whose Brawl is rated {int}',
   async ({ page, memory }, strength: number, brawl: number) => {
-    memory.saved = [
-      characterArranged({}, (character) => {
-        character.attributes.strength = strength;
-        character.abilities.brawl = brawl;
-      }),
-    ];
-    await saveCharacters(page, memory.saved);
+    await givenSaved(page, memory, {}, (character) => {
+      character.attributes.strength = strength;
+      character.abilities.brawl = brawl;
+    });
   },
 );
 
 Given('a saved character whose Strength is rated {int}', async ({ page, memory }, strength: number) => {
-  memory.saved = [
-    characterArranged({}, (character) => {
-      character.attributes.strength = strength;
-    }),
-  ];
-  await saveCharacters(page, memory.saved);
+  await givenSaved(page, memory, {}, (character) => {
+    character.attributes.strength = strength;
+  });
 });
 
 Given("the player has that character's sheet open in play mode", async ({ page, memory }) => {
@@ -245,7 +256,7 @@ When('the player clicks the fourth Strength dot and the fourth Brawl dot', async
 });
 
 When(
-  'the player presses the Tab key until focus has gone round the whole page once',
+  /^(?:the player presses|they press) the Tab key until focus has gone round the whole page once$/,
   async ({ page, memory }) => {
     memory.tabbedControls = await tabRoundThePage(page);
   },
@@ -367,17 +378,14 @@ const HIDDEN_VALUES = {
 Given(
   'a saved character with {string} as Player, {string} as Chronicle, {string} as Sire, three lines of Notes with leading spaces, a Weakness, an Experience value, a Bearing, a Bearing modifier and a Background {string} rated {int}',
   async ({ page, memory }, player: string, chronicle: string, sire: string, background: string, rated: number) => {
-    memory.saved = [
-      characterArranged({ name: 'Fatima', player, chronicle, sire }, (character) => {
-        character.notes = HIDDEN_VALUES.notes;
-        character.weakness = HIDDEN_VALUES.weakness;
-        character.experience = HIDDEN_VALUES.experience;
-        character.humanity.bearing = HIDDEN_VALUES.bearing;
-        character.humanity.bearingModifier = HIDDEN_VALUES.bearingModifier;
-        character.backgrounds[0] = { name: background, rating: rated };
-      }),
-    ];
-    await saveCharacters(page, memory.saved);
+    await givenSaved(page, memory, { name: 'Fatima', player, chronicle, sire }, (character) => {
+      character.notes = HIDDEN_VALUES.notes;
+      character.weakness = HIDDEN_VALUES.weakness;
+      character.experience = HIDDEN_VALUES.experience;
+      character.humanity.bearing = HIDDEN_VALUES.bearing;
+      character.humanity.bearingModifier = HIDDEN_VALUES.bearingModifier;
+      character.backgrounds[0] = { name: background, rating: rated };
+    });
   },
 );
 
@@ -387,14 +395,18 @@ When(
     await openSavedSheet(page, memory.saved[0]);
     await page.getByRole('button', { name: /^Bruised, / }).click();
     await expect(page.getByRole('button', { name: 'Bruised, bashing', exact: true })).toBeVisible();
+    // What was marked, for the check of what was saved: the damage, by the health level it is on.
+    memory.healthLevel = 'bruised';
+    memory.entered.set('bruised', 'bashing');
   },
 );
 
 When(
   'they enter edit mode, enter {string} as Name and reload the sheet',
-  async ({ page }, name: string) => {
+  async ({ page, memory }, name: string) => {
     await enterEditMode(page);
     await sheetField(page, 'Name').fill(name);
+    memory.entered.set('Name', name);
     await page.reload();
   },
 );
@@ -403,8 +415,8 @@ Then('the saved character still holds every one of those values exactly', async 
   const [arranged] = memory.saved;
   const expected: V20Character = {
     ...arranged,
-    header: { ...arranged.header, name: 'Lucita' },
-    health: { ...arranged.health, bruised: 'bashing' },
+    header: { ...arranged.header, name: memory.entered.get('Name')! },
+    health: { ...arranged.health, [memory.healthLevel]: memory.entered.get(memory.healthLevel)! },
   };
   await expect.poll(() => savedCharacter(page, openCharacterId(page))).toEqual(expected);
 });

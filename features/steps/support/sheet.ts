@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { V20Character } from '../../../src/domain/v20/character';
 import { keyFor } from '../../../src/storage/characterStore';
-import { watchAnnouncements } from './builder';
+import { watchAnnouncements } from './announcements';
 import { sheetAddress } from './pages';
 import { saveCharacters } from './seed';
 import { escaped } from './text';
@@ -87,7 +87,13 @@ export const openCharacterId = (page: Page): string =>
   new URL(page.url()).searchParams.get('id') ?? '';
 
 /** A card by its heading. */
-const card = (page: Page, name: string): Locator => page.getByRole('region', { name, exact: true });
+export const card = (page: Page, name: string): Locator => page.getByRole('region', { name, exact: true });
+
+/** The box a visible element occupies on the page. */
+export async function boxOf(locator: Locator): Promise<{ x: number; y: number; width: number; height: number }> {
+  await expect(locator).toBeVisible();
+  return (await locator.boundingBox())!;
+}
 
 export const bloodPoolCard = (page: Page): Locator => card(page, 'Blood Pool');
 export const willpowerCard = (page: Page): Locator => card(page, 'Willpower');

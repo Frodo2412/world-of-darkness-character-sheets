@@ -4,6 +4,7 @@ import { play, type Step } from '../../../src/domain/v20/creation/testing/play';
 import { createBuildStore } from '../../../src/storage/buildStore';
 import type { StoragePort } from '../../../src/storage/storagePort';
 import { ABILITY_GROUPS, ATTRIBUTE_GROUPS } from '../../../src/domain/v20/traits';
+import { watchAnnouncements } from './announcements';
 import { openRoster } from './pages';
 
 export const BUILD_KEY_PREFIX = 'wod-sheets:build:';
@@ -23,36 +24,6 @@ export async function startBuild(page: Page): Promise<void> {
   await expect(page).toHaveURL(BUILDER_ADDRESS);
   await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
   await watchAnnouncements(page);
-}
-
-/**
- * Records what each live region says every time it changes, as assistive
- * technology would hear it: one entry per region per change.
- */
-export async function watchAnnouncements(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    const log: string[] = [];
-    (window as unknown as { announcements: string[] }).announcements = log;
-    const regions = document.querySelectorAll('[role="status"], [role="alert"], output');
-    const observer = new MutationObserver((records) => {
-      const changed = new Set<Element>();
-      for (const record of records) {
-        const target = record.target instanceof Element ? record.target : record.target.parentElement;
-        const region = target?.closest('[role="status"], [role="alert"], output');
-        if (region) changed.add(region);
-      }
-      for (const region of changed) {
-        const text = (region.textContent ?? '').replace(/\s+/g, ' ').trim();
-        if (text !== '') log.push(text);
-      }
-    });
-    for (const region of regions) observer.observe(region, { childList: true, characterData: true, subtree: true });
-  });
-}
-
-/** Everything announced since the page was watched. */
-export async function announcements(page: Page): Promise<string[]> {
-  return page.evaluate(() => (window as unknown as { announcements?: string[] }).announcements ?? []);
 }
 
 export const baseGeneration = (page: Page): Locator =>

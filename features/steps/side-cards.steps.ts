@@ -3,7 +3,7 @@ import type { NamedRating } from '../../src/domain/v20/character';
 import { DISCIPLINE_ROWS } from '../../src/domain/v20/traits';
 import { Given, Then, When } from './fixtures';
 import { setRating } from './support/ratings';
-import { characterArranged, characterWith, saveCharacters } from './support/seed';
+import { characterArranged, characterWith, givenSaved, saveCharacters } from './support/seed';
 import { enterEditMode, openSavedSheet } from './support/sheet';
 import { escaped } from './support/text';
 
@@ -34,12 +34,9 @@ Given(
       { name: third, rating: c },
       { name: '   ', rating: 3 },
     ];
-    memory.saved = [
-      characterArranged({ name: 'Lucita', clan: 'Lasombra' }, (character) => {
-        rows.forEach((row, index) => (character.disciplines[index] = row));
-      }),
-    ];
-    await saveCharacters(page, memory.saved);
+    await givenSaved(page, memory, { name: 'Lucita', clan: 'Lasombra' }, (character) => {
+      rows.forEach((row, index) => (character.disciplines[index] = row));
+    });
   },
 );
 
@@ -49,12 +46,9 @@ Given('a saved character with no Discipline named', async ({ page, memory }) => 
 });
 
 Given('a saved character with the Discipline {string} rated {int}', async ({ page, memory }, name: string, rated: number) => {
-  memory.saved = [
-    characterArranged({ name: 'Lucita', clan: 'Lasombra' }, (character) => {
-      character.disciplines[0] = { name, rating: rated };
-    }),
-  ];
-  await saveCharacters(page, memory.saved);
+  await givenSaved(page, memory, { name: 'Lucita', clan: 'Lasombra' }, (character) => {
+    character.disciplines[0] = { name, rating: rated };
+  });
 });
 
 Given('the player is editing a saved character with no Discipline named', async ({ page, memory }) => {
@@ -114,10 +108,15 @@ Then('no other Discipline row is shown', async ({ page, memory }) => {
   await expect(disciplinesCard(page).getByRole('textbox')).toHaveCount(0);
 });
 
-Then('the Disciplines card shows no power list and no expand control', async ({ page }) => {
+Then('the Disciplines card shows no power list and no expand control', async ({ page, memory }) => {
   const card = disciplinesCard(page);
   await expect(card.getByRole('button')).toHaveCount(0);
   await expect(card.locator('[aria-expanded], details')).toHaveCount(0);
+  // Its list items are the named Disciplines and nothing else: no powers listed beneath them.
+  const named = memory.saved[0].disciplines
+    .filter((row) => row.name.trim() !== '')
+    .map((row) => `${row.name.trim()} ${row.rating}`);
+  await expect(card.getByRole('listitem')).toHaveText(named);
 });
 
 Then('the Disciplines card says {string}', async ({ page }, line: string) => {
@@ -163,22 +162,16 @@ const virtueRow = (page: Page, label: string): Locator =>
 Given(
   'a saved character with Conscience\\/Conviction {int}, Self-Control\\/Instinct {int} and Courage {int}',
   async ({ page, memory }, conscience: number, selfControl: number, courage: number) => {
-    memory.saved = [
-      characterArranged({ name: 'Lucita', clan: 'Lasombra' }, (character) => {
-        character.virtues = { conscience, selfControl, courage };
-      }),
-    ];
-    await saveCharacters(page, memory.saved);
+    await givenSaved(page, memory, { name: 'Lucita', clan: 'Lasombra' }, (character) => {
+      character.virtues = { conscience, selfControl, courage };
+    });
   },
 );
 
 Given('a saved character with Courage {int}', async ({ page, memory }, courage: number) => {
-  memory.saved = [
-    characterArranged({ name: 'Lucita', clan: 'Lasombra' }, (character) => {
-      character.virtues.courage = courage;
-    }),
-  ];
-  await saveCharacters(page, memory.saved);
+  await givenSaved(page, memory, { name: 'Lucita', clan: 'Lasombra' }, (character) => {
+    character.virtues.courage = courage;
+  });
 });
 
 Then(

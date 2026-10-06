@@ -1,20 +1,13 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { ABILITY_GROUPS } from '../../src/domain/v20/traits';
 import { Given, Then } from './fixtures';
-import { characterArranged, characterWith, saveCharacters } from './support/seed';
-import { expectReadAs, openSavedSheet, visibleDots } from './support/sheet';
-
-const section = (page: Page, name: string): Locator => page.getByRole('region', { name, exact: true });
+import { crowdedCharacter, givenSaved } from './support/seed';
+import { boxOf, card, expectReadAs, openSavedSheet, visibleDots } from './support/sheet';
 
 /** Every row the group is showing, fixed and custom, in the order drawn. */
 const shownRows = (group: Locator): Locator => group.locator('[data-trait-key]:visible');
 
 const rowName = (row: Locator): Locator => row.locator('[data-show="trait.name"], button');
-
-async function boxOf(locator: Locator): Promise<{ x: number; y: number; width: number; height: number }> {
-  await expect(locator).toBeVisible();
-  return (await locator.boundingBox())!;
-}
 
 // Cards
 
@@ -22,14 +15,14 @@ Given(
   "a player viewing a saved character's sheet on a {int} pixel wide screen",
   async ({ page, memory }, width: number) => {
     await page.setViewportSize({ width, height: 900 });
-    memory.saved = [characterWith({ name: 'Lucita', clan: 'Lasombra' })];
+    memory.saved = [crowdedCharacter({ name: 'Lucita', clan: 'Lasombra' })];
     await openSavedSheet(page, memory.saved[0]);
   },
 );
 
 /** Three cards in one row, left to right, drawn as cards. */
 async function expectCardsSideBySide(page: Page, heading: string, names: string[]): Promise<void> {
-  const cards = names.map((name) => section(page, heading).getByRole('group', { name, exact: true }));
+  const cards = names.map((name) => card(page, heading).getByRole('group', { name, exact: true }));
   const boxes = [];
   for (const card of cards) {
     await expect(card).toHaveCSS('border-radius', '10px');
@@ -52,7 +45,7 @@ Then('Abilities shows the cards Talents, Skills and Knowledges side by side', as
 });
 
 Then('the Abilities heading carries the hint {string}', async ({ page }, hint: string) => {
-  const abilities = section(page, 'Abilities');
+  const abilities = card(page, 'Abilities');
   const heading = await boxOf(abilities.getByRole('heading', { name: 'Abilities', exact: true }));
   const hinted = await boxOf(abilities.getByText(hint, { exact: true }));
   // On the heading's line, to its right.
@@ -84,13 +77,10 @@ Then('{word} reads {string} to assistive technology', async ({ page }, name: str
 Given(
   'a saved character whose Strength is rated {int} and whose Dexterity is rated {int}',
   async ({ page, memory }, strength: number, dexterity: number) => {
-    memory.saved = [
-      characterArranged({ name: 'Lucita' }, (character) => {
-        character.attributes.strength = strength;
-        character.attributes.dexterity = dexterity;
-      }),
-    ];
-    await saveCharacters(page, memory.saved);
+    await givenSaved(page, memory, { name: 'Lucita' }, (character) => {
+      character.attributes.strength = strength;
+      character.attributes.dexterity = dexterity;
+    });
   },
 );
 
@@ -112,14 +102,11 @@ Then('the Strength and Dexterity numbers line up', async ({ page }) => {
 Given(
   'a saved character with the custom Talent {string} rated {int}, a custom Skill named with only spaces and no custom Knowledge',
   async ({ page, memory }, name: string, rated: number) => {
-    memory.saved = [
-      characterArranged({ name: 'Lucita' }, (character) => {
-        character.customAbilities.talents = { name, rating: rated };
-        // A rating on a row with no name is not enough to list it, nor to widen its card's dot slot.
-        character.customAbilities.skills = { name: '   ', rating: 8 };
-      }),
-    ];
-    await saveCharacters(page, memory.saved);
+    await givenSaved(page, memory, { name: 'Lucita' }, (character) => {
+      character.customAbilities.talents = { name, rating: rated };
+      // A rating on a row with no name is not enough to list it, nor to widen its card's dot slot.
+      character.customAbilities.skills = { name: '   ', rating: 8 };
+    });
   },
 );
 
