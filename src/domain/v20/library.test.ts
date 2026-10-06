@@ -368,3 +368,243 @@ describe('view', () => {
     });
   });
 });
+
+/** Characters filed under `chronicles`, oldest first; '' leaves the chronicle blank. */
+const inChronicles = (...chronicles: string[]) =>
+  entriesOf({
+    characters: chronicles.map((chronicle, index) =>
+      character(String(index + 1).padStart(4, '0'), { chronicle }),
+    ),
+    builds: [],
+  });
+
+/** Each tab as the strip will print it: its label, a dot, its count. */
+const printed = (entries: Parameters<typeof view>[0], filter = INITIAL_FILTER) =>
+  view(entries, filter).tabs.map((tab) => `${tab.label} · ${tab.count}`);
+
+describe('view: chronicle tabs', () => {
+  test('the initial filter selects the All tab', () => {
+    const result = view(inChronicles('The Glass City'), INITIAL_FILTER);
+    expect(result.tab).toBe(result.tabs[0].key);
+    expect(result.tabs[0]).toMatchObject({ label: 'All characters', count: 1 });
+  });
+
+  test('with no chronicle anywhere there is only the All tab', () => {
+    expect(printed(inChronicles('', '   '))).toEqual(['All characters · 2']);
+  });
+
+  test('each chronicle has a tab, alphabetical, after All', () => {
+    expect(printed(inChronicles('The Glass City', 'The Glass City', 'Ashes of Milan'))).toEqual([
+      'All characters · 3',
+      'Ashes of Milan · 1',
+      'The Glass City · 2',
+    ]);
+  });
+
+  test('chronicles are ordered ignoring case and accents', () => {
+    expect(printed(inChronicles('zebra', 'Élysée', 'Beta', 'alpha')).slice(1)).toEqual([
+      'alpha · 1',
+      'Beta · 1',
+      'Élysée · 1',
+      'zebra · 1',
+    ]);
+  });
+
+  test.each([
+    ['three spellings', ['The Glass City', ' the glass city ', 'THE GLASS CITY'], 'The Glass City · 3'],
+    ['the oldest spelling is not the tidiest', [' the glass city ', 'The Glass City'], 'the glass city · 2'],
+  ])('one chronicle however it is spelled: %s', (_, spellings, tab) => {
+    expect(printed(inChronicles(...spellings)).slice(1)).toEqual([tab]);
+  });
+
+  test('accents tell chronicles apart', () => {
+    expect(printed(inChronicles('Élysée', 'Elysee')).slice(1)).toEqual(['Elysee · 1', 'Élysée · 1']);
+  });
+
+  test('a build counts in its chronicle', () => {
+    const entries = entriesOf({
+      characters: [character('0001', { chronicle: 'The Glass City' })],
+      builds: [build('0002', { chronicle: 'The Glass City' })],
+    });
+    expect(printed(entries)).toEqual(['All characters · 2', 'The Glass City · 2']);
+  });
+
+  test('tab keys are stable across what is stored', () => {
+    const glassKey = (...chronicles: string[]) =>
+      view(inChronicles(...chronicles), INITIAL_FILTER).tabs.find((tab) => tab.label === 'Glass')!.key;
+    expect(glassKey('Ashes', 'Glass')).toBe(glassKey('Glass', ' glass '));
+  });
+
+  test('every tab has its own key', () => {
+    const keys = view(inChronicles('A', 'B', ''), INITIAL_FILTER).tabs.map((tab) => tab.key);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  test('an empty library has only the All tab, counting nothing', () => {
+    expect(printed([])).toEqual(['All characters · 0']);
+  });
+
+  test('Unassigned comes last, counting the entries with no chronicle', () => {
+    expect(printed(inChronicles('The Glass City', '', 'Ashes of Milan', '   '))).toEqual([
+      'All characters · 4',
+      'Ashes of Milan · 1',
+      'The Glass City · 1',
+      'Unassigned · 2',
+    ]);
+  });
+
+  test('Unassigned is left out when every entry has a chronicle', () => {
+    expect(printed(inChronicles('The Glass City', 'The Glass City'))).toEqual([
+      'All characters · 2',
+      'The Glass City · 2',
+    ]);
+  });
+
+  test('an unreadable entry counts as unassigned, and a build in its chronicle', () => {
+    const entries = entriesOf({
+      characters: [
+        character('0001', { chronicle: 'The Glass City' }),
+        { kind: 'unreadable', id: '0003' },
+      ],
+      builds: [build('0002', { chronicle: 'The Glass City' }), { kind: 'unreadable', id: '0004' }],
+    });
+    expect(printed(entries)).toEqual(['All characters · 4', 'The Glass City · 2', 'Unassigned · 2']);
+  });
+
+  test('unreadable entries alone make no chronicle, so no Unassigned tab', () => {
+    const entries = entriesOf({ characters: [{ kind: 'unreadable', id: '0001' }], builds: [] });
+    expect(printed(entries)).toEqual(['All characters · 1']);
+  });
+
+  describe('a chronicle named like a special tab', () => {
+    test.each([
+      ['Unassigned', ' unassigned ', ['Ashes · 1', '"Unassigned" · 2', 'Unassigned · 1']],
+      ['All characters', 'ALL CHARACTERS', ['"All characters" · 2', 'Ashes · 1', 'Unassigned · 1']],
+    ])('%j is its own chronicle, labelled in quotation marks', (name, spelling, tabs) => {
+      expect(printed(inChronicles(name, spelling, 'Ashes', '')).slice(1)).toEqual(tabs);
+    });
+
+    test('its tab is not the special tab: keys never collide', () => {
+      const keys = view(inChronicles('Unassigned', 'All characters', 'Ashes', ''), INITIAL_FILTER).tabs.map(
+        (tab) => tab.key,
+      );
+      expect(keys).toHaveLength(5);
+      expect(new Set(keys).size).toBe(5);
+    });
+
+    test('a chronicle named Unassigned leaves the real Unassigned tab to the blank ones', () => {
+      const result = view(inChronicles('Unassigned', ''), INITIAL_FILTER);
+      expect(result.tabs.map((tab) => [tab.label, tab.count])).toEqual([
+        ['All characters', 2],
+        ['"Unassigned"', 1],
+        ['Unassigned', 1],
+      ]);
+    });
+  });
+});
+
+describe('view: the selected tab', () => {
+  const records = {
+    characters: [
+      character('0001', { name: 'Lucita', chronicle: 'The Glass City' }),
+      character('0002', { name: 'Beckett' }),
+      character('0003', { name: 'Anatole', chronicle: ' the glass city ' }),
+      { kind: 'unreadable' as const, id: '0005' },
+    ],
+    builds: [build('0004', { name: 'Fatima', chronicle: 'Ashes of Milan' })],
+  };
+  const entries = entriesOf(records);
+  const keyOf = (label: string) => view(entries, INITIAL_FILTER).tabs.find((tab) => tab.label === label)!.key;
+  const idsOn = (label: string) => view(entries, { tab: keyOf(label) }).shown.map((entry) => entry.id);
+
+  test('All shows everything', () => {
+    expect(idsOn('All characters')).toEqual(['0001', '0002', '0003', '0004', '0005']);
+  });
+
+  test('a chronicle shows its readable entries, builds included', () => {
+    expect(idsOn('The Glass City')).toEqual(['0001', '0003']);
+    expect(idsOn('Ashes of Milan')).toEqual(['0004']);
+  });
+
+  test('Unassigned shows the blank chronicles and every unreadable entry', () => {
+    expect(idsOn('Unassigned')).toEqual(['0002', '0005']);
+  });
+
+  test('the resolved tab is the selected one', () => {
+    expect(view(entries, { tab: keyOf('Ashes of Milan') }).tab).toBe(keyOf('Ashes of Milan'));
+  });
+
+  test('a tab that no longer exists resolves to All and shows everything', () => {
+    const result = view(entries, { tab: 'chronicle:gone' });
+    expect(result.tab).toBe(INITIAL_FILTER.tab);
+    expect(result.shown).toHaveLength(5);
+  });
+
+  test('the Unassigned tab resolves to All once no chronicle exists to set it apart', () => {
+    const unassignedKey = keyOf('Unassigned');
+    const bare = inChronicles('', '');
+    expect(view(bare, { tab: unassignedKey })).toMatchObject({ tab: INITIAL_FILTER.tab });
+    expect(view(bare, { tab: unassignedKey }).shown).toHaveLength(2);
+  });
+
+  test('counts stay the same whichever tab is selected', () => {
+    const counts = (tab: string) => view(entries, { tab }).tabs.map((t) => t.count);
+    expect(counts(keyOf('Ashes of Milan'))).toEqual(counts(INITIAL_FILTER.tab));
+  });
+
+  test('the counts line is shown of stored', () => {
+    expect(view(entries, INITIAL_FILTER).countsLine).toBe('Showing 5 of 5 characters');
+    expect(view(entries, { tab: keyOf('Ashes of Milan') }).countsLine).toBe('Showing 1 of 5 characters');
+    expect(view(entries, { tab: keyOf('Unassigned') }).countsLine).toBe('Showing 2 of 5 characters');
+  });
+
+  test('the state is about what is stored, not what the tab shows', () => {
+    expect(view(entries, { tab: keyOf('Ashes of Milan') }).state).toBe('entries');
+  });
+
+  test('the entries handed in are not changed', () => {
+    const before = structuredClone(entries);
+    const given = [...entries];
+    view(given, { tab: keyOf('Unassigned') });
+    expect(given).toEqual(before);
+    expect(entries).toEqual(before);
+  });
+});
+
+describe('view: the breakdown', () => {
+  test.each([
+    ['one chronicle and one unassigned', ['The Glass City', 'The Glass City', ''], '2 in The Glass City · 1 unassigned'],
+    ['several chronicles', ['The Glass City', 'Ashes of Milan', 'Ashes of Milan', ''], '3 in 2 chronicles · 1 unassigned'],
+    ['no unassigned entry', ['The Glass City', 'The Glass City'], '2 in The Glass City'],
+    ['several chronicles and no unassigned entry', ['A', 'B'], '2 in 2 chronicles'],
+    ['one chronicle spelled three ways: the oldest spelling', [' the glass city ', 'The Glass City', 'THE GLASS CITY'], '3 in the glass city'],
+    ['no chronicle at all', ['', '   '], ''],
+  ])('with %s reads %j', (_, chronicles, breakdown) => {
+    expect(view(inChronicles(...chronicles), INITIAL_FILTER).breakdown).toBe(breakdown);
+  });
+
+  test('is empty for an empty library', () => {
+    expect(view([], INITIAL_FILTER).breakdown).toBe('');
+  });
+
+  test('counts builds, and unreadable entries as unassigned', () => {
+    const entries = entriesOf({
+      characters: [character('0001', { chronicle: 'The Glass City' }), { kind: 'unreadable', id: '0003' }],
+      builds: [build('0002', { chronicle: 'The Glass City' })],
+    });
+    expect(view(entries, INITIAL_FILTER).breakdown).toBe('2 in The Glass City · 1 unassigned');
+  });
+
+  test('does not follow the selected tab', () => {
+    const entries = inChronicles('The Glass City', 'The Glass City', '');
+    const unassigned = view(entries, INITIAL_FILTER).tabs.find((tab) => tab.label === 'Unassigned')!;
+    const result = view(entries, { tab: unassigned.key });
+    expect(result.shown).toHaveLength(1);
+    expect(result.breakdown).toBe('2 in The Glass City · 1 unassigned');
+  });
+
+  test('names a chronicle called like a special tab as it is typed', () => {
+    expect(view(inChronicles('Unassigned', 'Unassigned'), INITIAL_FILTER).breakdown).toBe('2 in Unassigned');
+  });
+});
+

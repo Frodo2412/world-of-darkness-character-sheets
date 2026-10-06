@@ -4,7 +4,7 @@
 import { displayName, type V20Character } from './character';
 import type { V20Build } from './creation/build';
 import { buildSummary, identitySummary, monogram, temperamentOf } from './identity';
-import { caseFolded } from './text';
+import { caseFolded, folded } from './text';
 
 const UNNAMED_BUILD = 'Unnamed build';
 
@@ -166,32 +166,131 @@ export function entriesOf({ characters, builds }: LibraryRecords): LibraryEntry[
   return numberRepeats(entries.sort(oldestFirst));
 }
 
-/**
- * What the player has chosen to see. Later steps add the chronicle tab, search
- * text, clan, status and order; for now nothing narrows the library.
- */
-export type LibraryFilter = Record<never, never>;
+/** The tab that lists everything; the one a fresh page starts on. */
+const ALL_TAB = 'all';
+const ALL_LABEL = 'All characters';
 
-export const INITIAL_FILTER: LibraryFilter = {};
+/** The tab of entries with no chronicle. A chronicle's tab key starts with `chronicle:`, so this is never one. */
+const UNASSIGNED_TAB = 'unassigned';
+
+/** What the player has chosen to see. Later steps add search text, clan, status and order. */
+export interface LibraryFilter {
+  /** The key of a tab in `LibraryView.tabs`; one that no longer exists means All. */
+  tab: string;
+}
+
+export const INITIAL_FILTER: LibraryFilter = { tab: ALL_TAB };
 
 /** The summary row's left side: how many entries are shown of how many are stored. */
 export function countsLine(shown: number, stored: number): string {
   return `Showing ${shown} of ${stored} characters`;
 }
 
+/** One tab of the strip. The script draws " · count" itself; `label` is the name alone. */
+export interface LibraryTab {
+  /** Stable: it names the same tab whatever else changes. */
+  key: string;
+  label: string;
+  /** Every entry in the tab, whatever any other filter says. */
+  count: number;
+}
+
 export interface LibraryView {
+  /** All characters first, then each chronicle alphabetically, then Unassigned. */
+  tabs: LibraryTab[];
+  /** The key of the selected tab: `filter.tab` when that tab exists, otherwise All. */
+  tab: string;
   shown: LibraryEntry[];
   countsLine: string;
+  /** The summary row's right side, describing every stored entry: empty when no chronicle exists. */
+  breakdown: string;
   /** `empty` when nothing is stored at all. */
   state: 'entries' | 'empty';
 }
 
+/** An entry that could be read, and so has a chronicle (possibly blank). */
+const isReadable = (entry: LibraryEntry): entry is Extract<LibraryEntry, { chronicleKey: string }> =>
+  'chronicleKey' in entry;
+
+/** A readable entry that is filed under a chronicle. */
+const hasChronicle = (entry: LibraryEntry): entry is Extract<LibraryEntry, { chronicleKey: string }> =>
+  isReadable(entry) && entry.chronicleKey !== '';
+
+/** Items that are the same text, whatever the case or surrounding space, as one named group. */
+interface Group {
+  key: string;
+  /** As the group's oldest item spells it. */
+  name: string;
+  count: number;
+}
+
+/**
+ * Groups `items` (oldest first) by their folded key, naming each group as its oldest item spells
+ * it. Chronicles use it for their tabs; the clan filter's options will use it too.
+ */
+function groupByKey<T>(items: readonly T[], keyOf: (item: T) => string, nameOf: (item: T) => string): Group[] {
+  const groups = new Map<string, Group>();
+  for (const item of items) {
+    const key = keyOf(item);
+    const group = groups.get(key);
+    if (group === undefined) groups.set(key, { key, name: nameOf(item), count: 1 });
+    else group.count += 1;
+  }
+  return [...groups.values()];
+}
+
+/** Groups in alphabetical order, ignoring case and accents; the key settles a tie. */
+const alphabetically = (a: Group, b: Group): number =>
+  folded(a.name) < folded(b.name) ? -1 : folded(a.name) > folded(b.name) ? 1 : a.key < b.key ? -1 : 1;
+
+/** The chronicles in use, alphabetical, each named as its oldest entry spells it. */
+const chroniclesOf = (entries: readonly LibraryEntry[]): Group[] =>
+  groupByKey(
+    entries.filter(hasChronicle),
+    (entry) => entry.chronicleKey,
+    (entry) => entry.chronicle,
+  ).sort(alphabetically);
+
+/** The tab of a chronicle, whatever it is called: it can never be the key of All or Unassigned. */
+const chronicleTab = (chronicleKey: string): string => `chronicle:${chronicleKey}`;
+
+/** The tab an entry is listed under besides All: no chronicle, or one that cannot be read, is Unassigned. */
+const tabOf = (entry: LibraryEntry): string =>
+  hasChronicle(entry) ? chronicleTab(entry.chronicleKey) : UNASSIGNED_TAB;
+
+const SPECIAL_KEYS = [caseFolded(ALL_LABEL), caseFolded(UNASSIGNED)];
+
+/** A chronicle called like a special tab is shown in quotation marks, so two tabs never read the same. */
+const labelOf = (key: string, name: string): string => (SPECIAL_KEYS.includes(key) ? `"${name}"` : name);
+
+/** The summary row's right side: where all stored entries stand, whichever tab is selected. */
+function breakdownOf(chronicles: readonly Group[], stored: number): string {
+  if (chronicles.length === 0) return '';
+  const chronicled = chronicles.reduce((total, chronicle) => total + chronicle.count, 0);
+  const where = chronicles.length === 1 ? chronicles[0].name : `${chronicles.length} chronicles`;
+  const unassigned = stored - chronicled;
+  return [`${chronicled} in ${where}`, ...(unassigned > 0 ? [`${unassigned} unassigned`] : [])].join(' · ');
+}
+
 /** What the roster draws for `entries` (oldest first) under `filter`. */
-export function view(entries: readonly LibraryEntry[], _filter: LibraryFilter): LibraryView {
-  const shown = [...entries];
+export function view(entries: readonly LibraryEntry[], filter: LibraryFilter): LibraryView {
+  const chronicles = chroniclesOf(entries);
+  const unassigned = entries.filter((entry) => tabOf(entry) === UNASSIGNED_TAB).length;
+  const tabs = [
+    { key: ALL_TAB, label: ALL_LABEL, count: entries.length },
+    ...chronicles.map(({ key, name, count }) => ({ key: chronicleTab(key), label: labelOf(key, name), count })),
+    ...(chronicles.length > 0 && unassigned > 0
+      ? [{ key: UNASSIGNED_TAB, label: UNASSIGNED, count: unassigned }]
+      : []),
+  ];
+  const tab = tabs.some((candidate) => candidate.key === filter.tab) ? filter.tab : ALL_TAB;
+  const shown = entries.filter((entry) => tab === ALL_TAB || tabOf(entry) === tab);
   return {
+    tabs,
+    tab,
     shown,
     countsLine: countsLine(shown.length, entries.length),
+    breakdown: breakdownOf(chronicles, entries.length),
     state: entries.length === 0 ? 'empty' : 'entries',
   };
 }
