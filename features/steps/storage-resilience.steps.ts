@@ -41,14 +41,6 @@ Given('a saved record that is readable but is not a V20 character', async ({ pag
   memory.damaged = { id: character.id, ...record };
 });
 
-Given('the roster reports an unreadable character', async ({ page, memory }) => {
-  const character = characterWith({});
-  await saveCharacters(page, [character]);
-  memory.damaged = { id: character.id, ...(await overwriteRecord(page, character.id, NOT_JSON)) };
-  await openRoster(page);
-  await expect(unreadableEntries(page)).toHaveCount(1);
-});
-
 When('the player opens the roster and then reloads it', async ({ page }) => {
   await openRoster(page);
   await page.reload();
@@ -56,13 +48,6 @@ When('the player opens the roster and then reloads it', async ({ page }) => {
 
 When('the player opens its sheet address', async ({ page, memory }) => {
   await page.goto(sheetAddress(memory.damaged!.id));
-});
-
-When('the player deletes that entry and confirms', async ({ page }) => {
-  await unreadableEntries(page).getByRole('button', { name: /^Delete unreadable character/ }).click();
-  const dialog = page.getByRole('dialog', { name: 'Delete character?' });
-  await dialog.getByRole('button', { name: 'Delete' }).click();
-  await expect(dialog).toBeHidden();
 });
 
 Then('{string} is listed and can be opened', async ({ page }, name: string) => {
@@ -106,12 +91,6 @@ Then(
     await expect(page.getByRole('link', { name: 'Go to your characters' })).toBeVisible();
   },
 );
-
-Then('it is no longer reported', async ({ page, memory }) => {
-  await expect(unreadableEntries(page)).toHaveCount(0);
-  await expect(page.getByText('No characters yet')).toBeVisible();
-  expect(await storedText(page, memory.damaged!.key)).toBeNull();
-});
 
 const savingProblem = (page: Page) => page.getByRole('alert').filter({ hasText: /changes not saved/i });
 

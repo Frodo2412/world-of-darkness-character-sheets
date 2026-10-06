@@ -17,6 +17,11 @@ Given('a player who has created two characters', async ({ page }) => {
   await createCharacter(page);
 });
 
+Given('saved characters {string} and {string}', async ({ page, memory }, first: string, second: string) => {
+  memory.saved = [first, second].map((name) => characterWith({ name }));
+  await saveCharacters(page, memory.saved);
+});
+
 Given(
   'a saved character named {string} of clan {string} played by {string}',
   async ({ page }, name: string, clan: string, player: string) => {
@@ -84,6 +89,11 @@ Then(
     await expect(entry).toContainText(player);
   },
 );
+
+Then('the roster shows the empty state', async ({ page }) => {
+  await expect(page.getByText('No characters yet')).toBeVisible();
+  await expect(rosterEntries(page)).toHaveCount(0);
+});
 
 Then('the character is still listed', async ({ page }) => {
   await expect(rosterEntries(page)).toHaveCount(1);

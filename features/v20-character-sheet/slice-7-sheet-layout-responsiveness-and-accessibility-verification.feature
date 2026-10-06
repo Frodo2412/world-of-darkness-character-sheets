@@ -21,4 +21,3 @@ Feature: Layout and accessibility
       | roster with characters    |
       | sheet                     |
       | character not found       |
-      | delete confirmation       |

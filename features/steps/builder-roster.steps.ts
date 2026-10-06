@@ -3,11 +3,8 @@ import { Given, Then, When } from './fixtures';
 import { buildWith, saveBuilds } from './support/builder';
 import {
   buildEntries,
-  confirmDelete,
-  deleteConfirmation,
   openRoster,
   rosterEntries,
-  startDeleting,
 } from './support/pages';
 import { characterWith, saveCharacters } from './support/seed';
 import { overwriteRecord } from './support/storage';
@@ -54,13 +51,6 @@ Given(
   },
 );
 
-Given(
-  'builds in progress named {string} and {string}',
-  async ({ page }, first: string, second: string) => {
-    await saveBuilds(page, [buildWith({ concept: { name: first } }), buildWith({ concept: { name: second } })]);
-  },
-);
-
 Given('two builds in progress with no name', async ({ page }) => {
   await saveBuilds(page, [buildWith(), buildWith()]);
 });
@@ -77,22 +67,6 @@ Given('a saved character, a build in progress and an unreadable build', async ({
 When('the player continues {string} from the roster', async ({ page }, name: string) => {
   await openRoster(page);
   await page.getByRole('link', { name: `Continue ${name}`, exact: true }).click();
-});
-
-When(
-  'the player asks to delete {string} and cancels',
-  async ({ page, memory }, name: string) => {
-    await startDeleting(page, name);
-    memory.asked = (await deleteConfirmation(page).locator('p').textContent()) ?? '';
-    await expect(deleteConfirmation(page).getByRole('button', { name: 'Cancel' })).toBeFocused();
-    await deleteConfirmation(page).getByRole('button', { name: 'Cancel' }).click();
-    await expect(deleteConfirmation(page)).toBeHidden();
-  },
-);
-
-When('the player deletes the unreadable build and confirms', async ({ page }) => {
-  await startDeleting(page, 'unreadable build');
-  await confirmDelete(page);
 });
 
 // Then
@@ -113,16 +87,6 @@ Then(
     await expect(entryFor(page, name)).toContainText(`Clan: ${clan}`);
   },
 );
-
-Then('the builds in progress list shows only {string}', async ({ page }, name: string) => {
-  await expect(buildEntries(page)).toHaveCount(1);
-  await expect(entryFor(page, name)).toHaveCount(1);
-
-  // Still so after a reload: the build is gone from storage, not just from view.
-  await page.reload();
-  await expect(buildEntries(page)).toHaveCount(1);
-  await expect(entryFor(page, name)).toHaveCount(1);
-});
 
 Then(
   'the builds in progress list shows {string} and one unreadable build',
@@ -160,14 +124,4 @@ Then('the continue controls have different accessible names', async ({ page }) =
   const names = await accessibleNames(page, /^Continue/);
   expect(names).toHaveLength(2);
   expect(new Set(names).size).toBe(2);
-});
-
-Then('the delete controls have different accessible names', async ({ page }) => {
-  const names = await accessibleNames(page, /^Delete/);
-  expect(names).toHaveLength(2);
-  expect(new Set(names).size).toBe(2);
-});
-
-Then('they were asked {string}', async ({ memory }, question: string) => {
-  expect(memory.asked).toBe(question);
 });

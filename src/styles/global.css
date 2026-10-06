@@ -347,10 +347,6 @@ input[type='text'] {
 	color: var(--color-muted);
 }
 
-.roster button {
-	margin-inline-start: auto;
-}
-
 /* A build's name is its title; "Continue" is an ordinary link beside it. */
 #builds strong {
 	font-family: var(--font-display);

@@ -103,7 +103,6 @@ Feature: The character library lists everything stored
     When the player opens the roster
     Then "Ana" appears nowhere on the page
 
-  @pending
   Scenario: Nothing on the roster deletes
     Given a saved character, a build in progress, an unreadable character and an unreadable build
     When the player opens the roster

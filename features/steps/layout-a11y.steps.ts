@@ -67,9 +67,9 @@ Then('every control offered in play mode is visible and can be activated', async
     await expect(editButton(page)).toBeVisible();
   }
   const all = await controls(page).all();
-  // The roster shows a create button and a link and delete button per character;
+  // The roster shows two create buttons and a link per character;
   // the sheet shows about a hundred fields, ratings and boxes.
-  expect(all.length).toBeGreaterThanOrEqual(5);
+  expect(all.length).toBeGreaterThanOrEqual(4);
   const { width } = page.viewportSize()!;
   for (const control of all) {
     await control.scrollIntoViewIfNeeded();
@@ -93,7 +93,7 @@ Then('every control offered in play mode is visible and can be activated', async
 });
 
 Given(
-  /^a player viewing the (roster|builder|empty roster|roster with characters|sheet|character not found|delete confirmation)$/,
+  /^a player viewing the (roster|builder|empty roster|roster with characters|sheet|character not found)$/,
   async ({ page }, state: string) => {
     switch (state) {
       case 'roster':
@@ -117,12 +117,6 @@ Given(
       case 'character not found':
         await page.goto(sheetAddress('no-such-character'));
         await expect(page.getByRole('heading', { name: 'Character not found' })).toBeVisible();
-        break;
-      case 'delete confirmation':
-        await saveCharacters(page, SAVED.map(characterWith));
-        await openRoster(page);
-        await page.getByRole('button', { name: 'Delete Lucita', exact: true }).click();
-        await expect(page.getByRole('dialog')).toBeVisible();
         break;
     }
   },

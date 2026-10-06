@@ -20,8 +20,6 @@ interface ScenarioMemory {
   ratings: Map<string, number>;
   /** The build a scenario arranged, for later steps to change or find again. */
   build?: V20Build;
-  /** The question a confirmation asked, kept after it closed. */
-  asked?: string;
   /** Each place keyboard focus stopped, and whether a focus indicator was drawn there. */
   focusStops: { control: string; visible: boolean }[];
   /** What each Tab press in a scenario reached, by the control's name. */

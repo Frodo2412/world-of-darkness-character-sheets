@@ -14,9 +14,6 @@ const buildsSection = document.querySelector<HTMLElement>('#builds-section')!;
 const buildList = document.querySelector<HTMLUListElement>('#builds')!;
 const newCharacterButton = document.querySelector<HTMLButtonElement>('#new-character')!;
 const buildButton = document.querySelector<HTMLButtonElement>('#build-character')!;
-const deleteDialog = document.querySelector<HTMLDialogElement>('#delete-dialog')!;
-const deleteTitle = document.querySelector<HTMLHeadingElement>('#delete-dialog-title')!;
-const deleteMessage = document.querySelector<HTMLParagraphElement>('#delete-dialog-message')!;
 
 const sheetUrl = (id: string): string => `/sheet/?id=${encodeURIComponent(id)}`;
 // A new character is there to be filled in, so its sheet opens in edit mode.
@@ -28,22 +25,6 @@ function detail(label: string, value: string): HTMLElement[] {
   const element = document.createElement('span');
   element.textContent = `${label}: ${value}`;
   return [element];
-}
-
-/** What a delete asks and does, whatever is being deleted. */
-interface Deletion {
-  /** The delete button's accessible name. */
-  label: string;
-  title: string;
-  question: string;
-  onConfirm: () => void;
-}
-
-/** One roster entry: what it shows, then its delete button. */
-interface EntryDescription {
-  content: HTMLElement[];
-  deletion: Deletion;
-  unreadable?: boolean;
 }
 
 /**
@@ -60,35 +41,10 @@ function numbered(names: string[]): string[] {
 }
 
 function start(store: CharacterStore, builds: BuildStore): void {
-  /** Asks before deleting; the dialog opens with Cancel focused. */
-  function confirmDelete({ title, question, onConfirm }: Deletion): void {
-    deleteTitle.textContent = title;
-    deleteMessage.textContent = question;
-    deleteDialog.returnValue = '';
-    deleteDialog.addEventListener(
-      'close',
-      () => {
-        if (deleteDialog.returnValue !== 'confirm') return;
-        onConfirm();
-        render();
-        // The button that opened the dialog is gone, so focus needs a new home.
-        newCharacterButton.focus();
-      },
-      { once: true },
-    );
-    deleteDialog.showModal();
-  }
-
-  function entryItem({ content, deletion, unreadable }: EntryDescription): HTMLLIElement {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = 'Delete';
-    button.setAttribute('aria-label', deletion.label);
-    button.addEventListener('click', () => confirmDelete(deletion));
-
+  function entryItem(content: HTMLElement[], unreadable = false): HTMLLIElement {
     const item = document.createElement('li');
     if (unreadable) item.dataset.unreadable = '';
-    item.append(...content, button);
+    item.append(...content);
     return item;
   }
 
@@ -100,41 +56,21 @@ function start(store: CharacterStore, builds: BuildStore): void {
     return [title, explanation];
   }
 
-  const deleteCharacter = (id: string) => () => store.delete(id);
-
   function characterItem(character: V20Character): HTMLLIElement {
     const name = displayName(character);
     const link = document.createElement('a');
     link.href = sheetUrl(character.id);
     link.textContent = name;
-    return entryItem({
-      content: [
-        link,
-        ...detail('Clan', character.header.clan),
-        ...detail('Player', character.header.player),
-      ],
-      deletion: {
-        label: `Delete ${name}`,
-        title: 'Delete character?',
-        question: `Delete ${name}? This cannot be undone.`,
-        onConfirm: deleteCharacter(character.id),
-      },
-    });
+    return entryItem([
+      link,
+      ...detail('Clan', character.header.clan),
+      ...detail('Player', character.header.player),
+    ]);
   }
 
-  /** A record that could not be read is shown, never hidden, so the player can decide its fate. */
+  /** A record that could not be read is shown, never hidden. */
   function unreadableCharacterItem(id: string): HTMLLIElement {
-    return entryItem({
-      content: unreadableContent('character', id),
-      deletion: {
-        label: `Delete unreadable character ${id}`,
-        title: 'Delete character?',
-        question:
-          'Delete this unreadable character? Its saved data will be removed. This cannot be undone.',
-        onConfirm: deleteCharacter(id),
-      },
-      unreadable: true,
-    });
+    return entryItem(unreadableContent('character', id), true);
   }
 
   function rosterItem(entry: RosterEntry): HTMLLIElement {
@@ -147,27 +83,9 @@ function start(store: CharacterStore, builds: BuildStore): void {
     }
   }
 
-  function deleteBuild(id: string): () => void {
-    return () => {
-      if (builds.delete(id).status === 'failed') {
-        showStatus('The build could not be deleted. This browser refused to change its storage.');
-      }
-    };
-  }
-
   function buildItem(entry: BuildEntry, name: string): HTMLLIElement {
     if (entry.kind === 'unreadable') {
-      return entryItem({
-        content: unreadableContent('build', entry.id),
-        deletion: {
-          label: `Delete ${name}`,
-          title: 'Delete build?',
-          question:
-            'Delete this unreadable build? Its saved data will be removed. This cannot be undone.',
-          onConfirm: deleteBuild(entry.id),
-        },
-        unreadable: true,
-      });
+      return entryItem(unreadableContent('build', entry.id), true);
     }
     const title = document.createElement('strong');
     title.textContent = name;
@@ -177,15 +95,7 @@ function start(store: CharacterStore, builds: BuildStore): void {
     link.href = builderUrl(entry.build.id);
     link.textContent = 'Continue';
     link.setAttribute('aria-label', `Continue ${name}`);
-    return entryItem({
-      content: [title, marker, ...detail('Clan', entry.build.clan), link],
-      deletion: {
-        label: `Delete build ${name}`,
-        title: 'Delete build?',
-        question: `Delete the build ${name}? This cannot be undone.`,
-        onConfirm: deleteBuild(entry.build.id),
-      },
-    });
+    return entryItem([title, marker, ...detail('Clan', entry.build.clan), link]);
   }
 
   const buildName = (entry: BuildEntry): string =>

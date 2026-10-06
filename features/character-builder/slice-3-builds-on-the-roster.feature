@@ -29,25 +29,11 @@ Feature: Builds on the roster
     Given two builds in progress with no name
     When the player opens the roster
     Then the continue controls have different accessible names
-    And the delete controls have different accessible names
 
   Scenario: A build name is shown as plain text
     Given a build in progress named "<b>Beckett</b>"
     When the player opens the roster
     Then the builds in progress list shows the text "<b>Beckett</b>"
-
-  Scenario: Deleting a build asks first, and cancelling keeps it
-    Given a build in progress named "Beckett"
-    When the player asks to delete "Beckett" and cancels
-    Then they were asked "Delete the build Beckett? This cannot be undone."
-    And the builds in progress list shows "Beckett"
-
-  Scenario: Confirming the delete removes only that build
-    Given a saved character named "Lucita"
-    And builds in progress named "Beckett" and "Anatole"
-    When the player deletes "Beckett" and confirms
-    Then the builds in progress list shows only "Anatole"
-    And the characters list shows only "Lucita"
 
   Scenario: An unreadable build does not hide anything else
     Given a saved character named "Lucita"
@@ -57,11 +43,6 @@ Feature: Builds on the roster
     Then the characters list shows only "Lucita"
     And the builds in progress list shows "Beckett" and one unreadable build
     And the damaged data is exactly as it was
-
-  Scenario: An unreadable build can be deleted by the player
-    Given a saved build whose data has been damaged
-    When the player deletes the unreadable build and confirms
-    Then no builds in progress list is shown
 
   Scenario: Creating a blank character leaves builds alone
     Given a build in progress named "Beckett"

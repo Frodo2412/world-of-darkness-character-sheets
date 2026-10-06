@@ -106,7 +106,7 @@ Given('the browser accepts stored data again', async ({ page }) => {
 
 // The record is removed from this page's own storage, so no storage event
 // reaches it: the builder learns of the deletion only when it next saves.
-Given('the same build has been deleted from the roster in another tab', async ({ page }) => {
+Given('the same build has been removed in another tab', async ({ page }) => {
   const key = BUILD_KEY_PREFIX + openBuildId(page);
   await page.evaluate((k) => window.localStorage.removeItem(k), key);
 });
@@ -276,9 +276,9 @@ Then('they are told the build could not be read and has not been changed', async
 });
 
 Then(
-  'they are offered a link to the roster to delete it or build a new one',
+  'they are offered a link to the roster to build a new one',
   async ({ page }) => {
-    await expect(page.getByText(/delete it or build a new character/)).toBeVisible();
+    await expect(page.getByText(/You can build a new character/)).toBeVisible();
     await expect(page.getByRole('link', { name: 'Go to your characters' })).toBeVisible();
   },
 );
