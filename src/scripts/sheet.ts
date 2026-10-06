@@ -125,15 +125,6 @@ function startMode(): Mode {
   return createMode(sheet, startsEditing ? 'edit' : 'play');
 }
 
-// TEMPORARY: until the later slices rebuild each card, every text field the play
-// view does not read is hidden in play mode. Only the identity and the live
-// health track are read there. Delete this with the last legacy input.
-function markLegacyInputsEditOnly(): void {
-  for (const input of textInputs) {
-    (input.closest('label') ?? input).dataset.sheetModeOnly = 'edit';
-  }
-}
-
 /** Wires every control on the sheet to `apply`, the one path an edit takes. */
 function bindEditListeners(apply: Apply): void {
   for (const input of textInputs) {
@@ -182,7 +173,6 @@ function bindEditListeners(apply: Apply): void {
 function showSheet(loaded: V20Character, store: CharacterStore): void {
   let character = loaded;
   const mode = startMode();
-  markLegacyInputsEditOnly();
 
   /** The one path every edit takes: update the model, redraw, save. */
   function apply(update: Update): V20Character {

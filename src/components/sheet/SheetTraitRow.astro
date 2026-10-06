@@ -6,9 +6,11 @@ interface Props {
 	trait?: TraitRef;
 	customGroup?: AbilityGroupKey;
 	label: string;
+	/** A quick-reference row: its name is always shown, and it has no select button and no number. */
+	plain?: boolean;
 }
 
-const { trait, customGroup, label } = Astro.props;
+const { trait, customGroup, label, plain = false } = Astro.props;
 const custom = trait === undefined;
 ---
 
@@ -24,10 +26,14 @@ const custom = trait === undefined;
 	data-sheet-mode-only={custom ? 'play' : undefined}
 	hidden={custom}
 >
-	<button type="button" class="trait-select" tabindex="-1" aria-hidden="true" data-sheet-mode-only="play" data-show={custom ? 'trait.name' : undefined}>
-		{custom ? '' : label}
-	</button>
-	{custom ? null : <span class="trait-label" data-sheet-mode-only="edit">{label}</span>}
+	{
+		plain ? null : (
+			<button type="button" class="trait-select" tabindex="-1" aria-hidden="true" data-sheet-mode-only="play" data-show={custom ? 'trait.name' : undefined}>
+				{custom ? '' : label}
+			</button>
+		)
+	}
+	{custom ? null : <span class="trait-label" data-sheet-mode-only={plain ? undefined : 'edit'}>{label}</span>}
 	{
 		custom ? (
 			<dot-rating max="5" value="0" readonly />
@@ -35,5 +41,5 @@ const custom = trait === undefined;
 			<dot-rating data-trait={trait} data-label={label} aria-label={label} max={rangeOf(trait).max} value="0" />
 		)
 	}
-	<span class="trait-number" data-sheet-mode-only="play" data-show="trait.number" aria-hidden="true"></span>
+	{plain ? null : <span class="trait-number" data-sheet-mode-only="play" data-show="trait.number" aria-hidden="true"></span>}
 </div>

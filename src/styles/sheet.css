@@ -1,6 +1,6 @@
-/* The sheet: the identity, then Attributes and Abilities as cards of three,
-   then the sections not yet rebuilt as cards. Everything is one column on a
-   phone. */
+/* The sheet: the identity, the live resources, then the workspace: Attributes and
+   Abilities as cards of three, with Disciplines and Virtues in a column beside them.
+   Everything is one column on a phone. */
 
 /* One mode at a time: the sheet root says which, and what belongs to the other
    is removed from the page, the accessibility tree and the tab order. */
@@ -196,6 +196,29 @@
 	color: var(--color-muted);
 }
 
+/* The workspace: the trait cards, and at wide widths a 320px column of quick references
+   beside them. With no room the column drops below the traits. */
+
+.workspace {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0 var(--space-3);
+}
+
+.workspace-side {
+	display: grid;
+	align-content: start;
+	gap: 1.125rem;
+	/* Level with the trait cards, below the section label: the label's line and its gap. */
+	margin-block-start: calc(var(--space-3) + 1.4375rem);
+}
+
+@media (min-width: 75rem) {
+	.workspace {
+		grid-template-columns: minmax(0, 1fr) 20rem;
+	}
+}
+
 /* Side cards: Disciplines and Virtues, the quick references beside the traits. */
 
 .side-card {
@@ -218,6 +241,11 @@
 	color: var(--color-text-strong);
 }
 
+/* The column is too narrow for a name beside ten dots: the name takes a line of its own. */
+.side-card .rating-row input {
+	flex: 1 1 100%;
+}
+
 /* Each Discipline is its name and rating in the display typeface, set off from the next by a divider. */
 .discipline-list {
 	display: grid;
@@ -230,12 +258,27 @@
 	padding-block: var(--space-2);
 	font-family: var(--font-display);
 	font-size: 1.125rem;
+	font-variant-numeric: lining-nums;
 	color: var(--color-text);
 	overflow-wrap: anywhere;
 }
 
 .discipline-entry + .discipline-entry {
 	border-block-start: 1px solid var(--color-divider);
+}
+
+/* Rows in a side card sit apart. A virtue is its name and five dots, taller and rounder than a trait row, with no number. */
+.side-card .trait-rows {
+	gap: 0.375rem;
+}
+
+.sheet .virtues-card .trait-row {
+	min-block-size: 2rem;
+	border-radius: var(--radius-button);
+}
+
+.sheet[data-sheet-mode='play'] .virtues-card dot-rating {
+	inline-size: auto;
 }
 
 /* Live resources: Blood Pool, Willpower, Health and Humanity in one row under the

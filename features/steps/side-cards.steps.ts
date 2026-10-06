@@ -5,6 +5,7 @@ import { Given, Then, When } from './fixtures';
 import { setRating } from './support/ratings';
 import { characterArranged, characterWith, saveCharacters } from './support/seed';
 import { enterEditMode, openSavedSheet } from './support/sheet';
+import { escaped } from './support/text';
 
 const disciplinesCard = (page: Page): Locator => page.getByRole('region', { name: 'Disciplines', exact: true });
 
@@ -149,4 +150,68 @@ Then('there is no field for any Background', async ({ page }) => {
   await expect(page.getByRole('textbox', { name: /Background/ })).toHaveCount(0);
   await expect(page.getByRole('slider', { name: /Background/ })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: /Background/ })).toHaveCount(0);
+});
+
+// Virtues
+
+const virtuesCard = (page: Page): Locator => page.getByRole('region', { name: 'Virtues', exact: true });
+
+/** A virtue's row, found from the name its rating reports. */
+const virtueRow = (page: Page, label: string): Locator =>
+  virtuesCard(page).locator('[data-trait-key]').filter({ has: page.getByRole('img', { name: new RegExp(`^${escaped(label)} \\d+ of 5$`) }) });
+
+Given(
+  'a saved character with Conscience\\/Conviction {int}, Self-Control\\/Instinct {int} and Courage {int}',
+  async ({ page, memory }, conscience: number, selfControl: number, courage: number) => {
+    memory.saved = [
+      characterArranged({ name: 'Lucita', clan: 'Lasombra' }, (character) => {
+        character.virtues = { conscience, selfControl, courage };
+      }),
+    ];
+    await saveCharacters(page, memory.saved);
+  },
+);
+
+Given('a saved character with Courage {int}', async ({ page, memory }, courage: number) => {
+  memory.saved = [
+    characterArranged({ name: 'Lucita', clan: 'Lasombra' }, (character) => {
+      character.virtues.courage = courage;
+    }),
+  ];
+  await saveCharacters(page, memory.saved);
+});
+
+Then(
+  'the Virtues card shows Conscience\\/Conviction {int}, Self-Control\\/Instinct {int} and Courage {int}, each out of 5 dots',
+  async ({ page }, conscience: number, selfControl: number, courage: number) => {
+    const expected: [string, number][] = [
+      ['Conscience/Conviction', conscience],
+      ['Self-Control/Instinct', selfControl],
+      ['Courage', courage],
+    ];
+    await expect(virtuesCard(page).getByRole('img')).toHaveCount(expected.length);
+    for (const [label, value] of expected) {
+      const control = virtuesCard(page).getByRole('img', { name: `${label} ${value} of 5`, exact: true });
+      await expect(control.locator('.rating-mark')).toHaveCount(5);
+      await expect(control.locator('.rating-mark.is-filled')).toHaveCount(value);
+    }
+  },
+);
+
+Then('the Courage rating cannot be changed', async ({ page, memory }) => {
+  const courage = memory.saved[0].virtues.courage;
+  await expect(virtuesCard(page).getByRole('slider')).toHaveCount(0);
+  await expect(page.getByRole('slider', { name: 'Courage', exact: true })).toHaveCount(0);
+  // Pressing a dot does nothing: the rating reads as it did.
+  await virtueRow(page, 'Courage').locator('.rating-mark').first().click({ force: true });
+  await expect(virtuesCard(page).getByRole('img', { name: `Courage ${courage} of 5`, exact: true })).toBeVisible();
+});
+
+When('they activate {string} and set Courage to {int}', async ({ page }, name: string, value: number) => {
+  await page.getByRole('button', { name, exact: true }).click();
+  await setRating(page.getByRole('slider', { name: 'Courage', exact: true }), value);
+});
+
+Then('the Virtues card shows Courage {int}', async ({ page }, value: number) => {
+  await expect(virtuesCard(page).getByRole('img', { name: `Courage ${value} of 5`, exact: true })).toBeVisible();
 });

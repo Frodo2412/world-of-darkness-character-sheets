@@ -1,12 +1,12 @@
 ---
 import Abilities from '../components/sheet/Abilities.astro';
-import Advantages from '../components/sheet/Advantages.astro';
 import Attributes from '../components/sheet/Attributes.astro';
 import BloodPool from '../components/sheet/BloodPool.astro';
 import Disciplines from '../components/sheet/Disciplines.astro';
 import Health from '../components/sheet/Health.astro';
 import Humanity from '../components/sheet/Humanity.astro';
 import Identity from '../components/sheet/Identity.astro';
+import Virtues from '../components/sheet/Virtues.astro';
 import Willpower from '../components/sheet/Willpower.astro';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
@@ -27,10 +27,16 @@ import '../styles/sheet.css';
 				<Health />
 				<Humanity />
 			</div>
-			<Attributes />
-			<Abilities />
-			<Disciplines />
-			<Advantages />
+			<div class="workspace">
+				<div class="workspace-traits">
+					<Attributes />
+					<Abilities />
+				</div>
+				<div class="workspace-side">
+					<Disciplines />
+					<Virtues />
+				</div>
+			</div>
 		</div>
 		<div id="sheet-unreadable" hidden>
 			<h1>Character could not be read</h1>
