@@ -1,23 +1,21 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { SHEET_ADDRESS, createCharacter } from './pages';
+import { expectRatingValue, ratingLabelled } from './sheet';
 
 /** What a scenario calls a rating, where that differs from its label on the sheet. */
 const RATING_LABELS: Record<string, string> = {
-  'permanent Willpower': 'Willpower',
-  Humanity: 'Humanity / Path',
-  'temporary Willpower': 'Temporary Willpower',
+  'permanent Willpower': 'Permanent Willpower',
+  Willpower: 'Permanent Willpower',
 };
 
+/** A rating by its scenario name, whichever mode the sheet is in. */
 export const rating = (page: Page, name: string): Locator =>
-  page.getByRole('slider', { name: RATING_LABELS[name] ?? name, exact: true });
+  ratingLabelled(page, RATING_LABELS[name] ?? name);
 
 export const mark = (control: Locator, position: number): Locator =>
   control.locator('.rating-mark').nth(position - 1);
 
-export async function expectRating(control: Locator, value: number): Promise<void> {
-  await expect(control).toHaveAttribute('aria-valuenow', String(value));
-  await expect(control.locator('.rating-mark.is-filled')).toHaveCount(value);
-}
+export const expectRating = expectRatingValue;
 
 /** Sets a rating the way a player would, by activating one of its marks. */
 export async function setRating(control: Locator, value: number): Promise<void> {

@@ -4,10 +4,15 @@ import {
   blankCharacter,
   cycleHealthBox,
   displayName,
+  namedCustomAbility,
   namedRow,
+  namedRows,
   setHeaderField,
   setNamedRow,
+  setSpecialty,
   setText,
+  specialtyOf,
+  specialtyText,
   textValue,
   setTrait,
   traitValue,
@@ -556,6 +561,53 @@ describe('cycleHealthBox', () => {
   });
 });
 
+describe('namedRows', () => {
+  test('keeps the rows with a name, in order, with their ratings', () => {
+    const rows = [
+      { name: 'Dominate', rating: 3 },
+      { name: '', rating: 0 },
+      { name: 'Potence', rating: 1 },
+    ];
+    expect(namedRows(rows)).toEqual([
+      { name: 'Dominate', rating: 3 },
+      { name: 'Potence', rating: 1 },
+    ]);
+  });
+
+  test('drops a row whose name is only spaces, whatever its rating', () => {
+    expect(namedRows([{ name: '   ', rating: 4 }])).toEqual([]);
+  });
+
+  test('keeps a named row rated zero and trims its name', () => {
+    expect(namedRows([{ name: '  Hobby Talent ', rating: 0 }])).toEqual([{ name: 'Hobby Talent', rating: 0 }]);
+  });
+
+  test('is empty when there are no rows', () => {
+    expect(namedRows([])).toEqual([]);
+  });
+});
+
+describe('namedCustomAbility', () => {
+  const withTalent = (name: string, rating: number) =>
+    setNamedRow(blankCharacter('abc'), 'customAbilities.talents', { name, rating });
+
+  test('is the group\'s write-in ability with its name trimmed', () => {
+    expect(namedCustomAbility(withTalent('  Hobby Talent ', 3), 'customAbilities.talents')).toEqual({
+      name: 'Hobby Talent',
+      rating: 3,
+    });
+  });
+
+  test('is undefined while the name is blank or only spaces, whatever the rating', () => {
+    expect(namedCustomAbility(blankCharacter('abc'), 'customAbilities.skills')).toBeUndefined();
+    expect(namedCustomAbility(withTalent('   ', 4), 'customAbilities.talents')).toBeUndefined();
+  });
+
+  test('reads only the group asked for', () => {
+    expect(namedCustomAbility(withTalent('Streetwise', 2), 'customAbilities.knowledges')).toBeUndefined();
+  });
+});
+
 describe('weakness, experience and notes', () => {
   test('notes keep their line breaks', () => {
     const notes = 'first line\nsecond line\n\nfourth line';
@@ -651,5 +703,37 @@ describe('setNamedRow with a rating it was not asked to change', () => {
     const renamed = setNamedRow(stored, 'disciplines.0', { name: 'Presence' });
 
     expect(renamed.disciplines[0]).toEqual({ name: 'Presence', rating: 12 });
+  });
+});
+
+describe('specialties', () => {
+  test('a blank character has none', () => {
+    const character = blankCharacter('abc');
+
+    expect(character.specialties).toEqual({});
+    expect(specialtyText(character, 'attributes.strength')).toBe('');
+    expect(specialtyOf(character, 'attributes.strength')).toBeUndefined();
+  });
+
+  test('a specialty is kept as typed and read trimmed', () => {
+    const character = setSpecialty(blankCharacter('abc'), 'abilities.academics', ' Art history ');
+
+    expect(specialtyText(character, 'abilities.academics')).toBe(' Art history ');
+    expect(specialtyOf(character, 'abilities.academics')).toBe('Art history');
+    expect(specialtyOf(character, 'abilities.occult')).toBeUndefined();
+  });
+
+  test('clearing the text removes the specialty', () => {
+    const named = setSpecialty(blankCharacter('abc'), 'abilities.academics', 'Art history');
+
+    expect(setSpecialty(named, 'abilities.academics', '').specialties).toEqual({});
+  });
+
+  test('does not change the character it was given', () => {
+    const original = blankCharacter('abc');
+
+    setSpecialty(original, 'attributes.wits', 'Ambushes');
+
+    expect(original).toEqual(blankCharacter('abc'));
   });
 });

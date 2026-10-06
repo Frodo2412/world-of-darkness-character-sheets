@@ -1,23 +1,54 @@
-/* The sheet follows the printed page: header, three trait sections of three
-   columns each, then a foot of three columns. Everything is one column on a
-   phone. */
+/* The sheet: the identity, the live resources, then the workspace: Attributes and
+   Abilities as cards of three, with Disciplines and Virtues in a column beside them.
+   Everything is one column on a phone. The breakpoints are at the end of the file, each written once. */
+
+/* The sheet runs edge to edge under the application bar: its bands carry the page
+   gutter themselves, and so does anything else the page shows. Roster and builder keep `main`'s width. */
+main.sheet-page {
+	max-inline-size: var(--frame-width);
+	padding: 0;
+}
+
+/* On a screen wider than the design's frame the sheet keeps the frame's width, centred, and the
+   application bar lines up with it, so cards hold their proportions instead of stretching. */
+html:has(.sheet-page) header {
+	max-inline-size: var(--frame-width);
+	margin-inline: auto;
+}
+
+.sheet-page > :not(.sheet) {
+	margin-inline: var(--page-gutter);
+}
+
+/* Behind the sheet the page warms toward its right edge; the application bar and the identity stay level. */
+html:has(.sheet-page) {
+	background: linear-gradient(90deg, var(--color-page) 55%, var(--color-page-glow));
+}
+
+.sheet {
+	line-height: var(--leading-compact);
+	/* The dots of a read-only rating: 8px with a 5px gap. */
+	--compact-mark: 0.5rem;
+	--compact-gap: 0.3125rem;
+}
+
+/* A card's edge is drawn inside its box, as the frame does, so its padding is the space around what it holds. */
+.sheet .card {
+	border: 0;
+	box-shadow: inset 0 0 0 var(--stroke) var(--color-line);
+}
+
+/* One mode at a time: the sheet root says which, and what belongs to the other
+   is removed from the page, the accessibility tree and the tab order. */
+.sheet[data-sheet-mode='play'] [data-sheet-mode-only='edit'],
+.sheet[data-sheet-mode='edit'] [data-sheet-mode-only='play'] {
+	display: none !important;
+}
 
 .columns {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
 	gap: var(--space-3) var(--space-5);
-}
-
-@media (min-width: 60rem) {
-	.columns {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-	}
-
-	/* Fill the header down each column, as the printed sheet reads. */
-	.header-fields {
-		grid-template-rows: repeat(3, auto);
-		grid-auto-flow: column;
-	}
 }
 
 .sheet label {
@@ -27,10 +58,6 @@
 	color: var(--color-muted);
 	white-space: nowrap;
 	min-block-size: var(--control-size);
-}
-
-.sheet label:has(textarea) {
-	display: block;
 }
 
 .sheet label input {
@@ -53,35 +80,927 @@
 	flex: 1;
 }
 
-.sheet-column > section:first-child > h2,
-.sheet-column > div:first-child > h2 {
-	margin-block-start: var(--space-4);
+/* Trait cards: Attributes and Abilities, three cards a section. */
+
+.trait-section {
+	margin-block-start: var(--space-3);
+}
+
+.trait-section + .trait-section {
+	margin-block-start: var(--space-section);
+}
+
+.trait-section-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	margin-block-end: var(--space-row);
+}
+
+/* The section name is a small label over its cards, not a display heading. */
+.trait-section-head h2 {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-body);
+	font-weight: 400;
+	font-size: var(--text-caption);
+	line-height: var(--leading-compact);
+	letter-spacing: normal;
+	color: var(--color-muted);
+}
+
+.trait-hint {
+	margin: 0;
+	/* As tall as the section label, so a hint does not push the cards down. */
+	line-height: 1.2;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+}
+
+.trait-cards {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+}
+
+.trait-card {
+	display: grid;
+	align-content: start;
+	gap: var(--space-2);
+}
+
+.trait-card h3 {
+	margin: 0;
+	padding: 0 var(--space-row) var(--space-1);
+	font-weight: 400;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text);
+}
+
+.trait-rows {
+	display: grid;
+	gap: 1px;
+}
+
+/* A row: the trait's name, its dots and, in play, its number. The dots are 8px
+   with a 5px gap in play and larger to click in edit; in play they sit in a slot
+   as wide as the card's widest rating (five dots, or ten when a shown row is rated
+   above five), so the rows of a card keep their numbers in one column. */
+.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) {
+	--mark-size: 1rem;
+	--dot-gap: 0.25rem;
+	--row-edge: 2px;
+	/* The name starts 10px in from the row's outer edge, the selection edge included. */
+	--row-inset: calc(var(--space-row) - var(--row-edge));
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-row);
+	min-block-size: var(--row-height);
+	padding-inline: var(--row-inset) var(--space-row);
+	background: var(--color-row);
+	border-inline-start: var(--row-edge) solid var(--color-row);
+	border-radius: var(--radius-row);
+}
+
+.sheet[data-sheet-mode='play'] .trait-card {
+	--dots: 5;
+}
+
+/* Only a row that is shown counts: not an unnamed custom ability's play row, nor the edit-only write-in rating. */
+.sheet[data-sheet-mode='play'] .trait-card:has(.trait-row:not([hidden]) > dot-rating[max='10']) {
+	--dots: 10;
+}
+
+.sheet[data-sheet-mode='play'] :is(.trait-row, .trait-card .rating-row) {
+	--mark-size: var(--compact-mark);
+	--dot-gap: var(--compact-gap);
+	--dots-width: calc(var(--dots) * var(--mark-size) + (var(--dots) - 1) * var(--dot-gap));
+	flex-wrap: nowrap;
+}
+
+/* The compact dots of a row, and of the read-only Willpower and Humanity displays, share one look. */
+.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit) dot-rating,
+.sheet :is(.willpower-dots, .humanity-dots) {
+	gap: var(--dot-gap);
+}
+
+.sheet[data-sheet-mode='play'] .trait-row dot-rating {
+	inline-size: var(--dots-width);
+	justify-content: flex-end;
+}
+
+.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit, .willpower-dots, .humanity-dots) .rating-mark {
+	border-width: 1px;
+	border-color: var(--color-border-control);
+	background: var(--color-row);
+}
+
+.sheet :is(.trait-row, .trait-card .rating-row, .side-card .rating-row, .resource-edit, .willpower-dots, .humanity-dots) .rating-mark.is-filled {
+	border-color: var(--color-text);
+	background: var(--color-text);
+}
+
+.trait-label,
+.trait-select {
+	flex: 1 1 6rem;
+	min-inline-size: 0;
+	overflow-wrap: anywhere;
+}
+
+/* While editing, a trait's specialty is written between its name and its dots. */
+.sheet .trait-row .trait-specialty {
+	flex: 1 1 6rem;
+	min-inline-size: 0;
+	min-block-size: 0;
+	padding-block: 0.125rem;
+	font-size: var(--text-caption);
+}
+
+/* With the specialty beside the name, the dots take a line of their own: the row needs air above and below. */
+.sheet[data-sheet-mode='edit'] .trait-row:has(> .trait-specialty) {
+	padding-block: var(--space-2);
+}
+
+/* In play a trait with a specialty carries a mark after its name; the specialty itself is in the name's description. */
+.trait-row.has-specialty > .trait-select::after {
+	content: '✧';
+	content: '✧' / '';
+	margin-inline-start: var(--space-2);
+	font-weight: 400;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+}
+
+/* In play the name is a button that chooses the trait for a dice pool. It looks like the name it holds. */
+.trait-select {
+	font: inherit;
+	color: inherit;
+	background: none;
+	border: 0;
+	padding: 0;
+	min-block-size: 0;
+	text-align: start;
+	cursor: pointer;
+}
+
+/* A selectable row is one button the size of the row, so the whole row is the pointer target
+   and the focus ring. The dots and the number lie over it and let clicks through. */
+.sheet[data-sheet-mode='play'] .trait-row:has(> .trait-select) {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: 0 var(--space-row);
+}
+
+.sheet[data-sheet-mode='play'] .trait-row > .trait-select {
+	grid-area: 1 / 1 / 2 / -1;
+	align-self: stretch;
+	display: flex;
+	align-items: center;
+	margin-inline: calc(-1 * var(--row-inset)) calc(-1 * var(--space-row));
+	/* Clear of the dots and the number beside it, so a long name wraps before them. */
+	padding-inline: var(--row-inset) calc(var(--space-row) * 4 + var(--dots-width));
+	border-radius: var(--radius-row);
+}
+
+.sheet[data-sheet-mode='play'] .trait-row:has(> .trait-select) :is(dot-rating, .trait-number) {
+	grid-row: 1;
+	position: relative;
+	pointer-events: none;
+}
+
+.sheet[data-sheet-mode='play'] .trait-row:has(> .trait-select) dot-rating {
+	grid-column: 2;
+}
+
+.sheet[data-sheet-mode='play'] .trait-row:has(> .trait-select) .trait-number {
+	grid-column: 3;
+}
+
+/* Chosen for the dice pool: the row filled, an accent edge, a strong name, accent dots and number. */
+.sheet .trait-row.is-selected {
+	background: var(--color-selected);
+	border-inline-start-color: var(--color-accent);
+}
+
+.sheet .trait-row.is-selected .trait-select {
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.sheet .trait-row.is-selected .rating-mark.is-filled {
+	border-color: var(--color-accent);
+	background: var(--color-accent);
+}
+
+.sheet .trait-row.is-selected .trait-number {
+	color: var(--color-accent-text);
+}
+
+.trait-number {
+	flex: none;
+	min-inline-size: var(--space-row);
+	text-align: end;
+	font-size: var(--text-caption);
+	font-variant-numeric: tabular-nums;
+	color: var(--color-muted);
+}
+
+/* The workspace: the trait cards, and at wide widths a 320px column beside them: the
+   Selected pool card, then the quick references. The pool card comes first in the markup,
+   so with no room it sits above the traits, held in view, and the rest drops below them. */
+
+.workspace {
+	/* Level with the trait cards, below the section label: the label's line and its gap. */
+	--side-offset: calc(var(--space-3) + 1.4375rem);
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0 var(--space-3);
+	padding: 0 var(--page-gutter) var(--space-gutter);
+}
+
+.workspace-side {
+	display: grid;
+	align-content: start;
+	gap: var(--space-section);
+	margin-block-start: var(--side-offset);
+}
+
+/* Side cards: Disciplines and Virtues, the quick references beside the traits. */
+
+.side-card {
+	display: grid;
+	align-content: start;
+	gap: var(--space-row);
+	padding: var(--space-3);
+	min-inline-size: 0;
+}
+
+.side-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-weight: 600;
+	font-size: var(--text-h2);
+	line-height: 1.1;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+/* The Selected pool card: the formula, what is still needed, and the total. */
+.pool-head {
+	gap: var(--space-2);
+}
+
+.side-title.pool-title {
+	font-weight: 400;
+	line-height: var(--leading-tight);
+	color: var(--color-text);
+}
+
+.pool-body {
+	display: grid;
+	gap: 0.3125rem;
+}
+
+.pool-body > p {
+	margin: 0;
+}
+
+.pool-formula {
+	font-size: 0.875rem;
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+.pool-specialties {
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.pool-prompt {
+	color: var(--color-muted);
+}
+
+.pool-total {
+	font-size: var(--text-figure);
+	font-variant-numeric: tabular-nums;
+	color: var(--color-muted);
+}
+
+.pool-flag {
+	font-weight: 600;
+	font-size: var(--text-small);
+	color: var(--color-accent-text);
+}
+
+/* The column is too narrow for a name beside ten dots: the name takes a line of its own. */
+.side-card .rating-row input {
+	flex: 1 1 100%;
+}
+
+/* Each Discipline is its name and rating in the display typeface, set off from the next by a divider. */
+.discipline-list {
+	display: grid;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.discipline-entry {
+	font-family: var(--font-display);
+	font-size: 1.125rem;
+	line-height: var(--leading-tight);
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+.discipline + .discipline {
+	margin-block-start: var(--space-row);
+	padding-block-start: var(--space-row);
+	border-block-start: var(--stroke) solid var(--color-divider);
+}
+
+/* A Discipline with powers opens to list them: its line is the control, with a chevron at its end. */
+summary.discipline-entry {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+	list-style: none;
+	cursor: pointer;
+	border-radius: var(--radius-row);
+}
+
+summary.discipline-entry::-webkit-details-marker {
+	display: none;
+}
+
+summary.discipline-entry::after {
+	content: '';
+	flex: none;
+	inline-size: 0.4375rem;
+	block-size: 0.4375rem;
+	margin-inline-end: 0.25rem;
+	border: solid var(--color-muted);
+	border-width: 0 1.5px 1.5px 0;
+	transform: translateY(-25%) rotate(45deg);
+}
+
+details[open] > summary.discipline-entry::after {
+	transform: translateY(25%) rotate(-135deg);
+}
+
+.discipline-note {
+	margin: var(--space-2) 0 0;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+}
+
+.power-list {
+	display: grid;
+	gap: var(--space-2);
+	margin: var(--space-2) 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* A power: its name with the dice to roll at the row's end, and under the name where they come from. */
+.power {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.125rem var(--space-2);
+}
+
+.power-name {
+	overflow-wrap: anywhere;
+}
+
+.power-dice {
+	grid-area: 1 / 2 / span 2;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.power-detail {
+	grid-column: 1;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+/* Rows in a side card sit apart. A virtue is its name and five dots, taller and rounder than a trait row, with no number. */
+.side-card .trait-rows {
+	gap: 0.375rem;
+}
+
+.sheet .virtues-card {
+	padding-block: var(--space-card);
+}
+
+.sheet .virtues-card .trait-row {
+	min-block-size: 2rem;
+	border-radius: var(--radius-button);
+}
+
+.sheet[data-sheet-mode='play'] .virtues-card dot-rating {
+	inline-size: auto;
+}
+
+/* Live resources: Blood Pool, Willpower, Health and Humanity in one row under the
+   identity, wrapping when the screen is too narrow for all four. Health takes
+   what the others leave. */
+
+.resources-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: var(--space-3);
+	padding: var(--space-card) var(--page-gutter);
+}
+
+.resource-card {
+	display: grid;
+	align-content: start;
+	gap: var(--space-2);
+	min-inline-size: 0;
+}
+
+.blood-card {
+	flex: 0 1 18.75rem;
+}
+
+.willpower-card {
+	flex: 0 1 20rem;
+}
+
+.health-card {
+	/* Room for seven levels in a line: 72px each, 6px apart, inside the card's edge and padding. */
+	flex: 1 1 35.375rem;
+	gap: var(--space-row);
+}
+
+.humanity-card {
+	flex: 0 1 10.875rem;
+}
+
+/* Editing needs room for ten full-size dots. */
+.sheet[data-sheet-mode='edit'] .humanity-card {
+	flex-basis: 15rem;
+}
+
+/* A card's heading band: a name beside what goes with it, or a line of notes beside its figure. */
+.resource-head,
+.resource-foot,
+.pool-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.resource-head,
+.resource-foot {
+	flex-wrap: wrap;
+	gap: var(--space-1) var(--space-2);
+}
+
+/* A card's name is a small label, not a display heading. */
+.resource-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4375rem;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-body);
+	font-weight: 400;
+	font-size: var(--text-body);
+	line-height: var(--leading-compact);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text);
+}
+
+.resource-note,
+.resource-flag {
+	margin: 0;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+}
+
+.resource-flag {
+	font-weight: 600;
+	color: var(--color-accent-text);
+}
+
+.stepper {
+	--control-size: var(--control-compact);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
+.stepper-button {
+	inline-size: var(--control-size);
+	padding: 0;
+	background: var(--color-control);
+	font-weight: 600;
+	font-size: var(--text-small);
+	line-height: 1;
+}
+
+/* At its bound a button stays focusable and keeps its place; it only says it does nothing. */
+.stepper-button[aria-disabled='true'] {
+	color: var(--color-muted);
+	border-style: dashed;
+	cursor: not-allowed;
+}
+
+.stepper-button[aria-disabled='true']:hover {
+	border-color: var(--color-border-control);
+}
+
+.stepper-total {
+	font-weight: 600;
+	font-size: var(--text-figure);
+	line-height: var(--leading-tight);
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text);
+}
+
+.blood-tracker {
+	display: flex;
+	gap: 0.25rem;
+	block-size: 0.5rem;
+}
+
+.blood-segment,
+.blood-bar {
+	flex: 1;
+	min-inline-size: 0;
+	border-radius: var(--radius-segment);
+	background: var(--color-divider);
+}
+
+.blood-segment.is-filled {
+	background: var(--color-accent);
+}
+
+.blood-bar {
+	overflow: hidden;
+}
+
+.blood-bar-fill {
+	display: block;
+	block-size: 100%;
+	background: var(--color-accent);
+}
+
+/* The read-only play displays of Willpower (temporary filled out of permanent) and Humanity: 8px dots,
+   drawn like a row's (see the compact dots above). */
+.willpower-dots,
+.humanity-dots {
+	--mark-size: var(--compact-mark);
+	--dot-gap: var(--compact-gap);
+}
+
+/* Health: seven boxes with their level and penalty beneath, the wound beside the
+   heading and a legend for the marks. */
+
+.wound-readout {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-accent-text);
 }
 
 .health-levels {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, 4.5rem);
+	justify-content: start;
+	gap: var(--space-2) 0.375rem;
 	list-style: none;
 	padding: 0;
 	margin: 0;
 }
 
 .health-levels > li {
+	display: grid;
+	justify-items: center;
+	align-content: start;
+	gap: var(--space-1);
+	text-align: center;
+}
+
+.health-label,
+.health-penalty {
+	font-size: var(--text-caption);
+	line-height: 1.2;
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.health-box {
+	--control-size: var(--control-compact);
+	min-block-size: 1.75rem;
+	border-radius: var(--radius-row);
+	background: var(--color-control);
+}
+
+.health-box[data-damage='bashing'],
+.health-box[data-damage='lethal'],
+.health-box[data-damage='aggravated'] {
+	background: var(--color-selected);
+	border-color: var(--color-accent);
+}
+
+/* The marks are the Figma icons used as shapes, so each differs by form and not only by
+   colour: a slash, a cross, a cross with a plus through it. The legend shows the same files. */
+.health-box[data-damage]:not([data-damage='empty'])::before {
+	content: '';
+	display: block;
+	margin: auto;
+	inline-size: var(--icon-mark);
+	block-size: var(--icon-mark);
+	background: var(--color-accent-text);
+	mask-position: center;
+	mask-size: contain;
+	mask-repeat: no-repeat;
+}
+
+.health-box[data-damage='bashing']::before {
+	mask-image: url('../assets/icons/bashing.svg');
+}
+
+.health-box[data-damage='lethal']::before {
+	mask-image: url('../assets/icons/lethal.svg');
+}
+
+.health-box[data-damage='aggravated']::before {
+	mask-image: url('../assets/icons/aggravated.svg');
+}
+
+.health-legend,
+.health-marks {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1) var(--space-card);
+	margin: 0;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+}
+
+.health-marks {
+	list-style: none;
+	padding: 0;
+}
+
+.health-marks > li {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3125rem;
+}
+
+.health-hint {
+	margin: 0;
+}
+
+.health-hint::before {
+	content: '· ';
+}
+
+/* Humanity: the rating as a number, then its ten dots and the path. */
+
+.humanity-figure {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: 2.125rem;
+	/* The display face's default figures sit on the x-height, where a 0 reads as the letter o. */
+	font-variant-numeric: lining-nums;
+	line-height: var(--leading-tight);
+	color: var(--color-text);
+}
+
+/* Edit mode: the badge and the way out stay under the top of the page while the sheet scrolls. */
+.edit-strip {
+	position: sticky;
+	inset-block-start: 0;
+	z-index: 1;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: var(--space-2);
-	padding-block: var(--space-1);
+	gap: var(--space-3);
+	padding: var(--space-2) var(--page-gutter);
+	background: var(--color-page);
+	border-block-end: 1px solid var(--color-line);
 }
 
-.health-penalty {
-	color: var(--color-muted);
-	margin-inline-start: var(--space-2);
+/* A control scrolled into view while editing stops below the strip, not under it.
+   The strip is the only sticky element on the sheet (the application bar scrolls
+   away): its padding, a control-sized button and its border, plus some air. The
+   strip's own button is left out: it sits in that margin, so scrolling it into
+   view would send the page back up. */
+.sheet[data-sheet-mode='edit'] :is(input, select, button, dot-rating, [tabindex]):not(.edit-strip *) {
+	scroll-margin-block-start: calc(var(--control-size) + var(--space-2) * 2 + var(--space-4));
 }
 
-.creation-reminder {
+.edit-badge {
+	background: var(--color-surface);
+	border: 1px solid var(--color-line);
+	border-radius: var(--radius-badge);
+	padding: var(--space-1) var(--space-2);
+	font-size: var(--text-caption);
+	line-height: 1.4;
+	color: var(--color-text);
+}
+
+/* Identity */
+
+.identity-card {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-card);
+	min-block-size: var(--identity-height);
+	padding: var(--space-2) var(--page-gutter);
+	background: var(--color-page);
+	border-block-end: 1px solid var(--color-line);
+}
+
+.identity-details {
+	flex: 1 1 10rem;
+	display: grid;
+	gap: var(--space-1);
+	min-inline-size: 0;
+}
+
+.identity-monogram {
+	flex: none;
+	display: grid;
+	place-items: center;
+	inline-size: 3rem;
+	block-size: 3.25rem;
+	background: var(--color-surface);
+	border: 1px solid var(--color-line);
+	border-radius: var(--radius-button);
+	font-family: var(--font-display);
+	font-size: 1.875rem;
 	color: var(--color-muted);
+}
+
+.identity-name {
+	margin: 0;
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: var(--text-h1);
+	line-height: 1.1;
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.identity-summary {
+	margin: 0;
 	font-size: var(--text-small);
-	text-align: center;
-	border-block-start: 1px solid var(--color-line);
-	margin-block-start: var(--space-5);
-	padding-block-start: var(--space-3);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.identity-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-3) var(--space-gutter);
+}
+
+.identity-temperament {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.identity-label {
+	font-size: var(--text-caption);
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.identity-edit {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	/* 10px above and below, 14px beside, the stroke inside. */
+	padding: calc(var(--space-row) - var(--stroke)) calc(var(--space-row) + var(--space-1) - var(--stroke));
+	min-block-size: 0;
+	line-height: var(--leading-tight);
+	font-weight: 600;
+	font-size: var(--text-small);
+}
+
+.identity-fields {
+	padding: var(--space-3) var(--page-gutter);
+}
+
+/* Breakpoints. Each is written once, after the rules it adjusts. */
+
+/* A phone: the bands stack, the health levels become a list, and what is pressed is at least 44px. */
+@media (max-width: 47.9375rem) {
+	.identity-actions {
+		flex: 1 1 100%;
+		justify-content: space-between;
+	}
+
+	.identity-edit {
+		min-block-size: var(--control-size);
+	}
+
+	.stepper,
+	.health-box {
+		--control-size: var(--touch-target);
+	}
+
+	.health-box {
+		min-block-size: var(--control-size);
+	}
+
+	.sheet[data-sheet-mode='play'] .trait-row {
+		min-block-size: var(--touch-target);
+	}
+
+	.health-levels {
+		grid-template-columns: minmax(0, 1fr);
+		gap: var(--space-1);
+	}
+
+	.health-levels > li {
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		justify-items: start;
+		gap: var(--space-2);
+		text-align: start;
+	}
+}
+
+/* Three cards to a row, the identity's fields three to a row. */
+@media (min-width: 60rem) {
+	.columns,
+	.trait-cards {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 75rem) {
+	.workspace {
+		grid-template-columns: minmax(0, 1fr) var(--side-column);
+		grid-template-rows: auto 1fr;
+	}
+
+	.workspace-traits {
+		grid-area: 1 / 1 / 3 / 2;
+	}
+
+	.pool-card {
+		grid-area: 1 / 2;
+		margin-block-start: var(--side-offset);
+	}
+
+	.workspace-side {
+		grid-area: 2 / 2;
+	}
+
+	/* Under the pool card, not the section label. */
+	.sheet[data-sheet-mode='play'] .workspace-side {
+		margin-block-start: var(--space-section);
+	}
+}
+
+/* No room beside the traits: the pool card stays at the top of the screen while the traits scroll
+   under it, and a row that takes keyboard focus is scrolled clear of it. */
+@media (max-width: 74.9375rem) {
+	:root {
+		/* The most of the screen the pool card may take while it is held in view. */
+		--pool-cap: 11rem;
+	}
+
+	.pool-card {
+		position: sticky;
+		inset-block-start: 0;
+		z-index: 1;
+		max-block-size: var(--pool-cap);
+		overflow-y: auto;
+		margin-block-start: var(--space-3);
+	}
+
+	html:has(.sheet[data-sheet-mode='play']) {
+		scroll-padding-block-start: calc(var(--pool-cap) + var(--space-2));
+	}
 }

@@ -14,6 +14,49 @@ export function characterWith(header: HeaderValues): V20Character {
   return character;
 }
 
+/** As `characterWith`, then `arrange` changes whatever else a scenario needs saved. */
+export function characterArranged(
+  header: HeaderValues,
+  arrange: (character: V20Character) => void,
+): V20Character {
+  const character = characterWith(header);
+  arrange(character);
+  return character;
+}
+
+/**
+ * A character that can overflow, for the layout scenarios: a ten-dot rating, long unbroken
+ * names, a blood pool drawn as a bar and a wound.
+ */
+export function crowdedCharacter(header: HeaderValues): V20Character {
+  return characterArranged({ ...header, generation: '4' }, (character) => {
+    character.attributes.strength = 8;
+    character.attributes.manipulation = 4;
+    character.abilities.investigation = 3;
+    character.abilities.intimidation = 2;
+    character.customAbilities.talents = { name: 'Supercalifragilisticexpialidocious'.repeat(2), rating: 7 };
+    character.disciplines[0] = { name: 'Thaumaturgical Sanguinary Dominationesque', rating: 5 };
+    character.humanity = {
+      ...character.humanity,
+      rating: 6,
+      pathName: 'The Path of Honorable Accord and Unbroken Conviction',
+    };
+    character.bloodPool.current = 30;
+    character.health.wounded = 'lethal';
+  });
+}
+
+/** Arranges one character, remembers it as the scenario's saved character and saves it: the body of a seed-and-save Given. */
+export async function givenSaved(
+  page: Page,
+  memory: { saved: V20Character[] },
+  header: HeaderValues,
+  arrange: (character: V20Character) => void = () => {},
+): Promise<void> {
+  memory.saved = [characterArranged(header, arrange)];
+  await saveCharacters(page, memory.saved);
+}
+
 /**
  * Puts characters into the browser's storage as if they had been saved
  * earlier. The app's own store writes the records, so the keys and format

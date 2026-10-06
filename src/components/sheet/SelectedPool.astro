@@ -1,0 +1,20 @@
+---
+import dices from '../../assets/icons/dices.svg';
+---
+
+<!-- The play view's dice calculator: the attribute and ability chosen in the rows, less any wound. -->
+<section class="card side-card pool-card" aria-labelledby="pool-heading" data-sheet-mode-only="play">
+	<div class="pool-head">
+		<h2 id="pool-heading" class="side-title pool-title">Selected pool</h2>
+		<img src={dices.src} alt="" width="20" height="20" />
+	</div>
+	<div class="pool-body">
+		<p class="pool-formula" data-show="pool.formula" data-show-block="pool.formula" hidden></p>
+		<p class="pool-specialties" data-show="pool.specialties" data-show-block="pool.specialties" hidden></p>
+		<p class="pool-prompt" data-show="pool.prompt" data-show-block="pool.prompt"></p>
+		<p class="pool-total" data-show="pool.total" data-show-block="pool.total" hidden></p>
+		<p class="pool-flag" data-show-block="pool.incapacitated" hidden>Incapacitated · cannot act</p>
+	</div>
+</section>
+<!-- In the page from load, outside the card so that hiding the card for editing does not remove it; written only when the player selects. -->
+<p class="visually-hidden" role="status" data-live="pool"></p>

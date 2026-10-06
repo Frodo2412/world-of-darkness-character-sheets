@@ -1,18 +1,31 @@
 ---
+import aggravated from '../../assets/icons/aggravated.svg';
+import bashing from '../../assets/icons/bashing.svg';
+import lethal from '../../assets/icons/lethal.svg';
 import { HEALTH_LEVELS } from '../../domain/v20/traits';
+
+// The legend's marks are the same three shapes sheet.css draws in the boxes.
+const LEGEND = [
+	{ name: 'Bashing', icon: bashing },
+	{ name: 'Lethal', icon: lethal },
+	{ name: 'Aggravated', icon: aggravated },
+];
+
+// What the sheet prints under a box: the dice a wound there takes off, with a true minus sign.
+const penaltyText = (level: (typeof HEALTH_LEVELS)[number]): string =>
+	'dicePenalty' in level ? (level.dicePenalty === 0 ? '0' : `\u2212${level.dicePenalty}`) : '\u2014';
 ---
 
-<section aria-labelledby="health-heading">
-	<h2 id="health-heading">Health</h2>
+<section class="card resource-card health-card" aria-labelledby="health-heading">
+	<div class="resource-head">
+		<h2 id="health-heading" class="resource-title">Health</h2>
+		<p class="wound-readout" data-show="health.wound" data-show-block="health.wound" hidden></p>
+	</div>
 	<health-track>
 		<ul class="health-levels">
 			{
 				HEALTH_LEVELS.map((level) => (
 					<li>
-						<span class="health-level">
-							{level.label}
-							{level.penalty && <span class="health-penalty">{level.penalty}</span>}
-						</span>
 						<button
 							type="button"
 							class="health-box"
@@ -20,9 +33,26 @@ import { HEALTH_LEVELS } from '../../domain/v20/traits';
 							data-label={level.label}
 							aria-label={`${level.label}, empty`}
 						/>
+						<span class="health-label">{level.label}</span>
+						<span class="health-penalty">{penaltyText(level)}</span>
 					</li>
 				))
 			}
 		</ul>
 	</health-track>
+	<div class="health-legend">
+		<ul class="health-marks">
+			{
+				LEGEND.map(({ name, icon }) => (
+					<li>
+						<img src={icon.src} alt="" width="10" height="10" />
+						{name}
+					</li>
+				))
+			}
+		</ul>
+		<p class="health-hint">Select a box to cycle</p>
+	</div>
+	<!-- In the page from load and written only when the player changes a box. -->
+	<p class="visually-hidden" role="status" data-live="health"></p>
 </section>

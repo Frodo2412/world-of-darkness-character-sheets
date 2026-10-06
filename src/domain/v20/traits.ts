@@ -128,14 +128,15 @@ export const VIRTUES = [
   { key: 'courage', label: 'Courage' },
 ] as const;
 
+/** `dicePenalty` is the dice a wound at that level takes off every pool. Incapacitated has none. */
 export const HEALTH_LEVELS = [
-  { key: 'bruised', label: 'Bruised', penalty: '' },
-  { key: 'hurt', label: 'Hurt', penalty: '-1' },
-  { key: 'injured', label: 'Injured', penalty: '-1' },
-  { key: 'wounded', label: 'Wounded', penalty: '-2' },
-  { key: 'mauled', label: 'Mauled', penalty: '-2' },
-  { key: 'crippled', label: 'Crippled', penalty: '-5' },
-  { key: 'incapacitated', label: 'Incapacitated', penalty: '' },
+  { key: 'bruised', label: 'Bruised', dicePenalty: 0 },
+  { key: 'hurt', label: 'Hurt', dicePenalty: 1 },
+  { key: 'injured', label: 'Injured', dicePenalty: 1 },
+  { key: 'wounded', label: 'Wounded', dicePenalty: 2 },
+  { key: 'mauled', label: 'Mauled', dicePenalty: 2 },
+  { key: 'crippled', label: 'Crippled', dicePenalty: 5 },
+  { key: 'incapacitated', label: 'Incapacitated' },
 ] as const;
 
 /** The damage a health box can hold, in the order activating it steps through. */
@@ -171,9 +172,15 @@ export function rangeOf(trait: TraitRef): Range {
   return RATING_RANGES[section];
 }
 
+/** Names a trait that can carry a specialty: any attribute or fixed ability. */
+export type SpecialtyRef = `attributes.${AttributeKey}` | `abilities.${AbilityKey}`;
+
+/** Names the write-in ability of one ability group. */
+export type CustomAbilityRef = `customAbilities.${AbilityGroupKey}`;
+
 /** Names one write-in row: a rating whose name the player supplies. */
 export type NamedRowRef =
-  | `customAbilities.${AbilityGroupKey}`
+  | CustomAbilityRef
   | `disciplines.${number}`
   | `backgrounds.${number}`;
 
@@ -187,7 +194,3 @@ export type TextRef =
   | 'weakness'
   | 'experience'
   | 'notes';
-
-/** The character-creation reminder printed at the foot of the sheet. Reference only. */
-export const CREATION_REMINDER =
-  'Attributes: 7/5/3 • Abilities: 13/9/5 • Disciplines: 3 • Backgrounds: 5 • Virtues: 7 • Freebie Points: 15 (7/5/2/1)';

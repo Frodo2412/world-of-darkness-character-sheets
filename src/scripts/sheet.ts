@@ -1,4 +1,3 @@
-import '../components/controls/box-tracker';
 import '../components/controls/dot-rating';
 import '../components/controls/health-track';
 import type { HealthChange, HealthTrack } from '../components/controls/health-track';
@@ -7,98 +6,176 @@ import {
   cycleHealthBox,
   namedRow,
   setNamedRow,
+  setSpecialty,
   setText,
   setTrait,
+  specialtyText,
   textValue,
   traitValue,
   type V20Character,
 } from '../domain/v20/character';
-import type { NamedRowRef, TextRef, TraitRef } from '../domain/v20/traits';
+import { RATING_RANGE, rangeOf, type NamedRowRef, type SpecialtyRef, type TextRef, type TraitRef } from '../domain/v20/traits';
+import { stepBlood, stepTemporaryWillpower, type Resource } from '../domain/v20/resources';
 import {
   browserStorage,
   createCharacterStore,
   keyFor,
   type CharacterStore,
 } from '../storage/characterStore';
-import { STORAGE_UNAVAILABLE, clearStatus, showStatus } from './status';
+import { drawIdentity } from './sheet/identityCard';
+import { createMode, type Mode, type SheetMode } from './sheet/mode';
+import { createPool, type PoolRow } from './sheet/pool';
+import { announcePool, drawPoolCard } from './sheet/poolCard';
+import { drawRating } from './sheet/ratingDraw';
+import { announce, announceWound, drawResourceCards } from './sheet/resourceCards';
+import { drawSideCards } from './sheet/sideCards';
+import { drawTraitCards } from './sheet/traitCards';
+import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
 
 type Update = (character: V20Character) => V20Character;
+type Apply = (update: Update) => V20Character;
+
+const STEPS: Record<Resource, (character: V20Character, delta: number) => V20Character> = {
+  blood: stepBlood,
+  willpower: stepTemporaryWillpower,
+};
 
 const sheet = document.querySelector<HTMLElement>('#sheet')!;
 const notFound = document.querySelector<HTMLElement>('#sheet-not-found')!;
 const unreadable = document.querySelector<HTMLElement>('#sheet-unreadable')!;
-type TextInput = HTMLInputElement | HTMLTextAreaElement;
 
-const textInputs = sheet.querySelectorAll<TextInput>('[data-text]');
+const textInputs = sheet.querySelectorAll<HTMLInputElement>('[data-text]');
 
 const traitRatings = sheet.querySelectorAll<RatingControl>('[data-trait]');
 const rowNames = sheet.querySelectorAll<HTMLInputElement>('[data-row-name]');
+const specialtyInputs = sheet.querySelectorAll<HTMLInputElement>('[data-specialty]');
 const healthTrack = sheet.querySelector<HealthTrack>('health-track')!;
 const rowRatings = sheet.querySelectorAll<RatingControl>('[data-row-rating]');
+const stepperButtons = sheet.querySelectorAll<HTMLButtonElement>('[data-step]');
 
-const textFieldOf = (input: TextInput): TextRef => input.dataset.text as TextRef;
+// What is chosen for the dice pool: kept here, never saved, and cleared whenever the mode changes.
+const pool = createPool();
+
+const textFieldOf = (input: HTMLInputElement): TextRef => input.dataset.text as TextRef;
 
 const traitOf = (rating: RatingControl): TraitRef => rating.dataset.trait as TraitRef;
 
 // Leave a matching input alone so typing does not move the caret.
-function showText(input: TextInput, text: string): void {
+function showText(input: HTMLInputElement, text: string): void {
   if (input.value !== text) input.value = text;
 }
 
-function render(character: V20Character): void {
+function drawTextInputs(character: V20Character): void {
   for (const input of textInputs) {
     showText(input, textValue(character, textFieldOf(input)));
   }
+}
+
+function drawTraitRatings(character: V20Character, mode: SheetMode): void {
   for (const rating of traitRatings) {
-    rating.value = traitValue(character, traitOf(rating));
-  }
-  healthTrack.damage = character.health;
-  for (const input of rowNames) {
-    showText(input, namedRow(character, input.dataset.rowName as NamedRowRef)?.name ?? '');
-  }
-  for (const rating of rowRatings) {
-    const row = namedRow(character, rating.dataset.rowRating as NamedRowRef);
-    if (row === undefined) continue;
-    rating.value = row.rating;
-    // A write-in rating is announced with the name the player gave it.
-    const label = rating.dataset.label!;
-    rating.setAttribute('aria-label', row.name ? `${label}: ${row.name}` : label);
+    const ref = traitOf(rating);
+    drawRating(rating, {
+      ref,
+      label: rating.dataset.label ?? '',
+      value: traitValue(character, ref),
+      storedMax: rangeOf(ref).max,
+      mode,
+    });
   }
 }
 
-function showSheet(loaded: V20Character, store: CharacterStore): void {
-  let character = loaded;
-
-  /** The one path every edit takes: update the model, redraw, save. */
-  function apply(update: Update): void {
-    character = update(character);
-    render(character);
-    if (store.save(character).status === 'failed') {
-      showStatus('Changes not saved. This browser refused to store your latest changes.');
-    } else {
-      clearStatus();
-    }
+function drawRowNames(character: V20Character): void {
+  for (const input of rowNames) {
+    showText(input, namedRow(character, input.dataset.rowName as NamedRowRef)?.name ?? '');
   }
+}
 
+function drawSpecialties(character: V20Character): void {
+  for (const input of specialtyInputs) {
+    showText(input, specialtyText(character, input.dataset.specialty as SpecialtyRef));
+  }
+}
+
+function drawRowRatings(character: V20Character, mode: SheetMode): void {
+  for (const rating of rowRatings) {
+    const ref = rating.dataset.rowRating as NamedRowRef;
+    const row = namedRow(character, ref);
+    if (row === undefined) continue;
+    // A write-in rating is announced with the name the player gave it.
+    const label = rating.dataset.label!;
+    const name = row.name.trim();
+    drawRating(rating, {
+      ref,
+      label: name ? `${label}: ${name}` : label,
+      value: row.rating,
+      storedMax: RATING_RANGE.max,
+      mode,
+    });
+  }
+}
+
+function render(character: V20Character, mode: SheetMode): void {
+  drawIdentity(sheet, character);
+  drawTextInputs(character);
+  drawTraitRatings(character, mode);
+  drawRowNames(character);
+  drawSpecialties(character);
+  drawRowRatings(character, mode);
+  drawTraitCards(sheet, character, mode, pool.selection());
+  drawResourceCards(sheet, character);
+  drawSideCards(sheet, character);
+  drawPoolCard(sheet, character, pool.selection());
+}
+
+// The roster opens a new character's sheet with this marker: start editing, and do
+// not keep the marker, so a reload is play mode again.
+const EDIT_MARKER = '#edit';
+
+function startMode(): Mode {
+  const startsEditing = window.location.hash === EDIT_MARKER;
+  if (startsEditing) {
+    const url = new URL(window.location.href);
+    url.hash = '';
+    history.replaceState(null, '', url);
+  }
+  return createMode(sheet, startsEditing ? 'edit' : 'play');
+}
+
+function bindTextInputs(apply: Apply): void {
   for (const input of textInputs) {
     input.addEventListener('input', () => {
       apply((current) => setText(current, textFieldOf(input), input.value));
     });
   }
+}
 
+function bindTraitRatings(apply: Apply): void {
   for (const rating of traitRatings) {
     rating.addEventListener('change', (event) => {
       const { value } = (event as CustomEvent<RatingChange>).detail;
       apply((current) => setTrait(current, traitOf(rating), value));
     });
   }
+}
 
+function bindRowNames(apply: Apply): void {
   for (const input of rowNames) {
     input.addEventListener('input', () => {
       const row = input.dataset.rowName as NamedRowRef;
       apply((current) => setNamedRow(current, row, { name: input.value }));
     });
   }
+}
+
+function bindSpecialties(apply: Apply): void {
+  for (const input of specialtyInputs) {
+    input.addEventListener('input', () => {
+      apply((current) => setSpecialty(current, input.dataset.specialty as SpecialtyRef, input.value));
+    });
+  }
+}
+
+function bindRowRatings(apply: Apply): void {
   for (const rating of rowRatings) {
     rating.addEventListener('change', (event) => {
       const row = rating.dataset.rowRating as NamedRowRef;
@@ -106,11 +183,57 @@ function showSheet(loaded: V20Character, store: CharacterStore): void {
       apply((current) => setNamedRow(current, row, { rating: value }));
     });
   }
+}
 
+function bindHealthTrack(apply: Apply): void {
   healthTrack.addEventListener('change', (event) => {
     const { level } = (event as CustomEvent<HealthChange>).detail;
-    apply((current) => cycleHealthBox(current, level));
+    let before!: V20Character;
+    const after = apply((current) => {
+      before = current;
+      return cycleHealthBox(current, level);
+    });
+    announceWound(sheet, before, after);
+    // The wound moves the pool's total: say the pool again so its status text matches its card.
+    announcePool(sheet, after, pool.selection());
   });
+}
+
+// A press says the new reading once; a redraw (a new Generation moving the maximum) stays silent.
+function bindSteppers(apply: Apply): void {
+  for (const button of stepperButtons) {
+    button.addEventListener('click', () => {
+      if (button.getAttribute('aria-disabled') === 'true') return;
+      const resource = button.dataset.resource as Resource;
+      const changed = apply((current) => STEPS[resource](current, Number(button.dataset.step)));
+      announce(sheet, changed, resource);
+    });
+  }
+}
+
+/** Wires every control on the sheet to `apply`, the one path an edit takes. */
+function bindEditListeners(apply: Apply): void {
+  bindTextInputs(apply);
+  bindTraitRatings(apply);
+  bindRowNames(apply);
+  bindSpecialties(apply);
+  bindRowRatings(apply);
+  bindHealthTrack(apply);
+  bindSteppers(apply);
+}
+
+function showSheet(loaded: V20Character, store: CharacterStore): void {
+  let character = loaded;
+  const mode = startMode();
+
+  /** The one path every edit takes: update the model, redraw, save. */
+  function apply(update: Update): V20Character {
+    character = update(character);
+    render(character, mode.current());
+    reportSave(store.save(character));
+    return character;
+  }
+  bindEditListeners(apply);
 
   // Another tab changed or deleted this character: what this page holds is stale,
   // and saving it would undo that. Start again from what is stored now.
@@ -118,7 +241,22 @@ function showSheet(loaded: V20Character, store: CharacterStore): void {
     if (event.key === null || event.key === keyFor(character.id)) window.location.reload();
   });
 
-  render(character);
+  // Choosing a trait redraws and says the pool once it is whole.
+  sheet.addEventListener('click', (event) => {
+    const row = (event.target as Element).closest('.trait-select')?.closest<HTMLElement>('[data-trait-key]');
+    if (row === null || row === undefined) return;
+    pool.toggle(row.dataset.traitKey as PoolRow);
+    render(character, mode.current());
+    announcePool(sheet, character, pool.selection());
+  });
+
+  // A mode change forgets the selection, and the pool said for it; the redraw after shows none.
+  mode.onChange(() => {
+    pool.clear();
+    announcePool(sheet, character, pool.selection());
+  });
+  mode.onChange((next) => render(character, next));
+  render(character, mode.current());
   sheet.hidden = false;
 }
 

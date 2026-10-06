@@ -5,9 +5,9 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page } from '@playwright/test';
 import { completeBuild, creation, generation } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When } from './fixtures';
+import { announcements } from './support/announcements';
 import {
   activateFinish,
-  announcements,
   builderAddress,
   buildWith,
   enterExtraFreebies,
@@ -30,6 +30,7 @@ import {
   traitRating,
 } from './support/builder';
 import { buildEntries, openRoster } from './support/pages';
+import { identityName, identitySummary } from './support/sheet';
 import { overwriteRecord, refuseWrites } from './support/storage';
 import { seedSteps } from './builder-seeding.steps';
 
@@ -123,9 +124,9 @@ Then(
   'the character sheet is shown for {string} of clan {string} and generation {string}',
   async ({ page }, name: string, clan: string, generationText: string) => {
     await expect(page.getByRole('heading', { name: 'Character sheet' })).toBeVisible();
-    await expect(page.getByLabel('Name', { exact: true })).toHaveValue(name);
-    await expect(page.getByLabel('Clan', { exact: true })).toHaveValue(clan);
-    await expect(page.getByLabel('Generation', { exact: true })).toHaveValue(generationText);
+    await expect(identityName(page)).toHaveText(name);
+    await expect(identitySummary(page)).toContainText(clan);
+    await expect(identitySummary(page)).toContainText(`${generationText} generation`);
   },
 );
 

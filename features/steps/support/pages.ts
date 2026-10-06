@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { escaped } from './text';
 
 export const SHEET_ADDRESS = /\/sheet\/\?id=.+/;
 
@@ -18,13 +19,15 @@ export async function createCharacter(page: Page): Promise<void> {
   await expect(page).toHaveURL(SHEET_ADDRESS);
 }
 
+/** How far the page reaches beyond the screen's width; 0 when it does not scroll sideways. */
+export const horizontalOverflow = (page: Page): Promise<number> =>
+  page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+
 export const sheetField = (page: Page, label: string): Locator =>
   page.getByLabel(label, { exact: true });
 
 export const deleteConfirmation = (page: Page): Locator =>
   page.getByRole('dialog', { name: /^Delete (character|build)\?$/ });
-
-const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Opens the roster and starts deleting the character or build in progress named `name`. */
 export async function startDeleting(page: Page, name: string): Promise<void> {

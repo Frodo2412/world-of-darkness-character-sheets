@@ -1,0 +1,13 @@
+---
+import diamond from '../assets/icons/diamond.svg';
+---
+
+<div class="app-bar">
+	<div class="app-bar-identity">
+		<img src={diamond.src} alt="" width="22" height="28" />
+		<a class="app-bar-title" href="/">Vampire: The Masquerade</a>
+		<span class="app-bar-badge">V20</span>
+	</div>
+	<!-- Filled by the sheet once it reports saving; empty, and not drawn, until then. -->
+	<p id="save-status" class="app-bar-status"></p>
+</div>

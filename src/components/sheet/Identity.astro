@@ -1,0 +1,49 @@
+---
+import pencil from '../../assets/icons/pencil.svg';
+import { HEADER_FIELDS } from '../../domain/v20/traits';
+
+// Player, Chronicle and Sire stay on the character but are not offered here.
+const EDITABLE = ['name', 'clan', 'generation', 'concept', 'nature', 'demeanor'] as const;
+const fields = EDITABLE.map((key) => HEADER_FIELDS.find((field) => field.key === key)!);
+---
+
+<div class="edit-strip" data-sheet-mode-only="edit">
+	<span class="edit-badge">Editing</span>
+	<button type="button" data-mode-toggle>Done editing</button>
+</div>
+
+<section class="identity" aria-labelledby="sheet-identity-heading">
+	<h2 id="sheet-identity-heading" class="visually-hidden">Character</h2>
+	<div class="identity-card">
+		<div class="identity-monogram" aria-hidden="true" data-show="identity.monogram"></div>
+		<div class="identity-details">
+			<p class="identity-name" data-show="identity.name"></p>
+			<p class="identity-summary" data-show="identity.summary" data-show-block="identity.summary"></p>
+		</div>
+		<div class="identity-actions" data-sheet-mode-only="play">
+			<div class="identity-temperament" data-show-block="identity.temperament">
+				<span class="identity-label">Nature / Demeanor</span>
+				<span data-show="identity.temperament"></span>
+			</div>
+			<button type="button" class="identity-edit" data-mode-toggle data-mode-focus="play">
+				<img src={pencil.src} alt="" width="14" height="14" />
+				Edit character
+			</button>
+		</div>
+	</div>
+	<div class="columns identity-fields" data-sheet-mode-only="edit">
+		{
+			fields.map((field) => (
+				<label>
+					{field.label}
+					<input
+						type="text"
+						data-text={`header.${field.key}`}
+						data-mode-focus={field.key === 'name' ? 'edit' : undefined}
+						autocomplete="off"
+					/>
+				</label>
+			))
+		}
+	</div>
+</section>

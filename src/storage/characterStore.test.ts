@@ -219,7 +219,26 @@ describe('characterStore with unreadable records', () => {
     ['disciplines that are not a list', altered('bad', (record) => (record.disciplines = {}))],
     ['an unknown damage type', altered('bad', (record) => (record.health.hurt = 'fire'))],
     ['notes that are not text', altered('bad', (record) => (record.notes = ['a']))],
+    ['specialties that are a list', altered('bad', (record) => (record.specialties = []))],
+    ['a specialty that is not text', altered('bad', (record) => (record.specialties['attributes.wits'] = 4))],
   ];
+
+  test('a record saved before specialties existed loads with none, and is not rewritten by loading', () => {
+    const before = altered('old', (record) => delete record.specialties);
+    const storage = fakeStorage({ [KEY + 'old']: before });
+
+    expect(createCharacterStore(storage).load('old')).toEqual({ status: 'found', character: blankCharacter('old') });
+    expect(storage.getItem(KEY + 'old')).toBe(before);
+  });
+
+  test('specialties survive a save and a load', () => {
+    const store = createCharacterStore(fakeStorage());
+    const character = { ...blankCharacter('a'), specialties: { 'abilities.academics': 'Art history' } };
+
+    store.save(character);
+
+    expect(store.load('a')).toEqual({ status: 'found', character });
+  });
 
   test.each(UNREADABLE)('%s loads as unreadable', (_description, text) => {
     const store = createCharacterStore(fakeStorage({ [KEY + 'bad']: text }));

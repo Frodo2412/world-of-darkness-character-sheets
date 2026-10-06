@@ -1,18 +1,12 @@
-dot-rating,
-box-tracker {
+dot-rating {
 	gap: 0.2rem;
 	cursor: pointer;
-	border-radius: 2px;
+	border-radius: var(--radius-segment);
 }
 
 dot-rating {
 	display: inline-flex;
 	flex-shrink: 0;
-}
-
-box-tracker {
-	display: inline-grid;
-	grid-template-columns: repeat(10, var(--mark-size, 1.125rem));
 }
 
 .rating-mark {
@@ -23,17 +17,13 @@ box-tracker {
 	border-radius: 50%;
 }
 
-box-tracker .rating-mark {
-	border-radius: 2px;
-}
-
 .rating-mark.is-filled {
 	background: currentColor;
 }
 
 /* A dot bought with freebie points is a filled diamond, not only another colour. */
 .rating-mark.is-freebie {
-	border-radius: 2px;
+	border-radius: var(--radius-segment);
 	transform: rotate(45deg) scale(0.8);
 }
 

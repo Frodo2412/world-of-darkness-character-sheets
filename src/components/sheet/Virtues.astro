@@ -1,0 +1,11 @@
+---
+import { VIRTUES } from '../../domain/v20/traits';
+import SheetTraitRow from './SheetTraitRow.astro';
+---
+
+<section class="card side-card virtues-card" aria-labelledby="virtues-heading">
+	<h2 id="virtues-heading" class="side-title">Virtues</h2>
+	<div class="trait-rows">
+		{VIRTUES.map((virtue) => <SheetTraitRow plain trait={`virtues.${virtue.key}`} label={virtue.label} />)}
+	</div>
+</section>

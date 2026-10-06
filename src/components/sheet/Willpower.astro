@@ -1,0 +1,24 @@
+---
+import { RATING_RANGES } from '../../domain/v20/traits';
+import Stepper from './Stepper.astro';
+---
+
+<section class="card resource-card willpower-card" aria-labelledby="willpower-heading">
+	<h2 id="willpower-heading" class="resource-title">Willpower</h2>
+	<Stepper resource="willpower" spend="Spend one willpower" gain="Regain one willpower" />
+	<p class="resource-flag" data-show-block="willpower.over" hidden>over maximum</p>
+	<div class="resource-foot">
+		<!-- Temporary filled, out of as many as permanent. Always read-only: the rating beside it edits permanent. -->
+		<dot-rating class="willpower-dots" data-willpower-dots readonly name="Temporary Willpower" max="0" value="0"></dot-rating>
+		<p class="resource-note">1 point → 1 automatic success</p>
+	</div>
+	<div class="resource-edit" data-sheet-mode-only="edit">
+		<span class="trait-label">Permanent Willpower</span>
+		<dot-rating
+			data-trait="willpower.permanent"
+			data-label="Permanent Willpower"
+			aria-label="Permanent Willpower"
+			max={RATING_RANGES.willpower.max}
+			value="0"></dot-rating>
+	</div>
+</section>

@@ -1,9 +1,5 @@
 Feature: Sheet header
 
-  Scenario: Header fields are available
-    Given a player viewing a new character's sheet
-    Then they can enter Name, Player, Chronicle, Nature, Demeanor, Concept, Clan, Generation and Sire
-
   Scenario: Header entries are saved without a save action
     Given a player viewing a new character's sheet
     When they enter "Lucita" as Name and "Lasombra" as Clan

@@ -1,0 +1,26 @@
+---
+interface Props {
+	/** Which resource this steps; the page finds its buttons, total and live region by it. */
+	resource: 'blood' | 'willpower';
+	spend: string;
+	gain: string;
+}
+
+const { resource, spend, gain } = Astro.props;
+---
+
+<!--
+	A button at its bound is marked aria-disabled by the page, never `disabled`: it stays
+	focusable so keyboard focus is not dropped when the last point is spent. The live region
+	is in the page from load and written only when a button is pressed.
+-->
+<div class="stepper">
+	<button type="button" class="stepper-button" data-resource={resource} data-step="-1" aria-label={spend}>
+		<span aria-hidden="true">−</span>
+	</button>
+	<span class="stepper-total" data-show={`${resource}.total`}></span>
+	<button type="button" class="stepper-button" data-resource={resource} data-step="1" aria-label={gain}>
+		<span aria-hidden="true">+</span>
+	</button>
+</div>
+<p class="visually-hidden" role="status" data-live={resource}></p>

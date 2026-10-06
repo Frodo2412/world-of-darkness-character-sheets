@@ -1,0 +1,19 @@
+---
+import droplet from '../../assets/icons/droplet.svg';
+import Stepper from './Stepper.astro';
+---
+
+<section class="card resource-card blood-card" aria-labelledby="blood-pool-heading">
+	<div class="resource-head">
+		<h2 id="blood-pool-heading" class="resource-title">
+			<img src={droplet.src} alt="" width="14" height="16" />
+			Blood Pool
+		</h2>
+		<p class="resource-note" data-show="blood.perTurn" data-show-block="blood.perTurn" hidden></p>
+	</div>
+	<Stepper resource="blood" spend="Spend one blood" gain="Gain one blood" />
+	<!-- Drawn for the eye; the total above is what assistive technology reads. -->
+	<div class="blood-tracker" data-blood-tracker aria-hidden="true"></div>
+	<p class="resource-flag" data-show-block="blood.over" hidden>over maximum</p>
+	<p class="resource-note" data-show="blood.assumed" data-show-block="blood.assumed" hidden></p>
+</section>

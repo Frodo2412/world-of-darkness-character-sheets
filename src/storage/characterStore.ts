@@ -43,14 +43,21 @@ function isV20Character(value: unknown, id: string): value is V20Character {
     character.id === id &&
     character.system === 'v20' &&
     character.schemaVersion === 1 &&
-    HEALTH_LEVELS.every((level) => DAMAGE_TYPES.includes(character.health[level.key]))
+    HEALTH_LEVELS.every((level) => DAMAGE_TYPES.includes(character.health[level.key])) &&
+    Object.values(character.specialties).every((specialty) => typeof specialty === 'string')
   );
+}
+
+/** A record saved before specialties existed has none: it is read as a character with no specialties. */
+function withSpecialties(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null || 'specialties' in value) return value;
+  return { ...value, specialties: {} };
 }
 
 /** The only way stored text becomes a character. */
 function parseRecord(text: string, id: string): V20Character | undefined {
   try {
-    const value: unknown = JSON.parse(text);
+    const value: unknown = withSpecialties(JSON.parse(text));
     return isV20Character(value, id) ? value : undefined;
   } catch {
     return undefined;

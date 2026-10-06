@@ -49,6 +49,10 @@ own record with a generated unique id, a `system` discriminator (`"v20"`), and a
 without rewriting existing saves. Saving is automatic on every change; there is no
 save button.
 
+> **Superseded.** The sheet's presentation (layout, modes, colours, type) is now specified by
+> [`sheet-play-view-redesign.md`](sheet-play-view-redesign.md); the paragraph below describes the
+> original layout only.
+
 **Presentation.** Original CSS that follows the official page-1 section order and
 grouping (header → Attributes → Abilities → Advantages → notes / Humanity–Willpower–Blood
 Pool / Health–Weakness–Experience). No White Wolf / Onyx Path artwork, logo, lettering,

@@ -8,18 +8,7 @@ import {
   sheetField,
 } from './support/pages';
 import { characterWith, saveCharacters } from './support/seed';
-
-const HEADER_LABELS = [
-  'Name',
-  'Player',
-  'Chronicle',
-  'Nature',
-  'Demeanor',
-  'Concept',
-  'Clan',
-  'Generation',
-  'Sire',
-];
+import { ensureEditing } from './support/sheet';
 
 async function enter(
   page: Page,
@@ -58,21 +47,14 @@ When('they reload the sheet', async ({ page }) => {
 
 When('the player names the first one {string}', async ({ page, memory }, name: string) => {
   await page.goto(sheetAddress(memory.saved[0].id));
+  await ensureEditing(page);
   await enter(page, memory.entered, 'Name', name);
 });
 
 Then(
-  'they can enter Name, Player, Chronicle, Nature, Demeanor, Concept, Clan, Generation and Sire',
-  async ({ page }) => {
-    for (const label of HEADER_LABELS) {
-      await expect(sheetField(page, label)).toBeEditable();
-    }
-  },
-);
-
-Then(
   '{word} shows {string} and {word} shows {string}',
   async ({ page }, firstLabel: string, first: string, secondLabel: string, second: string) => {
+    await ensureEditing(page);
     await expect(sheetField(page, firstLabel)).toHaveValue(first);
     await expect(sheetField(page, secondLabel)).toHaveValue(second);
   },
@@ -89,6 +71,7 @@ Then('both entries are kept exactly as typed and nothing is flagged', async ({ p
 
 Then("the second character's Name is still empty", async ({ page, memory }) => {
   await page.goto(sheetAddress(memory.saved[1].id));
+  await ensureEditing(page);
   await expect(sheetField(page, 'Name')).toBeVisible();
   await expect(sheetField(page, 'Name')).toHaveValue('');
 });

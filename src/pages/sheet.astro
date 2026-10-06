@@ -1,41 +1,46 @@
 ---
 import Abilities from '../components/sheet/Abilities.astro';
-import Advantages from '../components/sheet/Advantages.astro';
 import Attributes from '../components/sheet/Attributes.astro';
+import BloodPool from '../components/sheet/BloodPool.astro';
+import Disciplines from '../components/sheet/Disciplines.astro';
 import Health from '../components/sheet/Health.astro';
-import Morality from '../components/sheet/Morality.astro';
-import Notes from '../components/sheet/Notes.astro';
-import SheetHeader from '../components/sheet/SheetHeader.astro';
-import Trackers from '../components/sheet/Trackers.astro';
-import WeaknessExperience from '../components/sheet/WeaknessExperience.astro';
-import { CREATION_REMINDER } from '../domain/v20/traits';
+import Humanity from '../components/sheet/Humanity.astro';
+import Identity from '../components/sheet/Identity.astro';
+import SelectedPool from '../components/sheet/SelectedPool.astro';
+import Virtues from '../components/sheet/Virtues.astro';
+import Willpower from '../components/sheet/Willpower.astro';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
 import '../styles/sheet.css';
 ---
 
 <Layout title="Character sheet">
-	<main>
-		<p><a href="/">Back to characters</a></p>
+	<main class="sheet-page">
 		<StatusMessage />
+		<!-- Spoken when the mode changes; in the page from load so it is already a live region. -->
+		<p id="mode-announcement" class="visually-hidden" role="status"></p>
 		<div id="sheet" class="sheet" hidden>
-			<h1>Character sheet</h1>
-			<SheetHeader />
-			<Attributes />
-			<Abilities />
-			<Advantages />
-			<div class="columns">
-				<div class="sheet-column"><Notes /></div>
-				<div class="sheet-column">
-					<Morality />
-					<Trackers />
+			<!-- The page's one heading for the sheet itself; the identity below is the visible title. -->
+			<h1 class="visually-hidden">Character sheet</h1>
+			<Identity />
+			<div class="resources-row">
+				<BloodPool />
+				<Willpower />
+				<Health />
+				<Humanity />
+			</div>
+			<div class="workspace">
+				<!-- First in the markup so that a narrow screen shows it above the traits; the stylesheet puts it at the top of the side column when wide. -->
+				<SelectedPool />
+				<div class="workspace-traits">
+					<Attributes />
+					<Abilities />
 				</div>
-				<div class="sheet-column">
-					<Health />
-					<WeaknessExperience />
+				<div class="workspace-side">
+					<Disciplines />
+					<Virtues />
 				</div>
 			</div>
-			<p class="creation-reminder">{CREATION_REMINDER}</p>
 		</div>
 		<div id="sheet-unreadable" hidden>
 			<h1>Character could not be read</h1>
