@@ -15,30 +15,27 @@ Feature: Character creator
     When they open the roster
     Then the roster lists "Unnamed build" as in progress
 
-  @pending
   Scenario Outline: A refused create keeps the player on the roster
-    Given a browser that refuses to store anything new
+    Given the roster is open and the browser will not accept further saved data
     When they choose "<action>"
     Then they see "<message>"
     And they are still on the roster
-    And the roster lists no entries
+    And the roster lists 0 entries
 
     Examples:
       | action                   | message                                                                 |
       | Start character creator  | The new build could not be saved. This browser refused to store it.     |
       | Start with a blank sheet | The new character could not be saved. This browser refused to store it. |
 
-  @pending
   Scenario: A second refusal is announced again
-    Given a browser that refuses to store anything new
+    Given the roster is open and the browser will not accept further saved data
     When they choose "Start with a blank sheet" twice
     Then the refusal has been announced twice
 
-  @pending
   Scenario: Without storage the library says so and offers nothing to do
-    Given a browser that withholds storage from the page
+    Given the browser provides no storage to the page
     When they open the roster
-    Then they see the storage unavailable message
+    Then they see that characters cannot be saved in this browser
     And the message that there are no characters yet is not shown
     And both create actions are disabled, can still be focused and are described by the message
     And choosing either create action leaves them on the roster

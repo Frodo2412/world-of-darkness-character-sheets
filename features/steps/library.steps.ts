@@ -1,10 +1,12 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
+import { watchWrites, writeCount } from './support/announcements';
 import { buildWith, saveBuilds } from './support/builder';
 import { controlNames, linkNames } from './support/accessibility';
 import {
   SHEET_ADDRESS,
   actionName,
+  browsingControls,
   createAction,
   creatorCard,
   currentEntry,
@@ -136,6 +138,71 @@ When("the roster is restored from the browser's back and forward cache", async (
 
 When('they choose {string}', async ({ page }, name: string) => {
   await page.getByRole('button', { name, exact: true }).click();
+});
+
+/** The message in the page's status region, exactly as shown. */
+const statusMessage = (page: Page): Locator => page.getByRole('alert');
+
+When('they choose {string} twice', async ({ page }, name: string) => {
+  // Installed before the first click, so every write to the message is seen.
+  await watchWrites(page, '#status-message');
+  await page.getByRole('button', { name, exact: true }).click();
+  // The second refusal must follow the first one's announcement, not share its frame.
+  await expect.poll(() => writeCount(page)).toBe(1);
+  await page.getByRole('button', { name, exact: true }).click();
+});
+
+// Then: a create that was refused or is unavailable
+
+Then('they see {string}', async ({ page }, text: string) => {
+  await expect(page.getByText(text, { exact: true })).toBeVisible();
+});
+
+Then('they are still on the roster', async ({ page }) => {
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Characters' })).toBeVisible();
+});
+
+Then('the refusal has been announced twice', async ({ page }) => {
+  await expect.poll(() => writeCount(page)).toBe(2);
+});
+
+const CREATE_ACTIONS = ['Start character creator', 'Start with a blank sheet'];
+
+Then('both create actions are disabled, can still be focused and are described by the message', async ({ page }) => {
+  const message = ((await statusMessage(page).textContent()) ?? '').trim();
+  expect(message).not.toBe('');
+  for (const name of CREATE_ACTIONS) {
+    const action = createAction(page, name);
+    await expect(action).toBeDisabled();
+    // Disabled by aria-disabled, not by the attribute that would take the button out of the tab order.
+    await expect(action).toHaveAttribute('aria-disabled', 'true');
+    await expect(action).not.toHaveAttribute('disabled');
+    await expect(action).toHaveAccessibleDescription(message);
+    await action.focus();
+    await expect(action).toBeFocused();
+  }
+});
+
+Then('choosing either create action leaves them on the roster', async ({ page }) => {
+  const message = await statusMessage(page).textContent();
+  let navigated = false;
+  page.on('framenavigated', () => {
+    navigated = true;
+  });
+  for (const name of CREATE_ACTIONS) {
+    // Forced: the action is disabled for Playwright, which would otherwise wait for it.
+    await createAction(page, name).click({ force: true });
+  }
+  // Let a click's handler, if it had one, run to its end.
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve(undefined))));
+  expect(navigated).toBe(false);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(statusMessage(page)).toHaveText(message!);
+});
+
+Then('no tabs, search field, clan filter, status filter or sort control are shown', async ({ page }) => {
+  await expect(browsingControls(page).filter({ visible: true })).toHaveCount(0);
 });
 
 // Then: the Character creator card

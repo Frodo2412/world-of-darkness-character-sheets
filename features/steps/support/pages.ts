@@ -76,6 +76,19 @@ export const creatorCard = (page: Page): Locator =>
 export const createAction = (page: Page, name: string): Locator =>
   creatorCard(page).getByRole('button', { name, exact: true });
 
+/**
+ * Every tab, search field, filter and sort control a player can browse the library with, by role and
+ * name. A page with none of them is the page of an empty library or of a browser without storage.
+ */
+export const browsingControls = (page: Page): Locator =>
+  page
+    .getByRole('tab')
+    .or(page.getByRole('searchbox'))
+    .or(page.getByRole('textbox', { name: /search/i }))
+    .or(page.getByRole('combobox', { name: /clan|sort/i }))
+    .or(page.getByRole('group', { name: 'Status', exact: true }))
+    .or(page.getByRole('radio'));
+
 /** Creates a character from the roster and ends on its sheet. */
 export async function createCharacter(page: Page): Promise<void> {
   await openRoster(page);

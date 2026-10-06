@@ -381,6 +381,14 @@ html:has(.roster-page) header {
 	}
 }
 
+/* Without storage the actions do nothing: they keep their place and focus, and look unavailable. */
+.creator-action[aria-disabled='true'] {
+	background: var(--color-surface);
+	border-color: var(--color-border-control);
+	color: var(--color-muted);
+	cursor: not-allowed;
+}
+
 /* Wide enough for the library and the creator side by side (the sheet's breakpoint): the card is
    the second column, 320px, level with the top of the list, and shows its stages. */
 @media (min-width: 75rem) {
