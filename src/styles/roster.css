@@ -32,15 +32,135 @@ html:has(.roster-page) header {
 	color: var(--color-muted);
 }
 
-.roster-actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--space-2);
-	margin-block-end: var(--space-3);
+/* The workspace: the creator card above the library; from 75rem the card is the second column.
+   The card comes first in the document at every width, so its place is set here, not by `order`. */
+
+.roster-workspace {
+	display: grid;
+	gap: var(--space-4);
+}
+
+.roster-library {
+	min-inline-size: 0;
 }
 
 .roster-empty {
 	color: var(--color-muted);
+}
+
+/* The Character creator card */
+
+.creator {
+	/* 20px: the card's padding, as beside every row of the list. */
+	--creator-pad: calc(var(--space-3) + var(--space-1));
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-section);
+	padding: var(--creator-pad);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.creator-heading {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.creator-heading p {
+	margin: 0;
+}
+
+.creator-overline {
+	font-size: var(--text-overline);
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: var(--color-accent-text);
+}
+
+/* The title is a level 2 heading, so it sheds the section-heading look of global.css. */
+.creator-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: var(--text-figure);
+	font-weight: 400;
+	line-height: 1.1;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.creator-description {
+	font-size: var(--text-small);
+	line-height: 1.6;
+	color: var(--color-muted);
+}
+
+/* The stages only explain; a phone leaves them out and keeps the two actions close to the top. */
+.creator-stages {
+	display: none;
+	list-style: none;
+	margin: 0;
+	padding: var(--space-section) 0 0;
+	border-block-start: var(--stroke) solid var(--color-divider);
+	/* 13px between stages. */
+	gap: 0.8125rem;
+}
+
+.creator-stage {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.creator-stage-title {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	font-size: var(--text-small);
+	color: var(--color-text);
+}
+
+.creator-stage-title img {
+	flex: none;
+}
+
+.creator-stage-description {
+	margin: 0;
+	font-size: var(--text-caption);
+	line-height: 1.5;
+	color: var(--color-muted);
+}
+
+.creator-actions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.creator-action {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-2);
+	inline-size: 100%;
+	/* 38px; the padding is 10px above and below and 14px beside, the stroke inside. */
+	min-block-size: 2.375rem;
+	padding: calc(var(--space-row) - var(--stroke)) calc(var(--space-row) + var(--space-1) - var(--stroke));
+	font-size: var(--text-small);
+	font-weight: 600;
+	line-height: var(--leading-tight);
+}
+
+.creator-action img {
+	flex: none;
+}
+
+.creator-primary {
+	background: var(--color-accent);
+	border-color: var(--color-accent);
+	color: var(--color-text-strong);
 }
 
 /* The list card */
@@ -258,5 +378,26 @@ html:has(.roster-page) header {
 	.entry-edit,
 	.entry-open {
 		--entry-action-height: 1.5rem;
+	}
+}
+
+/* Wide enough for the library and the creator side by side (the sheet's breakpoint): the card is
+   the second column, 320px, level with the top of the list, and shows its stages. */
+@media (min-width: 75rem) {
+	.roster-workspace {
+		grid-template-columns: minmax(0, 1fr) var(--side-column);
+		align-items: start;
+	}
+
+	.roster-library {
+		grid-area: 1 / 1;
+	}
+
+	.creator {
+		grid-area: 1 / 2;
+	}
+
+	.creator-stages {
+		display: grid;
 	}
 }

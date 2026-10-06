@@ -1,0 +1,47 @@
+---
+import diamond from '../../assets/icons/diamond.svg';
+import pencil from '../../assets/icons/pencil.svg';
+
+// The card that starts a new character: what building involves, then the two ways to begin.
+// It is the page's second section but comes before the library in the document, so the
+// reading order is the same at every width; the wide layout places it in the second column.
+// The stages explain, they do not act, so they leave a phone's screen (see roster.css).
+const stages = [
+	{ title: 'Concept & clan', description: 'Who were you before the Embrace?' },
+	{ title: 'Traits & disciplines', description: 'Shape your strengths and powers.' },
+	{ title: 'Finishing touches', description: 'Backgrounds, virtues, and freebie points.' },
+];
+---
+
+<section class="creator" aria-labelledby="creator-title">
+	<div class="creator-heading">
+		<p class="creator-overline">Character creator</p>
+		<h2 id="creator-title" class="creator-title">A new story begins.</h2>
+		<p class="creator-description">
+			Build a Kindred from concept to character sheet, using the V20 creation rules.
+		</p>
+	</div>
+	<ol class="creator-stages">
+		{
+			stages.map((stage) => (
+				<li class="creator-stage">
+					<span class="creator-stage-title">
+						<img src={diamond.src} alt="" width="8" height="10" />
+						{stage.title}
+					</span>
+					<p class="creator-stage-description">{stage.description}</p>
+				</li>
+			))
+		}
+	</ol>
+	<div class="creator-actions">
+		<button type="button" id="build-character" class="creator-action creator-primary">
+			<img src={pencil.src} alt="" width="14" height="14" />
+			Start character creator
+		</button>
+		<button type="button" id="new-character" class="creator-action">
+			<img src={pencil.src} alt="" width="14" height="14" />
+			Start with a blank sheet
+		</button>
+	</div>
+</section>

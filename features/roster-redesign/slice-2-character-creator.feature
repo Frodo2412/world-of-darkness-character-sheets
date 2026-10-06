@@ -1,6 +1,5 @@
 Feature: Character creator
 
-  @pending
   Scenario: The creator card explains what building involves
     Given a player with no saved characters
     When they open the roster
@@ -8,12 +7,13 @@ Feature: Character creator
     And it names the stages "Concept & clan", "Traits & disciplines" and "Finishing touches"
     And it offers "Start character creator" and "Start with a blank sheet"
 
-  @pending
   Scenario: Starting the character creator opens a new build
     Given a player with no saved characters
-    When they choose "Start character creator"
+    When they open the roster
+    And they choose "Start character creator"
     Then the builder is shown
-    And the roster lists "Unnamed build" as in progress
+    When they open the roster
+    Then the roster lists "Unnamed build" as in progress
 
   @pending
   Scenario Outline: A refused create keeps the player on the roster

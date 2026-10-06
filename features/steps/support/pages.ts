@@ -68,10 +68,18 @@ export async function openRoster(page: Page): Promise<void> {
   await page.goto('/');
 }
 
+/** The Character creator card: the section labelled by its level 2 title. */
+export const creatorCard = (page: Page): Locator =>
+  page.getByRole('region', { name: 'A new story begins.', exact: true });
+
+/** One of the card's two actions, "Start character creator" or "Start with a blank sheet". */
+export const createAction = (page: Page, name: string): Locator =>
+  creatorCard(page).getByRole('button', { name, exact: true });
+
 /** Creates a character from the roster and ends on its sheet. */
 export async function createCharacter(page: Page): Promise<void> {
   await openRoster(page);
-  await page.getByRole('button', { name: 'New V20 character' }).click();
+  await createAction(page, 'Start with a blank sheet').click();
   await expect(page).toHaveURL(SHEET_ADDRESS);
 }
 

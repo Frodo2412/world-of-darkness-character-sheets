@@ -5,6 +5,8 @@ import { controlNames, linkNames } from './support/accessibility';
 import {
   SHEET_ADDRESS,
   actionName,
+  createAction,
+  creatorCard,
   currentEntry,
   entryAction,
   entryHeading,
@@ -130,6 +132,26 @@ When("the roster is restored from the browser's back and forward cache", async (
   await page.evaluate(() => {
     window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
   });
+});
+
+When('they choose {string}', async ({ page }, name: string) => {
+  await page.getByRole('button', { name, exact: true }).click();
+});
+
+// Then: the Character creator card
+
+Then('the Character creator card is headed {string}', async ({ page }, title: string) => {
+  await expect(creatorCard(page).getByRole('heading', { level: 2, name: title, exact: true })).toBeVisible();
+});
+
+Then('it names the stages {string}, {string} and {string}', async ({ page }, first: string, second: string, third: string) => {
+  const stages = creatorCard(page).getByRole('listitem');
+  await expect(stages).toContainText([first, second, third]);
+  for (const stage of await stages.all()) await expect(stage).toBeVisible();
+});
+
+Then('it offers {string} and {string}', async ({ page }, primary: string, secondary: string) => {
+  for (const name of [primary, secondary]) await expect(createAction(page, name)).toBeEnabled();
 });
 
 // Then: one entry

@@ -12,7 +12,7 @@ import {
   setBaseGeneration,
   startBuild,
 } from './support/builder';
-import { characterEntries, openRoster, rosterList } from './support/pages';
+import { characterEntries, createAction, openRoster, rosterList } from './support/pages';
 import { saveDamagedBuild } from './support/seed';
 import {
   acceptWrites,
@@ -229,7 +229,7 @@ Then('the roster lists no characters', async ({ page }) => {
 });
 
 Then('they see a way to build a character', async ({ page }) => {
-  await expect(page.getByRole('button', { name: 'Build a character' })).toBeEnabled();
+  await expect(createAction(page, 'Start character creator')).toBeEnabled();
 });
 
 Then(
@@ -317,7 +317,7 @@ Then('the roster lists no builds in progress', async ({ page }) => {
 });
 
 Then('the build action cannot be used', async ({ page }) => {
-  await expect(page.getByRole('button', { name: 'Build a character' })).toBeDisabled();
+  await expect(createAction(page, 'Start character creator')).toBeDisabled();
 });
 
 Then('they are told characters cannot be saved in this browser', async ({ page }) => {

@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import {
   SHEET_ADDRESS,
+  createAction,
   createCharacter,
   entryNamed,
   openRoster,
@@ -58,7 +59,7 @@ Then('they see a message that there are no characters yet', async ({ page }) => 
 });
 
 Then('they see a way to create a V20 character', async ({ page }) => {
-  await expect(page.getByRole('button', { name: 'New V20 character' })).toBeVisible();
+  await expect(createAction(page, 'Start with a blank sheet')).toBeVisible();
 });
 
 Then('the sheet for a new blank character is shown', async ({ page }) => {

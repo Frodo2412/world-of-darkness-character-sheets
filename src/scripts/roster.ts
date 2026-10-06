@@ -10,45 +10,60 @@ const counts = document.querySelector<HTMLElement>('#library-counts')!;
 const emptyMessage = document.querySelector<HTMLParagraphElement>('#roster-empty')!;
 const newCharacterButton = document.querySelector<HTMLButtonElement>('#new-character')!;
 const buildButton = document.querySelector<HTMLButtonElement>('#build-character')!;
+const templates = findTemplates(document);
+
+/** Reads both stores once; every redraw after this works from what was read. */
+function load(store: CharacterStore, builds: BuildStore): LibraryEntry[] {
+  return entriesOf({ characters: store.list(), builds: builds.list() });
+}
+
+/** A pure redraw from the entries and the filter. */
+function render(entries: readonly LibraryEntry[], filter: LibraryFilter): void {
+  const current = view(entries, filter);
+  list.replaceChildren(...current.shown.map((entry) => drawEntry(templates, entry)));
+  counts.textContent = current.countsLine;
+  library.hidden = current.state === 'empty';
+  emptyMessage.hidden = current.state !== 'empty';
+}
+
+/**
+ * Creates a record and opens it, or says why not and stays on the roster.
+ * `create` returns the new record's id, or nothing when the browser refused to store it.
+ */
+function createAndOpen(create: () => string | undefined, failure: string, address: (id: string) => string): void {
+  const id = create();
+  if (id === undefined) {
+    showStatus(failure);
+    return;
+  }
+  clearStatus();
+  window.location.assign(address(id));
+}
 
 function start(store: CharacterStore, builds: BuildStore): void {
-  const templates = findTemplates(document);
+  render(load(store, builds), INITIAL_FILTER);
 
-  /** Reads both stores once; every redraw after this works from what was read. */
-  function load(): LibraryEntry[] {
-    return entriesOf({ characters: store.list(), builds: builds.list() });
-  }
+  newCharacterButton.addEventListener('click', () =>
+    createAndOpen(
+      () => {
+        const result = store.create();
+        return result.status === 'created' ? result.character.id : undefined;
+      },
+      'The new character could not be saved. This browser refused to store it.',
+      editSheetUrl,
+    ),
+  );
 
-  /** A pure redraw from the entries and the filter. */
-  function render(entries: readonly LibraryEntry[], filter: LibraryFilter): void {
-    const current = view(entries, filter);
-    list.replaceChildren(...current.shown.map((entry) => drawEntry(templates, entry)));
-    counts.textContent = current.countsLine;
-    library.hidden = current.state === 'empty';
-    emptyMessage.hidden = current.state !== 'empty';
-  }
-
-  render(load(), INITIAL_FILTER);
-
-  newCharacterButton.addEventListener('click', () => {
-    const result = store.create();
-    if (result.status === 'failed') {
-      showStatus('The new character could not be saved. This browser refused to store it.');
-      return;
-    }
-    clearStatus();
-    window.location.assign(editSheetUrl(result.character.id));
-  });
-
-  buildButton.addEventListener('click', () => {
-    const result = builds.create();
-    if (result.status === 'failed') {
-      showStatus('The new build could not be saved. This browser refused to store it.');
-      return;
-    }
-    clearStatus();
-    window.location.assign(builderUrl(result.build.id));
-  });
+  buildButton.addEventListener('click', () =>
+    createAndOpen(
+      () => {
+        const result = builds.create();
+        return result.status === 'created' ? result.build.id : undefined;
+      },
+      'The new build could not be saved. This browser refused to store it.',
+      builderUrl,
+    ),
+  );
 
   // A page restored from the back/forward cache is showing what was stored when it was left:
   // start again, as the sheet does, so entries created since are listed.

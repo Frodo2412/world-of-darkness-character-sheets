@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import {
+  createAction,
   createCharacter,
   entryNamed,
   openRoster,
@@ -75,7 +76,7 @@ Then('that entry is reported as an unreadable character', async ({ page }) => {
 });
 
 Then('creating a new character still works', async ({ page, memory }) => {
-  await page.getByRole('button', { name: 'New V20 character' }).click();
+  await createAction(page, 'Start with a blank sheet').click();
   await expect(sheetField(page, 'Name')).toBeEditable();
 
   await openRoster(page);
@@ -157,7 +158,7 @@ Then('after a reload the latest values are shown', async ({ page, memory }) => {
 
 Then('they see that characters cannot be saved in this browser', async ({ page }) => {
   await expect(page.getByRole('alert')).toContainText('cannot be saved in this browser');
-  await expect(page.getByRole('button', { name: 'New V20 character' })).toBeDisabled();
+  await expect(createAction(page, 'Start with a blank sheet')).toBeDisabled();
 });
 
 Given(
@@ -173,7 +174,7 @@ When('the player opens a sheet address', async ({ page }) => {
 });
 
 When('they try to create a V20 character', async ({ page }) => {
-  await page.getByRole('button', { name: 'New V20 character' }).click();
+  await createAction(page, 'Start with a blank sheet').click();
 });
 
 Then(
