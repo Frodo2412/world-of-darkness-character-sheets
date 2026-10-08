@@ -50,7 +50,6 @@ Feature: Library layout and accessibility
     Then the page does not scroll horizontally
     And pressing End on the tabs brings the last tab fully into view
 
-  @pending
   Scenario Outline: Focus moves through the page in reading order
     Given a full library
     When the roster is shown <width> pixels wide
@@ -63,7 +62,6 @@ Feature: Library layout and accessibility
       | 1512  |
       | 320   |
 
-  @pending
   Scenario: The library is worked without a pointer
     Given a full library
     When the player, using only the keyboard, moves to the tab "The Glass City · 2"
@@ -75,7 +73,6 @@ Feature: Library layout and accessibility
     When they activate "Open sheet" for "Fatima" with the Enter key
     Then the sheet for "Fatima" is shown in play mode
 
-  @pending
   Scenario Outline: The library has no accessibility violations
     Given the library is in the "<state>" state
     When the roster is checked
@@ -89,14 +86,12 @@ Feature: Library layout and accessibility
       | storage unavailable |
       | create refused      |
 
-  @pending
   Scenario: Every control has its own name
     Given a full library and two more characters with nothing filled in
     When the player opens the roster
     Then every control has a unique, non-empty accessible name
     And the two unnamed characters' actions name "Unnamed character" and "Unnamed character 2"
 
-  @pending
   Scenario Outline: Controls are large enough to press
     Given a full library
     When the roster is shown <width> pixels wide
@@ -108,7 +103,6 @@ Feature: Library layout and accessibility
       | 768   |
       | 1512  |
 
-  @pending
   Scenario: The page is outlined by its headings
     Given a full library
     When the player opens the roster
@@ -116,7 +110,6 @@ Feature: Library layout and accessibility
     And the level 2 headings are "A new story begins." and "Library"
     And every entry's name is a level 3 heading
 
-  @pending
   Scenario: Selection does not rest on colour alone
     Given a full library
     When the roster is shown with forced colours

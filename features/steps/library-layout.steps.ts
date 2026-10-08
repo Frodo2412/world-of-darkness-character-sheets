@@ -36,7 +36,7 @@ const EIGHT_MORE_CHRONICLES = [
 ];
 
 /** A character, a build and two damaged records saved one after the other. */
-async function saveFullLibrary(page: Page, extra: Parameters<typeof characterWith>[0][] = []): Promise<void> {
+export async function saveFullLibrary(page: Page, extra: Parameters<typeof characterWith>[0][] = []): Promise<void> {
   const characters = [
     characterWith({ name: 'Lucita', clan: 'Lasombra', chronicle: GLASS_CITY }),
     characterWith({ name: 'Fatima', clan: 'Assamite', chronicle: GLASS_CITY }),

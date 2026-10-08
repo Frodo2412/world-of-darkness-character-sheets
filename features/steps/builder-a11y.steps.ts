@@ -7,6 +7,7 @@ import { expect, type Page } from '@playwright/test';
 import { Then, When } from './fixtures';
 import { openFreebieSections, openStep, shownStep } from './support/builder';
 import { openRoster } from './support/pages';
+import { putRosterInState } from './support/library-states';
 
 const PHONE = { width: 375, height: 800 };
 
@@ -95,6 +96,7 @@ Then('the freebie points remaining bar does not cover the focused control', asyn
 
 When('the roster is checked', async ({ page, memory }) => {
   await openRoster(page);
+  await putRosterInState(page, memory.libraryState);
   memory.violations = await wcagViolations(page);
 });
 

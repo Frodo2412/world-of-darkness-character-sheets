@@ -33,6 +33,10 @@ interface ScenarioMemory {
   visited: string[];
   /** The rows keyboard focus reached while something held in view covered them, by name. */
   coveredRows: string[];
+  /** The state a scenario asked the roster to be checked in, applied once the roster is open. */
+  libraryState?: string;
+  /** Whether "No characters match." was seen on the way. */
+  noMatchSeen?: boolean;
 }
 
 // Every step file imports Given/When/Then from here so scenarios share one
