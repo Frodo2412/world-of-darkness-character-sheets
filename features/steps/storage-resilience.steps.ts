@@ -1,14 +1,25 @@
 import { expect, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import {
+  createAction,
   createCharacter,
+  entryNamed,
+  expectOnRoster,
   openRoster,
+  openSheetOf,
   rosterEntries,
   sheetAddress,
   sheetField,
+  statusRegion,
+  unreadableEntries,
 } from './support/pages';
 import { rating, setRating } from './support/ratings';
-import { characterWith, saveCharacters } from './support/seed';
+import {
+  DAMAGED_CHARACTER_TEXT,
+  characterWith,
+  saveCharacters,
+  saveDamagedCharacter,
+} from './support/seed';
 import { ensureEditing, identityName } from './support/sheet';
 import {
   acceptWrites,
@@ -18,20 +29,13 @@ import {
   withholdStorage,
 } from './support/storage';
 
-const NOT_JSON = '{"id": "broken", "header": {"name": "Fat';
-
-const unreadableEntries = (page: Page) =>
-  rosterEntries(page).filter({ hasText: 'Unreadable character' });
-
 Given("Fatima's saved data has become unreadable", async ({ page, memory }) => {
   const fatima = memory.saved.find((character) => character.header.name === 'Fatima')!;
-  memory.damaged = { id: fatima.id, ...(await overwriteRecord(page, fatima.id, NOT_JSON)) };
+  memory.damaged = { id: fatima.id, ...(await overwriteRecord(page, fatima.id, DAMAGED_CHARACTER_TEXT)) };
 });
 
 Given('a saved character whose data has become unreadable', async ({ page, memory }) => {
-  const character = characterWith({ name: 'Fatima' });
-  await saveCharacters(page, [character]);
-  memory.damaged = { id: character.id, ...(await overwriteRecord(page, character.id, NOT_JSON)) };
+  memory.damaged = await saveDamagedCharacter(page);
 });
 
 Given('a saved record that is readable but is not a V20 character', async ({ page, memory }) => {
@@ -39,14 +43,6 @@ Given('a saved record that is readable but is not a V20 character', async ({ pag
   await saveCharacters(page, [character]);
   const record = await overwriteRecord(page, character.id, JSON.stringify({ hello: 'world' }));
   memory.damaged = { id: character.id, ...record };
-});
-
-Given('the roster reports an unreadable character', async ({ page, memory }) => {
-  const character = characterWith({});
-  await saveCharacters(page, [character]);
-  memory.damaged = { id: character.id, ...(await overwriteRecord(page, character.id, NOT_JSON)) };
-  await openRoster(page);
-  await expect(unreadableEntries(page)).toHaveCount(1);
 });
 
 When('the player opens the roster and then reloads it', async ({ page }) => {
@@ -58,26 +54,19 @@ When('the player opens its sheet address', async ({ page, memory }) => {
   await page.goto(sheetAddress(memory.damaged!.id));
 });
 
-When('the player deletes that entry and confirms', async ({ page }) => {
-  await unreadableEntries(page).getByRole('button', { name: /^Delete unreadable character/ }).click();
-  const dialog = page.getByRole('dialog', { name: 'Delete character?' });
-  await dialog.getByRole('button', { name: 'Delete' }).click();
-  await expect(dialog).toBeHidden();
-});
-
 Then('{string} is listed and can be opened', async ({ page }, name: string) => {
-  await rosterEntries(page).getByRole('link', { name }).click();
+  await openSheetOf(entryNamed(page, name));
   await expect(identityName(page)).toHaveText(name);
 });
 
 Then('one entry is reported as an unreadable character', async ({ page }) => {
   await openRoster(page);
-  await expect(unreadableEntries(page)).toHaveCount(1);
+  await expect(unreadableEntries(page, 'character')).toHaveCount(1);
   await expect(rosterEntries(page)).toHaveCount(2);
 });
 
 Then('the unreadable entry is still reported', async ({ page }) => {
-  await expect(unreadableEntries(page)).toHaveCount(1);
+  await expect(unreadableEntries(page, 'character')).toHaveCount(1);
 });
 
 Then('its saved data is unchanged', async ({ page, memory }) => {
@@ -85,16 +74,16 @@ Then('its saved data is unchanged', async ({ page, memory }) => {
 });
 
 Then('that entry is reported as an unreadable character', async ({ page }) => {
-  await expect(unreadableEntries(page)).toHaveCount(1);
+  await expect(unreadableEntries(page, 'character')).toHaveCount(1);
 });
 
 Then('creating a new character still works', async ({ page, memory }) => {
-  await page.getByRole('button', { name: 'New V20 character' }).click();
+  await createAction(page, 'Start with a blank sheet').click();
   await expect(sheetField(page, 'Name')).toBeEditable();
 
   await openRoster(page);
   await expect(rosterEntries(page)).toHaveCount(2);
-  await expect(unreadableEntries(page)).toHaveCount(1);
+  await expect(unreadableEntries(page, 'character')).toHaveCount(1);
   expect(await storedText(page, memory.damaged!.key)).toBe(memory.damaged!.text);
 });
 
@@ -107,13 +96,7 @@ Then(
   },
 );
 
-Then('it is no longer reported', async ({ page, memory }) => {
-  await expect(unreadableEntries(page)).toHaveCount(0);
-  await expect(page.getByText('No characters yet')).toBeVisible();
-  expect(await storedText(page, memory.damaged!.key)).toBeNull();
-});
-
-const savingProblem = (page: Page) => page.getByRole('alert').filter({ hasText: /changes not saved/i });
+const savingProblem = (page: Page) => statusRegion(page).filter({ hasText: /changes not saved/i });
 
 async function change(page: Page, entered: Map<string, string>, label: string, text: string) {
   await sheetField(page, label).fill(text);
@@ -163,7 +146,7 @@ Then('they can keep editing the sheet', async ({ page, memory }) => {
 
 Then('the message is no longer shown', async ({ page }) => {
   await expect(savingProblem(page)).toBeHidden();
-  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(statusRegion(page)).toHaveCount(0);
 });
 
 Then('after a reload the latest values are shown', async ({ page, memory }) => {
@@ -176,8 +159,8 @@ Then('after a reload the latest values are shown', async ({ page, memory }) => {
 });
 
 Then('they see that characters cannot be saved in this browser', async ({ page }) => {
-  await expect(page.getByRole('alert')).toContainText('cannot be saved in this browser');
-  await expect(page.getByRole('button', { name: 'New V20 character' })).toBeDisabled();
+  await expect(statusRegion(page)).toContainText('cannot be saved in this browser');
+  await expect(createAction(page, 'Start with a blank sheet')).toBeDisabled();
 });
 
 Given(
@@ -193,19 +176,19 @@ When('the player opens a sheet address', async ({ page }) => {
 });
 
 When('they try to create a V20 character', async ({ page }) => {
-  await page.getByRole('button', { name: 'New V20 character' }).click();
+  await createAction(page, 'Start with a blank sheet').click();
 });
 
 Then(
   'they see on the sheet page that characters cannot be saved in this browser',
   async ({ page }) => {
-    await expect(page.getByRole('alert')).toContainText('cannot be saved in this browser');
+    await expect(statusRegion(page)).toContainText('cannot be saved in this browser');
     await expect(page.getByRole('heading', { name: 'Character sheet' })).toBeHidden();
     await expect(page.getByRole('heading', { name: 'Character not found' })).toBeHidden();
   },
 );
 
 Then('they see that the new character could not be saved', async ({ page }) => {
-  await expect(page.getByRole('alert')).toContainText('could not be saved');
-  await expect(page).toHaveURL(/\/$/);
+  await expect(statusRegion(page)).toContainText('could not be saved');
+  await expectOnRoster(page);
 });

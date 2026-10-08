@@ -11,7 +11,9 @@ async function keyFor(page: Page, id: string): Promise<string> {
     const keys = Array.from({ length: window.localStorage.length }, (_, index) =>
       window.localStorage.key(index)!,
     );
-    return keys.find((key) => key.endsWith(suffix))!;
+    const found = keys.find((key) => key.endsWith(suffix));
+    if (found === undefined) throw new Error(`no stored record has the id ${suffix.slice(1)}`);
+    return found;
   }, `:${id}`);
 }
 
@@ -62,4 +64,23 @@ export async function storedKeys(page: Page, prefix: string): Promise<string[]> 
         .filter((key) => key.startsWith(start)),
     prefix,
   );
+}
+
+/** Every stored record, by key, exactly as stored. */
+export async function storedRecords(page: Page): Promise<Record<string, string>> {
+  return page.evaluate(() =>
+    Object.fromEntries(
+      Array.from({ length: window.localStorage.length }, (_, index) => window.localStorage.key(index)!).map(
+        (key) => [key, window.localStorage.getItem(key)!],
+      ),
+    ),
+  );
+}
+
+/** The records an earlier step remembered; a step that compares against them needs a Given that seeded storage. */
+export function currentStored(memory: { stored?: Record<string, string> }): Record<string, string> {
+  if (memory.stored === undefined) {
+    throw new Error('no stored records remembered: a Given that seeds storage must come first');
+  }
+  return memory.stored;
 }

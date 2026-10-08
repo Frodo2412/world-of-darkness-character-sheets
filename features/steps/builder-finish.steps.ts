@@ -28,7 +28,15 @@ import {
   shownStep,
   stepHeading,
 } from './support/builder';
-import { SHEET_ADDRESS, buildEntries, openRoster, rosterEntries, sheetAddress, sheetField } from './support/pages';
+import {
+  SHEET_ADDRESS,
+  buildEntries,
+  entryNamed,
+  openRoster,
+  rosterEntries,
+  sheetAddress,
+  sheetField,
+} from './support/pages';
 import { expectRating, rating, setRating } from './support/ratings';
 import {
   bloodPoolCard,
@@ -414,7 +422,7 @@ Then(
   async ({ page }, name: string) => {
     await openRoster(page);
     await expect(rosterEntries(page)).toHaveCount(1);
-    await expect(rosterEntries(page).getByRole('link', { name, exact: true })).toBeVisible();
+    await expect(entryNamed(page, name)).toBeVisible();
     await expect(buildEntries(page)).toHaveCount(0);
   },
 );

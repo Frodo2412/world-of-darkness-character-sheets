@@ -2,8 +2,8 @@
 import pencil from '../../assets/icons/pencil.svg';
 import { HEADER_FIELDS } from '../../domain/v20/traits';
 
-// Player, Chronicle and Sire stay on the character but are not offered here.
-const EDITABLE = ['name', 'clan', 'generation', 'concept', 'nature', 'demeanor'] as const;
+// Player and Sire stay on the character but are not offered here.
+const EDITABLE = ['name', 'clan', 'generation', 'concept', 'chronicle', 'nature', 'demeanor'] as const;
 const fields = EDITABLE.map((key) => HEADER_FIELDS.find((field) => field.key === key)!);
 ---
 

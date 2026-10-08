@@ -2,6 +2,7 @@
 
 import type { V20Character } from './character';
 import { generationNumber } from './generations';
+import { withoutAccents } from './text';
 
 /** "1st", "2nd", "3rd", "4th", "11th", "21st": English ordinal suffixes. */
 export function ordinal(n: number): string {
@@ -19,13 +20,7 @@ export function generationLabel(text: string): string {
 
 /** The first letters of the first and last words, without accents: "Éloïse Voss" is "EV". */
 export function monogram(name: string): string {
-  // Recompose after stripping marks so scripts such as Hangul are not left decomposed.
-  const words = name
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .normalize('NFC')
-    .split(/\s+/)
-    .filter(Boolean);
+  const words = withoutAccents(name).split(/\s+/).filter(Boolean);
   const ends = words.length > 1 ? [words[0], words[words.length - 1]] : words;
   return ends
     .map((word) => word.match(/[\p{L}\p{N}]/u)?.[0] ?? '')
@@ -33,19 +28,32 @@ export function monogram(name: string): string {
     .toUpperCase();
 }
 
+const SUMMARY_SEPARATOR = ' · ';
+const TEMPERAMENT_SEPARATOR = ' / ';
+
 const joinNonBlank = (parts: readonly string[], separator: string): string =>
   parts.map((part) => part.trim()).filter((part) => part !== '').join(separator);
 
 /** Clan, generation and concept on one line, leaving out whichever is blank. */
 export function identitySummary(character: V20Character): string {
   const { clan, generation, concept } = character.header;
-  return joinNonBlank([clan, generationLabel(generation), concept], ' · ');
+  return joinNonBlank([clan, generationLabel(generation), concept], SUMMARY_SEPARATOR);
+}
+
+/** A build's clan and concept on one line; a build has no generation yet. */
+export function buildSummary(clan: string, concept: string): string {
+  return joinNonBlank([clan, concept], SUMMARY_SEPARATOR);
 }
 
 /** Nature and Demeanor on one line, leaving out whichever is blank. */
 export function temperament(character: V20Character): string {
   const { nature, demeanor } = character.header;
-  return joinNonBlank([nature, demeanor], ' / ');
+  return temperamentOf(nature, demeanor);
+}
+
+/** Nature and Demeanor on one line from plain text, for a build as well as a character. */
+export function temperamentOf(nature: string, demeanor: string): string {
+  return joinNonBlank([nature, demeanor], TEMPERAMENT_SEPARATOR);
 }
 
 /** "1 die", "0 dice", "7 dice". */

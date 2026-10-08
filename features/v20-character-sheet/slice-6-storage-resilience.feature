@@ -25,11 +25,6 @@ Feature: Storage resilience
     Then they see that the character could not be read, with a link to the roster
     And its saved data is unchanged
 
-  Scenario: The player can remove an unreadable record
-    Given the roster reports an unreadable character
-    When the player deletes that entry and confirms
-    Then it is no longer reported
-
   Scenario: The browser refuses to save
     Given a player viewing a character's sheet
     And the browser will not accept further saved data

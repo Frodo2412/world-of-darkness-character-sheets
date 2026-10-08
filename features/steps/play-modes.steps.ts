@@ -1,8 +1,9 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import type { V20Character } from '../../src/domain/v20/character';
 import { Given, Then, When } from './fixtures';
 import { announcements, watchAnnouncements } from './support/announcements';
-import { createCharacter, openRoster, rosterEntries, sheetField } from './support/pages';
+import { pressUnavailable } from './support/controls';
+import { createCharacter, openRoster, openSheetOf, rosterEntries, sheetField } from './support/pages';
 import { mark, rating, setRating } from './support/ratings';
 import { characterWith, givenSaved, saveCharacters } from './support/seed';
 import {
@@ -25,8 +26,8 @@ import {
 } from './support/sheet';
 import { acceptWrites, refuseWrites } from './support/storage';
 
-const IDENTITY_FIELDS = ['Name', 'Clan', 'Generation', 'Concept', 'Nature', 'Demeanor'];
-const HIDDEN_FIELDS = ['Player', 'Chronicle', 'Sire'];
+const IDENTITY_FIELDS = ['Name', 'Clan', 'Generation', 'Concept', 'Chronicle', 'Nature', 'Demeanor'];
+const HIDDEN_FIELDS = ['Player', 'Sire'];
 
 // Arranging
 
@@ -81,7 +82,7 @@ Given(
 
 async function openFirstFromRoster(page: Page): Promise<void> {
   await openRoster(page);
-  await rosterEntries(page).getByRole('link').first().click();
+  await openSheetOf(rosterEntries(page).first());
   await expect(editButton(page).or(doneButton(page))).toBeVisible();
   await watchAnnouncements(page);
 }
@@ -93,26 +94,6 @@ When(/^(?:the player opens|they open) that character from the roster$/, async ({
 When('the player creates a new V20 character from the roster', async ({ page }) => {
   await createCharacter(page);
 });
-
-/** Presses an unavailable (aria-disabled) control as a player would, with the pointer at its centre. */
-async function pressUnavailable(page: Page, control: Locator): Promise<void> {
-  await control.scrollIntoViewIfNeeded();
-  const box = (await control.boundingBox())!;
-  const x = box.x + box.width / 2;
-  const y = box.y + box.height / 2;
-  // The click must reach the button itself, not something lying over it.
-  const reached = await control.evaluate(
-    (element, point) => element.contains(document.elementFromPoint(point.x, point.y)),
-    { x, y },
-  );
-  expect(reached).toBe(true);
-
-  const before = await announcements(page);
-  await page.mouse.click(x, y);
-  // Let any announcement the press would make arrive (two frames), then see that none did.
-  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
-  expect(await announcements(page)).toEqual(before);
-}
 
 When('they activate {string}', async ({ page }, name: string) => {
   const control = page.getByRole('button', { name, exact: true });
@@ -175,13 +156,13 @@ Then('no identity text field is offered', async ({ page }) => {
 // Edit mode
 
 Then(
-  'Name, Clan, Generation, Concept, Nature and Demeanor can be edited',
+  'Name, Clan, Generation, Concept, Chronicle, Nature and Demeanor can be edited',
   async ({ page }) => {
     for (const label of IDENTITY_FIELDS) await expect(sheetField(page, label)).toBeEditable();
   },
 );
 
-Then('there is no field for Player, Chronicle or Sire', async ({ page }) => {
+Then('there is no field for Player or Sire', async ({ page }) => {
   await expect(identityRegion(page)).toBeVisible();
   for (const label of HIDDEN_FIELDS) await expect(sheetField(page, label)).toHaveCount(0);
 });
@@ -377,9 +358,9 @@ const HIDDEN_VALUES = {
 };
 
 Given(
-  'a saved character with {string} as Player, {string} as Chronicle, {string} as Sire, three lines of Notes with leading spaces, a Weakness, an Experience value, a Bearing, a Bearing modifier and a Background {string} rated {int}',
-  async ({ page, memory }, player: string, chronicle: string, sire: string, background: string, rated: number) => {
-    await givenSaved(page, memory, { name: 'Fatima', player, chronicle, sire }, (character) => {
+  'a saved character with {string} as Player, {string} as Sire, three lines of Notes with leading spaces, a Weakness, an Experience value, a Bearing, a Bearing modifier and a Background {string} rated {int}',
+  async ({ page, memory }, player: string, sire: string, background: string, rated: number) => {
+    await givenSaved(page, memory, { name: 'Fatima', player, sire }, (character) => {
       character.notes = HIDDEN_VALUES.notes;
       character.weakness = HIDDEN_VALUES.weakness;
       character.experience = HIDDEN_VALUES.experience;

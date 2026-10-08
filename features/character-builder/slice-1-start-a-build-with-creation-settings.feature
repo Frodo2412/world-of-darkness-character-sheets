@@ -112,7 +112,7 @@ Feature: Starting a build with creation settings
     Given a saved build whose data has been damaged
     When the player opens that build
     Then they are told the build could not be read and has not been changed
-    And they are offered a link to the roster to delete it or build a new one
+    And they are offered a link to the roster to build a new one
     And the damaged data is exactly as it was
 
   Scenario: A refused save is reported and the builder stays usable
@@ -137,7 +137,7 @@ Feature: Starting a build with creation settings
 
   Scenario: A build deleted in another tab is not saved again
     Given a player with the builder open on a build
-    And the same build has been deleted from the roster in another tab
+    And the same build has been removed in another tab
     When they set the base generation to "10th"
     Then they see a "build not found" message with a link to the roster
     And the roster lists no builds in progress

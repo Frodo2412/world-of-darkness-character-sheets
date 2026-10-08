@@ -7,10 +7,11 @@ import { expect, type Page } from '@playwright/test';
 import { Then, When } from './fixtures';
 import { openFreebieSections, openStep, shownStep } from './support/builder';
 import { openRoster } from './support/pages';
+import { putRosterInState } from './support/library-states';
 
 const PHONE = { width: 375, height: 800 };
 
-const CONTROL_ROLES = 'textbox|combobox|slider|button|link|checkbox|radio|spinbutton';
+const CONTROL_ROLES = 'textbox|searchbox|combobox|slider|button|link|checkbox|radio|spinbutton|tab';
 const CONTROL_LINE = new RegExp(`^\\s*- (?:${CONTROL_ROLES})\\b`);
 const CONTROL_NAME = new RegExp(`^\\s*- (${CONTROL_ROLES}) "([^"]+)"`);
 
@@ -95,6 +96,7 @@ Then('the freebie points remaining bar does not cover the focused control', asyn
 
 When('the roster is checked', async ({ page, memory }) => {
   await openRoster(page);
+  await putRosterInState(page, memory.libraryState);
   memory.violations = await wcagViolations(page);
 });
 

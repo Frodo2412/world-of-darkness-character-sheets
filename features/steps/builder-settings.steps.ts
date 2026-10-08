@@ -4,20 +4,18 @@ import {
   BUILD_KEY_PREFIX,
   baseGeneration,
   builderAddress,
-  buildWith,
   enterExtraFreebies,
   extraFreebies,
   openBuildId,
   openStep,
   readout,
-  saveBuilds,
   setBaseGeneration,
   startBuild,
 } from './support/builder';
-import { openRoster, rosterEntries } from './support/pages';
+import { buildEntries, characterEntries, createAction, openRoster, rosterList } from './support/pages';
+import { saveDamagedBuild } from './support/seed';
 import {
   acceptWrites,
-  overwriteRecord,
   refuseWrites,
   storedKeys,
   storedText,
@@ -84,9 +82,7 @@ Given(
 );
 
 Given('a saved build whose data has been damaged', async ({ page, memory }) => {
-  const build = buildWith();
-  await saveBuilds(page, [build]);
-  memory.damaged = { id: build.id, ...(await overwriteRecord(page, build.id, '{"id": "bro')) };
+  memory.damaged = await saveDamagedBuild(page);
 });
 
 Given('the browser has started refusing to store data', async ({ page }) => {
@@ -106,7 +102,7 @@ Given('the browser accepts stored data again', async ({ page }) => {
 
 // The record is removed from this page's own storage, so no storage event
 // reaches it: the builder learns of the deletion only when it next saves.
-Given('the same build has been deleted from the roster in another tab', async ({ page }) => {
+Given('the same build has been removed in another tab', async ({ page }) => {
   const key = BUILD_KEY_PREFIX + openBuildId(page);
   await page.evaluate((k) => window.localStorage.removeItem(k), key);
 });
@@ -224,12 +220,16 @@ Then('the blood points per turn are {int}', async ({ page }, value: number) => {
 
 Then('the roster lists no characters', async ({ page }) => {
   await openRoster(page);
-  await expect(page.getByText('No characters yet')).toBeVisible();
-  await expect(rosterEntries(page)).toHaveCount(0);
+  // Anchor first: a page still loading shows no entry either.
+  await expect(page.getByRole('heading', { level: 1, name: 'Characters' })).toBeVisible();
+  // The page keeps the list or the empty message in the markup and shows one of them.
+  await expect(rosterList(page).or(page.getByText('No characters yet')).filter({ visible: true })).toBeVisible();
+  // A build in progress is an entry of its own, so the library is not empty; it holds no character.
+  await expect(characterEntries(page)).toHaveCount(0);
 });
 
 Then('they see a way to build a character', async ({ page }) => {
-  await expect(page.getByRole('button', { name: 'Build a character' })).toBeEnabled();
+  await expect(createAction(page, 'Start character creator')).toBeEnabled();
 });
 
 Then(
@@ -276,9 +276,9 @@ Then('they are told the build could not be read and has not been changed', async
 });
 
 Then(
-  'they are offered a link to the roster to delete it or build a new one',
+  'they are offered a link to the roster to build a new one',
   async ({ page }) => {
-    await expect(page.getByText(/delete it or build a new character/)).toBeVisible();
+    await expect(page.getByText(/You can build a new character/)).toBeVisible();
     await expect(page.getByRole('link', { name: 'Go to your characters' })).toBeVisible();
   },
 );
@@ -310,14 +310,15 @@ Then('the not-saved message is gone', async ({ page }) => {
 
 Then('the roster lists no builds in progress', async ({ page }) => {
   await openRoster(page);
-  await expect(
-    page.getByRole('list', { name: 'Builds in progress' }).getByRole('listitem'),
-  ).toHaveCount(0);
+  // Anchor first: a page still loading shows no entry either.
+  await expect(page.getByRole('heading', { level: 1, name: 'Characters' })).toBeVisible();
+  await expect(rosterList(page).or(page.getByText('No characters yet')).filter({ visible: true })).toBeVisible();
+  await expect(buildEntries(page)).toHaveCount(0);
   expect(await storedKeys(page, BUILD_KEY_PREFIX)).toEqual([]);
 });
 
 Then('the build action cannot be used', async ({ page }) => {
-  await expect(page.getByRole('button', { name: 'Build a character' })).toBeDisabled();
+  await expect(createAction(page, 'Start character creator')).toBeDisabled();
 });
 
 Then('they are told characters cannot be saved in this browser', async ({ page }) => {

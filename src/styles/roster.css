@@ -1,0 +1,766 @@
+/* The roster: the page introduction, then one bordered list of everything stored.
+   Written for a 320px phone first and widened at the sheet's two breakpoints (48rem and 75rem).
+   Colours, typefaces and type sizes come from the tokens in global.css, never from values here. */
+
+/* The page holds the design's width, as the sheet does, and carries the page gutter itself. */
+main.roster-page {
+	max-inline-size: var(--frame-width);
+	padding: 0 var(--page-gutter) var(--space-5);
+}
+
+html:has(.roster-page) header {
+	max-inline-size: var(--frame-width);
+	margin-inline: auto;
+}
+
+/* Introduction */
+
+.roster-intro {
+	/* 28px above, 24px below. */
+	padding-block: calc(var(--space-4) + var(--space-1)) var(--space-4);
+}
+
+.roster-intro h1 {
+	margin: 0;
+	font-size: var(--text-display);
+	line-height: var(--leading-tight);
+}
+
+.roster-intro p {
+	margin: var(--space-1) 0 0;
+	font-size: var(--text-body);
+	color: var(--color-muted);
+}
+
+/* The chronicle tabs: one row under the introduction, its edge running the page's full width.
+   When the tabs are wider than the screen the strip scrolls sideways within itself; the page does not. */
+
+.tab-strip {
+	display: flex;
+	/* 28px between one tab's text and the next, the tabs' own padding taken off. */
+	gap: calc(var(--space-4) + var(--space-1) - 2 * var(--space-2));
+	/* 48px, the edge inside it. */
+	block-size: 3rem;
+	/* Reaches the page's sides; the first tab's text starts at the gutter, its padding hanging into it. */
+	margin-inline: calc(var(--page-gutter) * -1);
+	padding-inline: calc(var(--page-gutter) - var(--space-2)) var(--page-gutter);
+	overflow-x: auto;
+	border-block-end: var(--stroke) solid var(--color-line);
+	/* The workspace's gap again, between the strip and the cards. */
+	margin-block-end: var(--space-4);
+}
+
+.tab {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	min-block-size: 0;
+	/* Beside the text, so the selected tab's background does not touch it. */
+	padding: 0 var(--space-2);
+	background: transparent;
+	/* 2px: invisible until selected, so choosing a tab does not move the text. */
+	border: 0;
+	border-block-end: 2px solid var(--color-page);
+	border-radius: var(--radius-button) var(--radius-button) 0 0;
+	font-size: var(--text-body);
+	font-weight: 400;
+	color: var(--color-muted);
+	white-space: nowrap;
+}
+
+/* A button's hover would colour the edge; a tab's edge only shows which one is selected. */
+.tab:hover:not(:disabled) {
+	border-color: var(--color-page);
+	color: var(--color-text);
+}
+
+.tab[aria-selected='true'],
+.tab[aria-selected='true']:hover:not(:disabled) {
+	background: var(--color-surface);
+	border-color: var(--color-focus);
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+/* Read by assistive technology, not drawn; the status filter's labels use it too. `.visually-hidden` positions
+   its element, and Chrome puts a gap before a positioned element when it works out a name: "All characters , 4".
+   Text with no size takes no room and is not positioned. */
+.tab-comma {
+	font-size: 0;
+}
+
+/* The strip clips what overflows it, so the focus ring is drawn inside the tab. */
+.tab:focus-visible {
+	outline-offset: -3px;
+}
+
+/* The browsing tools: two rows above the list card, 16px apart and 16px clear of it. The first holds the search
+   field, which takes the width the clan filter leaves, 12px away from it; the second the list controls. On a
+   phone the two wrap onto rows of their own. */
+
+.library-tools {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	margin-block-end: var(--space-3);
+}
+
+.tools-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	gap: var(--space-card);
+}
+
+/* The field is drawn by this box, the input inside it having no edge of its own. The input fills the
+   box's height, so the whole field is the target and not a line of text within it. */
+.search-field {
+	/* Wraps below the clan filter before it is narrower than the placeholder it carries. */
+	flex: 1 1 14rem;
+	display: flex;
+	align-items: center;
+	/* 10px between the icon and the text. */
+	gap: var(--space-row);
+	min-inline-size: 0;
+	padding-inline: var(--space-card);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.search-field img {
+	flex: none;
+}
+
+.search-input {
+	flex: 1 1 auto;
+	min-inline-size: 0;
+	padding: var(--space-card) 0;
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	font: inherit;
+	font-size: var(--text-small);
+	color: var(--color-text);
+	appearance: none;
+}
+
+.search-input::placeholder {
+	color: var(--color-muted);
+	opacity: 1;
+}
+
+/* The keys that go to the field, at its right edge; a touch screen has no keys to press. */
+.search-hint {
+	flex: none;
+	font-size: var(--text-caption);
+	color: var(--color-muted);
+	white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+	.search-hint {
+		display: none;
+	}
+}
+
+/* The frame has no clear mark in the field; "Clear filters" and the keyboard do that job. */
+.search-input::-webkit-search-cancel-button {
+	display: none;
+}
+
+/* The ring is drawn round the whole field, which is what the player sees as the control. */
+.search-input:focus-visible {
+	outline: none;
+}
+
+.search-field:focus-within {
+	outline: 3px solid var(--color-focus);
+	outline-offset: 2px;
+}
+
+/* The clan filter and the sort control: native selects drawn as boxes, 41px high. Its chevron is an image laid over the box's
+   right end, so the box keeps its own edge, text and keyboard behaviour. */
+
+.clan-field,
+.sort-field {
+	/* 14px: beside the text and beside the chevron. */
+	--clan-pad: calc(var(--space-row) + var(--space-1));
+	position: relative;
+	display: flex;
+	/* On a phone it shares its row with nobody and fills it; from a tablet up it is only as wide as its text. */
+	flex: 1 1 9rem;
+	min-inline-size: 0;
+	max-inline-size: 100%;
+}
+
+.clan-select,
+.sort-select {
+	inline-size: 100%;
+	min-inline-size: 0;
+	/* 41px. */
+	min-block-size: 2.5625rem;
+	/* The stroke inside the 14px; at the right the chevron's 12px and the 18px before it are kept clear. */
+	padding: 0 calc(var(--clan-pad) + var(--space-card) + var(--space-section)) 0 calc(var(--clan-pad) - var(--stroke));
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+	font: inherit;
+	font-size: var(--text-small);
+	color: var(--color-text);
+	text-overflow: ellipsis;
+	cursor: pointer;
+	appearance: none;
+}
+
+.clan-select option,
+.sort-select option {
+	background: var(--color-surface);
+	color: var(--color-text);
+}
+
+.clan-field img,
+.sort-field img {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-end: var(--clan-pad);
+	margin-block: auto;
+	pointer-events: none;
+}
+
+/* The focus ring of the page would square the box's corners. */
+.clan-select:focus-visible,
+.sort-select:focus-visible {
+	border-radius: var(--radius-badge);
+}
+
+/* The list controls: the status filter on the left and the sort control on the right. */
+
+.list-controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-card) var(--space-3);
+}
+
+/* The status filter is a fieldset of two radios drawn as segments in one box: 3px inside its edge, 4px apart.
+   Each radio covers its segment and cannot be seen, so the whole segment is the target and the keyboard,
+   the arrow keys and the one tab stop are the browser's own. */
+.status-filter {
+	display: flex;
+	gap: var(--space-1);
+	min-inline-size: 0;
+	margin: 0;
+	/* 3px: the stroke is inside the frame's padding. */
+	padding: calc(var(--space-1) - var(--stroke));
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
+}
+
+.status-segment {
+	position: relative;
+	display: inline-flex;
+	/* 8px above and below, 15px beside; the stroke inside. */
+	padding: calc(var(--space-2) - var(--stroke)) calc(var(--space-3) - var(--stroke));
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-divider);
+	border-radius: var(--radius-row);
+	font-size: var(--text-small);
+	line-height: var(--leading-tight);
+	color: var(--color-muted);
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.status-segment input {
+	position: absolute;
+	inset: 0;
+	inline-size: 100%;
+	block-size: 100%;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+/* The chosen segment is tinted and semibold: it does not rest on two near-identical fills. Its edge matches its fill,
+   so choosing does not move the text. */
+.status-segment:has(input:checked) {
+	background: var(--color-selected);
+	border-color: var(--color-selected);
+	font-weight: 600;
+	color: var(--color-accent-text);
+}
+
+.status-segment:not(:has(input:checked)):hover {
+	color: var(--color-text);
+}
+
+/* The radio is invisible, so the segment carries the ring. */
+.status-segment:has(input:focus-visible) {
+	outline: 3px solid var(--color-focus);
+	outline-offset: 2px;
+}
+
+/* The sort control's label is seen: "Sort by" stands before its box, which has room on its right for the chevron. */
+.sort-field {
+	flex: 0 1 auto;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.sort-label {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	white-space: nowrap;
+}
+
+.sort-select {
+	inline-size: auto;
+}
+
+/* The chevron lies over the select's right end, not over its label. */
+.sort-field img {
+	inset-inline-end: var(--clan-pad);
+}
+
+/* From a tablet up the clan filter is only as wide as its text. */
+@media (min-width: 48rem) {
+	.clan-field {
+		flex: none;
+	}
+}
+
+/* The workspace: the creator card above the library; from 75rem the card is the second column.
+   The card comes first in the document at every width, so its place is set here, not by `order`. */
+
+.roster-workspace {
+	display: grid;
+	gap: var(--space-4);
+}
+
+.roster-library {
+	min-inline-size: 0;
+}
+
+.roster-empty {
+	color: var(--color-muted);
+}
+
+/* The Character creator card */
+
+.creator {
+	/* 20px: the card's padding, as beside every row of the list. */
+	--creator-pad: calc(var(--space-3) + var(--space-1));
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-section);
+	padding: var(--creator-pad);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.creator-heading {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.creator-heading p {
+	margin: 0;
+}
+
+.creator-overline {
+	font-size: var(--text-overline);
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: var(--color-accent-text);
+}
+
+/* The title is a level 2 heading, so it sheds the section-heading look of global.css. */
+.creator-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: var(--text-figure);
+	font-weight: 400;
+	line-height: 1.1;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.creator-description {
+	font-size: var(--text-small);
+	line-height: 1.6;
+	color: var(--color-muted);
+}
+
+/* The stages only explain; a phone leaves them out and keeps the two actions close to the top. */
+.creator-stages {
+	display: none;
+	list-style: none;
+	margin: 0;
+	padding: var(--space-section) 0 0;
+	border-block-start: var(--stroke) solid var(--color-divider);
+	/* 13px between stages. */
+	gap: 0.8125rem;
+}
+
+.creator-stage {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.creator-stage-title {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	font-size: var(--text-small);
+	line-height: var(--leading-tight);
+	color: var(--color-text);
+}
+
+.creator-stage-title img {
+	flex: none;
+}
+
+.creator-stage-description {
+	margin: 0;
+	font-size: var(--text-caption);
+	line-height: 1.5;
+	color: var(--color-muted);
+}
+
+.creator-actions {
+	display: flex;
+	flex-direction: column;
+	/* 16px between the two, as in the frame. */
+	gap: var(--space-3);
+}
+
+.creator-action {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: var(--space-2);
+	inline-size: 100%;
+	/* 38px; the padding is 10px above and below and 14px beside, the stroke inside. */
+	min-block-size: 2.375rem;
+	padding: calc(var(--space-row) - var(--stroke)) calc(var(--space-row) + var(--space-1) - var(--stroke));
+	font-size: var(--text-small);
+	font-weight: 600;
+	line-height: var(--leading-tight);
+}
+
+.creator-action img {
+	flex: none;
+}
+
+.creator-primary {
+	background: var(--color-accent);
+	border-color: var(--color-accent);
+	color: var(--color-text-strong);
+}
+
+/* The list card */
+
+.library {
+	/* 20px: beside every row's content; 14px: below an entry's metadata and around the summary. */
+	--entry-gutter: calc(var(--space-3) + var(--space-1));
+	--entry-pad: calc(var(--space-row) + var(--space-1));
+	/* 80px: the monogram's width and gap, so the metadata lines up with the name. */
+	--entry-indent: calc(var(--entry-gutter) + 3rem + var(--space-card));
+	--entry-action-height: 2rem;
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+	overflow: hidden;
+}
+
+.library-heading,
+.library-summary {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	background: var(--color-surface);
+	color: var(--color-muted);
+}
+
+.library-heading {
+	padding: var(--space-card) var(--entry-gutter);
+	border-block-end: var(--stroke) solid var(--color-line);
+	font-size: var(--text-overline);
+	text-transform: uppercase;
+}
+
+.library-title {
+	letter-spacing: 0.8px;
+}
+
+.library-summary {
+	padding: var(--entry-pad) var(--entry-gutter);
+	font-size: var(--text-caption);
+}
+
+.library-summary p {
+	margin: 0;
+}
+
+.entries {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+/* A filter that leaves nothing: the message and the way back, in the place the entries were. */
+.no-match {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-3);
+	padding: var(--space-5) var(--entry-gutter);
+	background: var(--color-page);
+	border-block-end: var(--stroke) solid var(--color-line);
+	text-align: center;
+}
+
+.no-match p {
+	margin: 0;
+	font-size: var(--text-body);
+	color: var(--color-muted);
+}
+
+/* An entry: who it is and what to do with it, then where it belongs. */
+
+.entry {
+	min-inline-size: 0;
+	background: var(--color-page);
+	border-block-end: var(--stroke) solid var(--color-line);
+}
+
+.entry-identity {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-card) var(--entry-gutter);
+	padding: var(--space-card) var(--entry-gutter);
+}
+
+.entry-who {
+	/* On a phone the name has the whole row and the actions wrap beneath it. */
+	flex: 1 1 100%;
+	display: flex;
+	align-items: center;
+	gap: var(--space-card);
+	min-inline-size: 0;
+}
+
+.entry-monogram {
+	flex: none;
+	display: grid;
+	place-items: center;
+	inline-size: 3rem;
+	block-size: 3.25rem;
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
+	font-family: var(--font-display);
+	font-size: 1.875rem;
+	color: var(--color-muted);
+}
+
+.entry-details {
+	display: grid;
+	gap: var(--space-1);
+	min-inline-size: 0;
+}
+
+.entry-name {
+	margin: 0;
+	font-size: var(--text-figure);
+	line-height: 1.1;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.entry-summary {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.entry-actions {
+	flex: 1 1 100%;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-card) var(--entry-gutter);
+	min-inline-size: 0;
+}
+
+.entry-temperament {
+	display: grid;
+	gap: var(--space-1);
+	min-inline-size: 0;
+	overflow-wrap: anywhere;
+}
+
+.entry-label {
+	font-size: var(--text-caption);
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.entry-edit {
+	gap: var(--space-2);
+	/* 10px above and below, 14px beside, the stroke inside. */
+	padding: calc(var(--space-row) - var(--stroke)) calc(var(--space-row) + var(--space-1) - var(--stroke));
+	min-block-size: var(--entry-action-height);
+	line-height: var(--leading-tight);
+	font-weight: 600;
+	font-size: var(--text-small);
+}
+
+.entry-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	padding: 0 var(--entry-gutter) var(--entry-pad) var(--entry-indent);
+	/* The frame draws a line between an entry's identity and its metadata. */
+	border-block-start: var(--stroke) solid var(--color-line);
+	font-size: var(--text-caption);
+}
+
+.entry-tags {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1) var(--space-2);
+	min-inline-size: 0;
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.entry-progress {
+	color: var(--color-accent-text);
+}
+
+.entry-open {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	min-block-size: var(--entry-action-height);
+	margin-inline-start: auto;
+	font-weight: 600;
+	color: var(--color-text);
+	text-decoration: none;
+}
+
+.entry-open:hover {
+	text-decoration: underline;
+}
+
+/* A record that could not be read: its explanation, and nothing to do. */
+.entry-unreadable .entry-identity {
+	padding-block: var(--entry-pad);
+}
+
+/* From a tablet up an entry is one row of 86px, the actions beside the name, and the targets
+   need no more than 24px. */
+@media (min-width: 48rem) {
+	.entry-identity {
+		flex-wrap: nowrap;
+		min-block-size: 5.375rem;
+		padding-block: 0;
+	}
+
+	.entry-who {
+		flex: 1 1 auto;
+	}
+
+	.entry-actions {
+		flex: none;
+		justify-content: flex-end;
+	}
+
+	.entry-unreadable .entry-identity {
+		padding-block: var(--entry-pad);
+	}
+
+	.entry-edit,
+	.entry-open {
+		--entry-action-height: 1.5rem;
+	}
+
+	/* One row of 27px under the line: the 24px target and a pixel above and below it. */
+	.entry-meta {
+		padding-block: var(--stroke);
+	}
+}
+
+/* Without storage the actions do nothing: they keep their place and focus, and look unavailable. */
+.creator-action[aria-disabled='true'] {
+	background: var(--color-surface);
+	border-color: var(--color-border-control);
+	color: var(--color-muted);
+	cursor: not-allowed;
+}
+
+.creator-action[aria-disabled='true']:hover {
+	border-color: var(--color-border-control);
+}
+
+/* Wide enough for the library and the creator side by side (the sheet's breakpoint): the card is
+   the second column, 320px, level with the top of the list, and shows its stages. */
+@media (min-width: 75rem) {
+	.roster-workspace {
+		grid-template-columns: minmax(0, 1fr) var(--side-column);
+		align-items: start;
+	}
+
+	.roster-library {
+		grid-area: 1 / 1;
+	}
+
+	.creator {
+		grid-area: 1 / 2;
+	}
+
+	/* With no library to show (storage withheld) the card takes the first column, not a place beside a blank one. */
+	.roster-workspace:has(.roster-library[hidden]) .creator {
+		grid-area: auto;
+	}
+
+	.creator-stages {
+		display: grid;
+	}
+}
+
+/* Forced colours replace every author colour, so what tells the chosen tab and status from the rest has to be a
+   difference of shape: the chosen tab keeps its underline in the highlight colour and the others' is the canvas;
+   the chosen status is outlined. */
+@media (forced-colors: active) {
+	.tab {
+		border-block-end-color: Canvas;
+	}
+
+	.tab[aria-selected='true'],
+	.tab[aria-selected='true']:hover:not(:disabled) {
+		border-block-end-color: Highlight;
+	}
+
+	.status-segment:has(input:checked) {
+		outline: 2px solid Highlight;
+		outline-offset: -2px;
+	}
+}

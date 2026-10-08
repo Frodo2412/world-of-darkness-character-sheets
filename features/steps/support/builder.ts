@@ -5,7 +5,7 @@ import { createBuildStore } from '../../../src/storage/buildStore';
 import type { StoragePort } from '../../../src/storage/storagePort';
 import { ABILITY_GROUPS, ATTRIBUTE_GROUPS } from '../../../src/domain/v20/traits';
 import { watchAnnouncements } from './announcements';
-import { openRoster } from './pages';
+import { createAction, openRoster } from './pages';
 
 export const BUILD_KEY_PREFIX = 'wod-sheets:build:';
 
@@ -20,7 +20,7 @@ export const openBuildId = (page: Page): string =>
 /** Starts a build from the roster and ends on the builder. */
 export async function startBuild(page: Page): Promise<void> {
   await openRoster(page);
-  await page.getByRole('button', { name: 'Build a character' }).click();
+  await createAction(page, 'Start character creator').click();
   await expect(page).toHaveURL(BUILDER_ADDRESS);
   await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
   await watchAnnouncements(page);
