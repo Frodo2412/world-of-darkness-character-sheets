@@ -1,6 +1,5 @@
 Feature: Library layout and accessibility
 
-  @pending
   Scenario Outline: The creator sits beside the library on wide screens
     Given a full library
     When the roster is shown <width> pixels wide
@@ -13,13 +12,11 @@ Feature: Library layout and accessibility
       | 1200  |
       | 1512  |
 
-  @pending
   Scenario: The page holds the frame's width
     Given a full library
     When the roster is shown 1920 pixels wide
     Then the page content is no wider than 1512 pixels
 
-  @pending
   Scenario Outline: The creator moves above the library on narrower screens
     Given a full library
     When the roster is shown <width> pixels wide
@@ -33,7 +30,6 @@ Feature: Library layout and accessibility
       | 768   |
       | 320   |
 
-  @pending
   Scenario: The library is usable on a small phone
     Given a full library
     When the roster is shown 320 pixels wide
@@ -41,7 +37,6 @@ Feature: Library layout and accessibility
     And every entry's name and actions lie within the screen's width and are not cut off
     And every character's and build's summary line lies within the screen's width
 
-  @pending
   Scenario: Long names do not break a narrow screen
     Given a saved character whose name and chronicle are each 60 letters with no space
     When the roster is shown 320 pixels wide
@@ -49,7 +44,6 @@ Feature: Library layout and accessibility
     And the entry's whole name and whole chronicle can be read, wrapped onto more lines if need be
     And the chronicle's tab has its full name as its accessible name
 
-  @pending
   Scenario: Many chronicles scroll within the tab strip
     Given a full library and characters in eight more chronicles
     When the roster is shown 320 pixels wide
