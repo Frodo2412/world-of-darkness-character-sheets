@@ -1394,13 +1394,13 @@ graph TD
   - [x] Step 5.3: The announcement and the shortcut
 
 #### Wave 6
-- [ ] Slice 6: Clan and status filters
-  - [ ] Step 6.1: Clan and status in the model
-  - [ ] Step 6.2: The clan and status controls
+- [x] Slice 6: Clan and status filters
+  - [x] Step 6.1: Clan and status in the model
+  - [x] Step 6.2: The clan and status controls
 
 #### Wave 7
 - [ ] Slice 7: Sort, and the library as a whole
-  - [ ] Step 7.1: Orders in the model
+  - [x] Step 7.1: Orders in the model
   - [ ] Step 7.2: The sort control
 
 #### Wave 8

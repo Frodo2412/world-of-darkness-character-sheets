@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { blankCharacter, setHeaderField } from './character';
 import { blankBuild, type ConceptField, type V20Build } from './creation/build';
-import { ALL_CLANS, clearedFilter, countsLine, entriesOf, INITIAL_FILTER, UNASSIGNED, view, type LibraryFilter } from './library';
+import { ALL_CLANS, clearedFilter, countsLine, entriesOf, INITIAL_FILTER, ORDERS, UNASSIGNED, view, type LibraryFilter, type LibraryOrder } from './library';
 import type { HeaderField } from './traits';
 
 const character = (id: string, fields: Partial<Record<HeaderField, string>> = {}) => ({
@@ -1068,7 +1068,7 @@ describe('view: clan and status', () => {
 
     test('the entries handed in are not changed', () => {
       const before = structuredClone(stored);
-      view(stored, { tab: glassCity, clan: 'brujah', status: 'ready', search: 'x' });
+      view(stored, { tab: glassCity, clan: 'brujah', status: 'ready', search: 'x', order: 'oldest' });
       expect(stored).toEqual(before);
     });
   });
@@ -1106,10 +1106,10 @@ describe('view: state', () => {
 });
 
 describe('clearedFilter', () => {
-  const chosen: LibraryFilter = { tab: 'chronicle:the glass city', clan: 'brujah', status: 'ready', search: 'zzz' };
+  const chosen: LibraryFilter = { tab: 'chronicle:the glass city', clan: 'brujah', status: 'ready', search: 'zzz', order: 'name' };
 
-  test('empties the search, the clan and the status and keeps the tab', () => {
-    expect(clearedFilter(chosen)).toEqual({ ...INITIAL_FILTER, tab: 'chronicle:the glass city' });
+  test('empties the search, the clan and the status and keeps the tab and the order', () => {
+    expect(clearedFilter(chosen)).toEqual({ ...INITIAL_FILTER, tab: 'chronicle:the glass city', order: 'name' });
   });
 
   test.each([
@@ -1143,5 +1143,100 @@ describe('clearedFilter', () => {
     const narrowed = { ...INITIAL_FILTER, tab: view(entries, INITIAL_FILTER).tabs[1].key, clan: 'brujah' };
     expect(view(entries, narrowed).state).toBe('no-match');
     expect(view(entries, clearedFilter(narrowed)).shown.map((entry) => entry.id)).toEqual(['0001']);
+  });
+});
+
+describe('view: sort order', () => {
+  const stored = entriesOf({
+    characters: [
+      character('0001', { name: 'Lucita', clan: 'Lasombra', chronicle: 'Milan' }),
+      character('0003', { name: 'anatole' }),
+      character('0004', { name: 'Élodie', clan: 'brujah' }),
+      character('0005', { name: 'Zed', clan: 'Brujah' }),
+    ],
+    builds: [build('0002', { name: 'Beckett', clan: 'Gangrel' })],
+  });
+  const listed = (order: LibraryOrder, entries = stored, patch: Partial<LibraryFilter> = {}) =>
+    view(entries, { ...INITIAL_FILTER, ...patch, order }).shown.map((entry) => ('name' in entry ? entry.name : entry.id));
+
+  test('the labels are the ones the control offers, in order', () => {
+    expect(Object.values(ORDERS).map(({ label }) => label)).toEqual([
+      'Newest first',
+      'Oldest first',
+      'Name A–Z',
+      'Clan A–Z',
+    ]);
+  });
+
+  test.each([
+    ['newest', ['Zed', 'Élodie', 'anatole', 'Beckett', 'Lucita']],
+    ['oldest', ['Lucita', 'Beckett', 'anatole', 'Élodie', 'Zed']],
+    ['name', ['anatole', 'Beckett', 'Élodie', 'Lucita', 'Zed']],
+    ['clan', ['Élodie', 'Zed', 'Beckett', 'Lucita', 'anatole']],
+  ] as const)('%s lists characters and builds interleaved', (order, names) => {
+    expect(listed(order)).toEqual(names);
+  });
+
+  test('names that differ by case or accent sort together, then by creation', () => {
+    const entries = entriesOf({
+      characters: [character('1', { name: 'Zoë' }), character('2', { name: 'zoe' }), character('3', { name: 'Zoe' })],
+      builds: [],
+    });
+    expect(listed('name', entries)).toEqual(['Zoë', 'zoe', 'Zoe 2']);
+  });
+
+  test('clans that differ by case or accent sort together, then by name', () => {
+    const entries = entriesOf({
+      characters: [
+        character('1', { name: 'B', clan: 'Ventrue' }),
+        character('2', { name: 'A', clan: 'ventrue' }),
+        character('3', { name: 'C', clan: 'Brujah' }),
+      ],
+      builds: [],
+    });
+    expect(listed('clan', entries)).toEqual(['C', 'A', 'B']);
+  });
+
+  test('a blank clan comes after every named clan, ties settled by name', () => {
+    const entries = entriesOf({
+      characters: [character('1', { name: 'Y' }), character('2', { name: 'X' }), character('3', { name: 'W', clan: 'Toreador' })],
+      builds: [],
+    });
+    expect(listed('clan', entries)).toEqual(['W', 'X', 'Y']);
+  });
+
+  describe('an unreadable entry', () => {
+    const broken = entriesOf({
+      characters: [
+        character('0001', { name: 'Zed', clan: 'Brujah' }),
+        { kind: 'unreadable' as const, id: '0002' },
+        character('0004', { name: 'Unreadable zzz', clan: 'Ventrue' }),
+      ],
+      builds: [{ kind: 'unreadable' as const, id: '0003' }],
+    });
+
+    test.each([
+      ['newest', ['0004', '0003', '0002', '0001']],
+      ['oldest', ['0001', '0002', '0003', '0004']],
+    ] as const)('sits at its creation position under %s', (order, ids) => {
+      expect(view(broken, { ...INITIAL_FILTER, order }).shown.map((entry) => entry.id)).toEqual(ids);
+    });
+
+    test.each([
+      ['name', ['Unreadable zzz', 'Zed', '0002', '0003']],
+      ['clan', ['Zed', 'Unreadable zzz', '0002', '0003']],
+    ] as const)('comes last under %s, after every readable entry, oldest first', (order, names) => {
+      expect(listed(order, broken)).toEqual(names);
+    });
+  });
+
+  test('sorts after filtering', () => {
+    expect(listed('name', stored, { search: 'an' })).toEqual(['anatole', 'Beckett']);
+  });
+
+  test('leaves the entries it is given as they were', () => {
+    const given = Object.freeze([...stored]);
+    expect(() => view(given, { ...INITIAL_FILTER, order: 'name' })).not.toThrow();
+    expect(given.map((entry) => entry.id)).toEqual(stored.map((entry) => entry.id));
   });
 });

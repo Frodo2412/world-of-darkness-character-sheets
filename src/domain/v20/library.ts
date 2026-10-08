@@ -126,8 +126,11 @@ function buildEntry(record: BuildRecord): LibraryEntry {
   return attempt(() => readBuild(build), { kind: 'unreadable-build', id: build.id });
 }
 
-const oldestFirst = (a: LibraryEntry, b: LibraryEntry): number =>
-  a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+type Comparator = (a: LibraryEntry, b: LibraryEntry) => number;
+
+const compareText = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
+const oldestFirst: Comparator = (a, b) => compareText(a.id, b.id);
 
 /** Names are the same when they match ignoring case and runs of space; accents count. */
 const nameSlot = (kind: LibraryEntry['kind'], name: string): string =>
@@ -166,6 +169,39 @@ export function entriesOf({ characters, builds }: LibraryRecords): LibraryEntry[
   return numberRepeats(entries.sort(oldestFirst));
 }
 
+/** An entry that could be read, and so has a name, a clan and the rest. */
+const isReadable = (entry: LibraryEntry): entry is Extract<LibraryEntry, { chronicleKey: string }> =>
+  'chronicleKey' in entry;
+
+/** Readable entries before unreadable ones; `byReadable` orders two readable entries. Unreadable ones fall back to creation. */
+const readableFirst =
+  (byReadable: (a: ReadableEntry, b: ReadableEntry) => number): Comparator =>
+  (a, b) => {
+    if (isReadable(a) && isReadable(b)) return byReadable(a, b) || oldestFirst(a, b);
+    if (isReadable(a)) return -1;
+    if (isReadable(b)) return 1;
+    return oldestFirst(a, b);
+  };
+
+type ReadableEntry = Extract<LibraryEntry, { chronicleKey: string }>;
+
+const byName = (a: ReadableEntry, b: ReadableEntry): number => compareText(folded(a.name), folded(b.name));
+
+/** A blank clan comes after every named one; clans that read the same fall back to name. */
+const byClan = (a: ReadableEntry, b: ReadableEntry): number => {
+  if (a.clanKey === '' && b.clanKey !== '') return 1;
+  if (a.clanKey !== '' && b.clanKey === '') return -1;
+  return compareText(folded(a.clan), folded(b.clan)) || byName(a, b);
+};
+
+/** Every order the roster offers: the label the control shows, and how entries compare under it. */
+export const ORDERS: Record<LibraryOrder, { label: string; compare: Comparator }> = {
+  newest: { label: 'Newest first', compare: (a, b) => oldestFirst(b, a) },
+  oldest: { label: 'Oldest first', compare: oldestFirst },
+  name: { label: 'Name A–Z', compare: readableFirst(byName) },
+  clan: { label: 'Clan A–Z', compare: readableFirst(byClan) },
+};
+
 /** The tab that lists everything; the one a fresh page starts on. */
 const ALL_TAB = 'all';
 const ALL_LABEL = 'All characters';
@@ -179,7 +215,10 @@ export const ALL_CLANS = '';
 /** Whether to list every entry, or only the characters that are ready to play. */
 export type LibraryStatus = 'all' | 'ready';
 
-/** What the player has chosen to see. Later steps add the order. */
+/** How the roster lists what it shows. */
+export type LibraryOrder = 'newest' | 'oldest' | 'name' | 'clan';
+
+/** What the player has chosen to see, and in which order. */
 export interface LibraryFilter {
   /** The key of a tab in `LibraryView.tabs`; one that no longer exists means All. */
   tab: string;
@@ -189,11 +228,12 @@ export interface LibraryFilter {
   status: LibraryStatus;
   /** Text to find in an entry's name, clan or concept; blank finds everything. */
   search: string;
+  order: LibraryOrder;
 }
 
-export const INITIAL_FILTER: LibraryFilter = { tab: ALL_TAB, clan: ALL_CLANS, status: 'all', search: '' };
+export const INITIAL_FILTER: LibraryFilter = { tab: ALL_TAB, clan: ALL_CLANS, status: 'all', search: '', order: 'oldest' };
 
-/** The filter with the search, clan and status taken back; the tab they chose stays. */
+/** The filter with the search, clan and status taken back; the tab and the order they chose stay. */
 export function clearedFilter(filter: LibraryFilter): LibraryFilter {
   const { clan, status, search } = INITIAL_FILTER;
   return { ...filter, clan, status, search };
@@ -244,10 +284,6 @@ export interface LibraryView {
   /** `empty` when nothing is stored at all; `no-match` when something is, and the filters leave nothing to show. */
   state: 'entries' | 'empty' | 'no-match';
 }
-
-/** An entry that could be read, and so has a chronicle (possibly blank). */
-const isReadable = (entry: LibraryEntry): entry is Extract<LibraryEntry, { chronicleKey: string }> =>
-  'chronicleKey' in entry;
 
 /** A readable entry that is filed under a chronicle. */
 const hasChronicle = (entry: LibraryEntry): entry is Extract<LibraryEntry, { chronicleKey: string }> =>
@@ -380,7 +416,7 @@ const matchesSearch = (search: string): Predicate => {
     wanted === '' || (isReadable(entry) && [entry.name, entry.clan, entry.concept].some((text) => folded(text).includes(wanted)));
 };
 
-/** What the roster draws for `entries` (oldest first) under `filter`. */
+/** What the roster draws for `entries` (oldest first) under `filter`. The input is left as it was. */
 export function view(entries: readonly LibraryEntry[], filter: LibraryFilter): LibraryView {
   const chronicles = chroniclesOf(entries);
   const unassigned = entries.filter((entry) => tabOf(entry) === UNASSIGNED_TAB).length;
@@ -395,9 +431,9 @@ export function view(entries: readonly LibraryEntry[], filter: LibraryFilter): L
   const clans = clansOf(entries);
   const clan = clans.some((candidate) => candidate.key === filter.clan) ? filter.clan : ALL_CLANS;
   // The four filters are one list, so an entry is looked at once.
-  const shown = entries.filter(
-    keepingAll(inTab(tab), inClan(clan), hasStatus(filter.status), matchesSearch(filter.search)),
-  );
+  const shown = entries
+    .filter(keepingAll(inTab(tab), inClan(clan), hasStatus(filter.status), matchesSearch(filter.search)))
+    .sort(ORDERS[filter.order].compare);
   const inSelectedTab = entries.filter(inTab(tab));
   return {
     tabs,
