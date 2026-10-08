@@ -119,6 +119,7 @@ function refuse(text: string): void {
 
 /** Whether a created record is being opened. */
 let opening = false;
+const OPENING_LATCH_MS = 3000;
 
 /**
  * Creates a record and opens it, or says why not and stays on the roster.
@@ -133,6 +134,8 @@ function createAndOpen(create: () => string | undefined, failure: string, addres
     return;
   }
   opening = true;
+  // A navigation the player cancels leaves this page live: it takes presses again after a moment.
+  window.setTimeout(() => (opening = false), OPENING_LATCH_MS);
   clearStatus();
   window.location.assign(address(id));
 }

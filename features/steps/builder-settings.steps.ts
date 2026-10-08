@@ -310,6 +310,9 @@ Then('the not-saved message is gone', async ({ page }) => {
 
 Then('the roster lists no builds in progress', async ({ page }) => {
   await openRoster(page);
+  // Anchor first: a page still loading shows no entry either.
+  await expect(page.getByRole('heading', { level: 1, name: 'Characters' })).toBeVisible();
+  await expect(rosterList(page).or(page.getByText('No characters yet')).filter({ visible: true })).toBeVisible();
   await expect(buildEntries(page)).toHaveCount(0);
   expect(await storedKeys(page, BUILD_KEY_PREFIX)).toEqual([]);
 });

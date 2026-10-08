@@ -15,7 +15,7 @@ Feature: Library layout and accessibility
   Scenario: The page holds the frame's width
     Given a full library
     When the roster is shown 1920 pixels wide
-    Then the page content is no wider than 1512 pixels
+    Then the page content is 1512 pixels wide
 
   Scenario Outline: The creator moves above the library on narrower screens
     Given a full library
@@ -64,7 +64,8 @@ Feature: Library layout and accessibility
 
   Scenario: The library is worked without a pointer
     Given a full library
-    When the player, using only the keyboard, moves to the tab "The Glass City · 2"
+    When the player opens the roster
+    And the player, using only the keyboard, moves to the tab "The Glass City · 2"
     Then the roster lists only "Lucita" and "Fatima"
     When they type "zzz" in the search field and activate "Clear filters" with the Enter key
     Then the roster shows "No characters match." and then lists "Lucita" and "Fatima" again

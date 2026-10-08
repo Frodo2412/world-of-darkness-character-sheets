@@ -18,8 +18,8 @@ Size: **S** under an hour, **M** a few hours, **L** a day or more.
   `tabsOf`, a `resolveKey` helper for the tab and clan fallbacks, `stateOf`); `createControls` is 63 lines
   (`fillOptions`, `wireFilters`, `wireClear`, `wireShortcut`); `createTabStrip` is 50 (click and keydown
   handler factories, a `syncTabs`). (complexity, refactor)
-- [ ] **M: Make `src/scripts/roster.ts` testable.** It reads 15 module-level elements plus a module-level
-  `storage`; `render` depends on nine of them. Move `SHOWN`/`partsShownFor` to `roster/visibility.ts` as a
+- [ ] **M: Make `src/scripts/roster.ts` testable.** It reads 18 module-level elements plus a module-level
+  `storage`; `render` uses eight of them directly. Move `SHOWN`/`partsShownFor` to `roster/visibility.ts` as a
   pure `partsShownFor(state, storageAvailable)`, build a `createLibraryScreen(elements, templates,
   storageAvailable)` and move the create flow to `roster/create.ts`. Also fixes the hidden `storage`
   input and the `change` forward reference in `open()`. (structure, js-fp, concurrency)
@@ -32,15 +32,15 @@ Size: **S** under an hour, **M** a few hours, **L** a day or more.
   (arch, domain)
 - [ ] **S: Name the build display name once.** `UNNAMED_BUILD` and the `trim() || 'Unnamed build'` rule
   are written in `library.ts` and `builder.ts`; add `buildDisplayName` beside the character's
-  `displayName` in `creation/build.ts`. (domain)
+  `displayName` in `src/domain/v20/character.ts`. (domain)
 - [ ] **S: One "readable entry".** Readability is tested three ways (`'chronicleKey' in entry`,
   `'name' in entry`, `entries.ts`'s own `Readable`). Export `ReadableEntry` and `isReadable`, base them
   on `kind`, and use them in `numberRepeats` and `entries.ts`. Add `unreadableOf(entry)` so `asUnreadable`
   stops re-deriving the mapping. (domain, naming, refactor)
 - [ ] **M: Single source for the status filter and the "Name · count" markup.** The status set is in
   four places (domain type, `STATUSES`, two hand-copied labels in `LibraryTools.astro`); the dot-and-comma
-  markup is in `LibraryTools.astro` and `tabs.ts`, and the test helper `shownText` depends on both. Add a
-  `STATUSES` table beside `ORDERS`, render the segments from it, share one counted-label builder.
+  markup is in `LibraryTools.astro` and `tabs.ts`, and the test helper `shownText` depends on both. Move the
+  existing `STATUSES` from `controls.ts` into the domain beside `ORDERS` (with labels), render the segments from it, share one counted-label builder.
   (structure, refactor)
 - [ ] **S: Deduplicate `EntryTemplates.astro`.** The character and build templates repeat the identity
   block and the metadata shell; extract `EntryIdentity.astro` and `EntryMeta.astro`. (structure, refactor)
@@ -50,22 +50,22 @@ Size: **S** under an hour, **M** a few hours, **L** a day or more.
 ## Test suite structure
 
 - [ ] **L: Split the catch-all step and support files.** `library.steps.ts` (503 lines, lowest health in
-  the repo), `library-filters.steps.ts` (536) and `support/pages.ts` (257 lines, ~45 exports) each mix
+  the repo), `library-filters.steps.ts` (535) and `support/pages.ts` (256 lines, ~54 exports) each mix
   unrelated areas. Split by feature area (entries, create, storage; tabs, controls, announcements,
   shortcut) and pages by region (`support/roster/{entries,controls,tabs,creator,live-region}.ts`) behind
   a barrel. Move `expectStoredEntriesListed` out of `pages.ts` so it has no `src/storage` dependency.
-- [ ] **M: Split `library.test.ts` (1250 lines)** per feature (entries, tabs, search, filters, sort) with
-  shared builders; extract the `withHeader` fixture (three copies) and a `tabKey(entries, label)`
+- [ ] **M: Split `library.test.ts` (1249 lines)** per feature (entries, tabs, search, filters, sort) with
+  shared builders; extract the `withHeader` fixture (two copies in `identity.test.ts`, a third as `character()` in `library.test.ts`) and a `tabKey(entries, label)`
   helper (about nine inline copies). Rename the local `INITIAL_FILTER` alias, which is not the shipped
   filter, and split the four-way `test.each` at line 561.
 - [ ] **M: One seeding mechanism.** `saveCharacters`, `saveBuilds` and the Given in
   `builder-finish.steps.ts` are the same recorder-then-write routine. Extract `seedStorage(page,
-  makeStore, records)` in `support/storage.ts`. Also: `damageRecord` for the four copies of the
-  damaged-record return shape, one `orderedId(position)`, and `BUILD_KEY_PREFIX` derived from
+  makeStore, records)` in `support/storage.ts`. Also: `damageRecord` for the three copies of the
+  damaged-record return shape in `seed.ts`, one `orderedId(position)`, and `BUILD_KEY_PREFIX` derived from
   `buildKeyFor('')`. (refactor)
 - [ ] **S: Named constants and helpers for repeated literals.** The create-action names, "No characters
   yet", "In progress", the 1512×900 viewport, the focus-outline minimum, the " · " separator and its
-  offset of 3 (`splitCounted`), and the "Showing N of M characters" pattern. Add `statusSegment`,
+  offset of 3 (`split + 3` in `pages.ts`; a proposed `splitCounted` helper), and the "Showing N of M characters" pattern. Add `statusSegment`,
   `selectedStatusOption` and `pageTitle` to `pages.ts` for the selectors that bypass it.
 - [ ] **M: Replace `describeFocus`** (a nested ternary re-deriving role and name in the page) with
   Playwright's own role resolution, and assert the focus order against one expected sequence instead of
@@ -93,6 +93,11 @@ Size: **S** under an hour, **M** a few hours, **L** a day or more.
   is not confirmed that axe evaluates `::placeholder`.
 - [ ] **S: Overflow and target-size checks at 320px for the empty and storage-unavailable states.**
   Today only the full library is measured.
+
+- [ ] **S: The create-button latch is a timer.** After a successful create, `roster.ts` ignores further
+  presses for 3 seconds so a double-click cannot leave a blank record behind, and so a cancelled
+  navigation does not leave the buttons dead. Replace the timer with `pagehide`/`pageshow` handling if a
+  cleaner signal is wanted.
 
 ## Decisions that need the author
 

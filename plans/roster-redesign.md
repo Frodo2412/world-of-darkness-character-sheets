@@ -1324,11 +1324,11 @@ graph TD
 
 ## Pre-PR Quality Gate
 
-- [ ] `npm run test` passes
-- [ ] `npm run test:e2e` passes with no `@pending` scenario and no `tags` filter
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run build` passes
+- [x] `npm run test` passes
+- [x] `npm run test:e2e` passes with no `@pending` scenario and no `tags` filter
+- [x] `npm run typecheck` passes
+- [x] `npm run lint` passes
+- [x] `npm run build` passes
 - [ ] `/code-review` passes
 - [ ] Side-by-side screenshot at 1512px attached to the PR
 - [ ] The PR body carries the gate output and the commit list

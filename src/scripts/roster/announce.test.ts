@@ -35,7 +35,7 @@ describe('sortAnnouncementOf', () => {
     expect(sortAnnouncementOf(order)).toBe(said);
   });
 
-  it('has a sentence for every order the library offers', () => {
+  it('offers exactly the four orders the table above covers', () => {
     expect(Object.keys(ORDERS)).toHaveLength(4);
   });
 });

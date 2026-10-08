@@ -92,7 +92,7 @@ Then('the page does not scroll horizontally', async ({ page }) => {
   await expect.poll(() => horizontalOverflow(page)).toBe(0);
 });
 
-Then('the page content is no wider than {int} pixels', async ({ page }, limit: number) => {
+Then('the page content is {int} pixels wide', async ({ page }, limit: number) => {
   const main = await box(page.locator('main'));
   const header = await box(page.locator('header'));
   expect(Math.round(main.width)).toBe(limit);

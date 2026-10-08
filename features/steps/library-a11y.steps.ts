@@ -94,7 +94,8 @@ Then(
     const small: string[] = [];
     for (const target of targets) {
       await target.scrollIntoViewIfNeeded();
-      const box = (await target.boundingBox())!;
+      const box = await target.boundingBox();
+      if (box === null) throw new Error('a control the page offers is not drawn');
       if (box.width < width || box.height < height) {
         small.push(`${(await target.textContent())?.trim() ?? '?'}: ${Math.round(box.width)}×${Math.round(box.height)}`);
       }
@@ -122,13 +123,14 @@ const lowerEdge = (element: Locator): Promise<{ drawn: boolean; edge: string }> 
 
 Then('the selected tab is underlined and no other tab is', async ({ page }) => {
   const selected = await lowerEdge(selectedTab(page));
-  const unselected = await Promise.all(
+  const allEdges = await Promise.all(
     (await tabs(page).all()).map((one) => lowerEdge(one)),
   );
   // The selected tab is in the strip too: it is the one that draws its edge in a colour of its own.
-  const others = unselected.filter((candidate) => candidate.edge !== selected.edge);
+  const differing = allEdges.filter((candidate) => candidate.edge !== selected.edge);
+  expect(allEdges.length).toBeGreaterThan(1);
   expect(selected.drawn).toBe(true);
-  expect(others.length).toBe(unselected.length - 1);
+  expect(differing.length).toBe(allEdges.length - 1);
 });
 
 /** A status segment's outline, as drawn. */
