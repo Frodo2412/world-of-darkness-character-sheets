@@ -2,7 +2,7 @@
 
 **Created**: 2026-10-06
 **Branch**: `feat/roster-redesign`
-**Status**: approved
+**Status**: implemented
 **Gherkin persistence**: features
 **Spec**: `docs/specs/roster-redesign.md`
 **Design**: Figma `TAvjmr6RE0rHV8kz56Ffs0`, frame `31:813`
@@ -108,6 +108,11 @@ asset URLs expire in seven days, so Step 1.1 commits all three): `search.svg` (1
 - The creator's stage descriptions are 11px (`--text-caption`), not the frame's 10px:
   they are sentences. 10px is kept for the two uppercase labels only, which are written
   in sentence case and upper-cased by CSS.
+- The sort control is a native select drawn as a box with its "Sort by" label beside it, and
+  its first option is "Newest first"; the frame shows plain text and "Recently updated".
+- The frame's third summary item (sect), the "Updated …" times, the "Last opened" mark, the
+  settings icon, the "Saved just now" badge, the creator's hint line and the "Pick up where
+  you left off" card are not drawn: the data or the feature is out of scope.
 - The selected status label is semibold as well as tinted, so selection does not rest on
   two near-identical fills.
 

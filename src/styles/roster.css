@@ -419,6 +419,7 @@ html:has(.roster-page) header {
 	align-items: center;
 	gap: var(--space-2);
 	font-size: var(--text-small);
+	line-height: var(--leading-tight);
 	color: var(--color-text);
 }
 
@@ -436,13 +437,14 @@ html:has(.roster-page) header {
 .creator-actions {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-2);
+	/* 16px between the two, as in the frame. */
+	gap: var(--space-3);
 }
 
 .creator-action {
 	display: flex;
 	align-items: center;
-	justify-content: center;
+	justify-content: flex-start;
 	gap: var(--space-2);
 	inline-size: 100%;
 	/* 38px; the padding is 10px above and below and 14px beside, the stroke inside. */
@@ -634,6 +636,8 @@ html:has(.roster-page) header {
 	justify-content: space-between;
 	gap: var(--space-1) var(--space-3);
 	padding: 0 var(--entry-gutter) var(--entry-pad) var(--entry-indent);
+	/* The frame draws a line between an entry's identity and its metadata. */
+	border-block-start: var(--stroke) solid var(--color-line);
 	font-size: var(--text-caption);
 }
 
@@ -696,6 +700,11 @@ html:has(.roster-page) header {
 	.entry-edit,
 	.entry-open {
 		--entry-action-height: 1.5rem;
+	}
+
+	/* One row of 27px under the line: the 24px target and a pixel above and below it. */
+	.entry-meta {
+		padding-block: var(--stroke);
 	}
 }
 
