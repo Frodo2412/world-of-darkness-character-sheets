@@ -1399,9 +1399,9 @@ graph TD
   - [x] Step 6.2: The clan and status controls
 
 #### Wave 7
-- [ ] Slice 7: Sort, and the library as a whole
+- [x] Slice 7: Sort, and the library as a whole
   - [x] Step 7.1: Orders in the model
-  - [ ] Step 7.2: The sort control
+  - [x] Step 7.2: The sort control
 
 #### Wave 8
 - [ ] Slice 8: Layout, accessibility and visual verification

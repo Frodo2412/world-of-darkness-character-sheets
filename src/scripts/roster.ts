@@ -1,7 +1,7 @@
 import { INITIAL_FILTER, entriesOf, view, type LibraryEntry, type LibraryFilter, type LibraryView } from '../domain/v20/library';
 import { createBuildStore, type BuildStore } from '../storage/buildStore';
 import { browserStorage, createCharacterStore, type CharacterStore } from '../storage/characterStore';
-import { announcementOf, createAnnouncer } from './roster/announce';
+import { announcementOf, createAnnouncer, sortAnnouncementOf } from './roster/announce';
 import { createControls, shortcutFor, type Controls } from './roster/controls';
 import { builderUrl, drawEntry, editSheetUrl, findTemplates } from './roster/entries';
 import { createTabStrip, type TabStrip } from './roster/tabs';
@@ -19,6 +19,7 @@ const searchField = document.querySelector<HTMLInputElement>('#library-search')!
 const noMatch = document.querySelector<HTMLElement>('#roster-no-match')!;
 const searchHint = document.querySelector<HTMLElement>('[data-slot="search-hint"]')!;
 const clanSelect = document.querySelector<HTMLSelectElement>('#library-clan')!;
+const sortSelect = document.querySelector<HTMLSelectElement>('#library-sort')!;
 const statusGroup = document.querySelector<HTMLElement>('#library-status')!;
 const clearFiltersButton = document.querySelector<HTMLButtonElement>('#clear-filters')!;
 const liveRegion = document.querySelector<HTMLElement>('#library-announcements')!;
@@ -89,13 +90,17 @@ function open(entries: readonly LibraryEntry[]): void {
   let filter = INITIAL_FILTER;
   const announce = createAnnouncer(liveRegion);
   const change = (patch: Partial<LibraryFilter>): void => {
+    const { order } = filter;
     filter = { ...filter, ...patch };
-    announce(announcementOf(render(entries, filter, tabs, controls)));
+    const current = render(entries, filter, tabs, controls);
+    // A new order leaves the same entries, so what the player needs to hear is the order, not the count.
+    // "Clear filters" hands back the order it kept, which is not a change of it.
+    announce(filter.order === order ? announcementOf(current) : sortAnnouncementOf(filter.order));
   };
   const unfiltered = view(entries, filter);
   const tabs = createTabStrip(tabStrip, library, unfiltered.tabs, (tab) => change({ tab }));
   const controls = createControls(
-    { tools, search: searchField, hint: searchHint, clear: clearFiltersButton, keys: document, clan: clanSelect, status: statusGroup },
+    { tools, search: searchField, hint: searchHint, clear: clearFiltersButton, keys: document, clan: clanSelect, status: statusGroup, order: sortSelect },
     unfiltered.clans,
     change,
     shortcutFor(navigator),

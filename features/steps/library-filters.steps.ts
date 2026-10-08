@@ -3,6 +3,7 @@ import type { DataTable } from 'playwright-bdd';
 import { Given, Then, When } from './fixtures';
 import { ANNOUNCEMENT_WINDOW_MS, waitOnPageClock, writtenTexts } from './support/announcements';
 import { buildWith, saveBuilds } from './support/builder';
+import { storedRecords } from './support/storage';
 import {
   browsingControls,
   chronicleBreakdown,
@@ -13,12 +14,14 @@ import {
   expectSelectedTab,
   expectStoredEntriesListed,
   expectTabs,
+  listedNames,
   liveRegion,
   openRoster,
   rosterButton,
   rosterEntries,
   searchField,
   selectedTab,
+  sortControl,
   shortcutHint,
   shownStatusTexts,
   statusFilter,
@@ -31,6 +34,7 @@ import {
   tabStrip,
   tabText,
   tabs,
+  watchLiveRegionWrites,
   unreadableEntries,
 } from './support/pages';
 import {
@@ -38,6 +42,7 @@ import {
   inChronicles,
   saveCharacters,
   saveLibraryInOrder,
+  saveDamagedAfterOthers,
   saveFromAnotherPage,
   saveInOrder,
   type LibraryRow,
@@ -86,6 +91,10 @@ Given('the browser reports the platform {string}', async ({ page }, platform: st
 
 Given('these characters and builds, created in this order', async ({ page, memory }, table: DataTable) => {
   await saveLibraryInOrder(page, memory, table.hashes() as unknown as LibraryRow[]);
+});
+
+Given('a character saved after the others whose data has been damaged', async ({ page, memory }) => {
+  memory.damaged = await saveDamagedAfterOthers(page);
 });
 
 Given('saved characters {string} and {string} with no chronicle', async ({ page, memory }, first: string, second: string) => {
@@ -215,6 +224,39 @@ When('they filter by the clan {string}', async ({ page }, clan: string) => {
   await clanFilter(page).selectOption({ label: clan });
 });
 
+// The select is focused first, as a player reaches it, so that choosing from it must leave focus where it is.
+When('they sort by {string}', async ({ page }, order: string) => {
+  await sortControl(page).focus();
+  await sortControl(page).selectOption({ label: order });
+});
+
+// A reload starts the page again; the live region is watched again so nothing it says afterwards is missed.
+When('they reload the page', async ({ page }) => {
+  await page.reload();
+  await watchLiveRegionWrites(page);
+});
+
+// Every control is used once, in the order a player meets them; the last thing done is to take the filters back.
+When(
+  'they select each tab, search, choose a clan, choose each status, choose each sort order and clear the filters',
+  async ({ page, memory }) => {
+    await expectStoredEntriesListed(page);
+    // What is stored before any control is used is what must be stored after every one has been.
+    memory.stored = await storedRecords(page);
+    for (let index = 0, count = await tabs(page).count(); index < count; index += 1) await tabs(page).nth(index).click();
+    await searchField(page).fill('zzz');
+    for (const label of await clanFilter(page).locator('option').allTextContents()) {
+      await clanFilter(page).selectOption({ label });
+    }
+    for (const option of await statusOptions(page).all()) await option.check();
+    for (const label of await sortControl(page).locator('option').allTextContents()) {
+      await sortControl(page).selectOption({ label });
+    }
+    await searchField(page).fill('zzz');
+    await clearFiltersButton(page).click();
+  },
+);
+
 // Nothing is done; the library is drawn first so that what follows looks at the list as it starts.
 When('they change nothing', async ({ page }) => {
   await expectStoredEntriesListed(page);
@@ -295,6 +337,20 @@ Then('the status filter reads {string} and {string}', async ({ page }, first: st
   }
 });
 
+Then('{string} is the chosen sort order', async ({ page }, text: string) => {
+  await expect(sortControl(page).locator('option:checked')).toHaveText(text);
+});
+
+Then('the search field is empty, {string} is chosen and {string} is the selected status', async ({ page }, clan: string, status: string) => {
+  await expect(searchField(page)).toHaveValue('');
+  await expect(clanFilter(page).locator('option:checked')).toHaveText(clan);
+  await expect(statusOption(page, status)).toBeChecked();
+});
+
+Then('the search field holds {string}', async ({ page }, text: string) => {
+  await expect(searchField(page)).toHaveValue(text);
+});
+
 Then('{string} is the selected status', async ({ page }, name: string) => {
   await expect(statusOption(page, name)).toBeChecked();
   await expect(statusFilter(page).getByRole('radio', { checked: true })).toHaveCount(1);
@@ -314,6 +370,24 @@ Then('focus has left the status filter', async ({ page }) => {
 });
 
 // Then: what the roster lists
+
+// The whole list, top to bottom: a missing, extra or misplaced entry all fail the same comparison.
+Then(/^the roster lists ("[^"]*"(?:, "[^"]*")*) in that order$/, async ({ page }, list: string) => {
+  await expect.poll(() => listedNames(page)).toEqual(quotedTexts(list));
+});
+
+Then('the first entry is {string}', async ({ page }, name: string) => {
+  await expect.poll(async () => (await listedNames(page))[0]).toBe(name);
+});
+
+// An unreadable record has no name of its own, so it is found by its heading.
+Then(/^the unreadable character is (first|last)$/, async ({ page }, position: string) => {
+  await expect(unreadableEntries(page, 'character')).toHaveCount(1);
+  await expect.poll(async () => {
+    const names = await listedNames(page);
+    return position === 'first' ? names.at(0) : names.at(-1);
+  }).toBe('Unreadable character');
+});
 
 Then('the roster lists only {string}', async ({ page }, name: string) => {
   await expect(rosterEntries(page)).toHaveCount(1);
@@ -411,6 +485,10 @@ Then('{string} has been announced twice', async ({ page }, text: string) => {
 
 Then('focus is still on the search field', async ({ page }) => {
   await expect(searchField(page)).toBeFocused();
+});
+
+Then('focus is still on the sort control', async ({ page }) => {
+  await expect(sortControl(page)).toBeFocused();
 });
 
 Then('focus is still on the clan filter', async ({ page }) => {

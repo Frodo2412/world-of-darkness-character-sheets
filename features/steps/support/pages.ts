@@ -79,6 +79,9 @@ export const clearFiltersButton = (page: Page): Locator =>
 /** The clan filter: a native select named "Clan". */
 export const clanFilter = (page: Page): Locator => page.getByRole('combobox', { name: 'Clan', exact: true });
 
+/** The sort control: a native select named "Sort by". */
+export const sortControl = (page: Page): Locator => page.getByRole('combobox', { name: 'Sort by', exact: true });
+
 /** The status filter: the group named "Status", which holds one radio for each status. */
 export const statusFilter = (page: Page): Locator => page.getByRole('group', { name: 'Status', exact: true });
 
@@ -190,6 +193,9 @@ export const openSheetOf = (entry: Locator): Promise<void> => entryAction(entry,
 /** The roster's path, as the address bar holds it. */
 export const ROSTER_PATH = '/';
 
+/** The names of the entries as listed, top to bottom. */
+export const listedNames = (page: Page): Promise<string[]> => entryHeading(rosterList(page)).allTextContents();
+
 export async function openRoster(page: Page): Promise<void> {
   await page.goto(ROSTER_PATH);
   // Watched from the start, so a scenario that asks what was announced finds everything since the page opened.
@@ -225,7 +231,8 @@ export const browsingControls = (page: Page): Locator =>
     .or(searchField(page))
     .or(clanFilter(page))
     .or(statusFilter(page))
-    .or(statusOptions(page));
+    .or(statusOptions(page))
+    .or(sortControl(page));
 
 /** A button the roster offers, by its name: one of the creator's two actions, or "Clear filters". */
 export const rosterButton = (page: Page, name: string): Locator => page.getByRole('button', { name, exact: true });

@@ -2,7 +2,7 @@
 // The region is in the page from the start; this writes to it, and only for changes the player made.
 // Nothing here touches the page when imported: the caller hands over the region.
 
-import type { LibraryView } from '../../domain/v20/library';
+import { ORDERS, type LibraryOrder, type LibraryView } from '../../domain/v20/library';
 
 /** How long the player has to stop changing the filter before the result is said. */
 export const ANNOUNCE_DELAY_MS = 400;
@@ -30,6 +30,9 @@ export const pageClock: Clock = {
 export function announcementOf({ state, countsLine }: Pick<LibraryView, 'state' | 'countsLine'>): string {
   return state === 'no-match' ? `No characters match. ${countsLine}` : countsLine;
 }
+
+/** What is said when the player changes the order. */
+export const sortAnnouncementOf = (order: LibraryOrder): string => `Sorted by ${ORDERS[order].label}.`;
 
 /**
  * Says `text` in `region` once the player has stopped for `ANNOUNCE_DELAY_MS`: a newer text replaces one

@@ -5,6 +5,7 @@ import { buildWith, saveBuilds } from './support/builder';
 import { controlNames, linkNames } from './support/accessibility';
 import { pressUnavailable } from './support/controls';
 import {
+  ROSTER_PATH,
   SHEET_ADDRESS,
   browsingControls,
   createAction,
@@ -27,6 +28,7 @@ import {
   statusOption,
   statusRegion,
   summaryCounts,
+  summaryRow,
   unreadableEntries,
   watchStatusWrites,
 } from './support/pages';
@@ -160,6 +162,14 @@ When('they choose {string}', async ({ page }, name: string) => {
   else await button.click();
 });
 
+// The creator's action opens the new record; coming back to the roster is what lists it.
+When('the player chooses {string} and returns to the roster', async ({ page }, name: string) => {
+  await openRoster(page);
+  await createAction(page, name).click();
+  await expect.poll(() => new URL(page.url()).pathname).not.toBe(ROSTER_PATH);
+  await openRoster(page);
+});
+
 When('they choose {string} twice', async ({ page }, name: string) => {
   // Installed before the first click, so every write to the message is seen.
   await watchStatusWrites(page);
@@ -215,6 +225,24 @@ Then('choosing either create action leaves them on the roster', async ({ page })
   }
   await expectOnRoster(page);
   await expect(statusRegion(page)).toHaveText(message!);
+});
+
+Given('a player with no saved characters or builds', async () => {
+  // Every scenario starts in a fresh browser with empty storage.
+});
+
+Then(
+  'no tabs, search field, clan filter, status filter, sort control, heading row or summary row are shown',
+  async ({ page }) => {
+    await expect(page.getByText('No characters yet')).toBeVisible();
+    await expect(browsingControls(page).filter({ visible: true })).toHaveCount(0);
+    await expect(rosterList(page)).toBeHidden();
+    await expect(summaryRow(page)).toBeHidden();
+  },
+);
+
+Then('the Character creator card is shown', async ({ page }) => {
+  await expect(creatorCard(page)).toBeVisible();
 });
 
 Then('no tabs, search field, clan filter, status filter or sort control are shown', async ({ page }) => {

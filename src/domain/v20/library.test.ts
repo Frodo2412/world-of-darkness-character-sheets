@@ -1,8 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import { blankCharacter, setHeaderField } from './character';
 import { blankBuild, type ConceptField, type V20Build } from './creation/build';
-import { ALL_CLANS, clearedFilter, countsLine, entriesOf, INITIAL_FILTER, ORDERS, UNASSIGNED, view, type LibraryFilter, type LibraryOrder } from './library';
+import { ALL_CLANS, clearedFilter, countsLine, entriesOf, INITIAL_FILTER as SHIPPED_FILTER, ORDERS, UNASSIGNED, view, type LibraryFilter, type LibraryOrder } from './library';
 import type { HeaderField } from './traits';
+
+// Most of these tests read the entries in storage order, so they fix the order the player starts with.
+const INITIAL_FILTER: LibraryFilter = { ...SHIPPED_FILTER, order: 'oldest' };
 
 const character = (id: string, fields: Partial<Record<HeaderField, string>> = {}) => ({
   kind: 'character' as const,
@@ -1147,6 +1150,10 @@ describe('clearedFilter', () => {
 });
 
 describe('view: sort order', () => {
+  test('the player starts with the newest first', () => {
+    expect(SHIPPED_FILTER.order).toBe('newest');
+  });
+
   const stored = entriesOf({
     characters: [
       character('0001', { name: 'Lucita', clan: 'Lasombra', chronicle: 'Milan' }),

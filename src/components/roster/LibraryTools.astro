@@ -3,13 +3,14 @@ import chevronDown from '../../assets/icons/chevron-down.svg';
 import search from '../../assets/icons/search.svg';
 
 // The browsing tools above the list card, in two rows. The first holds the search field and the clan filter;
-// the second the list controls: the status filter now, and the sort control of a later slice.
+// the second the list controls: the status filter and the sort control.
 // The search field is a native search box, named by a label the eye does not need: the placeholder says what
 // to type, the label says what the field is for. It is outside any form, so pressing Enter submits nothing.
 // The clan filter is a native select, its options written once by the script from the clans in the library.
 // The status filter is a fieldset of two native radios drawn as segments: one tab stop, the arrow keys move
 // between them, and one is always chosen. A label reads like a tab does, "Ready to play · 3": the dot is
 // for the eye, and a comma that is not drawn takes its place for assistive technology.
+// The sort control is a native select named "Sort by", its options written once by the script from the orders the model offers.
 // Every control's value is written by the script from the filter it holds, so none says what it holds here.
 // Hidden until there is a library to browse.
 // The shortcut hint is empty and hidden until the script writes it: which keys it names depends on the platform.
@@ -51,5 +52,10 @@ import search from '../../assets/icons/search.svg';
 				</span>
 			</label>
 		</fieldset>
+		<div class="sort-field">
+			<label for="library-sort" class="sort-label">Sort by</label>
+			<select id="library-sort" class="sort-select" autocomplete="off"></select>
+			<img src={chevronDown.src} alt="" width="12" height="12" />
+		</div>
 	</div>
 </div>

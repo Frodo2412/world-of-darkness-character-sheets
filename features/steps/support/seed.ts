@@ -25,7 +25,7 @@ export function characterWith(header: HeaderValues): V20Character {
 export function inCreationOrder(...headers: HeaderValues[]): V20Character[] {
   return headers.map((header, index) => ({
     ...characterWith(header),
-    id: `ordered-${String(index + 1).padStart(4, '0')}`,
+    id: `0000-ordered-${String(index + 1).padStart(4, '0')}`,
   }));
 }
 
@@ -120,10 +120,11 @@ export interface LibraryRow {
   kind: 'character' | 'build';
   name: string;
   clan: string;
-  concept: string;
+  /** A table with no such column leaves it blank. */
+  concept?: string;
   /** A table with no such column leaves it out. */
   player?: string;
-  chronicle: string;
+  chronicle?: string;
 }
 
 /** The builder only lets a build hold one of its clans, spelled as it spells them; the store reads any other as damaged. */
@@ -144,11 +145,11 @@ export async function saveLibraryInOrder(
   memory: { saved: V20Character[] },
   rows: LibraryRow[],
 ): Promise<void> {
-  const idAt = (index: number): string => `ordered-${String(index + 1).padStart(4, '0')}`;
-  const characters = rows.flatMap(({ kind, name, clan, concept, player = '', chronicle }, index) =>
+  const idAt = (index: number): string => `0000-ordered-${String(index + 1).padStart(4, '0')}`;
+  const characters = rows.flatMap(({ kind, name, clan, concept = '', player = '', chronicle = '' }, index) =>
     kind === 'character' ? [{ ...characterWith({ name, clan, concept, player, chronicle }), id: idAt(index) }] : [],
   );
-  const builds = rows.flatMap(({ kind, name, clan, concept, chronicle }, index) =>
+  const builds = rows.flatMap(({ kind, name, clan, concept = '', chronicle = '' }, index) =>
     kind === 'build' ? [{ ...buildWith({ clan: assertBuildable(clan), concept: { name, concept, chronicle } }), id: idAt(index) }] : [],
   );
   memory.saved = characters;
@@ -166,6 +167,16 @@ export const DAMAGED_CHARACTER_TEXT = '{"id": "broken", "header": {"name": "Fat'
 /** Saves a character named "Fatima", then leaves her record unreadable; the record is what is left. */
 export async function saveDamagedCharacter(page: Page): Promise<StoredRecord & { id: string }> {
   const character = characterWith({ name: 'Fatima' });
+  await saveCharacters(page, [character]);
+  return { id: character.id, ...(await overwriteRecord(page, character.id, DAMAGED_CHARACTER_TEXT)) };
+}
+
+/**
+ * Saves a character created after every record `saveLibraryInOrder` saved, then leaves its record
+ * unreadable. Its id sorts after theirs, which is how the roster knows it as the newest.
+ */
+export async function saveDamagedAfterOthers(page: Page): Promise<StoredRecord & { id: string }> {
+  const character = { ...characterWith({ name: 'Fatima' }), id: '0000-ordered-9999' };
   await saveCharacters(page, [character]);
   return { id: character.id, ...(await overwriteRecord(page, character.id, DAMAGED_CHARACTER_TEXT)) };
 }

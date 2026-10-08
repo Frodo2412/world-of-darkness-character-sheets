@@ -179,10 +179,11 @@ html:has(.roster-page) header {
 	outline-offset: 2px;
 }
 
-/* The clan filter: a native select drawn as a box, 41px high. Its chevron is an image laid over the box's
+/* The clan filter and the sort control: native selects drawn as boxes, 41px high. Its chevron is an image laid over the box's
    right end, so the box keeps its own edge, text and keyboard behaviour. */
 
-.clan-field {
+.clan-field,
+.sort-field {
 	/* 14px: beside the text and beside the chevron. */
 	--clan-pad: calc(var(--space-row) + var(--space-1));
 	position: relative;
@@ -193,7 +194,8 @@ html:has(.roster-page) header {
 	max-inline-size: 100%;
 }
 
-.clan-select {
+.clan-select,
+.sort-select {
 	inline-size: 100%;
 	min-inline-size: 0;
 	/* 41px. */
@@ -211,12 +213,14 @@ html:has(.roster-page) header {
 	appearance: none;
 }
 
-.clan-select option {
+.clan-select option,
+.sort-select option {
 	background: var(--color-surface);
 	color: var(--color-text);
 }
 
-.clan-field img {
+.clan-field img,
+.sort-field img {
 	position: absolute;
 	inset-block: 0;
 	inset-inline-end: var(--clan-pad);
@@ -225,11 +229,12 @@ html:has(.roster-page) header {
 }
 
 /* The focus ring of the page would square the box's corners. */
-.clan-select:focus-visible {
+.clan-select:focus-visible,
+.sort-select:focus-visible {
 	border-radius: var(--radius-badge);
 }
 
-/* The list controls: the status filter on the left, and room on the right for the sort control of a later slice. */
+/* The list controls: the status filter on the left and the sort control on the right. */
 
 .list-controls {
 	display: flex;
@@ -296,6 +301,28 @@ html:has(.roster-page) header {
 .status-segment:has(input:focus-visible) {
 	outline: 3px solid var(--color-focus);
 	outline-offset: 2px;
+}
+
+/* The sort control's label is seen: "Sort by" stands before its box, which has room on its right for the chevron. */
+.sort-field {
+	flex: 0 1 auto;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.sort-label {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	white-space: nowrap;
+}
+
+.sort-select {
+	inline-size: auto;
+}
+
+/* The chevron lies over the select's right end, not over its label. */
+.sort-field img {
+	inset-inline-end: var(--clan-pad);
 }
 
 /* From a tablet up the clan filter is only as wide as its text. */

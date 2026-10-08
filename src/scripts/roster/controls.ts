@@ -1,4 +1,4 @@
-// The controls that browse the library: the search field, the clan filter, the status filter, "Clear filters"
+// The controls that browse the library: the search field, the clan filter, the status filter, the sort control, "Clear filters"
 // and the shortcut to the search field.
 // One-way contract: the page calls `sync(view, filter)` after every redraw, and a control reports
 // what the player did by calling `onChange(patch)`; the controls hold no filter of their own beyond
@@ -8,8 +8,10 @@
 import {
   ALL_CLANS,
   clearedFilter,
+  ORDERS,
   type LibraryClan,
   type LibraryFilter,
+  type LibraryOrder,
   type LibraryStatus,
   type LibraryView,
 } from '../../domain/v20/library';
@@ -67,6 +69,8 @@ export interface ControlElements {
   clan: HTMLSelectElement;
   /** The status filter's fieldset: a radio per status, and beside each a `status-count` slot. */
   status: HTMLElement;
+  /** The native sort select; it has no options until `createControls` writes them. */
+  order: HTMLSelectElement;
 }
 
 /** What the clan filter calls the choice of every clan; its value is `ALL_CLANS`. */
@@ -118,16 +122,21 @@ export function createControls(
   onChange: (patch: Partial<LibraryFilter>) => void,
   shortcut: Shortcut,
 ): Controls {
-  const { tools, search, hint, clear, keys, clan, status } = elements;
+  const { tools, search, hint, clear, keys, clan, status, order } = elements;
   const statuses = statusOptions(status);
   let shown: LibraryFilter | undefined;
 
   clan.replaceChildren(option(ALL_CLANS, ALL_CLANS_LABEL), ...clans.map(({ key, label }) => option(key, label)));
+  order.replaceChildren(
+    ...(Object.entries(ORDERS) as [LibraryOrder, (typeof ORDERS)[LibraryOrder]][]).map(([value, { label }]) => option(value, label)),
+  );
 
   // On every input event, so the list narrows as the player types.
   search.addEventListener('input', () => onChange({ search: search.value }));
 
   clan.addEventListener('change', () => onChange({ clan: clan.value }));
+
+  order.addEventListener('change', () => onChange({ order: order.value as LibraryOrder }));
 
   // A radio reports only when it becomes the chosen one, whether by pointer or by the arrow keys.
   for (const { value, radio } of statuses) {
@@ -162,6 +171,7 @@ export function createControls(
       shown = filter;
       if (search.value !== filter.search) search.value = filter.search;
       if (clan.value !== view.clan) clan.value = view.clan;
+      if (order.value !== filter.order) order.value = filter.order;
       for (const { value, radio, count } of statuses) {
         radio.checked = value === filter.status;
         count.textContent = String(view.statusCounts[value]);

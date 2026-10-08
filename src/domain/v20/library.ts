@@ -231,7 +231,7 @@ export interface LibraryFilter {
   order: LibraryOrder;
 }
 
-export const INITIAL_FILTER: LibraryFilter = { tab: ALL_TAB, clan: ALL_CLANS, status: 'all', search: '', order: 'oldest' };
+export const INITIAL_FILTER: LibraryFilter = { tab: ALL_TAB, clan: ALL_CLANS, status: 'all', search: '', order: 'newest' };
 
 /** The filter with the search, clan and status taken back; the tab and the order they chose stay. */
 export function clearedFilter(filter: LibraryFilter): LibraryFilter {

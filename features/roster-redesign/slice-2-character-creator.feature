@@ -41,7 +41,6 @@ Feature: Character creator
     And choosing either create action leaves them on the roster
     And no tabs, search field, clan filter, status filter or sort control are shown
 
-  @pending
   Scenario: An empty library offers no browsing controls
     Given a player with no saved characters or builds
     When they open the roster
