@@ -300,7 +300,8 @@ Then('the entry is named {string}', async ({ page, memory }, name: string) => {
 });
 
 Then('its monogram is empty', async ({ memory }) => {
-  await expect(entrySlot(currentEntry(memory), 'monogram')).toHaveText('');
+  // A box with nothing in it is not drawn.
+  await expect(entrySlot(currentEntry(memory), 'monogram')).toBeHidden();
 });
 
 Then('it shows no summary line', async ({ memory }) => {

@@ -11,7 +11,9 @@ async function keyFor(page: Page, id: string): Promise<string> {
     const keys = Array.from({ length: window.localStorage.length }, (_, index) =>
       window.localStorage.key(index)!,
     );
-    return keys.find((key) => key.endsWith(suffix))!;
+    const found = keys.find((key) => key.endsWith(suffix));
+    if (found === undefined) throw new Error(`no stored record has the id ${suffix.slice(1)}`);
+    return found;
   }, `:${id}`);
 }
 

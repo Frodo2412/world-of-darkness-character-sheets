@@ -46,6 +46,14 @@ describe('caseFolded', () => {
   test('is empty for blank text', () => {
     expect(caseFolded('   ')).toBe('');
   });
+
+  test('reads an accented letter alike whether it is one character or a letter and a mark', () => {
+    expect(caseFolded('\u00c9lys\u00e9e')).toBe(caseFolded('E\u0301lyse\u0301e'));
+  });
+
+  test('still tells an accented letter from a plain one', () => {
+    expect(caseFolded('\u00c9lys\u00e9e')).not.toBe(caseFolded('Elysee'));
+  });
 });
 
 describe('withoutAccents', () => {

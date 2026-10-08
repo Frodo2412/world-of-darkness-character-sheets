@@ -26,7 +26,7 @@ interface ScenarioMemory {
   /** The build a scenario arranged, for later steps to change or find again. */
   build?: V20Build;
   /** Each place keyboard focus stopped, and whether a focus indicator was drawn there. */
-  focusStops: { control: string; visible: boolean }[];
+  focusStops: { control: string; visible: boolean; thickness?: number }[];
   /** What each Tab press in a scenario reached, by the control's name. */
   tabbedControls: string[];
   /** The text each opened sheet showed, in the order they were opened. */

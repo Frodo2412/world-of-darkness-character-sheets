@@ -11,7 +11,7 @@ import { putRosterInState } from './support/library-states';
 
 const PHONE = { width: 375, height: 800 };
 
-const CONTROL_ROLES = 'textbox|combobox|slider|button|link|checkbox|radio|spinbutton';
+const CONTROL_ROLES = 'textbox|searchbox|combobox|slider|button|link|checkbox|radio|spinbutton|tab';
 const CONTROL_LINE = new RegExp(`^\\s*- (?:${CONTROL_ROLES})\\b`);
 const CONTROL_NAME = new RegExp(`^\\s*- (${CONTROL_ROLES}) "([^"]+)"`);
 

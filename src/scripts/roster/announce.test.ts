@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { announcementOf, createAnnouncer, type Clock, type Region } from './announce';
+import { ORDERS, type LibraryOrder } from '../../domain/v20/library';
+import { announcementOf, createAnnouncer, sortAnnouncementOf, type Clock, type Region } from './announce';
 
 /** A clock that moves only when told to: time in milliseconds, and the frames that come between. */
 function stillClock(): Clock & { pass(milliseconds: number): void; frame(): void } {
@@ -24,6 +25,21 @@ function stillClock(): Clock & { pass(milliseconds: number): void; frame(): void
 
 const regionSaying = (text: string): Region => ({ textContent: text });
 
+describe('sortAnnouncementOf', () => {
+  it.each([
+    ['newest', 'Sorted by Newest first.'],
+    ['oldest', 'Sorted by Oldest first.'],
+    ['name', 'Sorted by Name A–Z.'],
+    ['clan', 'Sorted by Clan A–Z.'],
+  ] as [LibraryOrder, string][])('names the %s order', (order, said) => {
+    expect(sortAnnouncementOf(order)).toBe(said);
+  });
+
+  it('has a sentence for every order the library offers', () => {
+    expect(Object.keys(ORDERS)).toHaveLength(4);
+  });
+});
+
 describe('announcementOf', () => {
   it('says the counts line', () => {
     expect(announcementOf({ state: 'entries', countsLine: 'Showing 1 of 4 characters' })).toBe('Showing 1 of 4 characters');
@@ -36,7 +52,7 @@ describe('announcementOf', () => {
   });
 });
 
-// The delay is the spec's 400 milliseconds, written out here so that changing it is a decision.
+// The delay is the plan's 400 milliseconds (design rule 10), written out here so that changing it is a decision.
 describe('createAnnouncer', () => {
   it('writes nothing until the delay has passed', () => {
     const clock = stillClock();

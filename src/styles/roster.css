@@ -1,5 +1,5 @@
 /* The roster: the page introduction, then one bordered list of everything stored.
-   Written for a 320px phone first and widened at the sheet's breakpoint (48rem).
+   Written for a 320px phone first and widened at the sheet's two breakpoints (48rem and 75rem).
    Colours, typefaces and type sizes come from the tokens in global.css, never from values here. */
 
 /* The page holds the design's width, as the sheet does, and carries the page gutter itself. */

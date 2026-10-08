@@ -12,7 +12,10 @@ export function folded(text: string): string {
   return withoutAccents(text.trim()).toLowerCase();
 }
 
-/** The text trimmed and lower-cased, accents kept: "Élysée" and "Elysee" differ. */
+/**
+ * The text trimmed and lower-cased, accents kept: "Élysée" and "Elysee" differ. It is composed first,
+ * so one accented letter typed as a single character or as a letter and a mark is the same text.
+ */
 export function caseFolded(text: string): string {
-  return text.trim().toLowerCase();
+  return text.normalize('NFC').trim().toLowerCase();
 }

@@ -163,6 +163,32 @@ export const inChronicles = (chronicles: string[]): { chronicle: string }[] =>
 
 /** A record cut off part-way through writing, as storage damage leaves it. */
 export const DAMAGED_CHARACTER_TEXT = '{"id": "broken", "header": {"name": "Fat';
+export const DAMAGED_BUILD_TEXT = '{"id": "bro';
+
+export const GLASS_CITY = 'The Glass City';
+export const ASHES_OF_MILAN = 'Ashes of Milan';
+
+/**
+ * The library the layout and accessibility scenarios share: the characters Fatima, Lucita (both in
+ * "The Glass City") and Anatole ("Ashes of Milan"), the build Beckett, an unreadable character and an
+ * unreadable build. `extra` characters are saved after them. Fatima is saved first, so the default order
+ * (newest first) lists Lucita before her and Name A–Z lists her first.
+ */
+export async function saveFullLibrary(page: Page, extra: HeaderValues[] = []): Promise<void> {
+  const characters = [
+    characterWith({ name: 'Fatima', clan: 'Assamite', chronicle: GLASS_CITY }),
+    characterWith({ name: 'Lucita', clan: 'Lasombra', chronicle: GLASS_CITY }),
+    characterWith({ name: 'Anatole', clan: 'Brujah', chronicle: ASHES_OF_MILAN }),
+    ...extra.map(characterWith),
+  ];
+  const damaged = characterWith({ name: 'Damaged' });
+  await saveCharacters(page, [...characters, damaged]);
+  const build = buildWith({ clan: 'Gangrel', concept: { name: 'Beckett', concept: '', chronicle: '' } });
+  const damagedBuild = buildWith();
+  await saveBuilds(page, [build, damagedBuild]);
+  await overwriteRecord(page, damaged.id, DAMAGED_CHARACTER_TEXT);
+  await overwriteRecord(page, damagedBuild.id, DAMAGED_BUILD_TEXT);
+}
 
 /** Saves a character named "Fatima", then leaves her record unreadable; the record is what is left. */
 export async function saveDamagedCharacter(page: Page): Promise<StoredRecord & { id: string }> {
@@ -185,5 +211,5 @@ export async function saveDamagedAfterOthers(page: Page): Promise<StoredRecord &
 export async function saveDamagedBuild(page: Page): Promise<StoredRecord & { id: string }> {
   const build = buildWith();
   await saveBuilds(page, [build]);
-  return { id: build.id, ...(await overwriteRecord(page, build.id, '{"id": "bro')) };
+  return { id: build.id, ...(await overwriteRecord(page, build.id, DAMAGED_BUILD_TEXT)) };
 }

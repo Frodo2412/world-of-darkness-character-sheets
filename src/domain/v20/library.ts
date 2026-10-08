@@ -59,12 +59,12 @@ interface EntrySource {
   summary: string;
 }
 
-/** `displayName` is what the entry is called: the typed name, or a fallback when it is blank. */
-function detailsOf(source: EntrySource, displayName: string): EntryDetails {
+/** `shownName` is what the entry is called: the typed name, or a fallback when it is blank. */
+function detailsOf(source: EntrySource, shownName: string): EntryDetails {
   const chronicle = source.chronicle.trim();
   return {
     id: source.id,
-    name: displayName,
+    name: shownName,
     monogram: monogram(source.name),
     summary: source.summary,
     temperament: temperamentOf(source.nature, source.demeanor),
@@ -314,7 +314,7 @@ function groupByKey<T>(items: readonly T[], keyOf: (item: T) => string, nameOf: 
 
 /** Groups in alphabetical order, ignoring case and accents; the key settles a tie. */
 const alphabetically = (a: Group, b: Group): number =>
-  folded(a.name) < folded(b.name) ? -1 : folded(a.name) > folded(b.name) ? 1 : a.key < b.key ? -1 : 1;
+  compareText(folded(a.name), folded(b.name)) || compareText(a.key, b.key);
 
 /** A chronicle's group, with the label its tab and the breakdown both show. */
 interface Chronicle extends Group {

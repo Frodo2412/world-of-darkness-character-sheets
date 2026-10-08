@@ -2,7 +2,8 @@
 // and the shortcut to the search field.
 // One-way contract: the page calls `sync(view, filter)` after every redraw, and a control reports
 // what the player did by calling `onChange(patch)`; the controls hold no filter of their own beyond
-// the last one they were shown. `sync` is the only thing that writes what a control holds.
+// the last one they were shown. `sync` writes the filter's values into the controls on every redraw;
+// `createControls` writes their fixed options and the shortcut hint once.
 // Nothing here touches the page when imported: the caller hands over the elements.
 
 import {

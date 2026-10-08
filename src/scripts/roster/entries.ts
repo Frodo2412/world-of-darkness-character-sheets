@@ -69,7 +69,10 @@ type Readable = Extract<LibraryEntry, { name: string }>;
 
 function fillReadable(item: ParentNode, entry: Readable): void {
   slot(item, 'name').textContent = entry.name;
-  slot(item, 'monogram').textContent = entry.monogram;
+  const monogram = slot(item, 'monogram');
+  monogram.textContent = entry.monogram;
+  // A box with nothing in it is not drawn.
+  monogram.hidden = entry.monogram === '';
   fillOptional(item, 'summary', entry.summary);
   slot(item, 'temperament').textContent = entry.temperament;
   slot(item, 'temperament-group').hidden = entry.temperament === '';

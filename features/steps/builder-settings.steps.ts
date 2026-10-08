@@ -12,7 +12,7 @@ import {
   setBaseGeneration,
   startBuild,
 } from './support/builder';
-import { characterEntries, createAction, openRoster, rosterList } from './support/pages';
+import { buildEntries, characterEntries, createAction, openRoster, rosterList } from './support/pages';
 import { saveDamagedBuild } from './support/seed';
 import {
   acceptWrites,
@@ -310,9 +310,7 @@ Then('the not-saved message is gone', async ({ page }) => {
 
 Then('the roster lists no builds in progress', async ({ page }) => {
   await openRoster(page);
-  await expect(
-    page.getByRole('list', { name: 'Builds in progress' }).getByRole('listitem'),
-  ).toHaveCount(0);
+  await expect(buildEntries(page)).toHaveCount(0);
   expect(await storedKeys(page, BUILD_KEY_PREFIX)).toEqual([]);
 });
 

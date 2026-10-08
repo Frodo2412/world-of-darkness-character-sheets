@@ -117,16 +117,22 @@ function refuse(text: string): void {
   requestAnimationFrame(() => showStatus(text));
 }
 
+/** Whether a created record is being opened. */
+let opening = false;
+
 /**
  * Creates a record and opens it, or says why not and stays on the roster.
  * `create` returns the new record's id, or nothing when the browser refused to store it.
  */
 function createAndOpen(create: () => string | undefined, failure: string, address: (id: string) => string): void {
+  // The page is still live until the new one commits: a second press would leave a blank record behind.
+  if (opening) return;
   const id = create();
   if (id === undefined) {
     refuse(failure);
     return;
   }
+  opening = true;
   clearStatus();
   window.location.assign(address(id));
 }

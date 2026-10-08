@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
-import { saveFullLibrary } from './library-layout.steps';
+import { assertLibraryState } from './support/library-states';
 import {
   clanFilter,
   clearFiltersButton,
@@ -18,11 +18,13 @@ import {
   tab,
   tabs,
 } from './support/pages';
+import { saveFullLibrary } from './support/seed';
 import { withholdStorage } from './support/storage';
 
 // Accessibility states
 
 Given('the library is in the {string} state', async ({ page, memory }, state: string) => {
+  assertLibraryState(state);
   memory.libraryState = state;
   if (state === 'empty' || state === 'storage unavailable') {
     if (state === 'storage unavailable') await withholdStorage(page);
@@ -110,42 +112,43 @@ When('the roster is shown with forced colours', async ({ page }) => {
   await expect(selectedTab(page)).toHaveCount(1);
 });
 
-/** The colour and width of an element's lower edge, as drawn. */
-const lowerEdge = (element: Locator): Promise<string> =>
+/** An element's lower edge as drawn: its style, width and colour. */
+const lowerEdge = (element: Locator): Promise<{ drawn: boolean; edge: string }> =>
   element.evaluate((node) => {
     const style = getComputedStyle(node);
-    return `${style.borderBottomStyle} ${style.borderBottomWidth} ${style.borderBottomColor}`;
+    const drawn = style.borderBottomStyle !== 'none' && parseFloat(style.borderBottomWidth) > 0;
+    return { drawn, edge: `${style.borderBottomStyle} ${style.borderBottomWidth} ${style.borderBottomColor}` };
   });
 
 Then('the selected tab is underlined and no other tab is', async ({ page }) => {
   const selected = await lowerEdge(selectedTab(page));
-  const others = await Promise.all(
+  const unselected = await Promise.all(
     (await tabs(page).all()).map((one) => lowerEdge(one)),
   );
-  const unselected = (await tabs(page).all()).length - 1;
-  expect(unselected).toBeGreaterThan(0);
-  expect(others.filter((edge) => edge === selected)).toHaveLength(1);
+  // The selected tab is in the strip too: it is the one that draws its edge in a colour of its own.
+  const others = unselected.filter((candidate) => candidate.edge !== selected.edge);
+  expect(selected.drawn).toBe(true);
+  expect(others.length).toBe(unselected.length - 1);
 });
 
-/** The outline or border colour of a status segment. */
-const edge = (segment: Locator): Promise<string> =>
+/** A status segment's outline, as drawn. */
+const outline = (segment: Locator): Promise<{ drawn: boolean; edge: string }> =>
   segment.evaluate((node) => {
     const style = getComputedStyle(node);
-    return `${style.outlineStyle} ${style.outlineWidth} ${style.borderTopStyle} ${style.borderTopWidth} ${style.borderTopColor}`;
+    const drawn = style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2;
+    return { drawn, edge: `${style.outlineStyle} ${style.outlineWidth} ${style.outlineColor}` };
   });
 
 Then('the selected status is outlined and the other is not', async ({ page }) => {
   const segments = await Promise.all(
     (await statusOptions(page).all()).map(async (option) => ({
       checked: await option.isChecked(),
-      edge: await edge(option.locator('xpath=ancestor::label[1]')),
+      outline: await outline(option.locator('xpath=ancestor::label[1]')),
     })),
   );
-  const chosen = segments.filter((segment) => segment.checked);
-  const rest = segments.filter((segment) => !segment.checked);
-  expect(chosen).toHaveLength(1);
-  expect(rest).toHaveLength(1);
-  expect(chosen[0].edge).not.toBe(rest[0].edge);
+  expect(segments.length).toBeGreaterThan(1);
+  expect(segments.filter((segment) => segment.checked)).toHaveLength(1);
+  for (const segment of segments) expect(segment.outline.drawn).toBe(segment.checked);
 });
 
 // Keyboard
@@ -186,7 +189,7 @@ When('the player tabs from the top of the page to the bottom', async ({ page, me
     await page.keyboard.press('Tab');
     const stop = await describeFocus(page);
     if (stop === null) break;
-    memory.focusStops.push({ control: stop.control, visible: stop.thickness >= 2 });
+    memory.focusStops.push({ control: stop.control, visible: stop.thickness > 0, thickness: stop.thickness });
   }
 });
 
@@ -202,7 +205,7 @@ Then(
         entryLinks.push(`link: ${((await link.getAttribute('aria-label')) ?? (await link.textContent()) ?? '').replace(/\s+/g, ' ').trim()}`);
       }
     }
-    const afterTitle = stops.slice(1).map((control) => control.replace(/ for .*$/, '').replace(/: .*/, (rest) => rest));
+    const afterTitle = stops.slice(1).map((control) => control.replace(/ for .*$/, ''));
     expect(afterTitle).toHaveLength(7 + entryLinks.length);
     expect(afterTitle[0]).toMatch(/^tab: All characters/);
     expect(afterTitle.slice(1, 3)).toEqual(['button: Start character creator', 'button: Start with a blank sheet']);
@@ -217,8 +220,9 @@ Then(
 );
 
 Then('every focused control shows an outline at least {int} pixels thick', async ({ memory }, thickness: number) => {
-  expect(thickness).toBe(2);
-  expect(memory.focusStops.filter((stop) => !stop.visible).map((stop) => stop.control)).toEqual([]);
+  expect(memory.focusStops.length).toBeGreaterThan(0);
+  const thin = memory.focusStops.filter((stop) => (stop.thickness ?? 0) < thickness);
+  expect(thin.map((stop) => stop.control)).toEqual([]);
 });
 
 When('the player, using only the keyboard, moves to the tab {string}', async ({ page }, text: string) => {
@@ -240,7 +244,7 @@ When(
     await searchField(page).focus();
     await page.keyboard.type(text);
     await expect(noMatchState(page)).toBeVisible();
-    await expect(page.getByText('No characters match.')).toBeVisible();
+    await expect(noMatchState(page)).toContainText('No characters match.');
     memory.noMatchSeen = true;
     const button = clearFiltersButton(page);
     await expect(button).toHaveAccessibleName(action);

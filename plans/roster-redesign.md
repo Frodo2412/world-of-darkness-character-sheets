@@ -138,7 +138,7 @@ asset URLs expire in seven days, so Step 1.1 commits all three): `search.svg` (1
 
 - `LibraryEntry` is a discriminated union. `character` and `build` carry `id`, `name`
   (as displayed), `monogram`, `summary`, `temperament`, `chronicle`, `clan`, `concept`
-  and the folded `chronicleKey` and `clanKey`. `unreadable-character` and
+  `chronicleLabel` (the chronicle as typed, or "Unassigned" when blank) and the folded `chronicleKey` and `clanKey`. `unreadable-character` and
   `unreadable-build` carry only `kind` and `id`, so no filter can match text they do not
   have.
 - `entriesOf(records)` takes what the two stores returned, as plain structures, and
@@ -203,9 +203,10 @@ asset URLs expire in seven days, so Step 1.1 commits all three): `search.svg` (1
 14. **No stored field is touched.** Nothing in `src/storage/` changes; the roster never
     calls `save` or `delete`.
 
-### Scenarios that are not yet built
+### Scenarios that were not yet built (historical)
 
-`playwright.config.ts` fails the run when a scenario has a step nobody has defined, and
+Step 8.3 removed this mechanism: no scenario is tagged and the `tags` option is gone. It is
+kept as a record of how the slices were gated. `playwright.config.ts` failed the run when a scenario has a step nobody has defined, and
 the approved scenarios are exported for all eight slices at once. Step 1.1 therefore
 tags every exported scenario `@pending` and adds `tags: 'not @pending'` to
 `defineBddConfig`. Each step removes the tag from exactly the scenarios it binds, and
@@ -1393,7 +1394,7 @@ graph TD
   - [x] Step 4.2: The tab strip
 
 #### Wave 5
-- [ ] Slice 5: Search and the result count
+- [x] Slice 5: Search and the result count
   - [x] Step 5.1: Search in the model
   - [x] Step 5.2: The search field and the no-match state
   - [x] Step 5.3: The announcement and the shortcut
@@ -1409,10 +1410,17 @@ graph TD
   - [x] Step 7.2: The sort control
 
 #### Wave 8
-- [ ] Slice 8: Layout, accessibility and visual verification
-  - [ ] Step 8.1: Layout across widths
-  - [ ] Step 8.2: Accessibility pass
-  - [ ] Step 8.3: Visual comparison against the Figma frame
+- [x] Slice 8: Layout, accessibility and visual verification
+  - [x] Step 8.1: Layout across widths
+  - [x] Step 8.2: Accessibility pass
+  - [x] Step 8.3: Visual comparison against the Figma frame
+
+Step 8.1 planned an ellipsis on long tab labels and an edge fade on the tab strip. No scenario
+needed either (the strip scrolls and every tab keeps its full accessible name), so neither was
+built; they are listed in `docs/tech-debt/roster-redesign.md`.
+
+Work the code review found and the branch did not take on is recorded in
+`docs/tech-debt/roster-redesign.md`.
 
 ## Plan Review Summary
 

@@ -1,6 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
-import { buildWith, saveBuilds } from './support/builder';
 import {
   createAction,
   creatorCard,
@@ -14,15 +13,9 @@ import {
   tabStrip,
   tabs,
 } from './support/pages';
-import { characterWith, inChronicles, saveCharacters } from './support/seed';
-import { overwriteRecord } from './support/storage';
+import { characterWith, inChronicles, saveCharacters, saveFullLibrary } from './support/seed';
 
 const SCREEN_HEIGHT = 900;
-const FRAME_WIDTH = 1512;
-
-/** The chronicles the full library lists, and how many characters each holds. */
-const GLASS_CITY = 'The Glass City';
-const ASHES = 'Ashes of Milan';
 
 const EIGHT_MORE_CHRONICLES = [
   'The Ninth Gate',
@@ -34,23 +27,6 @@ const EIGHT_MORE_CHRONICLES = [
   'Gilded Cage',
   'Hollow Court',
 ];
-
-/** A character, a build and two damaged records saved one after the other. */
-export async function saveFullLibrary(page: Page, extra: Parameters<typeof characterWith>[0][] = []): Promise<void> {
-  const characters = [
-    characterWith({ name: 'Lucita', clan: 'Lasombra', chronicle: GLASS_CITY }),
-    characterWith({ name: 'Fatima', clan: 'Assamite', chronicle: GLASS_CITY }),
-    characterWith({ name: 'Anatole', clan: 'Brujah', chronicle: ASHES }),
-    ...extra.map(characterWith),
-  ];
-  const damaged = characterWith({ name: 'Damaged' });
-  await saveCharacters(page, [...characters, damaged]);
-  const build = buildWith({ clan: 'Gangrel', concept: { name: 'Beckett', concept: '', chronicle: '' } });
-  const brokenBuild = buildWith();
-  await saveBuilds(page, [build, brokenBuild]);
-  await overwriteRecord(page, damaged.id, '{"id": "broken", "header": {"name": "Fat');
-  await overwriteRecord(page, brokenBuild.id, '{"id": "bro');
-}
 
 Given('a full library', async ({ page }) => {
   await saveFullLibrary(page);
@@ -96,8 +72,9 @@ Then('the Character creator card is above the list', async ({ page }) => {
 });
 
 Then('its creation stages and both create actions are visible', async ({ page }) => {
-  await expect(creatorCard(page).getByRole('listitem')).toHaveCount(3);
-  await expect(creatorCard(page).getByRole('listitem').first()).toBeVisible();
+  const stages = creatorCard(page).getByRole('listitem');
+  await expect(stages).toHaveCount(3);
+  for (const stage of await stages.all()) await expect(stage).toBeVisible();
   await expect(createAction(page, 'Start character creator')).toBeVisible();
   await expect(createAction(page, 'Start with a blank sheet')).toBeVisible();
 });
@@ -112,38 +89,53 @@ Then('both create actions are visible', async ({ page }) => {
 });
 
 Then('the page does not scroll horizontally', async ({ page }) => {
-  expect(await horizontalOverflow(page)).toBe(0);
+  await expect.poll(() => horizontalOverflow(page)).toBe(0);
 });
 
 Then('the page content is no wider than {int} pixels', async ({ page }, limit: number) => {
-  expect(limit).toBe(FRAME_WIDTH);
   const main = await box(page.locator('main'));
-  expect(main.width).toBeLessThanOrEqual(limit);
+  const header = await box(page.locator('header'));
+  expect(Math.round(main.width)).toBe(limit);
+  expect(header.width).toBeLessThanOrEqual(limit);
 });
 
-/** Whether `element` lies within the screen's width and shows all of its own content. */
+/**
+ * Whether `element` lies within the screen's width and within the list card, which clips what
+ * overflows it, and shows all of its own content.
+ */
 async function fitsTheScreen(page: Page, element: Locator): Promise<boolean> {
   const screen = page.viewportSize()!.width;
   return element.evaluate((node, width) => {
     const rect = node.getBoundingClientRect();
-    return rect.left >= 0 && rect.right <= width && node.scrollWidth <= node.clientWidth + 1;
+    const card = node.closest('.library')?.getBoundingClientRect();
+    const within = card === undefined || (rect.left >= card.left && rect.right <= card.right);
+    return within && rect.left >= 0 && rect.right <= width && node.scrollWidth <= node.clientWidth + 1;
   }, screen);
 }
 
 Then("every entry's name and actions lie within the screen's width and are not cut off", async ({ page }) => {
+  let measured = 0;
   for (const entry of await rosterEntries(page).all()) {
     expect(await fitsTheScreen(page, entry.getByRole('heading', { level: 3 }))).toBe(true);
     for (const action of await entry.getByRole('link').all()) {
       expect(await fitsTheScreen(page, action)).toBe(true);
+      measured += 1;
     }
   }
+  // Some of the entries have actions, so something was measured.
+  expect(measured).toBeGreaterThan(0);
 });
 
 Then("every character's and build's summary line lies within the screen's width", async ({ page }) => {
+  let measured = 0;
   for (const entry of await rosterEntries(page).all()) {
     const summary = entrySlot(entry, 'summary');
-    if (await summary.count()) expect(await fitsTheScreen(page, summary)).toBe(true);
+    if (await summary.isVisible()) {
+      expect(await fitsTheScreen(page, summary)).toBe(true);
+      measured += 1;
+    }
   }
+  expect(measured).toBeGreaterThan(0);
 });
 
 Then("the entry's whole name and whole chronicle can be read, wrapped onto more lines if need be", async ({ page }) => {
