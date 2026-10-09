@@ -41,6 +41,7 @@ function setup(descriptors: TabDescriptor[], log: string[], mode: { value: 'play
   const resources: boolean[] = [];
   const view: ShellView = {
     show: (tab) => void log.push(`view:show:${tab.key}`),
+    focus: (tab) => void log.push(`view:focus:${tab.key}`),
     showResources: (visible) => void resources.push(visible),
     afterRender: (_character, _mode, tab) => void log.push(`view:after:${tab.key}`),
     applied: () => void log.push('view:applied'),
@@ -52,6 +53,7 @@ function setup(descriptors: TabDescriptor[], log: string[], mode: { value: 'play
     pool: createPool(),
     rootOf: () => ({}) as HTMLElement,
     save: (character) => void saved.push(character),
+    push: (key) => void log.push(`push:${key}`),
     view,
   });
   return { shell, saved, resources, mode };
@@ -188,6 +190,67 @@ describe('the shell and a tab', () => {
 
     showText(watched, 'Ada L');
     expect(writes).toEqual(['Ada L']);
+  });
+});
+
+describe('opening a tab as the player does', () => {
+  it('adds the history entry first, then switches, and puts focus in the panel last', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    const combat = recordingTab('combat', log).descriptor;
+    const { shell } = setup([sheet, combat], log);
+    await shell.switchTo('sheet');
+    log.length = 0;
+
+    await shell.open('combat');
+
+    expect(log).toEqual([
+      'push:combat',
+      'sheet:leave',
+      'view:show:combat',
+      'combat:mount',
+      'combat:enter',
+      'combat:render:play',
+      'view:after:combat',
+      'view:focus:combat',
+    ]);
+  });
+
+  it('does nothing for the tab already shown', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    const { shell } = setup([sheet, recordingTab('combat', log).descriptor], log);
+    await shell.switchTo('sheet');
+    log.length = 0;
+
+    await shell.open('sheet');
+
+    expect(log).toEqual([]);
+  });
+
+  it('is available to a tab through its context, as openTab', async () => {
+    const log: string[] = [];
+    const { descriptor, contexts } = recordingTab('sheet', log);
+    const { shell } = setup([descriptor, recordingTab('combat', log).descriptor], log);
+    await shell.switchTo('sheet');
+    log.length = 0;
+
+    await contexts[0].openTab('combat');
+
+    expect(log[0]).toBe('push:combat');
+    expect(log.at(-1)).toBe('view:focus:combat');
+  });
+
+  it('moves no focus and adds no entry when Back or Forward switches the tab', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    const { shell } = setup([sheet, recordingTab('combat', log).descriptor], log);
+    await shell.switchTo('sheet');
+    log.length = 0;
+
+    await shell.switchTo('combat');
+
+    expect(log.some((entry) => entry.startsWith('push:') || entry.startsWith('view:focus'))).toBe(false);
   });
 });
 

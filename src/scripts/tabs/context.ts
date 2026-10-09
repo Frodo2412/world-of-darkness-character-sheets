@@ -2,6 +2,7 @@ import type { V20Character } from '../../domain/v20/character';
 import type { PoolSelection } from '../../domain/v20/resources';
 import type { SheetMode } from '../sheet/mode';
 import type { PoolRow } from '../sheet/pool';
+import type { TabKey } from './descriptor';
 
 export type Update = (character: V20Character) => V20Character;
 
@@ -15,6 +16,8 @@ export interface TabContext {
   /** The latest character. */
   current(): V20Character;
   apply: Apply;
+  /** Switches to another tab as the player would: a history entry, then focus in its panel. Resolves once it is shown. */
+  openTab(key: TabKey): Promise<void>;
   /** What is chosen for the dice pool now; a copy. */
   poolSelection(): PoolSelection;
   /** Chooses the row for the pool, or drops it when it is the chosen one, and redraws. */

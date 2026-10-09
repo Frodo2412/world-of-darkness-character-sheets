@@ -14,11 +14,14 @@ import { createMode, type Mode } from './sheet/mode';
 import { createPool } from './sheet/pool';
 import { announce, announceWound, drawResourceCards } from './sheet/resourceCards';
 import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
-import { tabFromUrl } from './tabs/address';
+import { hrefFor, titleFor } from './tabs/address';
 import type { Apply } from './tabs/context';
 import { discoverTabs } from './tabs/discover';
 import { bindFields, drawFields } from './tabs/fields';
+import { createTabHistory } from './tabs/history';
+import { focusPanel, showPanel } from './tabs/panels';
 import { createShell } from './tabs/shell';
+import { createTabBar, type TabBar } from './tabs/tabBar';
 
 const STEPS: Record<Resource, (character: V20Character, delta: number) => V20Character> = {
   blood: stepBlood,
@@ -70,7 +73,13 @@ function bindSteppers(apply: Apply): void {
 
 async function showSheet(loaded: V20Character, store: CharacterStore): Promise<void> {
   const mode = startMode();
-  const { tabs } = discoverTabs();
+  const { tabs, showBar } = discoverTabs();
+  const history = createTabHistory(
+    window,
+    tabs.map((tab) => tab.key),
+  );
+  // The bar is drawn only when there is more than one tab; it is wired once the shell exists.
+  let bar: TabBar | undefined;
 
   const shell = createShell({
     tabs,
@@ -79,22 +88,34 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
     pool: createPool(),
     rootOf: (key) => sheet.querySelector<HTMLElement>(`[data-tab-panel="${key}"]`)!,
     save: (character) => reportSave(store.save(character)),
+    push: history.push,
     view: {
       show(tab) {
-        for (const panel of sheet.querySelectorAll<HTMLElement>('[data-tab-panel]')) {
-          panel.hidden = panel.dataset.tabPanel !== tab.key;
-        }
+        showPanel(sheet, tab.key);
+        bar?.select(tab.key);
       },
+      focus: (tab) => focusPanel(sheet, tab.key),
       showResources: (visible) => void (resourcesRow.hidden = !visible),
-      afterRender(character, current) {
+      afterRender(character, current, tab) {
         drawIdentity(sheet, character);
         drawFields(identity, character, current);
         drawFields(resourcesRow, character, current);
         drawResourceCards(sheet, character);
+        // With one tab the page is as it always was, title included.
+        if (showBar) document.title = titleFor(tab.label, character);
       },
       applied: (before, after) => announceWound(sheet, before, after),
     },
   });
+
+  const barElement = sheet.querySelector<HTMLElement>('[data-tab-bar]');
+  if (barElement !== null) {
+    bar = createTabBar(barElement, {
+      onSelect: (key) => void shell.open(key),
+      hrefFor: (key) => hrefFor(new URL(window.location.href), key),
+    });
+  }
+  history.onPop((key) => void shell.switchTo(key));
 
   const { apply } = shell;
   bindFields(identity, apply);
@@ -109,8 +130,10 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
   });
 
   mode.onChange(() => shell.modeChanged());
-  await shell.switchTo(tabFromUrl(new URL(window.location.href), tabs.map((tab) => tab.key)));
+  await shell.switchTo(history.current());
   sheet.hidden = false;
+  // Measured only now that the page is drawn: a tab far along the bar is brought into view.
+  bar?.select(history.current());
 }
 
 type PageState =

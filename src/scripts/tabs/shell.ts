@@ -8,6 +8,8 @@ import type { TabDescriptor, TabKey } from './descriptor';
 export interface ShellView {
   /** Reveals the tab's panel and marks its place in the bar. */
   show(tab: TabDescriptor): void;
+  /** Moves keyboard focus into the tab's panel, to its heading. */
+  focus(tab: TabDescriptor): void;
   /** Shows or hides the live resources row. */
   showResources(visible: boolean): void;
   /** Draws what belongs to the shell itself, after the active tab has drawn. */
@@ -25,12 +27,16 @@ export interface ShellOptions {
   /** The panel a tab draws in. */
   rootOf(key: TabKey): HTMLElement;
   save(character: V20Character): void;
+  /** Records the tab in the address as a new history entry. */
+  push(key: TabKey): void;
   view: ShellView;
 }
 
 export interface Shell {
   /** Shows the tab and draws it; resolves once it has been drawn. A request made while another tab loads wins. */
   switchTo(key: TabKey): Promise<void>;
+  /** A player's choice of tab: as `switchTo`, and also a history entry and focus in the panel. */
+  open(key: TabKey): Promise<void>;
   /** The one path every edit takes: update the model, redraw, save. */
   apply(update: Update): V20Character;
   /** The mode changed: forget the pool and redraw. */
@@ -54,6 +60,7 @@ export function createShell(options: ShellOptions): Shell {
     root: options.rootOf(key),
     current: () => character,
     apply,
+    openTab: open,
     poolSelection: () => pool.selection(),
     togglePool(row) {
       pool.toggle(row);
@@ -111,8 +118,16 @@ export function createShell(options: ShellOptions): Shell {
     draw();
   }
 
+  async function open(key: TabKey): Promise<void> {
+    if (key === activeKey) return;
+    options.push(key);
+    await switchTo(key);
+    if (activeKey === key) view.focus(descriptors.get(key)!);
+  }
+
   return {
     switchTo,
+    open,
     apply,
     modeChanged() {
       pool.clear();

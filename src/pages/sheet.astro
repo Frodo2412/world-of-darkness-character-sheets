@@ -1,5 +1,6 @@
 ---
 import SheetPanel from '../components/tabs/SheetPanel.astro';
+import TabBar from '../components/tabs/TabBar.astro';
 import TabPanel from '../components/tabs/TabPanel.astro';
 import BloodPool from '../components/sheet/BloodPool.astro';
 import Health from '../components/sheet/Health.astro';
@@ -11,6 +12,7 @@ import Layout from '../layouts/Layout.astro';
 import { SHEET_KEY } from '../scripts/tabs/descriptor';
 import { checkTabFolders, discoverTabs } from '../scripts/tabs/discover';
 import '../styles/sheet.css';
+import '../styles/tabs.css';
 
 // Each tab is a folder under src/tabs; the page lists whatever folders it finds.
 const folderPanels = import.meta.glob<{ default: (props: Record<string, never>) => unknown }>('../tabs/*/Panel.astro', {
@@ -31,6 +33,7 @@ const panelOf = (key: string) =>
 			<!-- The page's one heading for the sheet itself; the identity below is the visible title. -->
 			<h1 class="visually-hidden">Character sheet</h1>
 			<Identity />
+			<TabBar tabs={tabs} />
 			<div class="resources-row">
 				<BloodPool />
 				<Willpower />
