@@ -29,16 +29,18 @@ import '../styles/sheet.css';
 				<Health />
 				<Humanity />
 			</div>
-			<div class="workspace">
-				<!-- First in the markup so that a narrow screen shows it above the traits; the stylesheet puts it at the top of the side column when wide. -->
-				<SelectedPool />
-				<div class="workspace-traits">
-					<Attributes />
-					<Abilities />
-				</div>
-				<div class="workspace-side">
-					<Disciplines />
-					<Virtues />
+			<div data-tab-panel="sheet">
+				<div class="workspace">
+					<!-- First in the markup so that a narrow screen shows it above the traits; the stylesheet puts it at the top of the side column when wide. -->
+					<SelectedPool />
+					<div class="workspace-traits">
+						<Attributes />
+						<Abilities />
+					</div>
+					<div class="workspace-side">
+						<Disciplines />
+						<Virtues />
+					</div>
 				</div>
 			</div>
 		</div>

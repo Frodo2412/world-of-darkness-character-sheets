@@ -1,3 +1,5 @@
+import type { TabModule } from './context';
+
 /** The key of the Character sheet tab, the one that is always present and always first. */
 export const SHEET_KEY = 'sheet';
 
@@ -17,5 +19,5 @@ export interface TabDescriptor {
   order: number;
   /** Whether the live resources row (Blood Pool to Humanity) stays above this tab. */
   showsResources: boolean;
-  mount: () => Promise<unknown>;
+  mount: () => Promise<TabModule>;
 }

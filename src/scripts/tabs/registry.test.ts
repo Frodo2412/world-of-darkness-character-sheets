@@ -7,7 +7,7 @@ const tab = (key: string, order: number, showsResources = true): TabDescriptor =
   label: key,
   order,
   showsResources,
-  mount: async () => ({}),
+  mount: async () => ({ mount: () => ({ render() {} }) }),
 });
 
 const sheet = tab('sheet', 0);
