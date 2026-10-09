@@ -25,6 +25,15 @@ const build = (id: string, fields: Partial<Record<ConceptField | 'clan', string>
 };
 
 describe('entriesOf', () => {
+  test('a character with eight backgrounds is listed like any other', () => {
+    const many = character('c1', { name: 'Éloïse Voss' });
+    many.character.backgrounds.push({ name: 'Herd', rating: 1 }, { name: 'Fame', rating: 2, note: 'Local' });
+
+    const [entry] = entriesOf({ characters: [many], builds: [] });
+
+    expect(entry).toMatchObject({ kind: 'character', id: 'c1', name: 'Éloïse Voss' });
+  });
+
   test('a character carries what the library shows of it', () => {
     const [entry] = entriesOf({
       characters: [

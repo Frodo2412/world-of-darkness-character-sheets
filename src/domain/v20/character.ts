@@ -215,7 +215,9 @@ export function setNamedRow(
   const current = namedRow(character, row);
   if (current === undefined) return character;
 
+  // Spread the row so details the caller did not change (a background's summary, note and people) survive.
   const updated: NamedRating = {
+    ...current,
     name: change.name ?? current.name,
     rating: change.rating === undefined ? current.rating : clamp(change.rating, RATING_RANGE),
   };

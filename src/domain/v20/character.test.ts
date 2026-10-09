@@ -438,6 +438,44 @@ describe('setNamedRow on disciplines and backgrounds', () => {
     expect(updated.disciplines).toEqual(blankCharacter('abc').disciplines);
   });
 
+  test('renaming or rating a background keeps its summary, note and people', () => {
+    const details = {
+      summary: 'Two cops on the take',
+      note: 'Owe me a favor',
+      people: [{ name: 'Joe', role: 'Sergeant' }],
+    };
+    const base = blankCharacter('abc');
+    base.backgrounds[2] = { name: 'Allies', rating: 2, ...details };
+
+    const renamed = setNamedRow(base, 'backgrounds.2', { name: 'Allies (police)' });
+    const rerated = setNamedRow(renamed, 'backgrounds.2', { rating: 4 });
+
+    expect(rerated.backgrounds[2]).toEqual({ name: 'Allies (police)', rating: 4, ...details });
+    expect(base.backgrounds[2]).toEqual({ name: 'Allies', rating: 2, ...details });
+  });
+
+  test('a row beyond the sixth is a row on the sheet and keeps its details', () => {
+    const base = blankCharacter('abc');
+    base.backgrounds.push({ name: 'Herd', rating: 1, note: 'Club kids' }, { name: '', rating: 0 });
+
+    const updated = setNamedRow(base, 'backgrounds.6', { rating: 3 });
+
+    expect(namedRow(updated, 'backgrounds.6')).toEqual({ name: 'Herd', rating: 3, note: 'Club kids' });
+    expect(updated.backgrounds).toHaveLength(8);
+    expect(namedRows(updated.backgrounds).map((row) => row.name)).toEqual(['Herd']);
+  });
+
+  test('a field this version does not know on a row survives an edit', () => {
+    const base = blankCharacter('abc');
+    Object.assign(base.disciplines[0], { future: 'kept' });
+
+    expect(setNamedRow(base, 'disciplines.0', { name: 'Dominate' }).disciplines[0]).toEqual({
+      name: 'Dominate',
+      rating: 0,
+      future: 'kept',
+    });
+  });
+
   test.each([
     [11, 10],
     [-1, 0],
