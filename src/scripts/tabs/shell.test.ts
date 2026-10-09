@@ -51,6 +51,7 @@ function setup(
   const view: ShellView = {
     show: (tab) => void log.push(`view:show:${tab.key}`),
     focus: (tab) => void log.push(`view:focus:${tab.key}`),
+    loadFailed: (tab) => void log.push(`view:failed:${tab.key}`),
     showResources: (visible) => void resources.push(visible),
     afterRender: (_character, _mode, tab) => void log.push(`view:after:${tab.key}`),
     applied: () => void log.push('view:applied'),
@@ -63,6 +64,7 @@ function setup(
     rootOf: () => ({}) as HTMLElement,
     save: (character) => void saved.push(character),
     push: (key) => void log.push(`push:${key}`),
+    restore: (key) => void log.push(`restore:${key}`),
     announce: extras.announce ?? (() => {}),
     stamp,
     observers: extras.observers ?? [],
@@ -73,6 +75,27 @@ function setup(
 }
 
 const page = {} as HTMLElement;
+
+/** A tab whose script fails to load (a lost chunk) or whose `mount` throws, until `state.failing` is cleared. */
+function flakyTab(key: string, log: string[], how: 'load' | 'mount' = 'load') {
+  const state = { failing: true, attempts: 0 };
+  const good = recordingTab(key, log).descriptor;
+  const descriptor: TabDescriptor = {
+    ...good,
+    mount: async () => {
+      state.attempts += 1;
+      if (!state.failing) return good.mount();
+      if (how === 'load') throw new Error('chunk failed');
+      return {
+        mount: () => {
+          throw new Error('mount threw');
+        },
+      };
+    },
+  };
+  return { descriptor, state };
+}
+
 const strength = (character: V20Character) => setTrait(character, 'attributes.strength', 4);
 
 describe('the shell and a tab', () => {
@@ -207,8 +230,139 @@ describe('the shell and a tab', () => {
   });
 });
 
+describe('a tab that cannot be mounted', () => {
+  it.each(['load', 'mount'] as const)(
+    'is reported, not thrown, and the shell still draws its own parts when the first tab fails by %s',
+    async (how) => {
+      const log: string[] = [];
+      const { descriptor } = flakyTab('sheet', log, how);
+      const { shell } = setup([descriptor], log);
+
+      await shell.switchTo('sheet');
+      shell.apply(strength);
+
+      expect(log).toEqual(['view:show:sheet', 'view:after:sheet', 'view:failed:sheet', 'view:after:sheet', 'view:applied']);
+    },
+  );
+
+  it('is loaded again when it is chosen again, rather than failing from a remembered rejection', async () => {
+    const log: string[] = [];
+    const { descriptor, state } = flakyTab('sheet', log);
+    const { shell } = setup([descriptor], log);
+    await shell.switchTo('sheet');
+    state.failing = false;
+    log.length = 0;
+
+    await shell.open('sheet');
+
+    expect(state.attempts).toBe(2);
+    expect(log).toEqual([
+      'push:sheet',
+      'view:show:sheet',
+      'sheet:mount',
+      'sheet:enter',
+      'sheet:render:play',
+      'view:after:sheet',
+      'view:focus:sheet',
+    ]);
+  });
+
+  it('puts the tab and the address back on the one that was shown, which keeps redrawing on edits', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    const { descriptor: combat, state } = flakyTab('combat', log);
+    const { shell } = setup([sheet, combat], log);
+    await shell.switchTo('sheet');
+    log.length = 0;
+
+    await shell.open('combat');
+
+    expect(log).toEqual([
+      'push:combat',
+      'sheet:leave',
+      'view:show:combat',
+      'restore:sheet',
+      'view:show:sheet',
+      'sheet:enter',
+      'sheet:render:play',
+      'view:after:sheet',
+      'view:failed:combat',
+    ]);
+    log.length = 0;
+
+    shell.apply(strength);
+    expect(log).toEqual(['sheet:render:play', 'view:after:sheet', 'view:applied', 'sheet:changed']);
+
+    state.failing = false;
+    log.length = 0;
+    await shell.open('combat');
+    expect(log).toContain('combat:enter');
+    expect(log.at(-1)).toBe('view:focus:combat');
+  });
+
+  it('goes back to the tab that was shown when Back or Forward asks for one that fails', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    const { descriptor: combat } = flakyTab('combat', log);
+    const { shell } = setup([sheet, combat], log);
+    await shell.switchTo('sheet');
+    log.length = 0;
+
+    await shell.switchTo('combat');
+
+    expect(log).toContain('restore:sheet');
+    expect(log.at(-1)).toBe('view:failed:combat');
+  });
+
+  it('is not reported when a later request has already moved on', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    let fail!: () => void;
+    const slow: TabDescriptor = {
+      ...recordingTab('combat', log).descriptor,
+      mount: () =>
+        new Promise((_resolve, reject) => {
+          fail = () => reject(new Error('chunk failed'));
+        }),
+    };
+    const { shell } = setup([sheet, slow], log);
+    await shell.switchTo('sheet');
+    log.length = 0;
+
+    const toCombat = shell.switchTo('combat');
+    await shell.switchTo('sheet');
+    fail();
+    await toCombat;
+
+    expect(log.filter((entry) => entry.startsWith('view:failed') || entry.startsWith('restore'))).toEqual([]);
+  });
+});
+
+describe('switches that overlap', () => {
+  it('enter a tab once, however many requests for it are waiting on its load', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    const combatTab = recordingTab('combat', log).descriptor;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => void (release = resolve));
+    const slow: TabDescriptor = { ...combatTab, mount: () => gate.then(() => combatTab.mount()) };
+    const { shell } = setup([sheet, slow], log);
+    await shell.switchTo('sheet');
+    log.length = 0;
+
+    const first = shell.switchTo('combat');
+    await shell.switchTo('sheet');
+    const second = shell.switchTo('combat');
+    release();
+    await Promise.all([first, second]);
+
+    expect(log.filter((entry) => entry === 'combat:enter')).toEqual(['combat:enter']);
+    expect(log.filter((entry) => entry === 'combat:render:play')).toEqual(['combat:render:play']);
+  });
+});
+
 describe('what the shell offers every tab', () => {
-  it('runs the observers after every draw, whatever tab is shown, with the page', async () => {
+  it('runs the observers after every draw, whatever tab is shown, with the whole page and not the tab\'s panel', async () => {
     const log: string[] = [];
     const seen: unknown[] = [];
     const observer: Observer = {

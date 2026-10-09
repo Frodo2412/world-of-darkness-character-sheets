@@ -14,7 +14,7 @@ import { createMode, type Mode } from './sheet/mode';
 import { observers } from './sheet/observers/index';
 import { createPool } from './sheet/pool';
 import { announce, announceWound, drawResourceCards } from './sheet/resourceCards';
-import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
+import { STORAGE_UNAVAILABLE, clearStatus, reportSave, showStatus } from './status';
 import { hrefFor, titleFor } from './tabs/address';
 import type { Apply } from './tabs/context';
 import { discoverTabs } from './tabs/discover';
@@ -76,6 +76,21 @@ function bindSteppers(apply: Apply): void {
   }
 }
 
+const TAB_FAILED = 'This tab could not be shown. Choose it again, or reload the page, to try again.';
+
+// Set while the status message is saying a tab failed, so showing a tab can take it down again.
+let tabFailureShown = false;
+
+function reportTabFailure(text: string): void {
+  tabFailureShown = true;
+  showStatus(text);
+}
+
+/** A switch that fails must not leave the page silent: say so, and leave the rest of the sheet working. */
+function surviving(switching: Promise<void>): void {
+  switching.catch(() => reportTabFailure(TAB_FAILED));
+}
+
 async function showSheet(loaded: V20Character, store: CharacterStore): Promise<void> {
   const mode = startMode();
   const { tabs, showBar } = discoverTabs();
@@ -97,13 +112,20 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
     announce: announceToPage,
     stamp: realStamp,
     observers,
-    pageRoot: sheet,
+    restore: history.replace,
+    // The whole page: an observer's target, the application bar's label, is outside #sheet.
+    pageRoot: document.body,
     view: {
       show(tab) {
+        if (tabFailureShown) {
+          tabFailureShown = false;
+          clearStatus();
+        }
         showPanel(sheet, tab.key);
         bar?.select(tab.key);
       },
       focus: (tab) => focusPanel(sheet, tab.key),
+      loadFailed: (tab) => reportTabFailure(`The ${tab.label} tab could not be loaded. Choose it again to try again.`),
       showResources: (visible) => void (resourcesRow.hidden = !visible),
       afterRender(character, current, tab) {
         drawIdentity(sheet, character);
@@ -120,11 +142,11 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
   const barElement = sheet.querySelector<HTMLElement>('[data-tab-bar]');
   if (barElement !== null) {
     bar = createTabBar(barElement, {
-      onSelect: (key) => void shell.open(key),
+      onSelect: (key) => surviving(shell.open(key)),
       hrefFor: (key) => hrefFor(new URL(window.location.href), key),
     });
   }
-  history.onPop((key) => void shell.switchTo(key));
+  history.onPop((key) => surviving(shell.switchTo(key)));
 
   const { apply } = shell;
   bindFields(identity, apply);
@@ -139,8 +161,14 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
   });
 
   mode.onChange(() => shell.modeChanged());
-  await shell.switchTo(history.current());
-  sheet.hidden = false;
+  try {
+    await shell.switchTo(history.current());
+  } catch {
+    reportTabFailure(TAB_FAILED);
+  } finally {
+    // Whatever happened, the player gets the sheet back: the shell's own parts work without a tab.
+    sheet.hidden = false;
+  }
   // Measured only now that the page is drawn: a tab far along the bar is brought into view.
   bar?.select(history.current());
 }

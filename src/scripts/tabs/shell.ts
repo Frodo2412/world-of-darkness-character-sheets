@@ -12,6 +12,8 @@ export interface ShellView {
   show(tab: TabDescriptor): void;
   /** Moves keyboard focus into the tab's panel, to its heading. */
   focus(tab: TabDescriptor): void;
+  /** Says the tab could not be loaded or mounted; choosing it again tries again. */
+  loadFailed(tab: TabDescriptor): void;
   /** Shows or hides the live resources row. */
   showResources(visible: boolean): void;
   /** Draws what belongs to the shell itself, after the active tab has drawn. */
@@ -31,16 +33,25 @@ export interface ShellOptions {
   save(character: V20Character): void;
   /** Records the tab in the address as a new history entry. */
   push(key: TabKey): void;
+  /** Puts the address back on `key` after a switch to another tab failed, without a new history entry. */
+  restore(key: TabKey): void;
   announce: Announce;
   stamp: Stamp;
-  /** Modules that react to the character after every draw, on any tab, and the page they are given. */
+  /**
+   * Modules that react to the character after every draw, on any tab, and the root they are given:
+   * the whole page, since what they fill (the application bar's label) is outside the sheet.
+   */
   observers: readonly Observer[];
   pageRoot: HTMLElement;
   view: ShellView;
 }
 
 export interface Shell {
-  /** Shows the tab and draws it; resolves once it has been drawn. A request made while another tab loads wins. */
+  /**
+   * Shows the tab and draws it; resolves once it has been drawn. A request made while another tab
+   * loads wins. A tab that fails to load is reported through the view and does not reject: the tab
+   * shown before it is shown again, and choosing the failed tab again tries again.
+   */
   switchTo(key: TabKey): Promise<void>;
   /** A player's choice of tab: as `switchTo`, and also a history entry and focus in the panel. */
   open(key: TabKey): Promise<void>;
@@ -62,6 +73,8 @@ export function createShell(options: ShellOptions): Shell {
   let activeKey: TabKey | undefined;
   const loading = new Map<TabKey, Promise<MountedTab>>();
   const loaded = new Map<TabKey, MountedTab>();
+  /** Counts the requests to switch; a request that is no longer the latest does nothing when its tab arrives. */
+  let latestSwitch = 0;
 
   const context = (key: TabKey): TabContext => ({
     root: options.rootOf(key),
@@ -93,18 +106,25 @@ export function createShell(options: ShellOptions): Shell {
           return tab;
         });
       loading.set(key, promise);
+      // A failure is not kept, so choosing the tab again loads it again.
+      promise.catch(() => void loading.delete(key));
     }
     return promise;
   }
 
   const active = (): MountedTab | undefined => (activeKey === undefined ? undefined : loaded.get(activeKey));
 
-  /** Redraws the active tab and then the shell. A tab still loading is drawn when it arrives. */
+  /** Whether the tab is shown, or on its way: a tab that failed to load is neither. */
+  const isShown = (key: TabKey): boolean => key === activeKey && (loaded.has(key) || loading.has(key));
+
+  /**
+   * Redraws the active tab and then the shell. A tab still loading is drawn when it arrives, and one
+   * that failed to load leaves the shell's own parts drawing.
+   */
   function draw(): void {
-    const tab = active();
-    if (tab === undefined) return;
+    if (activeKey === undefined) return;
     const mode = options.mode();
-    tab.render(character, mode);
+    active()?.render(character, mode);
     view.afterRender(character, mode, descriptors.get(activeKey!)!);
     for (const observer of options.observers) observer.afterRender(character, options.pageRoot);
   }
@@ -120,23 +140,46 @@ export function createShell(options: ShellOptions): Shell {
   }
 
   async function switchTo(key: TabKey): Promise<void> {
-    if (key === activeKey) return;
+    if (isShown(key)) return;
+    const thisSwitch = ++latestSwitch;
+    const previous = activeKey;
     active()?.leave?.();
     activeKey = key;
     const tab = descriptors.get(key)!;
     view.show(tab);
     view.showResources(tab.showsResources);
-    const mounted = await load(key);
-    if (activeKey !== key) return;
+    let mounted: MountedTab;
+    try {
+      mounted = await load(key);
+    } catch {
+      if (thisSwitch === latestSwitch) failed(tab, previous);
+      return;
+    }
+    if (thisSwitch !== latestSwitch) return;
     mounted.enter?.();
     draw();
   }
 
+  /** The tab could not be loaded: go back to the tab that was shown if there was one, and say so. */
+  function failed(tab: TabDescriptor, previous: TabKey | undefined): void {
+    if (previous !== undefined && loaded.has(previous)) {
+      activeKey = previous;
+      options.restore(previous);
+      const back = descriptors.get(previous)!;
+      view.show(back);
+      view.showResources(back.showsResources);
+      loaded.get(previous)!.enter?.();
+    }
+    draw();
+    // Last, so that showing the tab again does not take the message down.
+    view.loadFailed(tab);
+  }
+
   async function open(key: TabKey): Promise<void> {
-    if (key === activeKey) return;
+    if (isShown(key)) return;
     options.push(key);
     await switchTo(key);
-    if (activeKey === key) view.focus(descriptors.get(key)!);
+    if (activeKey === key && loaded.has(key)) view.focus(descriptors.get(key)!);
   }
 
   return {

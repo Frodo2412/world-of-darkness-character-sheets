@@ -19,6 +19,9 @@ function fakeWindow(start: string) {
         entries.splice(at + 1, entries.length, new URL(url, entries[at]).href);
         at += 1;
       },
+      replaceState(_data, _unused, url) {
+        entries[at] = new URL(url, entries[at]).href;
+      },
     },
     addEventListener: (_type, listener) => void listeners.push(listener),
     go(offset) {
@@ -48,6 +51,16 @@ describe('createTabHistory', () => {
     createTabHistory(win, keys).push('combat');
     createTabHistory(fakeWindow('/sheet/?id=a1'), keys).push('sheet');
     expect(win.entries).toHaveLength(1);
+  });
+
+  it('puts a tab in the address in place of the current entry, adding none', () => {
+    const win = fakeWindow('/sheet/?id=a1&tab=combat');
+    const history = createTabHistory(win, keys);
+
+    history.replace('sheet');
+    history.replace('sheet');
+
+    expect(win.entries).toEqual(['http://localhost/sheet/?id=a1']);
   });
 
   it('tells the listener the tab the address names after Back and after Forward', () => {
