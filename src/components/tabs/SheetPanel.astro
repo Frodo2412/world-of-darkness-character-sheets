@@ -8,6 +8,8 @@ import Virtues from '../sheet/Virtues.astro';
 
 <!-- The Character sheet's panel: the tab that is always there, so it has no folder under src/tabs. -->
 <div class="workspace">
+	<!-- Where focus lands when the player opens this tab. Not named "Character sheet": the page's own h1 already is. -->
+	<h2 class="visually-hidden" data-panel-heading>Traits and pool</h2>
 	<!-- First in the markup so that a narrow screen shows it above the traits; the stylesheet puts it at the top of the side column when wide. -->
 	<SelectedPool />
 	<div class="workspace-traits">

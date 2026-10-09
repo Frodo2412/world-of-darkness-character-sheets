@@ -1,5 +1,5 @@
 ---
-import SheetPanel from '../components/tabs/SheetPanel.astro';
+import { panelOf } from '../components/tabs/panelOf';
 import TabBar from '../components/tabs/TabBar.astro';
 import TabPanel from '../components/tabs/TabPanel.astro';
 import BloodPool from '../components/sheet/BloodPool.astro';
@@ -9,19 +9,12 @@ import Identity from '../components/sheet/Identity.astro';
 import Willpower from '../components/sheet/Willpower.astro';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
-import { SHEET_KEY } from '../scripts/tabs/descriptor';
-import { checkTabFolders, discoverTabs } from '../scripts/tabs/discover';
+import { discoverTabs } from '../scripts/tabs/discover';
 import '../styles/sheet.css';
 import '../styles/tabs.css';
 
 // Each tab is a folder under src/tabs; the page lists whatever folders it finds.
-const folderPanels = import.meta.glob<{ default: (props: Record<string, never>) => unknown }>('../tabs/*/Panel.astro', {
-	eager: true,
-});
-checkTabFolders(Object.keys(folderPanels));
 const { tabs, showBar } = discoverTabs();
-const panelOf = (key: string) =>
-	key === SHEET_KEY ? SheetPanel : folderPanels[`../tabs/${key}/Panel.astro`].default;
 ---
 
 <Layout title="Character sheet">
