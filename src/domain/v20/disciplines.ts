@@ -25,7 +25,7 @@ export interface Power {
   /** One sentence of the book's description of what the power does. */
   readonly summary?: string;
   /** The V20 page where the power's entry begins. */
-  readonly page?: number;
+  readonly page: number;
 }
 
 export interface DisciplineEntry {

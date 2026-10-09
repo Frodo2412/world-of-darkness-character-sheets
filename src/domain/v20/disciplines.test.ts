@@ -36,21 +36,19 @@ describe('DISCIPLINE_CATALOGUE', () => {
 
 const RULE_FIELDS = ['cost', 'duration', 'prerequisite', 'difficulty', 'summary'] as const;
 
-/** The Disciplines whose rule fields have been read from V20 chapter four. */
-const EXTRACTED = [
-  'Animalism',
-  'Auspex',
-  'Chimerstry',
-  'Dementation',
-  'Dominate',
-  'Obfuscate',
-  'Obtenebration',
-  'Presence',
-];
-
-const extractedEntries = () => DISCIPLINE_CATALOGUE.filter((entry) => EXTRACTED.includes(entry.name));
-
 describe('Discipline rule data', () => {
+  test('all seventeen Disciplines are present', () => {
+    expect(DISCIPLINE_CATALOGUE).toHaveLength(17);
+  });
+
+  test('Thaumaturgy and Necromancy, learned by path, keep their note and list no powers', () => {
+    for (const name of ['Thaumaturgy', 'Necromancy']) {
+      const entry = DISCIPLINE_CATALOGUE.find((candidate) => candidate.name === name);
+      expect(entry?.powers, name).toEqual([]);
+      expect(entry?.note, name).toBeTruthy();
+    }
+  });
+
   test('Presence has five powers, in level order', () => {
     const presence = DISCIPLINE_CATALOGUE.find((entry) => entry.name === 'Presence');
 
@@ -84,8 +82,8 @@ describe('Discipline rule data', () => {
     expect(Object.keys(dreadGaze ?? {})).not.toContain('duration');
   });
 
-  test('every power read from the book has a page in chapter four and names its Discipline and level', () => {
-    for (const entry of extractedEntries()) {
+  test('every power has a page in chapter four and names its Discipline and level', () => {
+    for (const entry of DISCIPLINE_CATALOGUE) {
       entry.powers.forEach((power, index) => {
         const label = `${entry.name} ${power.name}`;
         expect(Number.isInteger(power.page), label).toBe(true);
@@ -93,7 +91,7 @@ describe('Discipline rule data', () => {
         expect(power.page, label).toBeLessThanOrEqual(243);
         expect(power.prerequisite, label).toBe(`${entry.name} ${index + 1}`);
       });
-      const pages = entry.powers.map((power) => power.page ?? 0);
+      const pages = entry.powers.map((power) => power.page);
       expect(pages, `${entry.name} pages in level order`).toEqual([...pages].sort((a, b) => a - b));
     }
   });
