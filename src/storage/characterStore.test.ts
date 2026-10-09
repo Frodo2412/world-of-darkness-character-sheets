@@ -198,6 +198,8 @@ describe('characterStore with unreadable records', () => {
     return JSON.stringify(record);
   };
 
+  const blankHaven = { name: '', kind: 'Primary', description: '', location: '', access: '', security: '' };
+
   const UNREADABLE: [string, string][] = [
     ['text that is not JSON', '{not json'],
     ['an empty value', ''],
@@ -221,6 +223,16 @@ describe('characterStore with unreadable records', () => {
     ['notes that are not text', altered('bad', (record) => (record.notes = ['a']))],
     ['specialties that are a list', altered('bad', (record) => (record.specialties = []))],
     ['a specialty that is not text', altered('bad', (record) => (record.specialties['attributes.wits'] = 4))],
+    ['five background rows', altered('bad', (record) => record.backgrounds.pop())],
+    ['a background summary that is not text', altered('bad', (record) => (record.backgrounds[0].summary = 4))],
+    ['merits that are not a list', altered('bad', (record) => (record.merits = 'Eidetic Memory'))],
+    ['a merit without points', altered('bad', (record) => (record.merits = [{ name: 'M', category: 'Mental', note: '' }]))],
+    ['flaws that are null', altered('bad', (record) => (record.flaws = null))],
+    ['other traits that are not a list', altered('bad', (record) => (record.otherTraits = {}))],
+    ['a haven with an unknown kind', altered('bad', (record) => (record.havens = [{ ...blankHaven, kind: 'Tertiary' }]))],
+    ['a journal that is text', altered('bad', (record) => (record.journal = 'none'))],
+    ['a note without an id', altered('bad', (record) => (record.journal.notes = [{ sessionId: 's', title: '', category: '', tags: [], pinned: false, body: '', createdAt: 1, editedAt: 1 }]))],
+    ['a session flag that is not a boolean', altered('bad', (record) => (record.journal.sessions = [{ id: 's', title: '', summary: '', current: 'yes' }]))],
   ];
 
   test('a record saved before specialties existed loads with none, and is not rewritten by loading', () => {
@@ -229,6 +241,61 @@ describe('characterStore with unreadable records', () => {
 
     expect(createCharacterStore(storage).load('old')).toEqual({ status: 'found', character: blankCharacter('old') });
     expect(storage.getItem(KEY + 'old')).toBe(before);
+  });
+
+  test('a record saved before the dossier fields existed loads with each blank, and is not rewritten', () => {
+    const before = altered('old', (record) => {
+      for (const field of ['merits', 'flaws', 'otherTraits', 'havens', 'journal']) delete record[field];
+    });
+    const storage = fakeStorage({ [KEY + 'old']: before });
+
+    expect(createCharacterStore(storage).load('old')).toEqual({ status: 'found', character: blankCharacter('old') });
+    expect(storage.getItem(KEY + 'old')).toBe(before);
+  });
+
+  test('a pre-work record keeps its legacy text through a save and a load', () => {
+    const before = altered('old', (record) => {
+      for (const field of ['merits', 'flaws', 'otherTraits', 'havens', 'journal']) delete record[field];
+      Object.assign(record, { notes: 'a\nb', experience: '12', weakness: 'No reflection' });
+    });
+    const store = createCharacterStore(fakeStorage({ [KEY + 'old']: before }));
+    const loaded = store.load('old');
+    if (loaded.status !== 'found') throw new Error('expected the record to load');
+
+    store.save({ ...loaded.character, header: { ...loaded.character.header, name: 'Edited' } });
+
+    expect(store.load('old')).toMatchObject({
+      status: 'found',
+      character: { notes: 'a\nb', experience: '12', weakness: 'No reflection', header: { name: 'Edited' } },
+    });
+  });
+
+  test('a record with eight backgrounds loads with all eight', () => {
+    const text = altered('many', (record) => {
+      record.backgrounds.push(
+        { name: 'Allies', rating: 2, summary: 'Cops', people: [{ name: 'Joe', role: 'Sergeant' }] },
+        { name: '', rating: 0 },
+      );
+    });
+    const store = createCharacterStore(fakeStorage({ [KEY + 'many']: text }));
+
+    const loaded = store.load('many');
+
+    expect(loaded.status === 'found' && loaded.character.backgrounds).toHaveLength(8);
+    expect(loaded.status === 'found' && loaded.character.backgrounds[6].people).toEqual([
+      { name: 'Joe', role: 'Sergeant' },
+    ]);
+  });
+
+  test('a damaged dossier field is never rewritten by loading or listing', () => {
+    const damaged = altered('bad', (record) => (record.journal = 'none'));
+    const storage = fakeStorage({ [KEY + 'bad']: damaged });
+    const store = createCharacterStore(storage);
+
+    store.load('bad');
+    store.list();
+
+    expect(storage.getItem(KEY + 'bad')).toBe(damaged);
   });
 
   test('specialties survive a save and a load', () => {
