@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import EmptyState from './EmptyState.astro';
 import ReadOnlyHint from './ReadOnlyHint.astro';
 import ReferenceTable from './ReferenceTable.astro';
+import SearchField from './SearchField.astro';
 import SectionHeading from './SectionHeading.astro';
 import SegmentedControl from './SegmentedControl.astro';
 import SelectableItem from './SelectableItem.astro';
@@ -140,5 +141,25 @@ describe('SelectableItem', () => {
     const html = await render(SelectableItem, { props: { value: 'auspex' }, slots: { default: 'Auspex' } });
     expect(html).not.toContain('aria-current');
     expect(html).toContain('data-value="auspex"');
+  });
+});
+
+describe('SearchField', () => {
+  it('labels the input it draws', async () => {
+    const html = await render(SearchField, { props: { id: 'power-search', label: 'Search powers' } });
+    expect(html).toMatch(/<label[^>]*for="power-search"[^>]*>Search powers<\/label>/);
+    expect(html).toMatch(/<input[^>]*id="power-search"/);
+  });
+
+  it('has a clear button, hidden until there is something to clear', async () => {
+    const html = await render(SearchField, { props: { id: 'q', label: 'Search' } });
+    const clear = html.match(/<button[^>]*>/)![0];
+    expect(clear).toContain('aria-label="Clear search"');
+    expect(clear).toContain('hidden');
+  });
+
+  it('has a polite region for the number of results', async () => {
+    const html = await render(SearchField, { props: { id: 'q', label: 'Search' } });
+    expect(html).toMatch(/<p[^>]*role="status"[^>]*data-search-count/);
   });
 });

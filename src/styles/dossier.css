@@ -164,3 +164,53 @@
 	font-weight: 600;
 	color: var(--color-text-strong);
 }
+
+.dossier-search {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+
+.dossier-search-label {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.dossier-search-box {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.dossier-search-input {
+	flex: 1;
+	min-inline-size: 0;
+	min-block-size: var(--control-compact);
+	padding: var(--space-1);
+	font: inherit;
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
+	appearance: none;
+}
+
+/* The clear button is ours; the browser's own would be a second one. */
+.dossier-search-input::-webkit-search-cancel-button {
+	display: none;
+}
+
+.dossier-search-clear {
+	min-block-size: var(--control-compact);
+	padding-block: var(--space-1);
+}
+
+.dossier-search-count {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.dossier-search-count:empty {
+	display: none;
+}
