@@ -37,7 +37,7 @@ describe('DISCIPLINE_CATALOGUE', () => {
 const RULE_FIELDS = ['cost', 'duration', 'prerequisite', 'difficulty', 'summary'] as const;
 
 /** The Disciplines whose rule fields have been read from V20 chapter four. */
-const EXTRACTED = ['Presence'];
+const EXTRACTED = ['Animalism', 'Auspex', 'Chimerstry', 'Dementation', 'Presence'];
 
 const extractedEntries = () => DISCIPLINE_CATALOGUE.filter((entry) => EXTRACTED.includes(entry.name));
 
@@ -84,6 +84,8 @@ describe('Discipline rule data', () => {
         expect(power.page, label).toBeLessThanOrEqual(243);
         expect(power.prerequisite, label).toBe(`${entry.name} ${index + 1}`);
       });
+      const pages = entry.powers.map((power) => power.page ?? 0);
+      expect(pages, `${entry.name} pages in level order`).toEqual([...pages].sort((a, b) => a - b));
     }
   });
 });
