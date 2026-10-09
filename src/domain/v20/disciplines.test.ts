@@ -37,7 +37,16 @@ describe('DISCIPLINE_CATALOGUE', () => {
 const RULE_FIELDS = ['cost', 'duration', 'prerequisite', 'difficulty', 'summary'] as const;
 
 /** The Disciplines whose rule fields have been read from V20 chapter four. */
-const EXTRACTED = ['Animalism', 'Auspex', 'Chimerstry', 'Dementation', 'Presence'];
+const EXTRACTED = [
+  'Animalism',
+  'Auspex',
+  'Chimerstry',
+  'Dementation',
+  'Dominate',
+  'Obfuscate',
+  'Obtenebration',
+  'Presence',
+];
 
 const extractedEntries = () => DISCIPLINE_CATALOGUE.filter((entry) => EXTRACTED.includes(entry.name));
 
