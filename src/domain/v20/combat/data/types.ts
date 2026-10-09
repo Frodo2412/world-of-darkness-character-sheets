@@ -37,5 +37,20 @@ export interface MeleeWeapon extends WeaponBase {
   readonly type: 'bashing' | 'lethal';
 }
 
+/** A firearm or crossbow of the Ranged Weapons Chart. Its damage is a flat pool; `range` is the short range in yards or meters. */
+export interface RangedWeapon extends WeaponBase {
+  readonly kind: 'ranged';
+  readonly range: number;
+  /** The most bullets or three-round bursts it fires in a turn. */
+  readonly rate: number;
+  /** The shells it holds; `chambered` is the chart's "+1": a bullet held in the chamber, ready to fire. */
+  readonly clip: number;
+  readonly chambered: boolean;
+  /** The chart's asterisk: capable of three-round bursts, full auto and sprays. */
+  readonly automatic: boolean;
+  /** The chart's example make and model, when it prints one. */
+  readonly example?: string;
+}
+
 /** A rulebook weapon; `kind` says which chart it is on. */
-export type Weapon = MeleeWeapon;
+export type Weapon = MeleeWeapon | RangedWeapon;
