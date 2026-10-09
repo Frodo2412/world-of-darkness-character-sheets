@@ -1,9 +1,12 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import EmptyState from './EmptyState.astro';
 import ReadOnlyHint from './ReadOnlyHint.astro';
 import ReferenceTable from './ReferenceTable.astro';
 import SectionHeading from './SectionHeading.astro';
+import SegmentedControl from './SegmentedControl.astro';
+import SelectableItem from './SelectableItem.astro';
 import TagChips from './TagChips.astro';
 
 type Component = Parameters<AstroContainer['renderToString']>[0];
@@ -92,5 +95,50 @@ describe('ReferenceTable', () => {
   it('can keep the caption for assistive technology only', async () => {
     const html = await render(ReferenceTable, { props: { ...props, captionHidden: true }, slots: { default: rows } });
     expect(html).toMatch(/<caption[^>]*class="visually-hidden"/);
+  });
+});
+
+describe('SegmentedControl', () => {
+  const props = {
+    label: 'Weapon type',
+    options: [
+      { value: 'all', label: 'All' },
+      { value: 'melee', label: 'Close combat' },
+    ],
+    pressed: 'melee',
+  };
+
+  it('is a named group of buttons, only the chosen one pressed', async () => {
+    const html = await render(SegmentedControl, { props });
+    expect(html).toContain('role="group"');
+    expect(html).toContain('aria-label="Weapon type"');
+    const buttons = html.match(/<button[^>]*>/g)!;
+    expect(buttons).toHaveLength(2);
+    expect(buttons[0]).toContain('aria-pressed="false"');
+    expect(buttons[1]).toContain('aria-pressed="true"');
+    expect(buttons[1]).toContain('data-value="melee"');
+  });
+
+  it('carries a text mark in each button, shown only on the pressed one', async () => {
+    const html = await render(SegmentedControl, { props });
+    expect(html.match(/dossier-segment-mark[^>]*>✓</g)).toHaveLength(2);
+    const css = readFileSync(new URL('../../styles/dossier.css', import.meta.url), 'utf8');
+    expect(css).toMatch(/\.dossier-segment\[aria-pressed='false'\] \.dossier-segment-mark[^{]*\{[^}]*visibility:\s*hidden/);
+  });
+});
+
+describe('SelectableItem', () => {
+  it('marks the current item with aria-current and a text mark', async () => {
+    const html = await render(SelectableItem, { props: { value: 'celerity', current: true }, slots: { default: 'Celerity' } });
+    expect(html).toMatch(/<button[^>]*aria-current="true"/);
+    expect(html).toContain('dossier-item-mark');
+    expect(html).toContain('▸');
+    expect(html).toContain('Celerity');
+  });
+
+  it('leaves aria-current off the others', async () => {
+    const html = await render(SelectableItem, { props: { value: 'auspex' }, slots: { default: 'Auspex' } });
+    expect(html).not.toContain('aria-current');
+    expect(html).toContain('data-value="auspex"');
   });
 });

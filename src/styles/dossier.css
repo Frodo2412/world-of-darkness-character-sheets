@@ -103,3 +103,64 @@
 	font-weight: 600;
 	color: var(--color-muted);
 }
+
+.dossier-segmented {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: var(--space-1);
+}
+
+.dossier-segment,
+.dossier-item-button {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	min-block-size: var(--control-compact);
+	min-inline-size: var(--control-compact);
+	padding: var(--space-1) var(--space-row);
+	font-size: var(--text-body);
+	background: var(--color-control);
+	border-radius: var(--radius-segment);
+}
+
+.dossier-segment[aria-pressed='true'],
+.dossier-item-button[aria-current='true'] {
+	font-weight: 600;
+	color: var(--color-text-strong);
+	background: var(--color-selected);
+	border-color: var(--color-focus);
+}
+
+/* The mark takes its room whether shown or not, so pressing a segment does not move its neighbours. */
+.dossier-segment-mark,
+.dossier-item-mark {
+	font-size: var(--text-small);
+}
+
+.dossier-segment[aria-pressed='false'] .dossier-segment-mark,
+.dossier-item-button:not([aria-current='true']) .dossier-item-mark {
+	visibility: hidden;
+}
+
+.dossier-item {
+	list-style: none;
+}
+
+.dossier-item-button {
+	inline-size: 100%;
+	justify-content: flex-start;
+	text-align: start;
+}
+
+/* A native <details> is the disclosure: its <summary> is a button to the keyboard and to assistive technology, and Enter and Space open it. */
+.dossier-disclosure > summary {
+	display: list-item;
+	min-block-size: var(--control-compact);
+	padding-block: var(--space-1);
+	cursor: pointer;
+}
+
+.dossier-disclosure[open] > summary {
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
