@@ -2,6 +2,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import EmptyState from './EmptyState.astro';
 import ReadOnlyHint from './ReadOnlyHint.astro';
+import ReferenceTable from './ReferenceTable.astro';
 import SectionHeading from './SectionHeading.astro';
 import TagChips from './TagChips.astro';
 
@@ -65,5 +66,31 @@ describe('EmptyState', () => {
     });
     expect(html).toContain('dossier-empty-action');
     expect(html).toContain('<button type="button">Add a note</button>');
+  });
+});
+
+describe('ReferenceTable', () => {
+  const rows = '<tr><th scope="row">Block</th><td>5</td></tr>';
+  const props = { caption: 'Melee manoeuvres', headings: ['Name', 'Pool'] };
+
+  it('names the table with a caption and scopes each heading to its column', async () => {
+    const html = await render(ReferenceTable, { props, slots: { default: rows } });
+    expect(html).toMatch(/<caption[^>]*>Melee manoeuvres<\/caption>/);
+    expect(html.match(/<th scope="col"/g)).toHaveLength(2);
+    expect(html).toContain('Block');
+  });
+
+  it('scrolls inside a labelled region the keyboard can reach', async () => {
+    const html = await render(ReferenceTable, { props, slots: { default: rows } });
+    expect(html).toMatch(/<div[^>]*class="dossier-table-scroll"[^>]*>/);
+    const region = html.match(/<div[^>]*class="dossier-table-scroll"[^>]*>/)![0];
+    expect(region).toContain('role="region"');
+    expect(region).toContain('aria-label="Melee manoeuvres"');
+    expect(region).toContain('tabindex="0"');
+  });
+
+  it('can keep the caption for assistive technology only', async () => {
+    const html = await render(ReferenceTable, { props: { ...props, captionHidden: true }, slots: { default: rows } });
+    expect(html).toMatch(/<caption[^>]*class="visually-hidden"/);
   });
 });
