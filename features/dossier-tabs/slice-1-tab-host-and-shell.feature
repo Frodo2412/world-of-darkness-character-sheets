@@ -26,3 +26,21 @@ Feature: The sheet's tab host
     Given no character is saved with the address's id
     When the sheet is opened with the tab name "combat"
     Then "Character not found" is shown
+
+  Scenario: A tab name that does not exist survives a reload and Back and Forward
+    Given a saved character
+    When its sheet is opened with the tab name "nonsense"
+    And the page is reloaded
+    Then the Character sheet is shown
+    When the player goes Back and then Forward
+    Then the Character sheet is shown
+    And no error is shown
+
+  Scenario: The Character sheet has no accessibility problems in play or edit mode
+    Given a saved character
+    When the Character sheet tab is scanned for accessibility problems
+    Then no problems are reported
+
+  Scenario: The Character sheet fits a 320 pixel screen
+    When the Character sheet tab is opened at 320 pixels wide with crowded content
+    Then the page does not scroll sideways

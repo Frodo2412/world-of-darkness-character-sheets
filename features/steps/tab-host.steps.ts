@@ -2,30 +2,23 @@ import { expect } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import { statusRegion } from './support/pages';
 import { rating, setRating } from './support/ratings';
-import { characterArranged, saveCharacters } from './support/seed';
+import { characterArranged } from './support/seed';
 import {
   card,
   doneButton,
   editButton,
-  enterEditMode,
   identityName,
   markDamage,
   openSavedSheet,
   traitButton,
 } from './support/sheet';
-import { openSheetAt, tabKeyOf, tabPanelOf } from './support/tabs';
+import { openSheetAt, tabPanelOf } from './support/tabs';
 
 const savedCharacter = (strength: number, brawl: number) =>
   characterArranged({ name: 'Marguerite', clan: 'Toreador' }, (character) => {
     character.attributes.strength = strength;
     character.abilities.brawl = brawl;
   });
-
-Given('a character in edit mode', async ({ page, memory }) => {
-  memory.saved = [savedCharacter(2, 1)];
-  await openSavedSheet(page, memory.saved[0]);
-  await enterEditMode(page);
-});
 
 Given('a character in play mode with Strength and Brawl selected', async ({ page, memory }) => {
   memory.saved = [savedCharacter(3, 2)];
@@ -59,11 +52,6 @@ Then('the Selected pool is announced with the wound subtracted', async ({ page }
 
 // Opening a sheet on a tab
 
-Given('a saved character', async ({ page, memory }) => {
-  memory.saved = [savedCharacter(2, 1)];
-  await saveCharacters(page, memory.saved);
-});
-
 Given("no character is saved with the address's id", async ({ page, memory }) => {
   memory.saved = [];
   await page.goto('/');
@@ -72,16 +60,21 @@ Given("no character is saved with the address's id", async ({ page, memory }) =>
 /** The id a scenario opens: the saved character's, or one nothing is saved under. */
 const addressedId = (memory: { saved: { id: string }[] }): string => memory.saved[0]?.id ?? 'no-such-character';
 
-When(/^the (.+) tab is opened$/, async ({ page, memory }, name: string) => {
-  await openSheetAt(page, addressedId(memory), tabKeyOf(name));
-});
-
 When('its sheet is opened with the tab name {string}', async ({ page, memory }, tab: string) => {
   await openSheetAt(page, addressedId(memory), tab);
 });
 
 When('the sheet is opened with the tab name {string}', async ({ page, memory }, tab: string) => {
   await openSheetAt(page, addressedId(memory), tab);
+});
+
+When('the page is reloaded', async ({ page }) => {
+  await page.reload();
+});
+
+When('the player goes Back and then Forward', async ({ page }) => {
+  await page.goBack();
+  await page.goForward();
 });
 
 // What the sheet shows
