@@ -3,6 +3,8 @@ import { blankCharacter, setTrait, type V20Character } from '../../domain/v20/ch
 import { createPool } from '../sheet/pool';
 import type { MountedTab, TabContext } from './context';
 import type { TabDescriptor } from './descriptor';
+import type { Observer } from '../sheet/observers/index';
+import type { Announce, Stamp } from './services';
 import { createShell, type ShellView } from './shell';
 import { showText } from './showText';
 
@@ -36,7 +38,14 @@ function recordingTab(
   return { descriptor, contexts };
 }
 
-function setup(descriptors: TabDescriptor[], log: string[], mode: { value: 'play' | 'edit' } = { value: 'play' }) {
+const stamp: Stamp = { newId: () => 'id-1', now: () => 1_000 };
+
+function setup(
+  descriptors: TabDescriptor[],
+  log: string[],
+  mode: { value: 'play' | 'edit' } = { value: 'play' },
+  extras: { observers?: Observer[]; announce?: Announce } = {},
+) {
   const saved: V20Character[] = [];
   const resources: boolean[] = [];
   const view: ShellView = {
@@ -54,11 +63,16 @@ function setup(descriptors: TabDescriptor[], log: string[], mode: { value: 'play
     rootOf: () => ({}) as HTMLElement,
     save: (character) => void saved.push(character),
     push: (key) => void log.push(`push:${key}`),
+    announce: extras.announce ?? (() => {}),
+    stamp,
+    observers: extras.observers ?? [],
+    pageRoot: page,
     view,
   });
   return { shell, saved, resources, mode };
 }
 
+const page = {} as HTMLElement;
 const strength = (character: V20Character) => setTrait(character, 'attributes.strength', 4);
 
 describe('the shell and a tab', () => {
@@ -190,6 +204,52 @@ describe('the shell and a tab', () => {
 
     showText(watched, 'Ada L');
     expect(writes).toEqual(['Ada L']);
+  });
+});
+
+describe('what the shell offers every tab', () => {
+  it('runs the observers after every draw, whatever tab is shown, with the page', async () => {
+    const log: string[] = [];
+    const seen: unknown[] = [];
+    const observer: Observer = {
+      afterRender: (character, root) => {
+        log.push('observer');
+        seen.push(root);
+      },
+    };
+    const sheet = recordingTab('sheet', log).descriptor;
+    const combat = recordingTab('combat', log).descriptor;
+    const { shell } = setup([sheet, combat], log, { value: 'play' }, { observers: [observer] });
+
+    await shell.switchTo('sheet');
+    shell.apply(strength);
+    await shell.switchTo('combat');
+    shell.apply(strength);
+
+    expect(log.filter((entry) => entry === 'observer' || entry.startsWith('view:after'))).toEqual([
+      'view:after:sheet',
+      'observer',
+      'view:after:sheet',
+      'observer',
+      'view:after:combat',
+      'observer',
+      'view:after:combat',
+      'observer',
+    ]);
+    expect(seen.every((root) => root === page)).toBe(true);
+  });
+
+  it('gives a tab the announcer and the stamp the page uses', async () => {
+    const log: string[] = [];
+    const said: string[] = [];
+    const { descriptor, contexts } = recordingTab('sheet', log);
+    const { shell } = setup([descriptor], log, { value: 'play' }, { announce: (text) => void said.push(text) });
+    await shell.switchTo('sheet');
+
+    contexts[0].announce('3 XP awarded. Available 8.');
+
+    expect(said).toEqual(['3 XP awarded. Available 8.']);
+    expect(contexts[0].stamp).toBe(stamp);
   });
 });
 

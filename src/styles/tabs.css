@@ -40,3 +40,14 @@
 .tab-link:focus-visible {
 	outline-offset: -3px;
 }
+
+/* The label the sheet puts in the application bar; nothing is drawn until something fills it. */
+.app-bar-label {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.app-bar-label:empty {
+	display: none;
+}

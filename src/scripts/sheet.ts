@@ -11,6 +11,7 @@ import {
 } from '../storage/characterStore';
 import { drawIdentity } from './sheet/identityCard';
 import { createMode, type Mode } from './sheet/mode';
+import { observers } from './sheet/observers/index';
 import { createPool } from './sheet/pool';
 import { announce, announceWound, drawResourceCards } from './sheet/resourceCards';
 import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
@@ -20,6 +21,7 @@ import { discoverTabs } from './tabs/discover';
 import { bindFields, drawFields } from './tabs/fields';
 import { createTabHistory } from './tabs/history';
 import { focusPanel, showPanel } from './tabs/panels';
+import { createAnnouncer, realStamp } from './tabs/services';
 import { createShell } from './tabs/shell';
 import { createTabBar, type TabBar } from './tabs/tabBar';
 
@@ -42,6 +44,9 @@ const stepperButtons = resourcesRow.querySelectorAll<HTMLButtonElement>('[data-s
 // not keep the marker, so a reload is play mode again.
 const EDIT_MARKER = '#edit';
 
+// The page's one polite live region: the mode change and the tabs both speak through it.
+const announceToPage = createAnnouncer(document.querySelector<HTMLElement>('#mode-announcement')!);
+
 function startMode(): Mode {
   const startsEditing = window.location.hash === EDIT_MARKER;
   if (startsEditing) {
@@ -49,7 +54,7 @@ function startMode(): Mode {
     url.hash = '';
     history.replaceState(null, '', url);
   }
-  return createMode(sheet, startsEditing ? 'edit' : 'play');
+  return createMode(sheet, startsEditing ? 'edit' : 'play', announceToPage);
 }
 
 function bindHealthTrack(apply: Apply): void {
@@ -89,6 +94,10 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
     rootOf: (key) => sheet.querySelector<HTMLElement>(`[data-tab-panel="${key}"]`)!,
     save: (character) => reportSave(store.save(character)),
     push: history.push,
+    announce: announceToPage,
+    stamp: realStamp,
+    observers,
+    pageRoot: sheet,
     view: {
       show(tab) {
         showPanel(sheet, tab.key);

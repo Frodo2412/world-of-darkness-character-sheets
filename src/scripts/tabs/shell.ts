@@ -1,8 +1,10 @@
 import type { V20Character } from '../../domain/v20/character';
 import type { SheetMode } from '../sheet/mode';
+import type { Observer } from '../sheet/observers/index';
 import type { Pool } from '../sheet/pool';
 import type { MountedTab, TabContext, Update } from './context';
 import type { TabDescriptor, TabKey } from './descriptor';
+import type { Announce, Stamp } from './services';
 
 /** The page the shell drives. Everything here is drawing; none of the shell's decisions are. */
 export interface ShellView {
@@ -29,6 +31,11 @@ export interface ShellOptions {
   save(character: V20Character): void;
   /** Records the tab in the address as a new history entry. */
   push(key: TabKey): void;
+  announce: Announce;
+  stamp: Stamp;
+  /** Modules that react to the character after every draw, on any tab, and the page they are given. */
+  observers: readonly Observer[];
+  pageRoot: HTMLElement;
   view: ShellView;
 }
 
@@ -61,6 +68,8 @@ export function createShell(options: ShellOptions): Shell {
     current: () => character,
     apply,
     openTab: open,
+    announce: options.announce,
+    stamp: options.stamp,
     poolSelection: () => pool.selection(),
     togglePool(row) {
       pool.toggle(row);
@@ -93,6 +102,7 @@ export function createShell(options: ShellOptions): Shell {
     const mode = options.mode();
     tab.render(character, mode);
     view.afterRender(character, mode, descriptors.get(activeKey!)!);
+    for (const observer of options.observers) observer.afterRender(character, options.pageRoot);
   }
 
   function apply(update: Update): V20Character {

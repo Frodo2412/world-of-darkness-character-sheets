@@ -1,3 +1,5 @@
+import type { Announce } from '../tabs/services';
+
 export type SheetMode = 'play' | 'edit';
 
 const ANNOUNCEMENT: Record<SheetMode, string> = {
@@ -16,10 +18,9 @@ export interface Mode {
  * `data-sheet-mode` on the sheet root; the stylesheet shows and hides the
  * `data-sheet-mode-only` elements from it. A press on any `data-mode-toggle`
  * button switches mode, moves focus to the `data-mode-focus` element for the
- * new mode, then says what changed.
+ * new mode, then says what changed through `announce`.
  */
-export function createMode(root: HTMLElement, start: SheetMode): Mode {
-  const announcer = root.ownerDocument.querySelector<HTMLElement>('#mode-announcement')!;
+export function createMode(root: HTMLElement, start: SheetMode, announce: Announce): Mode {
   const listeners: ((mode: SheetMode) => void)[] = [];
   let mode = start;
   root.dataset.sheetMode = mode;
@@ -29,7 +30,7 @@ export function createMode(root: HTMLElement, start: SheetMode): Mode {
     root.dataset.sheetMode = mode;
     for (const listener of listeners) listener(mode);
     root.querySelector<HTMLElement>(`[data-mode-focus="${mode}"]`)?.focus();
-    announcer.textContent = ANNOUNCEMENT[mode];
+    announce(ANNOUNCEMENT[mode]);
   }
 
   root.addEventListener('click', (event) => {

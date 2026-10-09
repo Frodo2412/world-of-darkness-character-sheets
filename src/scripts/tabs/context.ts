@@ -3,6 +3,7 @@ import type { PoolSelection } from '../../domain/v20/resources';
 import type { SheetMode } from '../sheet/mode';
 import type { PoolRow } from '../sheet/pool';
 import type { TabKey } from './descriptor';
+import type { Announce, Stamp } from './services';
 
 export type Update = (character: V20Character) => V20Character;
 
@@ -18,6 +19,10 @@ export interface TabContext {
   apply: Apply;
   /** Switches to another tab as the player would: a history entry, then focus in its panel. Resolves once it is shown. */
   openTab(key: TabKey): Promise<void>;
+  /** Says the text once, politely, to assistive technology. */
+  announce: Announce;
+  /** Makes ids and reads the clock. */
+  readonly stamp: Stamp;
   /** What is chosen for the dice pool now; a copy. */
   poolSelection(): PoolSelection;
   /** Chooses the row for the pool, or drops it when it is the chosen one, and redraws. */
