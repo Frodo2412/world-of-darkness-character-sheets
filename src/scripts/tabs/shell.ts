@@ -71,6 +71,10 @@ export function createShell(options: ShellOptions): Shell {
     announce: options.announce,
     stamp: options.stamp,
     poolSelection: () => pool.selection(),
+    selectPool(selection) {
+      pool.select(selection);
+      draw();
+    },
     togglePool(row) {
       pool.toggle(row);
       draw();

@@ -19,3 +19,6 @@ export function folded(text: string): string {
 export function caseFolded(text: string): string {
   return text.normalize('NFC').trim().toLowerCase();
 }
+
+/** A true minus sign (U+2212), for a wound and a penalty. */
+export const MINUS_SIGN = '−';

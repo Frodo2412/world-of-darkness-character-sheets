@@ -25,6 +25,8 @@ export interface TabContext {
   readonly stamp: Stamp;
   /** What is chosen for the dice pool now; a copy. */
   poolSelection(): PoolSelection;
+  /** Makes the attribute and ability the whole pool choice, and redraws. */
+  selectPool(selection: PoolSelection): void;
   /** Chooses the row for the pool, or drops it when it is the chosen one, and redraws. */
   togglePool(row: PoolRow): void;
 }

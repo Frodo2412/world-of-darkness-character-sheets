@@ -1,5 +1,4 @@
-/** A true minus sign (U+2212), for a wound and a penalty. */
-export const MINUS_SIGN = '−';
+export { MINUS_SIGN } from '../../domain/v20/text';
 
 /** Leave a matching attribute alone so a redraw does not restart what it drives. */
 export function setAttr(element: Element, name: string, value: string): void {

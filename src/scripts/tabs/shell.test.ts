@@ -336,6 +336,21 @@ describe('the pool the shell keeps for its tabs', () => {
     expect(ctx.poolSelection()).toEqual({});
   });
 
+  it('is set whole through the context by selectPool, and drawn', async () => {
+    const log: string[] = [];
+    const { descriptor, contexts } = recordingTab('sheet', log);
+    const { shell } = setup([descriptor], log);
+    await shell.switchTo('sheet');
+    const [ctx] = contexts;
+    ctx.togglePool('abilities.brawl');
+    log.length = 0;
+
+    ctx.selectPool({ attribute: 'attributes.dexterity', ability: 'abilities.melee' });
+
+    expect(ctx.poolSelection()).toEqual({ attribute: 'attributes.dexterity', ability: 'abilities.melee' });
+    expect(log).toContain('sheet:render:play');
+  });
+
   it('reaches the tab as a copy it cannot change the shell through', async () => {
     const log: string[] = [];
     const { descriptor, contexts } = recordingTab('sheet', log);
