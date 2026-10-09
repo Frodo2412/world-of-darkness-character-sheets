@@ -5,10 +5,12 @@ import EmptyState from './EmptyState.astro';
 import ReadOnlyHint from './ReadOnlyHint.astro';
 import ReferenceTable from './ReferenceTable.astro';
 import SearchField from './SearchField.astro';
+import SessionPrompt from './SessionPrompt.astro';
 import SectionHeading from './SectionHeading.astro';
 import SegmentedControl from './SegmentedControl.astro';
 import SelectableItem from './SelectableItem.astro';
 import TagChips from './TagChips.astro';
+import UndoNotice from './UndoNotice.astro';
 
 type Component = Parameters<AstroContainer['renderToString']>[0];
 
@@ -161,5 +163,40 @@ describe('SearchField', () => {
   it('has a polite region for the number of results', async () => {
     const html = await render(SearchField, { props: { id: 'q', label: 'Search' } });
     expect(html).toMatch(/<p[^>]*role="status"[^>]*data-search-count/);
+  });
+});
+
+describe('UndoNotice', () => {
+  it('reads "Removed <name>. Undo", with Undo a button, hidden until a removal is held', async () => {
+    const html = await render(UndoNotice, { props: { name: 'Allies' } });
+    expect(html.replace(/<!--.*?-->/g, '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()).toBe('Removed Allies. Undo');
+    expect(html).toMatch(/<button[^>]*type="button"[^>]*>Undo<\/button>/);
+    expect(html).toMatch(/<p[^>]*data-undo-notice[^>]*hidden/);
+  });
+
+  it('is not a live region, so removals are announced once, through the page announcer', async () => {
+    const html = await render(UndoNotice);
+    expect(html).not.toMatch(/role="(status|alert)"|aria-live/);
+  });
+});
+
+describe('SessionPrompt', () => {
+  it('says to start a session first and why', async () => {
+    const html = await render(SessionPrompt, { props: { id: 'journal' } });
+    expect(html).toMatch(/<h3[^>]*>Start a session first<\/h3>/);
+    expect(html).toContain('Notes, experience and level-ups are recorded in a session.');
+  });
+
+  it('has a labelled title field and a Start session button that submits', async () => {
+    const html = await render(SessionPrompt, { props: { id: 'journal' } });
+    expect(html).toMatch(/<label[^>]*for="journal-title"/);
+    expect(html).toMatch(/<input[^>]*id="journal-title"/);
+    expect(html).toMatch(/<button[^>]*type="submit"[^>]*>Start session<\/button>/);
+  });
+
+  it('is a form raising start-session through its script, named by its heading', async () => {
+    const html = await render(SessionPrompt, { props: { id: 'levelup' } });
+    expect(html).toMatch(/<form[^>]*data-session-prompt/);
+    expect(html).toContain('aria-labelledby="levelup-heading"');
   });
 });

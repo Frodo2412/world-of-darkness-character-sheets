@@ -1,0 +1,15 @@
+---
+import '../../styles/dossier.css';
+
+interface Props {
+	/** Who is named when the notice is drawn by the server; the script replaces it. */
+	name?: string;
+}
+
+const { name = '' } = Astro.props;
+---
+
+<!-- Not a live region of its own: whoever shows it says "Removed" and the name through the page's one announcer. Hidden until a removal is held. -->
+<p class="dossier-undo" data-undo-notice hidden>
+	Removed <span data-undo-name>{name}</span>. <button type="button" class="dossier-undo-button" data-undo-button>Undo</button>
+</p>
