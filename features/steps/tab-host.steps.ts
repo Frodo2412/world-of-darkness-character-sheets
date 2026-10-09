@@ -20,7 +20,7 @@ const savedCharacter = (strength: number, brawl: number) =>
     character.abilities.brawl = brawl;
   });
 
-Given('a character in play mode with Strength and Brawl selected', async ({ page, memory }) => {
+Given('a character in play mode with Strength and Brawl selected on the Character sheet tab', async ({ page, memory }) => {
   memory.saved = [savedCharacter(3, 2)];
   await openSavedSheet(page, memory.saved[0]);
   await traitButton(page, 'Strength').click();
@@ -95,18 +95,18 @@ Then('the Attributes and Abilities cards are shown', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Abilities', exact: true })).toBeVisible();
 });
 
-Then('the Character sheet is shown', async ({ page }) => {
+Then('the Character sheet tab is shown', async ({ page }) => {
   await expect(editButton(page)).toBeVisible();
   await expect(tabPanelOf(page, 'sheet')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Attributes', exact: true })).toBeVisible();
 });
 
-Then('no error is shown', async ({ page }) => {
+Then('no error is shown on the Character sheet tab', async ({ page }) => {
   await expect(statusRegion(page)).toBeHidden();
   await expect(page.getByRole('heading', { name: 'Character not found' })).toBeHidden();
   await expect(page.getByRole('heading', { name: 'Character could not be read' })).toBeHidden();
 });
 
-Then('{string} is shown', async ({ page }, text: string) => {
+Then('{string} is shown in place of the Character sheet tab', async ({ page }, text: string) => {
   await expect(page.getByRole('heading', { name: text, exact: true })).toBeVisible();
 });

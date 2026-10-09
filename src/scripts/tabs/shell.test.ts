@@ -361,6 +361,32 @@ describe('switches that overlap', () => {
   });
 });
 
+describe('a tab that draws text with showText', () => {
+  it('leaves an input that already shows the text alone on every redraw the shell asks for', async () => {
+    const writes: string[] = [];
+    let shown = 'Ada';
+    const input = {
+      get value() {
+        return shown;
+      },
+      set value(next: string) {
+        writes.push(next);
+        shown = next;
+      },
+    };
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log, { render: () => showText(input, 'Ada') }).descriptor;
+    const { shell, mode } = setup([sheet], log);
+    await shell.switchTo('sheet');
+
+    shell.apply(strength);
+    mode.value = 'edit';
+    shell.modeChanged();
+
+    expect(writes).toEqual([]);
+  });
+});
+
 describe('what the shell offers every tab', () => {
   it('runs the observers after every draw, whatever tab is shown, with the whole page and not the tab\'s panel', async () => {
     const log: string[] = [];

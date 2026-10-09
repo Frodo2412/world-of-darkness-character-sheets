@@ -9,8 +9,8 @@ Feature: The sheet's tab host
   Scenario: An unknown tab name falls back to the Character sheet
     Given a saved character
     When its sheet is opened with the tab name "nonsense"
-    Then the Character sheet is shown
-    And no error is shown
+    Then the Character sheet tab is shown
+    And no error is shown on the Character sheet tab
 
   Scenario: The Character sheet still works as before
     Given a character in edit mode
@@ -18,23 +18,23 @@ Feature: The sheet's tab host
     Then the sheet shows Strength 4 and it is still 4 after a reload
 
   Scenario: A wound re-announces the selected pool
-    Given a character in play mode with Strength and Brawl selected
+    Given a character in play mode with Strength and Brawl selected on the Character sheet tab
     When the player marks a Hurt wound
     Then the Selected pool is announced with the wound subtracted
 
   Scenario: A missing character is still reported
     Given no character is saved with the address's id
     When the sheet is opened with the tab name "combat"
-    Then "Character not found" is shown
+    Then "Character not found" is shown in place of the Character sheet tab
 
   Scenario: A tab name that does not exist survives a reload and Back and Forward
     Given a saved character
     When its sheet is opened with the tab name "nonsense"
     And the page is reloaded
-    Then the Character sheet is shown
+    Then the Character sheet tab is shown
     When the player goes Back and then Forward
-    Then the Character sheet is shown
-    And no error is shown
+    Then the Character sheet tab is shown
+    And no error is shown on the Character sheet tab
 
   Scenario: The Character sheet has no accessibility problems in play or edit mode
     Given a saved character

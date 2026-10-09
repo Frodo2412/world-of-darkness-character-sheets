@@ -34,7 +34,7 @@ export function mount(ctx: TabContext): MountedTab {
       if (drawnMode !== undefined && drawnMode !== mode) sayPool();
       drawnMode = mode;
     },
-    // A pool chosen elsewhere (or a wound taken meanwhile) is said again on arrival.
+    // A pool chosen elsewhere (or a wound taken meanwhile) is said on arrival; one the card already says stays silent.
     enter: sayPool,
     // The wound moves the pool's total: say the pool again so its status text matches its card.
     changed(before, after) {

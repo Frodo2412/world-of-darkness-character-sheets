@@ -10,7 +10,7 @@ Feature: Stored character data for the dossier tabs
     Given a saved character whose <field> data is damaged
     And another undamaged saved character
     When the damaged character's sheet is opened
-    Then "Character could not be read" is shown
+    Then "Character could not be read" is shown in place of the Character sheet tab
     And the damaged record is not changed
     And the roster still lists the other character
 

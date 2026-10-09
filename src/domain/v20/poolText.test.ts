@@ -32,9 +32,15 @@ describe('poolFormula', () => {
     expect(poolFormula(pool({}))).toBe('');
   });
 
-  it('writes the traits alone when the character is incapacitated, since the pool is 0 whatever they are', () => {
+  it('writes the traits alone for an incapacitated pool that carries no wound penalty, as dicePool gives one', () => {
     expect(poolFormula(pool({ attribute: dexterity, ability: brawl, total: 0, incapacitated: true }))).toBe(
       'Dexterity 3 + Brawl 1',
+    );
+  });
+
+  it('follows the wound penalty the pool carries, whether or not it is incapacitated', () => {
+    expect(poolFormula(pool({ attribute: dexterity, ability: brawl, woundPenalty: 1, total: 0, incapacitated: true }))).toBe(
+      'Dexterity 3 + Brawl 1 − wound 1',
     );
   });
 });
