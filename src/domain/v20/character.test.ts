@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
+  DOSSIER_FIELDS,
   activateRating,
   blankCharacter,
   cycleHealthBox,
@@ -29,6 +30,38 @@ import {
 
 describe('blankCharacter', () => {
   const character = blankCharacter('abc');
+
+  test('has every dossier field blank and nothing else new', () => {
+    const legacy = [
+      'id', 'system', 'schemaVersion', 'header', 'attributes', 'abilities', 'customAbilities',
+      'specialties', 'disciplines', 'backgrounds', 'virtues', 'humanity', 'willpower', 'bloodPool',
+      'health', 'weakness', 'experience', 'notes',
+    ];
+    expect(Object.keys(character).sort()).toEqual([...legacy, ...DOSSIER_FIELDS].sort());
+    expect(character.merits).toEqual([]);
+    expect(character.flaws).toEqual([]);
+    expect(character.otherTraits).toEqual([]);
+    expect(character.havens).toEqual([]);
+    expect(character.journal.sessions).toEqual([]);
+    expect(character.journal.notes).toEqual([]);
+    expect(character.journal.xp).toEqual({ awards: [], spendings: [] });
+    expect(character.journal.record.gear).toEqual([]);
+    expect(Object.values(character.journal.record.description)).toEqual(Array(8).fill(''));
+  });
+
+  test('keeps the schema version at 1', () => {
+    expect(character.schemaVersion).toBe(1);
+  });
+
+  test('round-trips through JSON unchanged', () => {
+    expect(JSON.parse(JSON.stringify(character))).toEqual(character);
+  });
+
+  test('gives each character its own lists', () => {
+    const other = blankCharacter('def');
+    expect(other.journal).not.toBe(character.journal);
+    expect(other.merits).not.toBe(character.merits);
+  });
 
   test('is a version 1 V20 character with the given id', () => {
     expect(character.id).toBe('abc');
@@ -666,7 +699,37 @@ describe('a fully filled-in character', () => {
     }
     character = setText(character, 'weakness', 'Casts no reflection');
     character = setText(character, 'experience', '12');
-    return setText(character, 'notes', 'one\ntwo\nthree');
+    character = setText(character, 'notes', 'one\ntwo\nthree');
+    return {
+      ...character,
+      merits: [{ name: 'Eidetic Memory', category: 'Mental', points: 2, note: 'Never forgets' }],
+      flaws: [{ name: 'Nightmares', category: 'Mental', points: 1, note: 'Every day' }],
+      otherTraits: [{ name: 'Fame', rating: 3, kind: 'Status', note: 'Local' }],
+      havens: [
+        { name: 'Cellar', kind: 'Primary', description: 'Damp', location: 'Under the bar', access: 'Key', security: 'Lock' },
+      ],
+      journal: {
+        sessions: [{ id: 's1', title: 'Prologue', summary: 'Begins', current: true }],
+        notes: [
+          { id: 'n1', sessionId: 's1', title: 'Clue', category: 'Clues', tags: ['bar'], pinned: true, body: 'Ask **Maria**', createdAt: 1, editedAt: 2 },
+        ],
+        xp: {
+          awards: [{ id: 'a1', sessionId: 's1', amount: 3, note: 'Good play' }],
+          spendings: [{ id: 'p1', sessionId: 's1', label: 'Brawl', kind: 'ability', from: 1, to: 2, cost: 2 }],
+        },
+        record: {
+          gear: [{ item: 'Knife', detail: 'Folding' }],
+          equipment: [{ item: 'Phone', detail: 'Burner' }],
+          bloodBonds: [{ name: 'Maria', relation: 'Regnant', rating: 1, type: 'Full' }],
+          derangements: [{ name: 'Fear', status: 'Active', note: 'Fire' }],
+          goals: [{ text: 'Survive', kind: 'Long term' }],
+          description: {
+            apparentAge: '30', dateOfBirth: '1990', rip: 'n/a', hair: 'Black', eyes: 'Green',
+            nationality: 'Mexican', heightWeight: '180 cm', sex: 'F',
+          },
+        },
+      },
+    };
   }
 
   test('differs from a blank character in every field', () => {

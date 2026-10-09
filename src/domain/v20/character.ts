@@ -26,12 +26,14 @@ import {
   type TraitRef,
   type VirtueKey,
 } from './traits';
+import type { BackgroundRow, Flaw, Haven, Merit, OtherTrait } from './dossier/types';
+import { blankJournal, type Journal } from './journal/types';
+import type { NamedRating } from './namedRating';
 
-/** A write-in row: the player supplies the trait's name as well as its rating. */
-export interface NamedRating {
-  name: string;
-  rating: number;
-}
+// The stored shapes live next to their families; re-exported so later slices never edit this file.
+export type { NamedRating } from './namedRating';
+export * from './dossier/types';
+export * from './journal/types';
 
 /** Page 1 of the V20 sheet. A record of what the player entered, not a rules check. */
 export interface V20Character {
@@ -45,7 +47,7 @@ export interface V20Character {
   /** What the player wrote as a trait's specialty; a trait without one has no entry. */
   specialties: Partial<Record<SpecialtyRef, string>>;
   disciplines: NamedRating[];
-  backgrounds: NamedRating[];
+  backgrounds: BackgroundRow[];
   virtues: Record<VirtueKey, number>;
   humanity: { pathName: string; rating: number; bearing: string; bearingModifier: string };
   willpower: { permanent: number; temporary: number };
@@ -54,7 +56,16 @@ export interface V20Character {
   weakness: string;
   experience: string;
   notes: string;
+  merits: Merit[];
+  flaws: Flaw[];
+  otherTraits: OtherTrait[];
+  havens: Haven[];
+  journal: Journal;
 }
+
+/** Every top-level field added for the dossier tabs; a record saved without one reads as its blank default. */
+export const DOSSIER_FIELDS = ['merits', 'flaws', 'otherTraits', 'havens', 'journal'] as const satisfies readonly (keyof V20Character)[];
+export type DossierField = (typeof DOSSIER_FIELDS)[number];
 
 function recordOf<K extends string, V>(keys: readonly K[], value: () => V): Record<K, V> {
   return Object.fromEntries(keys.map((key) => [key, value()])) as Record<K, V>;
@@ -90,6 +101,11 @@ export function blankCharacter(id: string): V20Character {
     weakness: '',
     experience: '',
     notes: '',
+    merits: [],
+    flaws: [],
+    otherTraits: [],
+    havens: [],
+    journal: blankJournal(),
   };
 }
 

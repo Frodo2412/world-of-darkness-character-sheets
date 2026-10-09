@@ -272,7 +272,7 @@ describe('characterStore with unreadable records', () => {
   });
 
   test('a record with fields this version does not know is still readable', () => {
-    const text = altered('a', (record) => (record.merits = ['Eidetic Memory']));
+    const text = altered('a', (record) => (record.armour = ['Plate']));
     const store = createCharacterStore(fakeStorage({ [KEY + 'a']: text }));
 
     expect(store.load('a')).toMatchObject({ status: 'found', character: { id: 'a' } });
