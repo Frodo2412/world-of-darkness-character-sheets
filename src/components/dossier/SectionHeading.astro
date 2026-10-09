@@ -1,0 +1,19 @@
+---
+import '../../styles/dossier.css';
+
+interface Props {
+	title: string;
+	/** Already worded ("3 entries", "2 points"); see `countLabel` in domain/v20/labels. */
+	count?: string;
+	level?: 2 | 3;
+	id?: string;
+}
+
+const { title, count, level = 2, id } = Astro.props;
+const Heading = level === 2 ? 'h2' : 'h3';
+---
+
+<div class="dossier-heading">
+	<Heading class="dossier-heading-title" id={id}>{title}</Heading>
+	{count !== undefined && <span class="dossier-heading-count">{count}</span>}
+</div>

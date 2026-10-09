@@ -1,0 +1,68 @@
+/* Parts the new tabs share. Every class here starts with `dossier-`; colours and sizes come from the
+   tokens in global.css. Text is at least --text-small (12px) and controls at least 24 x 24px. */
+
+.dossier-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	margin-block-end: var(--space-row);
+}
+
+/* The global heading rules (capitals, accent, an underline) are for the old pages. */
+.dossier-heading-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.dossier-heading-count,
+.dossier-hint {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: var(--leading-compact);
+	color: var(--color-muted);
+}
+
+.dossier-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-1);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dossier-chip {
+	padding: var(--space-1) var(--space-2);
+	min-block-size: 1.5rem;
+	font-size: var(--text-small);
+	line-height: var(--leading-compact);
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
+}
+
+.dossier-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--space-2);
+	padding: var(--space-card);
+	background: var(--color-row);
+	border: var(--stroke) dashed var(--color-border-control);
+	border-radius: var(--radius-card);
+}
+
+.dossier-empty-message {
+	margin: 0;
+	font-size: var(--text-body);
+	color: var(--color-muted);
+}
