@@ -14,8 +14,8 @@ import { createMode, type Mode } from './sheet/mode';
 import { createPool } from './sheet/pool';
 import { announce, announceWound, drawResourceCards } from './sheet/resourceCards';
 import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
+import { tabFromUrl } from './tabs/address';
 import type { Apply } from './tabs/context';
-import { SHEET_KEY } from './tabs/descriptor';
 import { discoverTabs } from './tabs/discover';
 import { bindFields, drawFields } from './tabs/fields';
 import { createShell } from './tabs/shell';
@@ -109,7 +109,7 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
   });
 
   mode.onChange(() => shell.modeChanged());
-  await shell.switchTo(SHEET_KEY);
+  await shell.switchTo(tabFromUrl(new URL(window.location.href), tabs.map((tab) => tab.key)));
   sheet.hidden = false;
 }
 

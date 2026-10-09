@@ -1,15 +1,19 @@
 import { expect } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
+import { statusRegion } from './support/pages';
 import { rating, setRating } from './support/ratings';
-import { characterArranged } from './support/seed';
+import { characterArranged, saveCharacters } from './support/seed';
 import {
+  card,
   doneButton,
   editButton,
   enterEditMode,
+  identityName,
   markDamage,
   openSavedSheet,
   traitButton,
 } from './support/sheet';
+import { openSheetAt, tabKeyOf, tabPanelOf } from './support/tabs';
 
 const savedCharacter = (strength: number, brawl: number) =>
   characterArranged({ name: 'Marguerite', clan: 'Toreador' }, (character) => {
@@ -51,4 +55,65 @@ Then('the sheet shows Strength 4 and it is still 4 after a reload', async ({ pag
 
 Then('the Selected pool is announced with the wound subtracted', async ({ page }) => {
   await expect(page.locator('[data-live="pool"]')).toHaveText('Dice pool: Strength 3 + Brawl 2 − wound 1, 4 dice');
+});
+
+// Opening a sheet on a tab
+
+Given('a saved character', async ({ page, memory }) => {
+  memory.saved = [savedCharacter(2, 1)];
+  await saveCharacters(page, memory.saved);
+});
+
+Given("no character is saved with the address's id", async ({ page, memory }) => {
+  memory.saved = [];
+  await page.goto('/');
+});
+
+/** The id a scenario opens: the saved character's, or one nothing is saved under. */
+const addressedId = (memory: { saved: { id: string }[] }): string => memory.saved[0]?.id ?? 'no-such-character';
+
+When(/^the (.+) tab is opened$/, async ({ page, memory }, name: string) => {
+  await openSheetAt(page, addressedId(memory), tabKeyOf(name));
+});
+
+When('its sheet is opened with the tab name {string}', async ({ page, memory }, tab: string) => {
+  await openSheetAt(page, addressedId(memory), tab);
+});
+
+When('the sheet is opened with the tab name {string}', async ({ page, memory }, tab: string) => {
+  await openSheetAt(page, addressedId(memory), tab);
+});
+
+// What the sheet shows
+
+Then(
+  "the character's name, the mode toggle, the save status and the resources row are shown",
+  async ({ page, memory }) => {
+    await expect(identityName(page)).toHaveText(memory.saved[0].header.name);
+    await expect(editButton(page)).toBeVisible();
+    // The application bar's status is written by the first save, so before one it is there but empty.
+    await expect(page.locator('.app-bar #save-status')).toBeAttached();
+    for (const name of ['Blood Pool', 'Willpower', 'Health', 'Humanity']) await expect(card(page, name)).toBeVisible();
+  },
+);
+
+Then('the Attributes and Abilities cards are shown', async ({ page }) => {
+  await expect(page.getByRole('heading', { name: 'Attributes', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Abilities', exact: true })).toBeVisible();
+});
+
+Then('the Character sheet is shown', async ({ page }) => {
+  await expect(editButton(page)).toBeVisible();
+  await expect(tabPanelOf(page, 'sheet')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Attributes', exact: true })).toBeVisible();
+});
+
+Then('no error is shown', async ({ page }) => {
+  await expect(statusRegion(page)).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Character not found' })).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Character could not be read' })).toBeHidden();
+});
+
+Then('{string} is shown', async ({ page }, text: string) => {
+  await expect(page.getByRole('heading', { name: text, exact: true })).toBeVisible();
 });
