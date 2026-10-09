@@ -15,6 +15,17 @@ export interface Power {
   readonly name: string;
   readonly roll?: readonly [AttributeKey, AbilityKey];
   readonly note?: string;
+  /** What activating it spends, as V20 chapter four states it; "None" when the entry spends nothing. */
+  readonly cost?: string;
+  readonly duration?: string;
+  /** The Discipline level that unlocks it, e.g. "Presence 1". */
+  readonly prerequisite?: string;
+  /** The difficulty or the resisting roll, as the System entry states it. */
+  readonly difficulty?: string;
+  /** One sentence of the book's description of what the power does. */
+  readonly summary?: string;
+  /** The V20 page where the power's entry begins. */
+  readonly page?: number;
 }
 
 export interface DisciplineEntry {

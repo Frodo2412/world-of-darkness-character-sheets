@@ -34,6 +34,60 @@ describe('DISCIPLINE_CATALOGUE', () => {
   });
 });
 
+const RULE_FIELDS = ['cost', 'duration', 'prerequisite', 'difficulty', 'summary'] as const;
+
+/** The Disciplines whose rule fields have been read from V20 chapter four. */
+const EXTRACTED = ['Presence'];
+
+const extractedEntries = () => DISCIPLINE_CATALOGUE.filter((entry) => EXTRACTED.includes(entry.name));
+
+describe('Discipline rule data', () => {
+  test('Presence has five powers, in level order', () => {
+    const presence = DISCIPLINE_CATALOGUE.find((entry) => entry.name === 'Presence');
+
+    expect(presence?.powers.map((power) => power.name)).toEqual(['Awe', 'Dread Gaze', 'Entrancement', 'Summon', 'Majesty']);
+  });
+
+  test("Awe's fields are as the book states them", () => {
+    const awe = DISCIPLINE_CATALOGUE.find((entry) => entry.name === 'Presence')?.powers[0];
+
+    expect(awe).toMatchObject({
+      roll: ['charisma', 'performance'],
+      cost: '1 blood point',
+      duration: 'Remainder of the scene or until the character chooses to drop it',
+      prerequisite: 'Presence 1',
+      difficulty: '7',
+      page: 193,
+    });
+    expect(awe?.summary).toMatch(/^Those near the vampire suddenly desire to be closer/);
+  });
+
+  test('a field the book does not state is undefined, never an empty string', () => {
+    for (const entry of DISCIPLINE_CATALOGUE) {
+      for (const power of entry.powers) {
+        for (const field of RULE_FIELDS) {
+          const value = power[field];
+          if (value !== undefined) expect(value.trim(), `${entry.name} ${power.name} ${field}`).not.toBe('');
+        }
+      }
+    }
+    const dreadGaze = DISCIPLINE_CATALOGUE.find((entry) => entry.name === 'Presence')?.powers[1];
+    expect(Object.keys(dreadGaze ?? {})).not.toContain('duration');
+  });
+
+  test('every power read from the book has a page in chapter four and names its Discipline and level', () => {
+    for (const entry of extractedEntries()) {
+      entry.powers.forEach((power, index) => {
+        const label = `${entry.name} ${power.name}`;
+        expect(Number.isInteger(power.page), label).toBe(true);
+        expect(power.page, label).toBeGreaterThanOrEqual(126);
+        expect(power.page, label).toBeLessThanOrEqual(243);
+        expect(power.prerequisite, label).toBe(`${entry.name} ${index + 1}`);
+      });
+    }
+  });
+});
+
 describe('disciplineReadings', () => {
   test('lists the powers a rating reaches, in level order, each with its dice pool', () => {
     let character = withDisciplines({ name: 'Presence', rating: 3 });
