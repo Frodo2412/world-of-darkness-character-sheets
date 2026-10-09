@@ -3,14 +3,17 @@
 
 import { currentSession } from '../journal/sessions';
 import type { Stamp } from '../journal/stamp';
-import type { Journal, Spending } from '../journal/types';
+import type { Award, Journal, Spending } from '../journal/types';
 
 /** What a spending records about the trait that was raised. */
 export type SpendingEntry = Omit<Spending, 'id' | 'sessionId'>;
 
+/** What an award records: the session it was earned in, how much, and why. */
+export type AwardEntry = Omit<Award, 'id'>;
+
 /** Records experience earned in a session; a negative amount takes experience back. */
-export function awardXp(journal: Journal, sessionId: string, amount: number, note: string, stamp: Stamp): Journal {
-  const award = { id: stamp.newId(), sessionId, amount, note };
+export function awardXp(journal: Journal, entry: AwardEntry, stamp: Stamp): Journal {
+  const award: Award = { ...entry, id: stamp.newId() };
   return { ...journal, xp: { ...journal.xp, awards: [...journal.xp.awards, award] } };
 }
 

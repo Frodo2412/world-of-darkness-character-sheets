@@ -17,8 +17,8 @@ describe('experienceTotals', () => {
   test('sums awards and spendings', () => {
     let journal = withSession();
     const session = sessionOf(journal);
-    journal = awardXp(journal, session, 3, 'Good play', stamp);
-    journal = awardXp(journal, session, 5, 'Finale', stamp);
+    journal = awardXp(journal, { sessionId: session, amount: 3, note: 'Good play' }, stamp);
+    journal = awardXp(journal, { sessionId: session, amount: 5, note: 'Finale' }, stamp);
     journal = recordSpending(journal, session, brawl, stamp);
 
     expect(experienceTotals(journal)).toEqual({ earned: 8, spent: 2, available: 6, thisSession: 8 });
@@ -26,17 +26,17 @@ describe('experienceTotals', () => {
 
   test('a negative award subtracts', () => {
     let journal = withSession();
-    journal = awardXp(journal, sessionOf(journal), 5, '', stamp);
-    journal = awardXp(journal, sessionOf(journal), -2, 'Correction', stamp);
+    journal = awardXp(journal, { sessionId: sessionOf(journal), amount: 5, note: '' }, stamp);
+    journal = awardXp(journal, { sessionId: sessionOf(journal), amount: -2, note: 'Correction' }, stamp);
 
     expect(experienceTotals(journal)).toMatchObject({ earned: 3, available: 3 });
   });
 
   test('this session counts only the current session', () => {
     let journal = withSession();
-    journal = awardXp(journal, sessionOf(journal), 4, '', stamp);
+    journal = awardXp(journal, { sessionId: sessionOf(journal), amount: 4, note: '' }, stamp);
     journal = startSession(journal, 'Second', stamp);
-    journal = awardXp(journal, sessionOf(journal), 1, '', stamp);
+    journal = awardXp(journal, { sessionId: sessionOf(journal), amount: 1, note: '' }, stamp);
 
     expect(experienceTotals(journal)).toMatchObject({ earned: 5, thisSession: 1 });
     expect(experienceTotals(makeCurrent(journal, journal.sessions[0].id))).toMatchObject({ thisSession: 4 });
@@ -44,14 +44,14 @@ describe('experienceTotals', () => {
 
   test('available goes negative and is reported as such', () => {
     let journal = withSession();
-    journal = awardXp(journal, sessionOf(journal), 1, '', stamp);
+    journal = awardXp(journal, { sessionId: sessionOf(journal), amount: 1, note: '' }, stamp);
     journal = recordSpending(journal, sessionOf(journal), { ...brawl, cost: 4 }, stamp);
 
     expect(experienceTotals(journal).available).toBe(-3);
   });
 
   test('records for a session that no longer exists still count', () => {
-    let journal = awardXp(blankJournal(), 'gone', 6, '', stamp);
+    let journal = awardXp(blankJournal(), { sessionId: 'gone', amount: 6, note: '' }, stamp);
     journal = recordSpending(journal, 'gone', brawl, stamp);
 
     expect(experienceTotals(journal)).toEqual({ earned: 6, spent: 2, available: 4, thisSession: 0 });
@@ -62,7 +62,7 @@ describe('awardXp and recordSpending', () => {
   test('append records with their session, a new id and the entry', () => {
     let journal = withSession();
     const session = sessionOf(journal);
-    journal = awardXp(journal, session, 3, 'Good play', stamp);
+    journal = awardXp(journal, { sessionId: session, amount: 3, note: 'Good play' }, stamp);
     journal = recordSpending(journal, session, brawl, stamp);
 
     expect(journal.xp.awards).toEqual([{ id: expect.any(String), sessionId: session, amount: 3, note: 'Good play' }]);
@@ -74,7 +74,7 @@ describe('awardXp and recordSpending', () => {
     const before = withSession();
     const snapshot = structuredClone(before);
 
-    awardXp(before, sessionOf(before), 3, '', stamp);
+    awardXp(before, { sessionId: sessionOf(before), amount: 3, note: '' }, stamp);
     recordSpending(before, sessionOf(before), brawl, stamp);
 
     expect(before).toEqual(snapshot);
@@ -99,7 +99,7 @@ describe('removeSpendings', () => {
   });
 
   test('leaves awards alone', () => {
-    const journal = awardXp(withSession(), 'x', 3, '', stamp);
+    const journal = awardXp(withSession(), { sessionId: 'x', amount: 3, note: '' }, stamp);
 
     expect(removeSpendings(journal, ['any']).xp.awards).toEqual(journal.xp.awards);
   });
@@ -112,7 +112,7 @@ describe('over random ledgers', () => {
     for (let step = 0; step < count; step += 1) {
       const pick = random();
       if (pick < 0.15) journal = startSession(journal, '', stamp);
-      else if (pick < 0.6) journal = awardXp(journal, sessionOf(journal), Math.floor(random() * 21) - 5, '', stamp);
+      else if (pick < 0.6) journal = awardXp(journal, { sessionId: sessionOf(journal), amount: Math.floor(random() * 21) - 5, note: '' }, stamp);
       else journal = recordSpending(journal, sessionOf(journal), { ...brawl, cost: Math.floor(random() * 15) }, stamp);
     }
     return journal;

@@ -2,7 +2,9 @@ import { expect } from '@playwright/test';
 import { DOSSIER_FIELDS, type DossierField, type V20Character } from '../../src/domain/v20/character';
 import { BACKGROUNDS } from '../../src/domain/v20/creation/rules';
 import { Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
-import { startBuild, openStep } from './support/builder';
+import type { BuildTraitRef } from '../../src/domain/v20/creation/build';
+import { freebie, play } from '../../src/domain/v20/creation/testing/play';
+import { buildWith, openBuildId, openSavedBuild, openStep } from './support/builder';
 import { entryNamed, listedNames, openRoster, openSheetOf, sheetAddress, statusRegion, unreadableEntries } from './support/pages';
 import { rating, setRating } from './support/ratings';
 import { characterArranged, characterWith, saveCharacters } from './support/seed';
@@ -23,6 +25,9 @@ const dossierData = (memory: ScenarioMemory): DossierData =>
   memoryFor<DossierData>({ memory }, 'dossier-data', () => ({ listedBefore: [] }));
 
 const NAME = 'Marguerite';
+
+/** The most Backgrounds a build accepts. */
+const MAX_BUILD_BACKGROUNDS = 6;
 
 /** A record as it was saved before the dossier fields existed: the same record without them. */
 function asSavedBeforeTheDossier(character: V20Character): string {
@@ -135,9 +140,19 @@ Then('the character is listed and its sheet opens', async ({ page, memory }) => 
   await expect(page.getByRole('heading', { name: 'Character could not be read' })).toBeHidden();
 });
 
-Then('a build of that character in the builder reports progress without error', async ({ page }) => {
-  await startBuild(page);
+// The builder opens builds, which are stored apart from characters: a character's own id is a
+// "Build not found" there, and a build refuses more than six Backgrounds. So the character is taken
+// through the creator as a build that carries its id, name, clan and as many of its Backgrounds as
+// a build can hold, and that build is what is opened.
+Then('a build of that character in the builder reports progress without error', async ({ page, memory }) => {
+  const { id, header, backgrounds } = memory.saved[0];
+  const build = play(
+    { ...buildWith({ concept: { name: header.name }, clan: header.clan }), id },
+    ...backgrounds.slice(0, MAX_BUILD_BACKGROUNDS).map(({ name: background }) => freebie(`background:${background}` as BuildTraitRef, 1)),
+  );
+  await openSavedBuild(page, build);
+  expect(openBuildId(page)).toBe(id);
   await openStep(page, 'Finishing touches');
-  await expect(page.locator('[data-outstanding-list] li').filter({ hasText: 'Choose a clan' })).toBeVisible();
+  await expect(page.locator('[data-outstanding-list]')).toBeVisible();
   await expect(statusRegion(page)).toBeHidden();
 });

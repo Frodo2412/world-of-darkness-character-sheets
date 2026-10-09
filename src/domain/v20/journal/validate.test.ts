@@ -48,6 +48,21 @@ describe('validJournal', () => {
     expect(validJournal(damaged)).toBe(false);
   });
 
+  test.each([
+    ['no session current', [{ ...session, current: false }]],
+    ['two sessions current', [session, { ...session, id: 's2' }]],
+  ])('rejects sessions with %s', (_description, sessions) => {
+    const damaged = journal();
+    damaged.sessions = sessions;
+    expect(validJournal(damaged)).toBe(false);
+  });
+
+  test('accepts several sessions with exactly one current', () => {
+    const several = journal();
+    several.sessions = [{ ...session, current: false }, { ...session, id: 's2' }];
+    expect(validJournal(several)).toBe(true);
+  });
+
   test('rejects a value that is not an object', () => {
     expect(validJournal([])).toBe(false);
     expect(validJournal(undefined)).toBe(false);

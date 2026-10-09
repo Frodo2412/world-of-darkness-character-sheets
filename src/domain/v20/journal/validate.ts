@@ -5,6 +5,10 @@ import { isFlag, isNumber, isText, listOf, objectOf, type Check } from '../shape
 
 const session = objectOf({ id: isText, title: isText, summary: isText, current: isFlag });
 
+/** Once any session exists, exactly one is current; a list that breaks this is damaged, not repaired. */
+const oneCurrent: Check = (value) =>
+  !Array.isArray(value) || value.length === 0 || value.filter((entry) => entry.current === true).length === 1;
+
 const note = objectOf({
   id: isText,
   sessionId: isText,
@@ -43,7 +47,7 @@ const description = objectOf({
 });
 
 export const validJournal: Check = objectOf({
-  sessions: listOf(session),
+  sessions: (value) => listOf(session)(value) && oneCurrent(value),
   notes: listOf(note),
   xp: objectOf({ awards: listOf(award), spendings: listOf(spending) }),
   record: objectOf({
