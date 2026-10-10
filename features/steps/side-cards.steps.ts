@@ -202,11 +202,13 @@ Then('no Discipline name field or rating control is offered', async ({ page }) =
 
 // Backgrounds
 
+// The Character sheet tab: the Backgrounds tab is a tab of its own now, and is named for them.
 Then('there is no field for any Background', async ({ page }) => {
-  await expect(page.getByLabel(/Background/)).toHaveCount(0);
-  await expect(page.getByRole('textbox', { name: /Background/ })).toHaveCount(0);
-  await expect(page.getByRole('slider', { name: /Background/ })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: /Background/ })).toHaveCount(0);
+  const sheetTab = page.locator('[data-tab-panel="sheet"]');
+  await expect(sheetTab.getByLabel(/Background/)).toHaveCount(0);
+  await expect(sheetTab.getByRole('textbox', { name: /Background/ })).toHaveCount(0);
+  await expect(sheetTab.getByRole('slider', { name: /Background/ })).toHaveCount(0);
+  await expect(sheetTab.getByRole('heading', { name: /Background/ })).toHaveCount(0);
 });
 
 // Virtues

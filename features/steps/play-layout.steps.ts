@@ -152,6 +152,8 @@ Then('no text on the sheet is wider than the element that holds it', async ({ pa
         // Inline boxes have no width of their own; a box a pixel wide is one hidden on purpose.
         return display !== 'inline' && display !== 'contents' && element.clientWidth > 1 && element.checkVisibility();
       })
+      // The tab bar scrolls sideways inside itself by design when there are more tabs than fit.
+      .filter((element) => !element.closest('.tab-bar'))
       // A text field scrolls a value longer than itself by design; its box is checked below instead.
       .filter((element) => !(element instanceof HTMLInputElement) && element.scrollWidth > element.clientWidth)
       .map((element) => `${element.tagName.toLowerCase()}.${element.className}`),
