@@ -18,6 +18,11 @@ export function showStatus(text: string): void {
   region.hidden = false;
 }
 
+/** Shows `text` only if no message is showing: puts a message back that another one had replaced. */
+export function showStatusIfClear(text: string): void {
+  if (region.hidden) showStatus(text);
+}
+
 export function clearStatus(): void {
   region.hidden = true;
   region.textContent = '';

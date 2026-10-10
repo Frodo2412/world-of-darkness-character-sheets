@@ -131,9 +131,19 @@ export function createShell(options: ShellOptions): Shell {
    */
   function draw(): void {
     if (activeKey === undefined) return;
-    const mode = options.mode();
-    active()?.render(character, mode);
-    view.afterRender(character, mode, descriptors.get(activeKey!)!);
+    renderActive();
+    drawShell();
+  }
+
+  /** The active tab's own drawing. */
+  function renderActive(): void {
+    active()?.render(character, options.mode());
+  }
+
+  /** What belongs to the shell itself, after the tab: its own parts and the page's observers. */
+  function drawShell(): void {
+    if (activeKey === undefined) return;
+    view.afterRender(character, options.mode(), descriptors.get(activeKey)!);
     for (const observer of options.observers) observer.afterRender(character, options.pageRoot);
   }
 
@@ -169,15 +179,23 @@ export function createShell(options: ShellOptions): Shell {
     if (thisSwitch !== latestSwitch) return;
     try {
       mounted.enter?.();
-      draw();
-    } catch {
+      renderActive();
+    } catch (error) {
       // Not shown, but still mounted: choosing it again enters and draws it again, without mounting it twice.
+      console.error(error);
       broken.add(key);
+      try {
+        mounted.leave?.();
+      } catch {
+        // A tab that cannot leave cleanly is already reported as failed.
+      }
       failed(tab);
       return;
     }
     broken.delete(key);
     shownKey = key;
+    // The shell's own drawing is not the tab's: a throw there is not blamed on a healthy tab.
+    drawShell();
   }
 
   /** The tab could not be loaded: go back to the tab that was last shown if there was one, and say so. */

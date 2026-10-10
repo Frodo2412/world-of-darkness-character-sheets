@@ -14,7 +14,7 @@ import { createMode, type Mode } from './sheet/mode';
 import { observers } from './sheet/observers/index';
 import { createPool } from './sheet/pool';
 import { announce, announceWound, drawResourceCards } from './sheet/resourceCards';
-import { STORAGE_UNAVAILABLE, clearStatusIf, reportSave, showStatus } from './status';
+import { STORAGE_UNAVAILABLE, clearStatusIf, reportSave, showStatus, showStatusIfClear } from './status';
 import { hrefFor, titleFor } from './tabs/address';
 import type { Apply } from './tabs/context';
 import { discoverTabs } from './tabs/discover';
@@ -110,7 +110,11 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
     mode: mode.current,
     pool: createPool(),
     rootOf: (key) => sheet.querySelector<HTMLElement>(`[data-tab-panel="${key}"]`)!,
-    save: (character) => reportSave(store.save(character)),
+    save(character) {
+      reportSave(store.save(character));
+      // A refused save may have replaced the tab-failure message; once it is gone that message is still true.
+      if (tabFailureText !== undefined) showStatusIfClear(tabFailureText);
+    },
     push: history.push,
     announce: announceToPage,
     stamp: realStamp,
