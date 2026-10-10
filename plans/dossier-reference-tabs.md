@@ -753,7 +753,7 @@ This section is the machine-parseable recovery handle.
   - [x] Step 7.3: Havens
   - [x] Step 7.4: Merits and Flaws with totals
   - [x] Step 7.5: Other traits, notes card and section index
-  - [ ] Step 7.6: Editing, adding, removing and undo
+  - [x] Step 7.6: Editing, adding, removing and undo
   - [ ] Step 7.7: Accessibility and narrow screens
 - [ ] Slice 8: Combat tab
   - [ ] Step 8.1: Pools

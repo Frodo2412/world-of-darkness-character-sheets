@@ -17,12 +17,20 @@ function drawCard(item: HTMLElement, card: PointCard): void {
 }
 
 /** Makes the list hold the entries, one element each; a Merit and a Flaw are drawn the same way. */
-export function drawMeritsFlaws(list: HTMLElement, cards: readonly PointCard[], template: HTMLTemplateElement): void {
+export function drawMeritsFlaws(
+  list: HTMLElement,
+  cards: readonly PointCard[],
+  template: HTMLTemplateElement,
+  edit: (item: HTMLElement, card: PointCard) => void,
+): void {
   reconcile(
     list,
     cards,
     (card) => String(card.index),
     () => cloneOf(template),
-    drawCard,
+    (item, card) => {
+      drawCard(item, card);
+      edit(item, card);
+    },
   );
 }

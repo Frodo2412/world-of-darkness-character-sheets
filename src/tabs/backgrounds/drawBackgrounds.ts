@@ -46,12 +46,20 @@ function drawCard(item: HTMLElement, card: BackgroundCard, templates: Background
 }
 
 /** Makes the list hold the cards, one element each, kept from one draw to the next. */
-export function drawBackgrounds(list: HTMLElement, cards: readonly BackgroundCard[], templates: BackgroundTemplates): void {
+export function drawBackgrounds(
+  list: HTMLElement,
+  cards: readonly BackgroundCard[],
+  templates: BackgroundTemplates,
+  edit: (item: HTMLElement, card: BackgroundCard) => void,
+): void {
   reconcile(
     list,
     cards,
     (card) => String(card.index),
     () => cloneOf(templates.background),
-    (item, card) => drawCard(item, card, templates),
+    (item, card) => {
+      drawCard(item, card, templates);
+      edit(item, card);
+    },
   );
 }

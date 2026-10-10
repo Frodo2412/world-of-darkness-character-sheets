@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { memoryFor, type ScenarioMemory } from '../fixtures';
 import type { V20Character } from '../../../src/domain/v20/character';
 import type { Haven, HavenKind, Merit, MeritCategory, OtherTrait, Person } from '../../../src/domain/v20/dossier/types';
 import { characterArranged, saveCharacters } from './seed';
@@ -13,8 +14,17 @@ const NAME = 'Marguerite';
 /** The names the scenarios' unnamed-by-the-scenario backgrounds take, in the order of the rows. */
 const BACKGROUND_NAMES = ['Allies', 'Contacts', 'Herd', 'Resources', 'Retainers', 'Status', 'Fame', 'Mentor'];
 
+/** "the second being ..." names the row a background goes in. */
+const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'];
+
 const COUNTS: Record<string, number> = { a: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8 };
 export const countOf = (word: string): number => COUNTS[word.toLowerCase()];
+
+/** The kind of entry a section holds, by the name a scenario gives the section. */
+const KINDS: Record<string, string> = { Havens: 'haven', Merits: 'merit', Flaws: 'flaw', 'Other traits': 'other trait' };
+
+/** The section a kind of entry is listed in. */
+const SECTION_OF: Record<string, string> = { haven: 'Havens', merit: 'Merits', flaw: 'Flaws', 'other trait': 'Other traits' };
 
 /** The sections of the tab by the name a scenario gives them, and the key the panel's markup gives each. */
 const SECTIONS: Record<string, string> = {
@@ -61,12 +71,26 @@ const ENTRY_NAMES = {
   'other trait': ['Languages', 'Hobby', 'Pet'],
 };
 
-/** Adds the `place`th entry of the kind a scenario counts ("two havens", "three other traits"). */
-function addCounted(character: V20Character, kind: string, place: number): void {
-  const name = ENTRY_NAMES[kind as keyof typeof ENTRY_NAMES][place];
+/** The Merits or the Flaws of the character. */
+const pointedList = (character: V20Character, kind: string): Merit[] => (kind === 'merit' ? character.merits : character.flaws);
+
+/** Adds the `place`th entry of the kind a scenario counts ("two havens", "three other traits"), under `called` when given. */
+function addCounted(character: V20Character, kind: string, place: number, called?: string): void {
+  const name = called ?? ENTRY_NAMES[kind as keyof typeof ENTRY_NAMES][place];
   if (kind === 'haven') character.havens.push(havenOf('Other', name, ''));
   else if (kind === 'other trait') character.otherTraits.push({ name, kind: '', note: '' });
   else (kind === 'merit' ? character.merits : character.flaws).push({ name, category: 'Physical', points: 1, note: '' });
+}
+
+/** Adds an entry of the kind with every field it has filled in, so that putting it back can be checked field by field. */
+function fillEntry(character: V20Character, kind: string, name: string): void {
+  if (kind === 'haven') {
+    character.havens.push({ name, kind: 'Secondary', description: 'A glassed-in greenhouse', location: 'Quai de la Tournelle', access: 'Back stair only', security: 'Two ghouls' });
+  } else if (kind === 'other trait') {
+    character.otherTraits.push({ name, rating: 4, kind: 'Skill', note: 'French · native' });
+  } else {
+    pointedList(character, kind).push({ name, category: 'Supernatural', points: 3, note: `Note on ${name}` });
+  }
 }
 
 /**
@@ -76,13 +100,36 @@ function addCounted(character: V20Character, kind: string, place: number): void 
  * "French · native"`, or a count of entries ("two havens", "one flaw").
  */
 function arrange(character: V20Character, part: string, cursor: Cursor): void {
-  const detailed = part.match(/^(\w+) (\d+) summarised "([^"]*)"(?:, noted "([^"]*)")?(?:, with the people (.+))?$/);
+  const detailed = part.match(
+    /^(?:the (\w+) being )?(\w+) (\d+) summarised "([^"]*)"(?:, noted "([^"]*)")?(?:,? with (?:the people|one person) (.+))?$/,
+  );
   const named = part.match(/^(\w+) named backgrounds?$/);
   const pointed = part.match(/^an? (merit|flaw) "([^"]+)" \((\w+), (\d+) points?\)$/);
   const other = part.match(/^an unrated other trait "([^"]+)" of kind "([^"]*)" noted "([^"]*)"$/);
   const counted = part.match(/^(\w+) (havens?|merits?|flaws?|other traits?)$/);
   const haven = part.match(/^an? (Primary|Secondary|Other) haven "([^"]+)"((?:,? (?:described|located|access|security) "[^"]*")*)$/);
-  if (counted !== null) {
+  const entry = part.match(/^one (merit|flaw) "([^"]+)" of (\d+) points?$/);
+  const filled = part.match(/^one (haven|merit|flaw|other trait) "([^"]+)" with every field filled$/);
+  const earlier = part.match(/^one named entry in "([^"]+)"$/);
+  const ofPoints = part.match(/^an? (merit|flaw) of (\d+) points?$/);
+  const rated = part.match(/^the background (\w+) (\d+)$/);
+  const nameless = part === 'a background row holding a note but no name';
+  const backgroundsNamed = part.match(/^(\w+) backgrounds$/);
+  if (entry !== null) {
+    pointedList(character, entry[1]).push({ name: entry[2], category: 'Social', points: Number(entry[3]), note: `Note on ${entry[2]}` });
+  } else if (filled !== null) {
+    fillEntry(character, filled[1], filled[2]);
+  } else if (earlier !== null) {
+    addCounted(character, KINDS[earlier[1]], 0, `Earlier ${KINDS[earlier[1]]}`);
+  } else if (ofPoints !== null) {
+    pointedList(character, ofPoints[1]).push({ name: ofPoints[1] === 'merit' ? 'Acute Sense' : 'Hunted', category: 'Social', points: Number(ofPoints[2]), note: '' });
+  } else if (rated !== null) {
+    putBackground(character, cursor, { name: rated[1], rating: Number(rated[2]) });
+  } else if (nameless) {
+    putBackground(character, cursor, { name: '', rating: 0, note: 'Owes a favour' });
+  } else if (backgroundsNamed !== null && countOf(backgroundsNamed[1]) !== undefined) {
+    arrange(character, `${backgroundsNamed[1]} named backgrounds`, cursor);
+  } else if (counted !== null) {
     for (let count = 0; count < countOf(counted[1]); count += 1) addCounted(character, counted[2].replace(/s$/, ''), count);
   } else if (other !== null) {
     character.otherTraits.push({ name: other[1], kind: other[2], note: other[3] } satisfies OtherTrait);
@@ -94,7 +141,8 @@ function arrange(character: V20Character, part: string, cursor: Cursor): void {
   } else if (haven !== null) {
     character.havens.push(havenOf(haven[1] as HavenKind, haven[2], haven[3]));
   } else if (detailed !== null) {
-    const [, name, rating, summary, note, people] = detailed;
+    const [, ordinal, name, rating, summary, note, people] = detailed;
+    if (ordinal !== undefined) cursor.background = ORDINALS.indexOf(ordinal);
     putBackground(character, cursor, {
       name,
       rating: Number(rating),
@@ -115,7 +163,7 @@ function arrange(character: V20Character, part: string, cursor: Cursor): void {
 }
 
 /** The start of one thing a scenario says a character has: what a comma or "and" must be followed by to separate two of them. */
-const ITEM_START = '(?=(?:an? |one |two |three |four |five |six |seven |eight |the background ))';
+const ITEM_START = '(?=(?:an? |one |two |three |four |five |six |seven |eight |the background |the \\w+ being ))';
 
 /** What a scenario says when it wants a character with nothing on the tab. */
 const NOTHING = 'no backgrounds, havens, merits, flaws or other traits';
@@ -175,15 +223,71 @@ export function sectionNamed(page: Page, name: string): Locator {
 
 /** The cards of a section that are showing. */
 export const cardsOf = (page: Page, section: string): Locator =>
-  sectionNamed(page, section).locator('ul > li').filter({ visible: true });
+  sectionNamed(page, section).locator('[data-list] > li').filter({ visible: true });
 
 /** The card of one entry of a section, found by the heading with its name. */
 export const entryCard = (page: Page, section: string, name: string): Locator =>
   cardsOf(page, section).filter({ has: page.getByRole('heading', { name, exact: true }) });
+
+/** What a card shows in play mode: its edit form holds the same words in options and fields. */
+export const playFace = (card: Locator): Locator => card.locator('.backgrounds-view');
 
 /** The empty state of a section. */
 export const emptyOf = (page: Page, section: string): Locator =>
   backgroundsPanel(page).locator(`[data-empty="${SECTIONS[section]}"]`);
 
 /** The entries of the section index, as they read. */
-export const indexEntries = (page: Page): Locator => backgroundsPanel(page).locator('[data-index] li');
+export const indexEntries = (page: Page): Locator => backgroundsPanel(page).locator('[data-section-index] li');
+
+/** What this tab's steps remember about the scenario. */
+interface BackgroundsMemory {
+  /** The entry a scenario put in a section for steps that say "it": the section and the name. */
+  featured?: { section: string; name: string };
+  /** What a step saw before the sheet was reloaded, to be compared with what is shown after. */
+  before?: string[];
+  /** The section whose points a scenario is correcting. */
+  section?: string;
+}
+
+export const backgroundsMemory = (memory: ScenarioMemory): BackgroundsMemory =>
+  memoryFor<BackgroundsMemory>({ memory }, 'backgrounds', () => ({}));
+
+/** The one entry a scenario's words feature ("one haven "The Orangery" with every field filled"), if they name one. */
+export function featuredEntry(words: string): { section: string; name: string } | undefined {
+  const match = words.match(/^one (haven|merit|flaw|other trait) "([^"]+)"/);
+  return match === null ? undefined : { section: SECTION_OF[match[1]], name: match[2] };
+}
+
+/** The edit-mode fields of an entry, by the label the player sees. */
+export const nameField = (card: Locator): Locator => card.getByRole('textbox', { name: 'Name', exact: true });
+export const field = (card: Locator, label: RegExp | string): Locator => card.getByLabel(label, typeof label === 'string' ? { exact: true } : {});
+
+/** The button that adds to a section, by the section's name. */
+export const addButton = (page: Page, section: string): Locator =>
+  sectionNamed(page, section).locator('[data-action="add"]');
+
+/** The button that removes the entry called `name`. */
+export const removeButton = (page: Page, name: string): Locator => page.getByRole('button', { name: `Remove ${name}`, exact: true });
+
+/** The names of a section's entries as shown: what is typed in each name field in edit mode, the headings in play mode. */
+export async function entryNames(page: Page, section: string): Promise<string[]> {
+  const fields = nameField(cardsOf(page, section));
+  if ((await fields.count()) > 0) return Promise.all((await fields.all()).map((input) => input.inputValue()));
+  return cardsOf(page, section).getByRole('heading').allTextContents();
+}
+
+/** Reloads the sheet, which opens in play mode on the tab it was on. */
+export async function reloadSheet(page: Page): Promise<void> {
+  await page.reload();
+  await expect(backgroundsPanel(page)).toBeVisible();
+}
+
+/** The text of the entry of the section index called `label` ("Merits"), whatever count it carries. */
+export const indexEntryOf = async (page: Page, label: string): Promise<string> =>
+  (await indexEntries(page).filter({ hasText: new RegExp(`^${label} ·`) }).textContent()) ?? '';
+
+/** The text of a section's heading count and of its entry in the section index, for comparing across a reload. */
+export const countsShown = async (page: Page, section: string): Promise<string[]> => [
+  (await sectionNamed(page, section).locator('.dossier-heading-count').textContent()) ?? '',
+  await indexEntryOf(page, section),
+];

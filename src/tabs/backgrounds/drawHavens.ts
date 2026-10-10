@@ -32,12 +32,20 @@ function drawCard(item: HTMLElement, card: HavenCard, templates: HavenTemplates)
 }
 
 /** Makes the list hold the cards, one element each, kept from one draw to the next. */
-export function drawHavens(list: HTMLElement, cards: readonly HavenCard[], templates: HavenTemplates): void {
+export function drawHavens(
+  list: HTMLElement,
+  cards: readonly HavenCard[],
+  templates: HavenTemplates,
+  edit: (item: HTMLElement, card: HavenCard) => void,
+): void {
   reconcile(
     list,
     cards,
     (card) => String(card.index),
     () => cloneOf(templates.haven),
-    (item, card) => drawCard(item, card, templates),
+    (item, card) => {
+      drawCard(item, card, templates);
+      edit(item, card);
+    },
   );
 }

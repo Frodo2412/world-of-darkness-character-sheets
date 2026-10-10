@@ -19,12 +19,20 @@ function drawCard(item: HTMLElement, card: OtherTraitCard): void {
 }
 
 /** Makes the list hold the traits, one element each, kept from one draw to the next. */
-export function drawOther(list: HTMLElement, cards: readonly OtherTraitCard[], template: HTMLTemplateElement): void {
+export function drawOther(
+  list: HTMLElement,
+  cards: readonly OtherTraitCard[],
+  template: HTMLTemplateElement,
+  edit: (item: HTMLElement, card: OtherTraitCard) => void,
+): void {
   reconcile(
     list,
     cards,
     (card) => String(card.index),
     () => cloneOf(template),
-    drawCard,
+    (item, card) => {
+      drawCard(item, card);
+      edit(item, card);
+    },
   );
 }

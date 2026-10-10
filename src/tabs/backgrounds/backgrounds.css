@@ -150,6 +150,121 @@
 	}
 }
 
+/* Edit mode: a form on each card. */
+.backgrounds-form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.backgrounds-fields {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-2);
+}
+
+/* The sheet gives every label the height of a control and keeps it on one line; here a label is a caption over its field. */
+.backgrounds .backgrounds-field {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: var(--space-1);
+	min-block-size: 0;
+	min-inline-size: 0;
+	white-space: normal;
+}
+
+.backgrounds-field-label {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.backgrounds-field :is(input, select, textarea) {
+	flex: none;
+	box-sizing: border-box;
+	inline-size: 100%;
+	min-inline-size: 0;
+	min-block-size: var(--control-compact);
+	padding: var(--space-1) var(--space-2);
+	font: inherit;
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
+}
+
+.backgrounds-field textarea {
+	resize: vertical;
+}
+
+.backgrounds-people-edit {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--space-2);
+	min-inline-size: 0;
+	margin: 0;
+	padding: var(--space-2);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-row);
+}
+
+.backgrounds-people-edit legend {
+	padding-inline: var(--space-1);
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.backgrounds-people-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	align-self: stretch;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.backgrounds-person-edit {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	align-items: end;
+	gap: var(--space-2);
+}
+
+.backgrounds-form button,
+.backgrounds-add {
+	align-self: flex-start;
+	min-block-size: var(--control-compact);
+	padding-block: var(--space-1);
+}
+
+.backgrounds-add {
+	margin-block-start: var(--space-2);
+}
+
+.backgrounds-flag,
+.backgrounds-message {
+	margin: 0;
+	font-size: var(--text-small);
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+@media (min-width: 30rem) {
+	.backgrounds-fields {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.backgrounds-fields > :is(:has(textarea), :has([data-edit="summary"]), :has([data-edit="description"])) {
+		grid-column: 1 / -1;
+	}
+
+	.backgrounds-person-edit {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+	}
+}
+
 @media (min-width: 48rem) {
 	.backgrounds-list {
 		grid-template-columns: repeat(2, minmax(0, 1fr));

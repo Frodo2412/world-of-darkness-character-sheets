@@ -2,9 +2,22 @@
 import EmptyState from '../../components/dossier/EmptyState.astro';
 import ReadOnlyHint from '../../components/dossier/ReadOnlyHint.astro';
 import SectionHeading from '../../components/dossier/SectionHeading.astro';
+import UndoNotice from '../../components/dossier/UndoNotice.astro';
 import { SECTION_KEYS } from '../../domain/v20/backgrounds/counts';
+import { HAVEN_KINDS, MERIT_CATEGORIES } from '../../domain/v20/dossier/types';
+import { RATING_RANGE } from '../../domain/v20/traits';
+import { HAVEN_FIELDS } from './drawHavens';
 import { indexText } from './drawIndex';
 import './backgrounds.css';
+
+// The sections in the order they are shown: what each is called, what it says when it holds nothing, and what adds to it.
+const SECTIONS = [
+	{ key: 'backgrounds', title: 'Expanded backgrounds', empty: 'No backgrounds yet.', add: 'Add background' },
+	{ key: 'havens', title: 'Havens', empty: 'No havens yet.', add: 'Add haven' },
+	{ key: 'merits', title: 'Merits', empty: 'No merits yet.', add: 'Add merit' },
+	{ key: 'flaws', title: 'Flaws', empty: 'No flaws yet.', add: 'Add flaw' },
+	{ key: 'otherTraits', title: 'Other traits', empty: 'No other traits yet.', add: 'Add other trait' },
+] as const;
 ---
 
 <div class="backgrounds" data-backgrounds>
@@ -13,7 +26,7 @@ import './backgrounds.css';
 	<ReadOnlyHint />
 
 	<!-- How many entries each section holds; the script writes the counts and moves focus to a section's heading. -->
-	<nav class="backgrounds-index" aria-label="Sections" data-index>
+	<nav class="backgrounds-index" aria-label="Sections" data-section-index>
 		<ul class="backgrounds-index-list">
 			{
 				SECTION_KEYS.map((key) => (
@@ -27,52 +40,32 @@ import './backgrounds.css';
 		</ul>
 	</nav>
 
-	<section class="backgrounds-section" aria-labelledby="backgrounds-heading-backgrounds" data-section="backgrounds">
-		<!-- The script writes the count into the heading. -->
-		<SectionHeading title="Expanded backgrounds" count="" level={3} id="backgrounds-heading-backgrounds" />
-		<ul class="backgrounds-list" aria-labelledby="backgrounds-heading-backgrounds" data-list="backgrounds"></ul>
-		<div data-empty="backgrounds" hidden>
-			<EmptyState message="No backgrounds yet." />
-		</div>
-	</section>
+	<!-- Where "Removed <name>. Undo" appears after a removal; the one notice serves every section. -->
+	<div data-sheet-mode-only="edit">
+		<UndoNotice />
+	</div>
 
-	<section class="backgrounds-section" aria-labelledby="backgrounds-heading-havens" data-section="havens">
-		<SectionHeading title="Havens" count="" level={3} id="backgrounds-heading-havens" />
-		<ul class="backgrounds-list" aria-labelledby="backgrounds-heading-havens" data-list="havens"></ul>
-		<div data-empty="havens" hidden>
-			<EmptyState message="No havens yet." />
-		</div>
-	</section>
-
-	<section class="backgrounds-section" aria-labelledby="backgrounds-heading-merits" data-section="merits">
-		<SectionHeading title="Merits" count="" level={3} id="backgrounds-heading-merits" />
-		<ul class="backgrounds-list" aria-labelledby="backgrounds-heading-merits" data-list="merits"></ul>
-		<div data-empty="merits" hidden>
-			<EmptyState message="No merits yet." />
-		</div>
-	</section>
-
-	<section class="backgrounds-section" aria-labelledby="backgrounds-heading-flaws" data-section="flaws">
-		<SectionHeading title="Flaws" count="" level={3} id="backgrounds-heading-flaws" />
-		<ul class="backgrounds-list" aria-labelledby="backgrounds-heading-flaws" data-list="flaws"></ul>
-		<div data-empty="flaws" hidden>
-			<EmptyState message="No flaws yet." />
-		</div>
-	</section>
-
-	<section class="backgrounds-section" aria-labelledby="backgrounds-heading-otherTraits" data-section="otherTraits">
-		<SectionHeading title="Other traits" count="" level={3} id="backgrounds-heading-otherTraits" />
-		<ul class="backgrounds-list" aria-labelledby="backgrounds-heading-otherTraits" data-list="otherTraits"></ul>
-		<div data-empty="otherTraits" hidden>
-			<EmptyState message="No other traits yet." />
-		</div>
-	</section>
+	{
+		SECTIONS.map((section) => (
+			<section class="backgrounds-section" aria-labelledby={`backgrounds-heading-${section.key}`} data-section={section.key}>
+				<!-- The script writes the count into the heading. -->
+				<SectionHeading title={section.title} count="" level={3} id={`backgrounds-heading-${section.key}`} />
+				<ul class="backgrounds-list" aria-labelledby={`backgrounds-heading-${section.key}`} data-list={section.key} />
+				<div data-empty={section.key} hidden>
+					<EmptyState message={section.empty} />
+				</div>
+				<button type="button" class="backgrounds-add" data-action="add" data-family={section.key} data-sheet-mode-only="edit">
+					{section.add}
+				</button>
+			</section>
+		))
+	}
 
 	<p class="backgrounds-notes">Character notes, not rule effects</p>
 
-	<!-- Drawn from, never shown: the script copies each into the lists above. -->
+	<!-- Drawn from, never shown: the script copies each into the lists above. A card has a face for each mode. -->
 	<template data-template="background">
-		<li class="backgrounds-card">
+		<li class="backgrounds-card" data-entry>
 			<div class="backgrounds-view" data-sheet-mode-only="play">
 				<div class="backgrounds-card-head">
 					<h4 class="backgrounds-card-name" data-field="name"></h4>
@@ -83,10 +76,57 @@ import './backgrounds.css';
 				<p class="backgrounds-note" data-field="note"></p>
 				<ul class="dossier-chips backgrounds-people" aria-label="People" data-field="people"></ul>
 			</div>
+			<div class="backgrounds-form" data-sheet-mode-only="edit">
+				<p class="backgrounds-flag" data-field="needs-name" hidden>Name needed to show in play mode</p>
+				<div class="backgrounds-fields">
+					<label class="backgrounds-field">
+						<span class="backgrounds-field-label">Name</span>
+						<input type="text" autocomplete="off" data-edit="name" />
+					</label>
+					<label class="backgrounds-field backgrounds-field-short">
+						<span class="backgrounds-field-label">Rating ({RATING_RANGE.min} to {RATING_RANGE.max})</span>
+						<input type="number" min={RATING_RANGE.min} max={RATING_RANGE.max} step="1" inputmode="numeric" data-edit="rating" />
+					</label>
+					<label class="backgrounds-field">
+						<span class="backgrounds-field-label">Summary</span>
+						<input type="text" autocomplete="off" data-edit="summary" />
+					</label>
+					<label class="backgrounds-field">
+						<span class="backgrounds-field-label">Note</span>
+						<textarea rows="2" data-edit="note"></textarea>
+					</label>
+				</div>
+				<fieldset class="backgrounds-people-edit">
+					<legend>People</legend>
+					<ul class="backgrounds-people-list" data-field="people-edit"></ul>
+					<button type="button" data-action="add-person">Add person</button>
+				</fieldset>
+				<p class="backgrounds-message" data-field="message" hidden></p>
+				<button type="button" class="backgrounds-remove" data-action="remove" data-field="remove">Remove</button>
+			</div>
+		</li>
+	</template>
+	<template data-template="person">
+		<li class="dossier-chip backgrounds-person">
+			<span class="backgrounds-person-name" data-field="name"></span>{' '}
+			<span class="backgrounds-person-role" data-field="role"></span>
+		</li>
+	</template>
+	<template data-template="person-edit">
+		<li class="backgrounds-person-edit" data-person-edit>
+			<label class="backgrounds-field">
+				<span class="backgrounds-field-label">Person name</span>
+				<input type="text" autocomplete="off" data-edit="person-name" />
+			</label>
+			<label class="backgrounds-field">
+				<span class="backgrounds-field-label">Role</span>
+				<input type="text" autocomplete="off" data-edit="person-role" />
+			</label>
+			<button type="button" data-action="remove-person">Remove person</button>
 		</li>
 	</template>
 	<template data-template="haven">
-		<li class="backgrounds-card">
+		<li class="backgrounds-card" data-entry>
 			<div class="backgrounds-view" data-sheet-mode-only="play">
 				<div class="backgrounds-card-head">
 					<h4 class="backgrounds-card-name" data-field="name"></h4>
@@ -94,31 +134,33 @@ import './backgrounds.css';
 				</div>
 				<dl class="backgrounds-details" data-field="details"></dl>
 			</div>
-		</li>
-	</template>
-	<!-- A Merit and a Flaw are the same card. -->
-	<template data-template="pointed">
-		<li class="backgrounds-card">
-			<div class="backgrounds-view" data-sheet-mode-only="play">
-				<div class="backgrounds-card-head">
-					<h4 class="backgrounds-card-name" data-field="name"></h4>
-					<span class="dossier-chip backgrounds-kind" data-field="category"></span>
-					<span class="backgrounds-points" data-field="points"></span>
+			<div class="backgrounds-form" data-sheet-mode-only="edit">
+				<div class="backgrounds-fields">
+					<label class="backgrounds-field">
+						<span class="backgrounds-field-label">Name</span>
+						<input type="text" autocomplete="off" data-edit="name" />
+					</label>
+					<label class="backgrounds-field backgrounds-field-short">
+						<span class="backgrounds-field-label">Kind</span>
+						<select data-edit="kind">
+							{HAVEN_KINDS.map((kind) => <option value={kind}>{kind}</option>)}
+						</select>
+					</label>
+					{
+						HAVEN_FIELDS.map((haven) => (
+							<label class="backgrounds-field">
+								<span class="backgrounds-field-label">{haven.label}</span>
+								{haven.key === 'description' ? (
+									<textarea rows="2" data-edit={haven.key} />
+								) : (
+									<input type="text" autocomplete="off" data-edit={haven.key} />
+								)}
+							</label>
+						))
+					}
 				</div>
-				<p class="backgrounds-note" data-field="note"></p>
-			</div>
-		</li>
-	</template>
-	<template data-template="other">
-		<li class="backgrounds-card">
-			<div class="backgrounds-view" data-sheet-mode-only="play">
-				<div class="backgrounds-card-head">
-					<h4 class="backgrounds-card-name" data-field="name"></h4>
-					<span class="dossier-chip backgrounds-kind" data-field="kind"></span>
-					<dot-rating class="backgrounds-dots" readonly max="5" value="0" data-field="dots"></dot-rating>
-					<span class="backgrounds-overflow" data-field="overflow"></span>
-				</div>
-				<p class="backgrounds-note" data-field="note"></p>
+				<p class="backgrounds-message" data-field="message" hidden></p>
+				<button type="button" class="backgrounds-remove" data-action="remove" data-field="remove">Remove</button>
 			</div>
 		</li>
 	</template>
@@ -128,10 +170,76 @@ import './backgrounds.css';
 			<dd data-field="value"></dd>
 		</div>
 	</template>
-	<template data-template="person">
-		<li class="dossier-chip backgrounds-person">
-			<span class="backgrounds-person-name" data-field="name"></span>{' '}
-			<span class="backgrounds-person-role" data-field="role"></span>
+	<!-- A Merit and a Flaw are the same card. -->
+	<template data-template="pointed">
+		<li class="backgrounds-card" data-entry>
+			<div class="backgrounds-view" data-sheet-mode-only="play">
+				<div class="backgrounds-card-head">
+					<h4 class="backgrounds-card-name" data-field="name"></h4>
+					<span class="dossier-chip backgrounds-kind" data-field="category"></span>
+					<span class="backgrounds-points" data-field="points"></span>
+				</div>
+				<p class="backgrounds-note" data-field="note"></p>
+			</div>
+			<div class="backgrounds-form" data-sheet-mode-only="edit">
+				<div class="backgrounds-fields">
+					<label class="backgrounds-field">
+						<span class="backgrounds-field-label">Name</span>
+						<input type="text" autocomplete="off" data-edit="name" />
+					</label>
+					<label class="backgrounds-field backgrounds-field-short">
+						<span class="backgrounds-field-label">Category</span>
+						<select data-edit="category">
+							{MERIT_CATEGORIES.map((category) => <option value={category}>{category}</option>)}
+						</select>
+					</label>
+					<label class="backgrounds-field backgrounds-field-short">
+						<span class="backgrounds-field-label">Points (0 or more)</span>
+						<input type="number" min="0" step="1" inputmode="numeric" data-edit="points" />
+					</label>
+					<label class="backgrounds-field">
+						<span class="backgrounds-field-label">Note</span>
+						<textarea rows="2" data-edit="note"></textarea>
+					</label>
+				</div>
+				<p class="backgrounds-message" data-field="message" hidden></p>
+				<button type="button" class="backgrounds-remove" data-action="remove" data-field="remove">Remove</button>
+			</div>
+		</li>
+	</template>
+	<template data-template="other">
+		<li class="backgrounds-card" data-entry>
+			<div class="backgrounds-view" data-sheet-mode-only="play">
+				<div class="backgrounds-card-head">
+					<h4 class="backgrounds-card-name" data-field="name"></h4>
+					<span class="dossier-chip backgrounds-kind" data-field="kind"></span>
+					<dot-rating class="backgrounds-dots" readonly max="5" value="0" data-field="dots"></dot-rating>
+					<span class="backgrounds-overflow" data-field="overflow"></span>
+				</div>
+				<p class="backgrounds-note" data-field="note"></p>
+			</div>
+			<div class="backgrounds-form" data-sheet-mode-only="edit">
+				<div class="backgrounds-fields">
+					<label class="backgrounds-field">
+						<span class="backgrounds-field-label">Name</span>
+						<input type="text" autocomplete="off" data-edit="name" />
+					</label>
+					<label class="backgrounds-field backgrounds-field-short">
+						<span class="backgrounds-field-label">Kind</span>
+						<input type="text" autocomplete="off" data-edit="kind" />
+					</label>
+					<label class="backgrounds-field backgrounds-field-short">
+						<span class="backgrounds-field-label">Rating ({RATING_RANGE.min} to {RATING_RANGE.max}, or none)</span>
+						<input type="number" min={RATING_RANGE.min} max={RATING_RANGE.max} step="1" inputmode="numeric" data-edit="rating" />
+					</label>
+					<label class="backgrounds-field">
+						<span class="backgrounds-field-label">Note</span>
+						<textarea rows="2" data-edit="note"></textarea>
+					</label>
+				</div>
+				<p class="backgrounds-message" data-field="message" hidden></p>
+				<button type="button" class="backgrounds-remove" data-action="remove" data-field="remove">Remove</button>
+			</div>
 		</li>
 	</template>
 </div>
