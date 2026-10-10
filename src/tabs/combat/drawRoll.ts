@@ -10,6 +10,7 @@ export interface RollParts {
   range: HTMLSelectElement;
   dice: HTMLInputElement;
   difficulty: HTMLInputElement;
+  extra: HTMLInputElement;
 }
 
 export function rollParts(root: HTMLElement): RollParts {
@@ -22,7 +23,19 @@ export function rollParts(root: HTMLElement): RollParts {
     range: input('range'),
     dice: input('dice'),
     difficulty: input('difficulty'),
+    extra: input('extra'),
   };
+}
+
+/** The damage pool block, or the line that says a weapon is needed for it. */
+function drawDamage(root: HTMLElement, damage: RollView['damage']): void {
+  field(root, 'choose-weapon').hidden = damage !== undefined;
+  field(root, 'damage').hidden = damage === undefined;
+  if (damage === undefined) return;
+  setText(field(root, 'damage-pool'), damage.dice);
+  setText(field(root, 'damage-formula'), damage.formula);
+  setField(root, 'damage-type', damage.type);
+  setText(field(root, 'damage-difficulty'), damage.difficulty);
 }
 
 /** Shows the player's choices in the pickers and entries, and what they make of the attack in the result card. */
@@ -33,8 +46,11 @@ export function drawRoll(parts: RollParts, state: RollState, view: RollView): vo
   showUnlessFocused(parts.range, state.range ?? '');
   showUnlessFocused(parts.dice, String(state.diceModifier));
   showUnlessFocused(parts.difficulty, String(state.difficultyModifier));
+  showUnlessFocused(parts.extra, String(state.extraSuccesses));
   setField(parts.root, 'target-note', view.targetNote);
   setField(parts.root, 'range-note', view.rangeNote);
+  setField(parts.root, 'extra-hint', view.extraHint);
+  drawDamage(parts.root, view.damage);
 
   field(parts.root, 'choose-manoeuvre').hidden = view.attack !== undefined;
   field(parts.root, 'attack').hidden = view.attack === undefined;

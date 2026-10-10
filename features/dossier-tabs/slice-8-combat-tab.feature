@@ -71,10 +71,12 @@ Feature: Combat tab
   Scenario: Modifiers and Target change the pool and are forgotten on leaving
     Given a character with Dexterity 3, Melee 0 and Strength 2 with the Sap and "Weapon Strike" selected on the Combat tab
     And the Weapon roll panel shows an attack pool of 3 dice, accuracy "Normal" and difficulty 6 on the Combat tab
+    And the damage pool reads 3 dice on the Combat tab
     When the player adds one die and raises the difficulty by one on the Combat tab
     Then the attack pool reads "4 dice" and the difficulty reads 7 on the Combat tab
     When the player chooses the Target "Small (hand, head, cellphone)" on the Combat tab
     Then the difficulty reads 9 on the Combat tab
+    And the damage pool reads 4 dice on the Combat tab
     And the Targeting table entry it follows reads difficulty "+2" and damage "+1" (V20 p. 274) on the Combat tab
     When the player leaves the Combat tab for the Character sheet tab and returns without reloading on the Combat tab
     Then the dice modifier and the difficulty modifier read 0 on the Combat tab
@@ -96,6 +98,23 @@ Feature: Combat tab
       | Point blank | 4          |
       | Short range | 6          |
       | Long range  | 8          |
+
+  Scenario: The damage pool adds the weapon and the extra successes
+    Given a character with Strength 3 on the Combat tab
+    When the player selects the Sap and enters 2 extra successes on the Combat tab
+    Then the damage pool reads 6 dice on the Combat tab
+    And the damage is Bashing and its difficulty reads 6 on the Combat tab
+
+  Scenario: Flat damage and a negative entry
+    Given a character with Strength 3 with "Revolver, Lt." and "Multiple Shots" selected on the Combat tab
+    Then the damage pool reads 4 dice on the Combat tab
+    When the player enters -2 extra successes on the Combat tab
+    Then the entry shows 0 on the Combat tab
+    And "Extra successes kept at 0 or more." is shown on the Combat tab
+    And the damage pool still reads 4 dice on the Combat tab
+    When the player enters 1 extra successes on the Combat tab
+    Then the damage pool reads 5 dice on the Combat tab
+    And "Extra successes kept at 0 or more." is not shown on the Combat tab
 
   Scenario: Nothing is rolled
     Given a character with Dexterity 3 and Melee 0 with the Sap and "Weapon Strike" selected on the Combat tab

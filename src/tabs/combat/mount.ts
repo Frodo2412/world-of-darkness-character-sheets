@@ -128,6 +128,16 @@ export function mount(ctx: TabContext): MountedTab {
   roll.range.addEventListener('change', () => choose({ range: picked(roll.range) }));
   roll.dice.addEventListener('input', () => choose({ diceModifier: wholeNumber(roll.dice.value) }));
   roll.difficulty.addEventListener('input', () => choose({ difficultyModifier: wholeNumber(roll.difficulty.value) }));
+  // Extra successes are 0 or more: a negative entry counts as 0 while it is typed and is corrected, with a message, when it is committed.
+  roll.extra.addEventListener('input', () => {
+    const entered = wholeNumber(roll.extra.value);
+    choose({ extraSuccesses: entered, extraCorrected: entered < 0 });
+  });
+  roll.extra.addEventListener('change', () => {
+    if (state.extraSuccesses >= 0) return;
+    roll.extra.value = '0';
+    choose({ extraSuccesses: 0 });
+  });
 
   return { render: draw, leave: () => void (state = { ...state, ...clearedEntries() }) };
 }

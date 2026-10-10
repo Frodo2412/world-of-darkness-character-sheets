@@ -125,21 +125,44 @@ const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) =
 				<span class="combat-field-label">Difficulty modifier</span>
 				<input type="number" step="1" inputmode="numeric" data-input="difficulty" />
 			</label>
+			<label class="combat-field">
+				<span class="combat-field-label">Extra successes</span>
+				<input type="number" step="1" min="0" inputmode="numeric" data-input="extra" />
+			</label>
 		</div>
+		<!-- Said when an entry of extra successes below 0 is kept at 0. -->
+		<p class="combat-hint combat-hint-correction" role="status" data-field="extra-hint" hidden></p>
 		<p class="combat-hint" data-field="target-note" hidden></p>
 		<p class="combat-hint" data-field="range-note" hidden></p>
 
 		<!-- What "Use in roll" brings into view and focuses on a narrow screen. -->
 		<div class="combat-result" role="group" aria-labelledby="combat-result-heading" tabindex="-1" data-result>
-			<h4 class="combat-result-heading" id="combat-result-heading">Attack pool</h4>
-			<p class="combat-hint" data-field="choose-manoeuvre">Choose a manoeuvre to see the attack pool.</p>
-			<div data-field="attack" hidden>
-				<p class="combat-pool-total" data-field="attack-pool"></p>
-				<p class="combat-formula" data-field="attack-formula"></p>
-				<dl class="combat-readout">
-					<div class="combat-readout-row"><dt>Accuracy</dt><dd data-field="accuracy"></dd></div>
-					<div class="combat-readout-row"><dt>Difficulty</dt><dd data-field="difficulty"></dd></div>
-				</dl>
+			<h4 class="combat-result-heading" id="combat-result-heading">Result</h4>
+
+			<div class="combat-pool">
+				<p class="combat-pool-label">Attack pool</p>
+				<p class="combat-hint" data-field="choose-manoeuvre">Choose a manoeuvre to see the attack pool.</p>
+				<div data-field="attack" hidden>
+					<p class="combat-pool-total" data-field="attack-pool"></p>
+					<p class="combat-formula" data-field="attack-formula"></p>
+					<dl class="combat-readout">
+						<div class="combat-readout-row"><dt>Accuracy</dt><dd data-field="accuracy"></dd></div>
+						<div class="combat-readout-row"><dt>Difficulty</dt><dd data-field="difficulty"></dd></div>
+					</dl>
+				</div>
+			</div>
+
+			<div class="combat-pool">
+				<p class="combat-pool-label">Damage pool</p>
+				<p class="combat-hint" data-field="choose-weapon">Choose a weapon to see the damage pool.</p>
+				<div data-field="damage" hidden>
+					<p class="combat-pool-total" data-field="damage-pool"></p>
+					<p class="combat-formula" data-field="damage-formula"></p>
+					<dl class="combat-readout">
+						<div class="combat-readout-row"><dt>Type</dt><dd data-field="damage-type"></dd></div>
+						<div class="combat-readout-row"><dt>Difficulty</dt><dd data-field="damage-difficulty"></dd></div>
+					</dl>
+				</div>
 			</div>
 		</div>
 	</section>

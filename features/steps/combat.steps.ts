@@ -9,6 +9,7 @@ import {
   cellOf,
   combatMemory,
   combatPanel,
+  enterExtraSuccesses,
   expectListed,
   listedCounts,
   rollInput,
@@ -85,6 +86,19 @@ When('the player chooses the Range {string} on the Combat tab', async ({ page },
 When('the player leaves the Combat tab for the Character sheet tab and returns without reloading on the Combat tab', async ({ page }) => {
   await showTab(page, 'Character sheet');
   await showTab(page, 'Combat');
+});
+
+When(
+  /^the player selects the (.+) and enters (-?\d+) extra successes on the Combat tab$/,
+  async ({ page, memory }, weapon: string, extra: number) => {
+    await showCombat(page, memory);
+    await rollInput(page, 'Weapon').selectOption(weapon);
+    await enterExtraSuccesses(page, extra);
+  },
+);
+
+When(/^the player enters (-?\d+) extra successes on the Combat tab$/, async ({ page }, extra: number) => {
+  await enterExtraSuccesses(page, extra);
 });
 
 When(/^the player presses "([^"]+)" for the (.+) on the Combat tab$/, async ({ page, memory }, button: string, weapon: string) => {
@@ -205,6 +219,30 @@ for (const step of [Given, Then]) {
     },
   );
 }
+
+// Also a check that the arrangement took, before the scenario acts.
+for (const step of [Given, Then]) {
+  step('the damage pool reads {int} dice on the Combat tab', async ({ page }, dice: number) => {
+    await expect(rollReading(page, 'damage-pool')).toHaveText(`${dice} dice`);
+  });
+}
+
+Then('the damage pool still reads {int} dice on the Combat tab', async ({ page }, dice: number) => {
+  await expect(rollReading(page, 'damage-pool')).toHaveText(`${dice} dice`);
+});
+
+Then('the damage is {word} and its difficulty reads {int} on the Combat tab', async ({ page }, type: string, difficulty: number) => {
+  await expect(rollReading(page, 'damage-type')).toHaveText(`${type} damage`);
+  await expect(rollReading(page, 'damage-difficulty')).toHaveText(String(difficulty));
+});
+
+Then('the entry shows {int} on the Combat tab', async ({ page }, value: number) => {
+  await expect(rollInput(page, 'Extra successes')).toHaveValue(String(value));
+});
+
+Then('{string} is not shown on the Combat tab', async ({ page }, text: string) => {
+  await expect(combatPanel(page).getByText(text, { exact: true })).toBeHidden();
+});
 
 Then(
   /^the Targeting table entry it follows reads difficulty "([^"]+)" and damage "([^"]+)" \(V20 p\. (\d+)\) on the Combat tab$/,

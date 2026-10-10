@@ -197,6 +197,25 @@
 	border-radius: var(--radius-row);
 }
 
+.combat-pool {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+
+.combat-pool-label {
+	margin: 0;
+	font-size: var(--text-small);
+	font-weight: 600;
+	color: var(--color-muted);
+}
+
+/* A correction is said in words, and stands out from the other hints. */
+.combat-hint-correction {
+	font-weight: 600;
+	color: var(--color-text);
+}
+
 .combat-pool-total {
 	margin: 0;
 	font-family: var(--font-display);

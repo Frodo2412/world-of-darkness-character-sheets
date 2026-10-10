@@ -2,8 +2,11 @@
 // entries while the tab is open, never stored.
 
 import { attackPool } from '../../domain/v20/combat/attack';
+import { damagePool } from '../../domain/v20/combat/damage';
 import { MANOEUVRES } from '../../domain/v20/combat/data/manoeuvres';
 import { CALLED_SHOTS, RANGE_BANDS } from '../../domain/v20/combat/data/modifiers';
+import { RANGED_WEAPONS } from '../../domain/v20/combat/data/ranged';
+import { MELEE_WEAPONS } from '../../domain/v20/combat/data/weapons';
 import type { V20Character } from '../../domain/v20/character';
 import { diceLabel } from '../../domain/v20/identity';
 import { accuracyText, calledShotNote, rangeNote } from './text';
@@ -21,14 +24,20 @@ export interface RollState {
   target?: string;
   /** The Range, by key. */
   range?: string;
+  /** Extra successes of the attack roll, as entered; a negative entry is kept until it is committed. */
+  extraSuccesses: number;
+  /** The entry of extra successes was below 0 and was kept at 0: the player is told so until they enter a valid number. */
+  extraCorrected: boolean;
 }
 
 /** What the player enters or chooses for one roll: forgotten on leaving the tab. The weapon and manoeuvre are kept. */
-export const clearedEntries = (): Pick<RollState, 'diceModifier' | 'difficultyModifier' | 'target' | 'range'> => ({
+export const clearedEntries = (): Pick<RollState, 'diceModifier' | 'difficultyModifier' | 'target' | 'range' | 'extraSuccesses' | 'extraCorrected'> => ({
   diceModifier: 0,
   difficultyModifier: 0,
   target: undefined,
   range: undefined,
+  extraSuccesses: 0,
+  extraCorrected: false,
 });
 
 export const blankRoll = (): RollState => ({ ...clearedEntries(), weapon: undefined, manoeuvre: undefined });
@@ -40,7 +49,16 @@ export interface RollView {
   targetNote: string;
   /** What the chosen Range means, or empty. */
   rangeNote: string;
+  /** The damage pool in words; absent until a weapon is chosen. */
+  damage?: { dice: string; formula: string; type: string; difficulty: string };
+  /** Said beside the extra successes when the entry was kept at 0; empty otherwise. */
+  extraHint: string;
 }
+
+/** What the player is told when an entry of extra successes is below 0. */
+export const EXTRA_SUCCESSES_HINT = 'Extra successes kept at 0 or more.';
+
+const capitalised = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 
 export function rollView(character: V20Character, state: RollState): RollView {
   const manoeuvre = MANOEUVRES.find(({ name }) => name === state.manoeuvre);
@@ -49,7 +67,18 @@ export function rollView(character: V20Character, state: RollState): RollView {
   const view: RollView = {
     targetNote: target === undefined ? '' : calledShotNote(target),
     rangeNote: range === undefined ? '' : rangeNote(range),
+    extraHint: state.extraCorrected ? EXTRA_SUCCESSES_HINT : '',
   };
+  const weapon = [...MELEE_WEAPONS, ...RANGED_WEAPONS].find(({ name }) => name === state.weapon);
+  if (weapon !== undefined) {
+    const damage = damagePool(character, weapon, state.extraSuccesses, target);
+    view.damage = {
+      dice: diceLabel(damage.dice),
+      formula: damage.formula,
+      type: damage.type === undefined ? '' : `${capitalised(damage.type)} damage`,
+      difficulty: String(damage.difficulty),
+    };
+  }
   if (manoeuvre !== undefined) {
     const attack = attackPool({
       character,

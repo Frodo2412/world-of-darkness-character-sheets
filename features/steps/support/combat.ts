@@ -104,3 +104,10 @@ export async function selectInRoll(page: Page, memory: { saved: V20Character[] }
   await rollInput(page, 'Weapon').selectOption(weapon);
   await rollInput(page, 'Manoeuvre').selectOption(manoeuvre);
 }
+
+/** Types a number of extra successes and leaves the field, which commits the entry. */
+export async function enterExtraSuccesses(page: Page, extra: number): Promise<void> {
+  const entry = rollInput(page, 'Extra successes');
+  await entry.fill(String(extra));
+  await entry.blur();
+}

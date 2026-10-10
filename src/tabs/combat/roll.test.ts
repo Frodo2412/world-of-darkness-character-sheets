@@ -13,7 +13,7 @@ const roll = (overrides: Partial<RollState> = {}): RollState => ({ ...blankRoll(
 
 describe('rollView', () => {
   test('shows no attack until a manoeuvre is chosen', () => {
-    expect(rollView(character(), roll({ weapon: 'Sap' }))).toEqual({ targetNote: '', rangeNote: '' });
+    expect(rollView(character(), roll({ weapon: 'Sap' })).attack).toBeUndefined();
   });
 
   test('words the attack pool, accuracy and difficulty of the chosen manoeuvre', () => {
@@ -40,14 +40,41 @@ describe('rollView', () => {
     expect(view.rangeNote).toBe('Point blank: within 2 meters, difficulty 4 (V20 p. 278)');
   });
 
+  test('words the damage pool of the chosen weapon, with the extra successes and the Target', () => {
+    const strong = character();
+    strong.attributes.strength = 3;
+
+    expect(rollView(strong, roll({ weapon: 'Sap', extraSuccesses: 2 })).damage).toEqual({
+      dice: '6 dice',
+      formula: 'Strength 3 + 1 + extra successes 2',
+      type: 'Bashing damage',
+      difficulty: '6',
+    });
+    expect(rollView(strong, roll({ weapon: 'Revolver, Lt.', target: 'small' })).damage).toEqual({
+      dice: '5 dice',
+      formula: '4 + Target 1',
+      type: '',
+      difficulty: '6',
+    });
+  });
+
+  test('shows no damage pool until a weapon is chosen', () => {
+    expect(rollView(character(), roll({ manoeuvre: 'Strike' })).damage).toBeUndefined();
+  });
+
+  test('says an entry of extra successes was kept at 0 only while it was', () => {
+    expect(rollView(character(), roll({ extraCorrected: true })).extraHint).toBe('Extra successes kept at 0 or more.');
+    expect(rollView(character(), roll()).extraHint).toBe('');
+  });
+
   test('a choice no row matches is the same as none', () => {
-    expect(rollView(character(), roll({ manoeuvre: 'Nonesuch', target: 'huge', range: 'far' }))).toEqual({ targetNote: '', rangeNote: '' });
+    expect(rollView(character(), roll({ manoeuvre: 'Nonesuch', target: 'huge', range: 'far' }))).toEqual({ targetNote: '', rangeNote: '', extraHint: '' });
   });
 });
 
 describe('clearedEntries', () => {
   test('forgets the entries and choices of one roll but not the weapon and manoeuvre', () => {
-    const used = roll({ weapon: 'Sap', manoeuvre: 'Strike', diceModifier: 2, difficultyModifier: -1, target: 'small', range: 'short' });
+    const used = roll({ weapon: 'Sap', manoeuvre: 'Strike', diceModifier: 2, difficultyModifier: -1, target: 'small', range: 'short', extraSuccesses: 3, extraCorrected: true });
 
     expect({ ...used, ...clearedEntries() }).toEqual({
       weapon: 'Sap',
@@ -56,6 +83,8 @@ describe('clearedEntries', () => {
       difficultyModifier: 0,
       target: undefined,
       range: undefined,
+      extraSuccesses: 0,
+      extraCorrected: false,
     });
   });
 });
