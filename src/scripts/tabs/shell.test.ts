@@ -387,6 +387,7 @@ describe('a tab that cannot be mounted', () => {
 
     expect(log).not.toContain('combat:mount');
     expect(log).toContain('combat:enter');
+    expect(log).toContain('combat:render:play');
     expect(log.at(-1)).toBe('view:focus:combat');
   });
 

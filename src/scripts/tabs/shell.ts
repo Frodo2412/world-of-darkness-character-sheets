@@ -179,7 +179,8 @@ export function createShell(options: ShellOptions): Shell {
     if (thisSwitch !== latestSwitch) return;
     try {
       mounted.enter?.();
-      renderActive();
+      // The mounted tab itself, not the active one: a tab being retried is still marked broken until it draws.
+      mounted.render(character, options.mode());
     } catch (error) {
       // Not shown, but still mounted: choosing it again enters and draws it again, without mounting it twice.
       console.error(error);
@@ -200,7 +201,7 @@ export function createShell(options: ShellOptions): Shell {
 
   /** The tab could not be loaded: go back to the tab that was last shown if there was one, and say so. */
   function failed(tab: TabDescriptor): void {
-    if (shownKey !== undefined && loaded.has(shownKey)) {
+    if (shownKey !== undefined && loaded.has(shownKey) && !broken.has(shownKey)) {
       activeKey = shownKey;
       options.restore(shownKey);
       const back = descriptors.get(shownKey)!;
