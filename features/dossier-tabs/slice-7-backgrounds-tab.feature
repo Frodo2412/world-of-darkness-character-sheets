@@ -179,3 +179,12 @@ Feature: Backgrounds tab
     And the player takes the person "Odile" off Allies on the Backgrounds tab
     And the sheet is reloaded on the Backgrounds tab
     Then Allies shows no people on the Backgrounds tab
+
+  Scenario: The Backgrounds tab is accessible and fits a phone
+    Given a character in edit mode with eight backgrounds, two havens, two merits, one flaw and three other traits, all with very long names on the Backgrounds tab
+    When the Backgrounds tab is scanned for accessibility problems
+    Then no problems are reported
+    When the Backgrounds tab is opened at 320 pixels wide with crowded content
+    Then the page does not scroll sideways
+    When the player switches to edit mode on the Backgrounds tab
+    Then the page does not scroll sideways

@@ -123,6 +123,15 @@
 	overflow-wrap: anywhere;
 }
 
+/* A kind the player wrote (an other trait's) may be one long word: it wraps inside the card instead of leaving it. */
+.backgrounds-kind,
+.backgrounds-person-name,
+.backgrounds-person-role {
+	max-inline-size: 100%;
+	min-inline-size: 0;
+	overflow-wrap: anywhere;
+}
+
 /* A haven's details: a label over its text on a phone, side by side where there is room. */
 .backgrounds-details {
 	display: flex;

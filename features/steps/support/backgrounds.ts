@@ -63,6 +63,19 @@ function havenOf(kind: HavenKind, name: string, clauses: string): Haven {
   };
 }
 
+/** Text with no place to break, as long as a phone is narrow. */
+const LONG = 'Supercalifragilisticexpialidocious'.repeat(2);
+
+/** Gives every entry of every section long unbroken text, to see whether the tab keeps it inside the screen. */
+function crowd(character: V20Character): void {
+  for (const row of character.backgrounds) {
+    Object.assign(row, { name: LONG, summary: LONG, note: LONG, people: [{ name: LONG, role: LONG }] });
+  }
+  for (const haven of character.havens) Object.assign(haven, { name: LONG, description: LONG, location: LONG, access: LONG, security: LONG });
+  for (const entry of [...character.merits, ...character.flaws]) Object.assign(entry, { name: LONG, note: LONG });
+  for (const trait of character.otherTraits) Object.assign(trait, { name: LONG, kind: LONG, note: LONG });
+}
+
 /** The names a scenario's counted entries ("two havens") are given, in order. */
 const ENTRY_NAMES = {
   haven: ['The Orangery', 'Rue Mouffetard flat', 'The Cellar'],
@@ -114,6 +127,10 @@ function arrange(character: V20Character, part: string, cursor: Cursor): void {
   const ofPoints = part.match(/^an? (merit|flaw) of (\d+) points?$/);
   const rated = part.match(/^the background (\w+) (\d+)$/);
   const nameless = part === 'a background row holding a note but no name';
+  if (part === 'all with very long names') {
+    crowd(character);
+    return;
+  }
   const backgroundsNamed = part.match(/^(\w+) backgrounds$/);
   if (entry !== null) {
     pointedList(character, entry[1]).push({ name: entry[2], category: 'Social', points: Number(entry[3]), note: `Note on ${entry[2]}` });
@@ -163,7 +180,7 @@ function arrange(character: V20Character, part: string, cursor: Cursor): void {
 }
 
 /** The start of one thing a scenario says a character has: what a comma or "and" must be followed by to separate two of them. */
-const ITEM_START = '(?=(?:an? |one |two |three |four |five |six |seven |eight |the background |the \\w+ being ))';
+const ITEM_START = '(?=(?:an? |one |two |three |four |five |six |seven |eight |the background |the \\w+ being |all with ))';
 
 /** What a scenario says when it wants a character with nothing on the tab. */
 const NOTHING = 'no backgrounds, havens, merits, flaws or other traits';
