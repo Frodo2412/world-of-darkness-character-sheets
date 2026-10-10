@@ -354,7 +354,7 @@ checkout (`/Users/brunolemus/Projects/Personal/WorldOfDarknessCharacterSheets/do
 #### Step 4.2: Rule fields and Presence
 
 **Complexity**: complex
-**IMPLEMENT**: Extend `Power` with optional `cost`, `duration`, `prerequisite`, `difficulty`, `summary` and required `page`; extract Presence from V20 chapter four and type it in (Awe: cost None, duration One scene, prerequisite Presence 1, pool Charisma + Performance, difficulty 7, summary "Draw nearby people's attention and make them more receptive to you…" as the book states it)
+**IMPLEMENT**: Extend `Power` with optional `cost`, `duration`, `prerequisite`, `difficulty`, `summary` and required `page`; extract Presence from V20 chapter four and type it in (Awe: cost "1 blood point", duration "Remainder of the scene or until the character chooses to drop it", prerequisite "Presence 1", pool Charisma + Performance, difficulty "7", page 193, summary "Those near the vampire suddenly desire to be closer to her and become receptive to her point of view." as the book states it)
 **TEST**: Unit tests: Presence has five powers; Awe's fields as read from the book; every power has a page; unextractable fields are undefined, never empty strings
 **REFACTOR**: Existing readings and their consumers unchanged
 **Files**: `src/domain/v20/disciplines.ts`, `src/domain/v20/disciplines.test.ts`, `src/domain/v20/disciplineData/presence.ts`

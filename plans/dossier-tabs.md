@@ -40,7 +40,7 @@ These were forced by plan review and are shown here so they can be corrected at 
 4. **Level up offers only Disciplines the character holds (rating 1 or more).** A new Discipline has no cost in the spec's table, so it is covered by the "Beyond the standard costs" text, as in the Figma.
 5. **Combat controls.** The Melee / Ranged sub-tabs and the All / Close / Ranged filter are one state: "All" shows both sections, "Close combat" and the Melee sub-tab show melee, "Ranged combat" and the Ranged sub-tab show ranged. Target and Range change the difficulty and damage as the V20 called-shot and range tables say (extracted in Slice 5, tested in Slice 8). The Figma's roll buttons are replaced by a result card and the line "Pools only — roll your own dice."
 6. **Notes.** Categories are the Figma's fixed five (People & relationships, Clues, Places, Promises & boons, Unsorted). The body is a textarea with a toolbar and a live rendered preview beside it; checklist boxes are ticked in the preview. Mentions: `@` followed by capitalised words, or `@[any name]`; chips can also be added and removed by hand. The Figma's ⌘K shortcut hint is not rendered. Notes autosave debounced (400 ms) and flush on blur, on "Save note" and on leaving the tab. Sessions can be renamed and an earlier session made current again.
-7. **Numeric limits.** Blood-bond rating 0–10, merit and flaw points 0 or more, XP award a non-zero whole number. Out-of-range values show an inline hint and are corrected on commit with a message, never silently.
+7. **Numeric limits.** Blood-bond rating 0–10, merit and flaw points 0 or more, combat extra successes 0 or more, XP award a non-zero whole number. Out-of-range values show an inline hint and are corrected on commit with a message, never silently.
 8. **Legacy text.** The old `notes` and `experience` strings are shown read-only (Journal → Notes as "Earlier notes", Experience as "Earlier experience note") so no data looks lost. They are not imported or edited.
 9. **Mode on reload.** Mode persists across tab switches within a visit; a reload returns to play mode, as today.
 10. **Pool wording.** Pools are written with full labels everywhere ("Dexterity 3 + Brawl 1 − wound 1") by one shared helper.
@@ -114,6 +114,9 @@ and Slice 3 provide the pieces; slices only consume them.
 - Removal notice: "Removed <name>. Undo".
 - Level up announcements: "<Trait> <from> to <to> added to the review. <N> XP pending."; "<Trait> removed from the review. <N> XP pending."; "Applied <N> advancements. <M> XP spent. Available <A>."
 - Out-of-range input: "Rating kept between 0 and 10." (limits per decision 7).
+- Merit or flaw points below 0 (Backgrounds): "Points kept at 0 or more."
+- Combat extra successes below 0: "Extra successes kept at 0 or more."
+- Incapacitated (the health track fully marked Incapacitated), wherever a pool is shown as 0 dice (Disciplines, Combat): "Incapacitated: every pool is 0 dice."
 
 **Focus and announcements**: after a removal focus goes to the Undo button (Undo returns it to the restored entry); after Build pool focus goes to the Selected pool heading; after removing a pending line focus goes to the next line or the review heading; after Confirm focus goes to the result message; after a tab switch focus goes to the tab panel's heading and the page title becomes "<Tab> · <Character>".
 
