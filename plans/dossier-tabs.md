@@ -2,7 +2,7 @@
 
 **Created**: 2026-10-08
 **Branch**: `feat/dossier-foundation`, then `feat/dossier-reference-tabs`, then `feat/dossier-journal-levelup` (stacked; see Approach stance)
-**Status**: approved
+**Status**: in-progress
 **Gherkin persistence**: features
 **Spec**: `docs/specs/dossier-tabs.md`
 **Design**: Figma `TAvjmr6RE0rHV8kz56Ffs0`, frames `5:3452` (Disciplines), `37:2042` (Backgrounds), `91:3380` and `97:196` (Combat), `102:1140` (Journal), `152:3419` (Level up)
@@ -2058,42 +2058,42 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
 ### Slices (grouped by wave)
 
 #### Wave 1
-- [ ] Slice 1: Tab host and shell
-  - [ ] Step 1.1: The tab registry
-  - [ ] Step 1.2: Tab addresses
-  - [ ] Step 1.3: The shell split and the tab contract
-  - [ ] Step 1.4: Panels and descriptors from one glob
-  - [ ] Step 1.5: The tab bar
-  - [ ] Step 1.6: Observers, the application-bar slot and context services
-  - [ ] Step 1.7: One pool wording and `selectPool`
-  - [ ] Step 1.8: Test support for every slice
-- [ ] Slice 2: Stored data and the experience ledger
-  - [ ] Step 2.1: Additive types, blank defaults and the field list
-  - [ ] Step 2.2: Loading old records
-  - [ ] Step 2.3: Rows keep their details; consumers tolerate more than six
-  - [ ] Step 2.4: Legacy and damaged-record scenarios
-  - [ ] Step 2.5: Sessions
-  - [ ] Step 2.6: The experience ledger
-  - [ ] Step 2.7: The V20 experience cost table
-- [ ] Slice 3: Shared dossier parts
-  - [ ] Step 3.1: Text matching
-  - [ ] Step 3.2: Count and points labels
-  - [ ] Step 3.3: Heading, hint, chips and empty state
-  - [ ] Step 3.4: Reference table
-  - [ ] Step 3.5: Segmented control, selectable list and disclosure styles
-  - [ ] Step 3.6: Search field
-  - [ ] Step 3.7: Undo notice and session prompt
-  - [ ] Step 3.8: Contrast and size guard
-- [ ] Slice 4: Discipline catalogue data
-  - [ ] Step 4.1: Split the catalogue from the reading logic
-  - [ ] Step 4.2: Rule fields and Presence
-  - [ ] Step 4.3: Remaining Disciplines, batch one
-  - [ ] Step 4.4: Remaining Disciplines, batch two
-  - [ ] Step 4.5: Remaining Disciplines, batch three
-- [ ] Slice 5: Combat reference data
-  - [ ] Step 5.1: Manoeuvres
-  - [ ] Step 5.2: Melee weapons
-  - [ ] Step 5.3: Ranged weapons and the range and called-shot tables
+- [x] Slice 1: Tab host and shell
+  - [x] Step 1.1: The tab registry
+  - [x] Step 1.2: Tab addresses
+  - [x] Step 1.3: The shell split and the tab contract
+  - [x] Step 1.4: Panels and descriptors from one glob
+  - [x] Step 1.5: The tab bar
+  - [x] Step 1.6: Observers, the application-bar slot and context services
+  - [x] Step 1.7: One pool wording and `selectPool`
+  - [x] Step 1.8: Test support for every slice
+- [x] Slice 2: Stored data and the experience ledger
+  - [x] Step 2.1: Additive types, blank defaults and the field list
+  - [x] Step 2.2: Loading old records
+  - [x] Step 2.3: Rows keep their details; consumers tolerate more than six
+  - [x] Step 2.4: Legacy and damaged-record scenarios
+  - [x] Step 2.5: Sessions
+  - [x] Step 2.6: The experience ledger
+  - [x] Step 2.7: The V20 experience cost table
+- [x] Slice 3: Shared dossier parts
+  - [x] Step 3.1: Text matching
+  - [x] Step 3.2: Count and points labels
+  - [x] Step 3.3: Heading, hint, chips and empty state
+  - [x] Step 3.4: Reference table
+  - [x] Step 3.5: Segmented control, selectable list and disclosure styles
+  - [x] Step 3.6: Search field
+  - [x] Step 3.7: Undo notice and session prompt
+  - [x] Step 3.8: Contrast and size guard
+- [x] Slice 4: Discipline catalogue data
+  - [x] Step 4.1: Split the catalogue from the reading logic
+  - [x] Step 4.2: Rule fields and Presence
+  - [x] Step 4.3: Remaining Disciplines, batch one
+  - [x] Step 4.4: Remaining Disciplines, batch two
+  - [x] Step 4.5: Remaining Disciplines, batch three
+- [x] Slice 5: Combat reference data
+  - [x] Step 5.1: Manoeuvres
+  - [x] Step 5.2: Melee weapons
+  - [x] Step 5.3: Ranged weapons and the range and called-shot tables
 
 #### Wave 2
 - [ ] Slice 6: Disciplines tab
