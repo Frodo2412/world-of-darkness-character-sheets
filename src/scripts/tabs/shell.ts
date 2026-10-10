@@ -14,6 +14,8 @@ export interface ShellView {
   focus(tab: TabDescriptor): void;
   /** Says the tab could not be loaded or mounted; choosing it again tries again. */
   loadFailed(tab: TabDescriptor): void;
+  /** Takes the tab's panel away when it failed and there is no tab to go back to: a panel nothing drew or bound is not shown. */
+  unavailable(tab: TabDescriptor): void;
   /** Shows or hides the live resources row. */
   showResources(visible: boolean): void;
   /** Draws what belongs to the shell itself, after the active tab has drawn. */
@@ -134,8 +136,12 @@ export function createShell(options: ShellOptions): Shell {
   function apply(update: Update): V20Character {
     const before = character;
     character = update(before);
-    draw();
-    options.save(character);
+    try {
+      draw();
+    } finally {
+      // A tab whose drawing throws must not stop the edit from being stored.
+      options.save(character);
+    }
     view.applied(before, character);
     active()?.changed?.(before, character);
     return character;
@@ -157,9 +163,17 @@ export function createShell(options: ShellOptions): Shell {
       return;
     }
     if (thisSwitch !== latestSwitch) return;
+    try {
+      mounted.enter?.();
+      draw();
+    } catch {
+      // Not shown: forget it, so choosing it again mounts it again, and go back like a load that failed.
+      loaded.delete(key);
+      loading.delete(key);
+      failed(tab);
+      return;
+    }
     shownKey = key;
-    mounted.enter?.();
-    draw();
   }
 
   /** The tab could not be loaded: go back to the tab that was last shown if there was one, and say so. */
@@ -171,6 +185,8 @@ export function createShell(options: ShellOptions): Shell {
       view.show(back);
       view.showResources(back.showsResources);
       loaded.get(shownKey)!.enter?.();
+    } else {
+      view.unavailable(tab);
     }
     draw();
     // Last, so that showing the tab again does not take the message down.

@@ -20,7 +20,7 @@ import type { Apply } from './tabs/context';
 import { discoverTabs } from './tabs/discover';
 import { bindFields, drawFields } from './tabs/fields';
 import { createTabHistory } from './tabs/history';
-import { focusPanel, showPanel } from './tabs/panels';
+import { focusPanel, hidePanel, showPanel } from './tabs/panels';
 import { createAnnouncer, realStamp } from './tabs/services';
 import { createShell } from './tabs/shell';
 import { createTabBar, type TabBar } from './tabs/tabBar';
@@ -128,7 +128,13 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
         bar?.select(tab.key);
       },
       focus: (tab) => focusPanel(sheet, tab.key),
-      loadFailed: (tab) => reportTabFailure(`The ${tab.label} tab could not be loaded. Choose it again to try again.`),
+      loadFailed: (tab) =>
+        reportTabFailure(
+          showBar
+            ? `The ${tab.label} tab could not be loaded. Choose it again to try again.`
+            : `The ${tab.label} tab could not be loaded. Reload the page to try again.`,
+        ),
+      unavailable: (tab) => hidePanel(sheet, tab.key),
       showResources: (visible) => void (resourcesRow.hidden = !visible),
       afterRender(character, current, tab) {
         drawIdentity(sheet, character);

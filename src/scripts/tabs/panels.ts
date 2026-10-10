@@ -10,6 +10,11 @@ export function showPanel(sheet: ParentNode, key: TabKey): void {
   }
 }
 
+/** Hides the panel of `key`: a tab that could not be loaded has nothing to show or to type into. */
+export function hidePanel(sheet: ParentNode, key: TabKey): void {
+  panelOf(sheet, key).hidden = true;
+}
+
 /**
  * Moves focus to the panel's heading (the element its markup marks `data-panel-heading`), or to the
  * panel itself, and scrolls the panel to the top of the screen.

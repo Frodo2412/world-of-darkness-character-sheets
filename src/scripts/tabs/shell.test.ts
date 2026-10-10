@@ -52,6 +52,7 @@ function setup(
     show: (tab) => void log.push(`view:show:${tab.key}`),
     focus: (tab) => void log.push(`view:focus:${tab.key}`),
     loadFailed: (tab) => void log.push(`view:failed:${tab.key}`),
+    unavailable: (tab) => void log.push(`view:unavailable:${tab.key}`),
     showResources: (visible) => void resources.push(visible),
     afterRender: (_character, _mode, tab) => void log.push(`view:after:${tab.key}`),
     applied: () => void log.push('view:applied'),
@@ -230,6 +231,25 @@ describe('the shell and a tab', () => {
   });
 });
 
+describe('a tab that throws while drawing', () => {
+  it('does not stop an edit from being saved', async () => {
+    const log: string[] = [];
+    let throwing = false;
+    const sheet = recordingTab('sheet', log, {
+      render() {
+        if (throwing) throw new Error('render threw');
+      },
+    }).descriptor;
+    const { shell, saved } = setup([sheet], log);
+    await shell.switchTo('sheet');
+    throwing = true;
+
+    expect(() => shell.apply(strength)).toThrow('render threw');
+
+    expect(saved).toHaveLength(1);
+  });
+});
+
 describe('a tab that cannot be mounted', () => {
   it.each(['load', 'mount'] as const)(
     'is reported, not thrown, and the shell still draws its own parts when the first tab fails by %s',
@@ -241,7 +261,14 @@ describe('a tab that cannot be mounted', () => {
       await shell.switchTo('sheet');
       shell.apply(strength);
 
-      expect(log).toEqual(['view:show:sheet', 'view:after:sheet', 'view:failed:sheet', 'view:after:sheet', 'view:applied']);
+      expect(log).toEqual([
+        'view:show:sheet',
+        'view:unavailable:sheet',
+        'view:after:sheet',
+        'view:failed:sheet',
+        'view:after:sheet',
+        'view:applied',
+      ]);
     },
   );
 
@@ -333,6 +360,34 @@ describe('a tab that cannot be mounted', () => {
     expect(log).toContain('restore:sheet');
     expect(log).toContain('sheet:enter');
     expect(log.at(-1)).toBe('view:failed:combat');
+  });
+
+  it('is mounted again when choosing it again after its enter threw, and the shown tab comes back meanwhile', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    let throwing = true;
+    const combat = recordingTab('combat', log, {
+      enter() {
+        if (throwing) throw new Error('enter threw');
+        log.push('combat:enter');
+      },
+    }).descriptor;
+    const { shell } = setup([sheet, combat], log);
+    await shell.switchTo('sheet');
+    log.length = 0;
+
+    await shell.open('combat');
+
+    expect(log).toContain('restore:sheet');
+    expect(log.at(-1)).toBe('view:failed:combat');
+
+    throwing = false;
+    log.length = 0;
+    await shell.open('combat');
+
+    expect(log).toContain('combat:mount');
+    expect(log).toContain('combat:enter');
+    expect(log.at(-1)).toBe('view:focus:combat');
   });
 
   it('is not reported when a later request has already moved on', async () => {
