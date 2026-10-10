@@ -765,4 +765,4 @@ This section is the machine-parseable recovery handle.
   - [x] Step 8.7: Damage pool
   - [x] Step 8.8: Unavailable manoeuvres and incapacitation
   - [x] Step 8.9: Reminders and disclaimers
-  - [ ] Step 8.10: Accessibility and narrow screens
+  - [x] Step 8.10: Accessibility and narrow screens

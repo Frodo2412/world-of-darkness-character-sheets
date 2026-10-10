@@ -111,3 +111,17 @@ export async function enterExtraSuccesses(page: Page, extra: number): Promise<vo
   await entry.fill(String(extra));
   await entry.blur();
 }
+
+/**
+ * Puts the tab in its fullest state: a ranged weapon and manoeuvre, a dice and a difficulty modifier, a Target,
+ * a Range, a negative entry of extra successes (so its correction is showing) and a search that leaves many rows.
+ */
+export async function enterEverything(page: Page, memory: { saved: V20Character[] }): Promise<void> {
+  await selectInRoll(page, memory, 'Revolver, Lt.', 'Multiple Shots');
+  await rollInput(page, 'Dice modifier').fill('2');
+  await rollInput(page, 'Difficulty modifier').fill('1');
+  await rollInput(page, 'Target').selectOption({ label: 'Small (hand, head, cellphone)' });
+  await rollInput(page, 'Range').selectOption({ label: 'Short range' });
+  await enterExtraSuccesses(page, -2);
+  await searchField(page).fill('r');
+}

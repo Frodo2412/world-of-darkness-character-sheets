@@ -180,3 +180,13 @@ Feature: Combat tab
     And "Rulebook reference — not owned equipment" is shown on the Combat tab
     And "Base pools shown without Celerity, blood boosts, armor or situational modifiers" is shown on the Combat tab
 
+  Scenario: The Combat tab is accessible and fits a phone
+    Given a character with Dexterity 5, Strength 8 and Firearms 4 on the Combat tab
+    And a weapon, modifiers, a Target, a Range and a search are entered on the Combat tab
+    When the Combat tab is scanned for accessibility problems
+    Then no problems are reported
+    When the Combat tab is opened at 320 pixels wide with crowded content
+    And a weapon, modifiers, a Target, a Range and a search are entered on the Combat tab
+    Then the page does not scroll sideways
+    And the reference tables scroll inside their own containers on the Combat tab
+

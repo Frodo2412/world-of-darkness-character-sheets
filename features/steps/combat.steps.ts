@@ -9,6 +9,7 @@ import {
   cellOf,
   combatMemory,
   combatPanel,
+  enterEverything,
   enterExtraSuccesses,
   expectListed,
   listedCounts,
@@ -248,6 +249,33 @@ Then('every manoeuvre and weapon pool reads {string} on the Combat tab', async (
 Then('the attack pool reads {string} and the damage pool reads {string} on the Combat tab', async ({ page }, attack: string, damage: string) => {
   await expect(rollReading(page, 'attack-pool')).toHaveText(attack);
   await expect(rollReading(page, 'damage-pool')).toHaveText(damage);
+});
+
+// Everything entered at once, for the scans of the fullest state. The page may have been reloaded since, so it is a step of its own.
+for (const step of [Given, When]) {
+  step('a weapon, modifiers, a Target, a Range and a search are entered on the Combat tab', async ({ page, memory }) => {
+    await enterEverything(page, memory);
+  });
+}
+
+Then('the reference tables scroll inside their own containers on the Combat tab', async ({ page }) => {
+  const containers = combatPanel(page).locator('.dossier-table-scroll').filter({ visible: true });
+  expect(await containers.count()).toBeGreaterThan(0);
+  const viewportWidth = page.viewportSize()!.width;
+  const measured = await containers.evaluateAll((elements) =>
+    elements.map((element) => ({
+      overflowX: getComputedStyle(element).overflowX,
+      right: element.getBoundingClientRect().right,
+      scrolls: element.scrollWidth > element.clientWidth,
+    })),
+  );
+  // Every table is held in a container that scrolls sideways and stays within the screen ...
+  for (const container of measured) {
+    expect(['auto', 'scroll']).toContain(container.overflowX);
+    expect(container.right).toBeLessThanOrEqual(viewportWidth);
+  }
+  // ... and at this width at least one is wider than the screen, so the scrolling is what keeps the page from doing it.
+  expect(measured.some((container) => container.scrolls)).toBe(true);
 });
 
 // The reminders card
