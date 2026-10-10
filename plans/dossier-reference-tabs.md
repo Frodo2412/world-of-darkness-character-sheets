@@ -756,7 +756,7 @@ This section is the machine-parseable recovery handle.
   - [x] Step 7.6: Editing, adding, removing and undo
   - [x] Step 7.7: Accessibility and narrow screens
 - [ ] Slice 8: Combat tab
-  - [ ] Step 8.1: Pools
+  - [x] Step 8.1: Pools
   - [ ] Step 8.2: The tab and the melee manoeuvre table
   - [ ] Step 8.3: Melee weapons
   - [ ] Step 8.4: Ranged manoeuvres and weapons
