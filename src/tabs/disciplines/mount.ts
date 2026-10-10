@@ -1,4 +1,4 @@
-import { disciplineView, type DisciplineScope } from '../../domain/v20/disciplineView';
+import { disciplineView, type DisciplineScope, type DisciplineView, type PowerView } from '../../domain/v20/disciplineView';
 import { wireSegmented } from '../../scripts/dossier/segmented';
 import { SHEET_KEY } from '../../scripts/tabs/descriptor';
 import { hrefFor } from '../../scripts/tabs/address';
@@ -6,6 +6,9 @@ import type { MountedTab, TabContext } from '../../scripts/tabs/context';
 import { isPlainClick } from '../../scripts/tabs/tabBar';
 import { drawDetail, drawList, drawScope, type Parts, type Templates } from './drawList';
 import { drawSearch, narrowDisciplines, type SearchParts } from './drawSearch';
+
+/** The Selected pool card's heading, on the Character sheet tab: where focus goes once a pool has been built. */
+const SELECTED_POOL_HEADING = 'pool-heading';
 
 const one = <T extends Element>(root: ParentNode, selector: string): T => root.querySelector<T>(selector)!;
 
@@ -31,6 +34,8 @@ export function mount(ctx: TabContext): MountedTab {
   };
   let selected: string | undefined;
   let scope: DisciplineScope = 'owned';
+  /** The Disciplines as last drawn, for a press on a power to find its power in. */
+  let drawn: readonly DisciplineView[] = [];
 
   // The link to where ratings are edited: a real address, so it opens in a new window too.
   const sheetLink = one<HTMLAnchorElement>(root, '[data-open-sheet]');
@@ -50,6 +55,7 @@ export function mount(ctx: TabContext): MountedTab {
     parts.none.hidden = listed.length > 0;
     parts.noMatch.hidden = listed.length === 0 || disciplines.length > 0;
     drawSearch(search, disciplines.length);
+    drawn = disciplines;
     drawList(parts, templates, disciplines, selected);
     drawDetail(parts, templates, disciplines.find((discipline) => discipline.key === selected));
   }
@@ -58,6 +64,30 @@ export function mount(ctx: TabContext): MountedTab {
     scope = next;
     draw();
   }
+
+  /** The power a row of the powers list is for: its key is the Discipline's, a colon and the power's level. */
+  function powerOf(row: HTMLElement): PowerView | undefined {
+    const key = row.dataset.key!;
+    const colon = key.lastIndexOf(':');
+    const level = Number(key.slice(colon + 1));
+    return drawn.find((discipline) => discipline.key === key.slice(0, colon))?.powers.find((power) => power.level === level);
+  }
+
+  // Build pool: the power's attribute and ability become the Selected pool, and the player is taken to it.
+  parts.powers.addEventListener('click', async (event) => {
+    const button = (event.target as Element).closest('[data-field="build"]');
+    const power = button === null ? undefined : powerOf(button.closest<HTMLElement>('[data-key]')!);
+    if (power?.rule.roll === undefined) return;
+    const [attribute, ability] = power.rule.roll;
+    ctx.selectPool({ attribute: `attributes.${attribute}`, ability: `abilities.${ability}` });
+    await ctx.openTab(SHEET_KEY);
+    const heading = root.ownerDocument.getElementById(SELECTED_POOL_HEADING);
+    if (heading !== null) {
+      heading.tabIndex = -1;
+      heading.focus();
+    }
+    ctx.announce(`Pool set to ${power.rolls}`);
+  });
 
   parts.list.addEventListener('click', (event) => {
     const button = (event.target as Element).closest<HTMLButtonElement>('.dossier-item-button');

@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
-import { doneButton } from './support/sheet';
+import { watchAnnouncements, announcements } from './support/announcements';
+import { doneButton, selectedPoolCard, traitButton } from './support/sheet';
 import { tabPanelOf } from './support/tabs';
 import {
   disciplineItem,
@@ -20,6 +21,13 @@ import {
 
 // The steps of the Disciplines scenarios. Each one that is not shared names the tab ("on the
 // Disciplines tab"), so it never has the same words as a step of another tab.
+
+/** The power a scenario expanded, which the steps that say "it" are about. */
+const expanded = (memory: Parameters<typeof disciplinesMemory>[0]): string => {
+  const { power } = disciplinesMemory(memory);
+  if (power === undefined) throw new Error('no power was expanded: an "is expanded on the Disciplines tab" step must come first');
+  return power;
+};
 
 // Arranging
 
@@ -42,8 +50,17 @@ When('the player follows its link on the Disciplines tab', async ({ page }) => {
   await disciplinesPanel(page).getByRole('link', { name: 'Character sheet', exact: true }).click();
 });
 
-When(/^the (.+) power is expanded on the Disciplines tab$/, async ({ page, memory }, power: string) => {
-  await expandPower(page, memory, power);
+// Some scenarios start with a power already open, others open it as the thing under test.
+for (const step of [Given, When]) {
+  step(/^the (.+) power is expanded on the Disciplines tab$/, async ({ page, memory }, power: string) => {
+    await expandPower(page, memory, power);
+  });
+}
+
+When('the player presses {string} on the Disciplines tab', async ({ page, memory }, button: string) => {
+  // Watched from here on, so the announcement the press makes is the one that is read.
+  await watchAnnouncements(page);
+  await powerRow(page, expanded(memory)).getByRole('button', { name: button, exact: true }).click();
 });
 
 When(
@@ -198,12 +215,6 @@ Then('the tab says {string} on the Disciplines tab', async ({ page }, text: stri
 
 // What an expanded power shows. They are about the power the scenario expanded.
 
-const expanded = (memory: Parameters<typeof disciplinesMemory>[0]): string => {
-  const { power } = disciplinesMemory(memory);
-  if (power === undefined) throw new Error('no power was expanded: an "is expanded on the Disciplines tab" step must come first');
-  return power;
-};
-
 Then('it shows activation cost {string} on the Disciplines tab', async ({ page, memory }, cost: string) => {
   await expect(ruleOf(page, expanded(memory), 'Activation cost')).toHaveText(cost);
 });
@@ -283,4 +294,21 @@ Then('its panel is shown and its state is {string}, then hidden and {string} on 
     { state: first, shown: true },
     { state: second, shown: false },
   ]);
+});
+
+// Build pool
+
+Then('its Selected pool holds {word} and {word} on the Disciplines tab', async ({ page }, attribute: string, ability: string) => {
+  await expect(traitButton(page, attribute)).toHaveAttribute('aria-pressed', 'true');
+  await expect(traitButton(page, ability)).toHaveAttribute('aria-pressed', 'true');
+  await expect(tabPanelOf(page, 'sheet').locator('[aria-pressed="true"]')).toHaveCount(2);
+  await expect(selectedPoolCard(page).locator('[data-show="pool.formula"]')).toContainText(`${attribute} `);
+});
+
+Then('{string} is announced on the Disciplines tab', async ({ page }, text: string) => {
+  await expect.poll(() => announcements(page)).toContain(text);
+});
+
+Then('focus is on the Selected pool heading on the Disciplines tab', async ({ page }) => {
+  await expect(page.getByRole('heading', { name: 'Selected pool', exact: true })).toBeFocused();
 });

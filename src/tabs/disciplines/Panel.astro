@@ -81,7 +81,8 @@ import './disciplines.css';
 						<p class="disciplines-pool-total" data-field="pool"></p>
 						<p class="disciplines-pool-formula" data-field="formula"></p>
 						<p class="disciplines-pool-flag" data-field="incapacitated">Incapacitated: every pool is 0 dice.</p>
-						<button type="button" class="disciplines-build" data-field="build">Build pool</button>
+						<!-- The Selected pool card is shown in play mode only, so this is too. -->
+						<button type="button" class="disciplines-build" data-field="build" data-sheet-mode-only="play">Build pool</button>
 					</div>
 				</div>
 			</details>

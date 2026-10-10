@@ -78,6 +78,15 @@ Feature: Disciplines tab
     When the player chooses "Owned" again on the Disciplines tab
     Then only Presence, Auspex and Celerity are listed on the Disciplines tab
 
+  Scenario: Build pool selects the power's traits on the Character sheet
+    Given a character with Presence 1, Charisma 3 and Performance 3 on the Disciplines tab
+    And the Awe power is expanded on the Disciplines tab
+    When the player presses "Build pool" on the Disciplines tab
+    Then the Character sheet tab is shown
+    And its Selected pool holds Charisma and Performance on the Disciplines tab
+    And "Pool set to Charisma + Performance" is announced on the Disciplines tab
+    And focus is on the Selected pool heading on the Disciplines tab
+
   Scenario: A Discipline rated 0 or unknown shows no powers
     Given a character with a Discipline named "Homebrewed" rated 2 and Dominate rated 0 on the Disciplines tab
     When the Disciplines tab is opened
