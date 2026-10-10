@@ -195,8 +195,13 @@ export function createShell(options: ShellOptions): Shell {
     }
     broken.delete(key);
     shownKey = key;
-    // The shell's own drawing is not the tab's: a throw there is not blamed on a healthy tab.
-    drawShell();
+    // The shell's own drawing is not the tab's: a throw there is logged, not blamed on a healthy tab
+    // (which would say "choose it again" for something choosing it again cannot fix).
+    try {
+      drawShell();
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   /** The tab could not be loaded: go back to the tab that was last shown if there was one, and say so. */

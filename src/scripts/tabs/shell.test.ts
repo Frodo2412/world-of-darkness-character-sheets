@@ -231,6 +231,27 @@ describe('the shell and a tab', () => {
   });
 });
 
+describe('the shell drawing its own parts', () => {
+  it('a throw there leaves the tab shown and is not reported as the tab failing', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    const { shell } = setup([sheet], log, { value: 'play' }, {
+      observers: [
+        {
+          afterRender() {
+            throw new Error('observer threw');
+          },
+        },
+      ],
+    });
+
+    await expect(shell.switchTo('sheet')).resolves.toBeUndefined();
+
+    expect(log).not.toContain('view:failed:sheet');
+    expect(log).toContain('sheet:enter');
+  });
+});
+
 describe('a tab that throws while drawing', () => {
   it('does not stop an edit from being saved', async () => {
     const log: string[] = [];
