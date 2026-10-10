@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
+  DOSSIER_FIELDS,
   activateRating,
   blankCharacter,
   cycleHealthBox,
@@ -29,6 +30,38 @@ import {
 
 describe('blankCharacter', () => {
   const character = blankCharacter('abc');
+
+  test('has every dossier field blank and nothing else new', () => {
+    const legacy = [
+      'id', 'system', 'schemaVersion', 'header', 'attributes', 'abilities', 'customAbilities',
+      'specialties', 'disciplines', 'backgrounds', 'virtues', 'humanity', 'willpower', 'bloodPool',
+      'health', 'weakness', 'experience', 'notes',
+    ];
+    expect(Object.keys(character).sort()).toEqual([...legacy, ...DOSSIER_FIELDS].sort());
+    expect(character.merits).toEqual([]);
+    expect(character.flaws).toEqual([]);
+    expect(character.otherTraits).toEqual([]);
+    expect(character.havens).toEqual([]);
+    expect(character.journal.sessions).toEqual([]);
+    expect(character.journal.notes).toEqual([]);
+    expect(character.journal.xp).toEqual({ awards: [], spendings: [] });
+    expect(character.journal.record.gear).toEqual([]);
+    expect(Object.values(character.journal.record.description)).toEqual(Array(8).fill(''));
+  });
+
+  test('keeps the schema version at 1', () => {
+    expect(character.schemaVersion).toBe(1);
+  });
+
+  test('round-trips through JSON unchanged', () => {
+    expect(JSON.parse(JSON.stringify(character))).toEqual(character);
+  });
+
+  test('gives each character its own lists', () => {
+    const other = blankCharacter('def');
+    expect(other.journal).not.toBe(character.journal);
+    expect(other.merits).not.toBe(character.merits);
+  });
 
   test('is a version 1 V20 character with the given id', () => {
     expect(character.id).toBe('abc');
@@ -405,6 +438,44 @@ describe('setNamedRow on disciplines and backgrounds', () => {
     expect(updated.disciplines).toEqual(blankCharacter('abc').disciplines);
   });
 
+  test('renaming or rating a background keeps its summary, note and people', () => {
+    const details = {
+      summary: 'Two cops on the take',
+      note: 'Owe me a favor',
+      people: [{ name: 'Joe', role: 'Sergeant' }],
+    };
+    const base = blankCharacter('abc');
+    base.backgrounds[2] = { name: 'Allies', rating: 2, ...details };
+
+    const renamed = setNamedRow(base, 'backgrounds.2', { name: 'Allies (police)' });
+    const rerated = setNamedRow(renamed, 'backgrounds.2', { rating: 4 });
+
+    expect(rerated.backgrounds[2]).toEqual({ name: 'Allies (police)', rating: 4, ...details });
+    expect(base.backgrounds[2]).toEqual({ name: 'Allies', rating: 2, ...details });
+  });
+
+  test('a row beyond the sixth is a row on the sheet and keeps its details', () => {
+    const base = blankCharacter('abc');
+    base.backgrounds.push({ name: 'Herd', rating: 1, note: 'Club kids' }, { name: '', rating: 0 });
+
+    const updated = setNamedRow(base, 'backgrounds.6', { rating: 3 });
+
+    expect(namedRow(updated, 'backgrounds.6')).toEqual({ name: 'Herd', rating: 3, note: 'Club kids' });
+    expect(updated.backgrounds).toHaveLength(8);
+    expect(namedRows(updated.backgrounds).map((row) => row.name)).toEqual(['Herd']);
+  });
+
+  test('a field this version does not know on a row survives an edit', () => {
+    const base = blankCharacter('abc');
+    Object.assign(base.disciplines[0], { future: 'kept' });
+
+    expect(setNamedRow(base, 'disciplines.0', { name: 'Dominate' }).disciplines[0]).toEqual({
+      name: 'Dominate',
+      rating: 0,
+      future: 'kept',
+    });
+  });
+
   test.each([
     [11, 10],
     [-1, 0],
@@ -666,7 +737,38 @@ describe('a fully filled-in character', () => {
     }
     character = setText(character, 'weakness', 'Casts no reflection');
     character = setText(character, 'experience', '12');
-    return setText(character, 'notes', 'one\ntwo\nthree');
+    character = setText(character, 'notes', 'one\ntwo\nthree');
+    character = setSpecialty(character, 'abilities.academics', 'Art history');
+    return {
+      ...character,
+      merits: [{ name: 'Eidetic Memory', category: 'Mental', points: 2, note: 'Never forgets' }],
+      flaws: [{ name: 'Nightmares', category: 'Mental', points: 1, note: 'Every day' }],
+      otherTraits: [{ name: 'Fame', rating: 3, kind: 'Status', note: 'Local' }],
+      havens: [
+        { name: 'Cellar', kind: 'Primary', description: 'Damp', location: 'Under the bar', access: 'Key', security: 'Lock' },
+      ],
+      journal: {
+        sessions: [{ id: 's1', title: 'Prologue', summary: 'Begins', current: true }],
+        notes: [
+          { id: 'n1', sessionId: 's1', title: 'Clue', category: 'Clues', tags: ['bar'], pinned: true, body: 'Ask **Maria**', createdAt: 1, editedAt: 2 },
+        ],
+        xp: {
+          awards: [{ id: 'a1', sessionId: 's1', amount: 3, note: 'Good play' }],
+          spendings: [{ id: 'p1', sessionId: 's1', label: 'Brawl', kind: 'ability', from: 1, to: 2, cost: 2 }],
+        },
+        record: {
+          gear: [{ item: 'Knife', detail: 'Folding' }],
+          equipment: [{ item: 'Phone', detail: 'Burner' }],
+          bloodBonds: [{ name: 'Maria', relation: 'Regnant', rating: 1, type: 'Full' }],
+          derangements: [{ name: 'Fear', status: 'Active', note: 'Fire' }],
+          goals: [{ text: 'Survive', kind: 'Long term' }],
+          description: {
+            apparentAge: '30', dateOfBirth: '1990', rip: 'n/a', hair: 'Black', eyes: 'Green',
+            nationality: 'Mexican', heightWeight: '180 cm', sex: 'F',
+          },
+        },
+      },
+    };
   }
 
   test('differs from a blank character in every field', () => {
@@ -674,6 +776,8 @@ describe('a fully filled-in character', () => {
     const filled = filledIn() as unknown as Record<string, unknown>;
     const unchanged = (before: unknown, after: unknown): string[] => {
       if (typeof before !== 'object' || before === null) return before === after ? ['<value>'] : [];
+      // An empty list or map has nothing to walk into: it is one value, and filling it in must change it.
+      if (Object.keys(before).length === 0) return JSON.stringify(before) === JSON.stringify(after) ? ['<empty>'] : [];
       return Object.keys(before).flatMap((key) =>
         unchanged((before as Record<string, unknown>)[key], (after as Record<string, unknown>)[key]).map(
           (path) => `${key}.${path}`,

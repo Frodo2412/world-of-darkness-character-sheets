@@ -1,0 +1,28 @@
+---
+import '../../styles/dossier.css';
+
+interface Props {
+	/** Names the table, and the scrolling region around it. */
+	caption: string;
+	/** Drawn only to assistive technology, for a table that already has a visible heading. */
+	captionHidden?: boolean;
+	headings: readonly string[];
+}
+
+const { caption, captionHidden = false, headings } = Astro.props;
+---
+
+<!-- A table wider than the screen scrolls inside this region, which the keyboard can reach, so the page never scrolls sideways. -->
+<div class="dossier-table-scroll" role="region" aria-label={caption} tabindex="0">
+	<table class="dossier-table">
+		<caption class={captionHidden ? 'visually-hidden' : 'dossier-table-caption'}>{caption}</caption>
+		<thead>
+			<tr>
+				{headings.map((heading) => <th scope="col">{heading}</th>)}
+			</tr>
+		</thead>
+		<tbody>
+			<slot />
+		</tbody>
+	</table>
+</div>

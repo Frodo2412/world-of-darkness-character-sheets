@@ -66,4 +66,42 @@ describe('createPool', () => {
     pool.toggle('attributes.strength');
     expect(before).toEqual({ attribute: 'attributes.intelligence' });
   });
+
+  test('select sets the attribute and the ability at once, replacing what was chosen', () => {
+    const pool = createPool();
+    pool.toggle('attributes.strength');
+    pool.toggle('abilities.brawl');
+
+    pool.select({ attribute: 'attributes.dexterity', ability: 'abilities.melee' });
+
+    expect(pool.selection()).toEqual({ attribute: 'attributes.dexterity', ability: 'abilities.melee' });
+  });
+
+  test('select with only an attribute clears the ability', () => {
+    const pool = createPool();
+    pool.toggle('abilities.brawl');
+
+    pool.select({ attribute: 'attributes.dexterity' });
+
+    expect(pool.selection()).toEqual({ attribute: 'attributes.dexterity' });
+  });
+
+  test('select ignores a row given as undefined, and keeps no reference to what it was given', () => {
+    const pool = createPool();
+    const given = { attribute: 'attributes.dexterity', ability: undefined } as const;
+
+    pool.select(given);
+
+    expect(pool.selection()).toEqual({ attribute: 'attributes.dexterity' });
+    expect('ability' in pool.selection()).toBe(false);
+  });
+
+  test('a toggle after select works on the selected rows', () => {
+    const pool = createPool();
+    pool.select({ attribute: 'attributes.dexterity', ability: 'abilities.melee' });
+
+    pool.toggle('abilities.melee');
+
+    expect(pool.selection()).toEqual({ attribute: 'attributes.dexterity' });
+  });
 });

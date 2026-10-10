@@ -1,0 +1,270 @@
+/* Parts the new tabs share. Every class here starts with `dossier-`; colours and sizes come from the
+   tokens in global.css. Text is at least --text-small (12px) and controls at least 24 x 24px. */
+
+:root {
+	/* The space between a heading and what it heads, and inside a table cell. */
+	--dossier-gap: var(--space-row);
+}
+
+.dossier-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	margin-block-end: var(--dossier-gap);
+}
+
+/* The global heading rules (capitals, accent, an underline) are for the old pages. */
+.dossier-heading-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.dossier-heading-count,
+.dossier-hint {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: var(--leading-compact);
+	color: var(--color-muted);
+}
+
+.dossier-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-1);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dossier-chip {
+	padding: var(--space-1) var(--space-2);
+	min-block-size: 1.5rem;
+	font-size: var(--text-small);
+	line-height: var(--leading-compact);
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
+}
+
+.dossier-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--space-2);
+	padding: var(--space-card);
+	background: var(--color-row);
+	border: var(--stroke) dashed var(--color-border-control);
+	border-radius: var(--radius-card);
+}
+
+.dossier-empty-message {
+	margin: 0;
+	font-size: var(--text-body);
+	color: var(--color-muted);
+}
+
+.dossier-table-scroll {
+	max-inline-size: 100%;
+	overflow-x: auto;
+}
+
+.dossier-table {
+	inline-size: 100%;
+	border-collapse: collapse;
+	text-align: start;
+}
+
+.dossier-table-caption {
+	padding-block-end: var(--space-1);
+	text-align: start;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.dossier-table th,
+.dossier-table td {
+	padding: var(--space-2) var(--dossier-gap);
+	text-align: start;
+	vertical-align: top;
+	border-block-end: var(--stroke) solid var(--color-divider);
+}
+
+.dossier-table thead th {
+	font-size: var(--text-small);
+	font-weight: 600;
+	color: var(--color-muted);
+}
+
+.dossier-segmented {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: var(--space-1);
+}
+
+.dossier-segment,
+.dossier-item-button {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	min-block-size: var(--control-compact);
+	min-inline-size: var(--control-compact);
+	padding: var(--space-1) var(--space-row);
+	font-size: var(--text-body);
+	background: var(--color-control);
+	border-radius: var(--radius-segment);
+}
+
+.dossier-segment[aria-pressed='true'],
+.dossier-item-button[aria-current='true'] {
+	font-weight: 600;
+	color: var(--color-text-strong);
+	background: var(--color-selected);
+	border-color: var(--color-focus);
+}
+
+/* The mark takes its room whether shown or not, so pressing a segment does not move its neighbours. */
+.dossier-segment-mark,
+.dossier-item-mark {
+	font-size: var(--text-small);
+}
+
+.dossier-segment[aria-pressed='false'] .dossier-segment-mark,
+.dossier-item-button:not([aria-current='true']) .dossier-item-mark {
+	visibility: hidden;
+}
+
+.dossier-item {
+	list-style: none;
+}
+
+.dossier-item-button {
+	inline-size: 100%;
+	justify-content: flex-start;
+	text-align: start;
+}
+
+/* A native <details> is the disclosure: its <summary> is a button to the keyboard and to assistive technology, and Enter and Space open it. */
+.dossier-disclosure > summary {
+	display: list-item;
+	min-block-size: var(--control-compact);
+	padding-block: var(--space-1);
+	cursor: pointer;
+}
+
+.dossier-disclosure[open] > summary {
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.dossier-search {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+
+.dossier-search-label {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.dossier-search-box {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.dossier-search-input {
+	flex: 1;
+	min-inline-size: 0;
+	min-block-size: var(--control-compact);
+	padding: var(--space-1);
+	font: inherit;
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
+	appearance: none;
+}
+
+/* The clear button is ours; the browser's own would be a second one. */
+.dossier-search-input::-webkit-search-cancel-button {
+	display: none;
+}
+
+.dossier-search-clear {
+	min-block-size: var(--control-compact);
+	padding-block: var(--space-1);
+}
+
+.dossier-search-count {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.dossier-search-count:empty {
+	display: none;
+}
+
+.dossier-undo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1) var(--space-2);
+	margin: 0;
+	padding: var(--space-2) var(--space-row);
+	font-size: var(--text-body);
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.dossier-undo-button,
+.dossier-session-prompt-start {
+	min-block-size: var(--control-compact);
+	padding-block: var(--space-1);
+}
+
+.dossier-session-prompt {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--space-2);
+	padding: var(--space-card);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.dossier-session-prompt-heading {
+	margin: 0;
+	font-size: var(--text-h3);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.dossier-session-prompt-text {
+	margin: 0;
+	color: var(--color-muted);
+}
+
+.dossier-session-prompt-label {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.dossier-session-prompt-input {
+	max-inline-size: 24rem;
+	min-block-size: var(--control-compact);
+}

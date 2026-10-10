@@ -8,6 +8,8 @@ import diamond from '../assets/icons/diamond.svg';
 		<a class="app-bar-title" href="/">Vampire: The Masquerade</a>
 		<span class="app-bar-badge">V20</span>
 	</div>
+	<!-- The sheet puts the current session's name here (an empty element it fills); no other page gives it one. -->
+	<slot name="label" />
 	<!-- Filled by the sheet once it reports saving; empty, and not drawn, until then. -->
 	<p id="save-status" class="app-bar-status"></p>
 </div>

@@ -1,7 +1,8 @@
 import type { V20Character } from '../../domain/v20/character';
 import { diceLabel } from '../../domain/v20/identity';
+import { poolFormula } from '../../domain/v20/poolText';
 import { dicePool, type DicePool, type PoolSelection } from '../../domain/v20/resources';
-import { MINUS_SIGN, lookup, showBlock, showOptional } from './draw';
+import { lookup, showBlock, showOptional } from './draw';
 
 export interface PoolReadout {
   formula: string;
@@ -11,13 +12,6 @@ export interface PoolReadout {
   total: string;
   /** The "cannot act" notice: only while something is selected. */
   incapacitated: boolean;
-}
-
-/** The terms the player chose, and the wound once there is a whole pool to take it from. */
-export function poolFormula({ attribute, ability, woundPenalty, total }: DicePool): string {
-  const terms = [attribute, ability].filter((term) => term !== undefined).map((term) => `${term.label} ${term.rating}`);
-  const formula = terms.join(' + ');
-  return total !== undefined && woundPenalty !== undefined ? `${formula} ${MINUS_SIGN} wound ${woundPenalty}` : formula;
 }
 
 /** Each chosen trait that has a specialty, as "Trait · specialty". */

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
+import { BACKGROUNDS } from './rules';
 import { conceptReport, report, settingsReport, stepStatuses } from './progress';
 import { setBaseGeneration, setClan, setConceptText, setExtraFreebies } from './updates';
 
@@ -70,5 +71,17 @@ describe('stepStatuses', () => {
     const build = blankBuild('abc');
     expect(stepStatuses(build).concept).toBe('clan needed');
     expect(stepStatuses(setClan(build, 'Toreador').build).concept).toBe('');
+  });
+});
+
+describe('report with more than six Backgrounds rated', () => {
+  test('reports without error and counts every rated Background', () => {
+    const build = blankBuild('abc');
+    const eight = BACKGROUNDS.slice(0, 8);
+    for (const name of eight) build.traits[`background:${name}`] = { creation: 1, freebie: 0 };
+
+    const shown = report(build);
+
+    expect(shown.allotments.backgrounds).toMatchObject({ placed: 8, overspent: true });
   });
 });

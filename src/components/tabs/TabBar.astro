@@ -1,0 +1,29 @@
+---
+interface Props {
+	tabs: readonly { key: string; label: string }[];
+}
+
+const { tabs } = Astro.props;
+---
+
+{
+	/* A bar for one tab would have nothing to choose; the first tab is drawn selected, the script fills in the addresses and follows the address. */
+	tabs.length > 1 && (
+		<div class="tab-bar" role="tablist" aria-label="Sections of the character sheet" data-tab-bar>
+			{tabs.map((tab, index) => (
+				<a
+					class="tab-link"
+					role="tab"
+					id={`tab-${tab.key}`}
+					href={`?tab=${tab.key}`}
+					data-tab-key={tab.key}
+					aria-selected={index === 0 ? 'true' : 'false'}
+					aria-controls={`tab-panel-${tab.key}`}
+					tabindex={index === 0 ? 0 : -1}
+				>
+					{tab.label}
+				</a>
+			))}
+		</div>
+	)
+}

@@ -4,7 +4,7 @@ import type { V20Character } from '../../src/domain/v20/character';
 import type { V20Build } from '../../src/domain/v20/creation/build';
 
 /** What earlier steps of a scenario did, for later steps to check against. */
-interface ScenarioMemory {
+export interface ScenarioMemory {
   /** Text typed into the sheet, by field label. */
   entered: Map<string, string>;
   /** Characters arranged as already saved, in roster order. */
@@ -37,6 +37,18 @@ interface ScenarioMemory {
   libraryState?: string;
   /** Whether "No characters match." was seen on the way. */
   noMatchSeen?: boolean;
+  /** What each tab's steps remember, by tab; see `memoryFor`. */
+  slots: Map<string, unknown>;
+}
+
+/**
+ * A step file's own part of the scenario's memory, made by `init` the first time it is asked for and
+ * the same object after. Each slice names its own key, so a slice never edits `ScenarioMemory`.
+ */
+export function memoryFor<T>(world: { memory: ScenarioMemory }, key: string, init: () => T): T {
+  const { slots } = world.memory;
+  if (!slots.has(key)) slots.set(key, init());
+  return slots.get(key) as T;
 }
 
 // Every step file imports Given/When/Then from here so scenarios share one
@@ -55,6 +67,7 @@ export const test = base.extend<{ memory: ScenarioMemory }>({
       tabbedControls: [],
       visited: [],
       coveredRows: [],
+      slots: new Map(),
     });
   },
 });

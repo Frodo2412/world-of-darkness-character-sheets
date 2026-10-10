@@ -1,0 +1,20 @@
+---
+import '../../styles/dossier.css';
+
+interface Props {
+	message: string;
+}
+
+const { message } = Astro.props;
+---
+
+<div class="dossier-empty">
+	<p class="dossier-empty-message">{message}</p>
+	{
+		Astro.slots.has('action') && (
+			<div class="dossier-empty-action">
+				<slot name="action" />
+			</div>
+		)
+	}
+</div>

@@ -1,0 +1,19 @@
+---
+import '../../styles/dossier.css';
+
+interface Props {
+	/** What the script reads to know which item was chosen. */
+	value: string;
+	current?: boolean;
+}
+
+const { value, current = false } = Astro.props;
+---
+
+<!-- One item of a list where one item at a time is shown in full; the current one is marked in text as well as colour. -->
+<li class="dossier-item">
+	<button type="button" class="dossier-item-button" data-value={value} aria-current={current ? 'true' : undefined}>
+		<span class="dossier-item-mark" aria-hidden="true">▸</span>
+		<slot />
+	</button>
+</li>

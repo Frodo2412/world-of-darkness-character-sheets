@@ -7,6 +7,7 @@ const saveStatus = document.querySelector<HTMLElement>('#save-status');
 
 const SAVED = 'Saved';
 const NOT_SAVED = 'Changes not saved';
+const SAVE_REFUSED = 'Changes not saved. This browser refused to store your latest changes.';
 
 export const STORAGE_UNAVAILABLE =
   'Characters cannot be saved in this browser. Its storage is turned off or blocked for this site.';
@@ -17,9 +18,19 @@ export function showStatus(text: string): void {
   region.hidden = false;
 }
 
+/** Shows `text` only if no message is showing: puts a message back that another one had replaced. */
+export function showStatusIfClear(text: string): void {
+  if (region.hidden) showStatus(text);
+}
+
 export function clearStatus(): void {
   region.hidden = true;
   region.textContent = '';
+}
+
+/** Takes the message down only if it is still `text`: another message that replaced it stays. */
+export function clearStatusIf(text: string): void {
+  if (region.textContent === text) clearStatus();
 }
 
 /**
@@ -29,10 +40,11 @@ export function clearStatus(): void {
 export function reportSave(result: SaveResult): void {
   if (result.status === 'failed') {
     drawSaveStatus(NOT_SAVED, 'not-saved');
-    showStatus('Changes not saved. This browser refused to store your latest changes.');
+    showStatus(SAVE_REFUSED);
   } else {
     drawSaveStatus(SAVED, 'saved');
-    clearStatus();
+    // Only the refusal this function showed: another message (a tab that failed to load) is still true.
+    clearStatusIf(SAVE_REFUSED);
   }
 }
 

@@ -1,20 +1,7 @@
 import '../components/controls/dot-rating';
 import '../components/controls/health-track';
 import type { HealthChange, HealthTrack } from '../components/controls/health-track';
-import type { RatingChange, RatingControl } from '../components/controls/rating-control';
-import {
-  cycleHealthBox,
-  namedRow,
-  setNamedRow,
-  setSpecialty,
-  setText,
-  setTrait,
-  specialtyText,
-  textValue,
-  traitValue,
-  type V20Character,
-} from '../domain/v20/character';
-import { RATING_RANGE, rangeOf, type NamedRowRef, type SpecialtyRef, type TextRef, type TraitRef } from '../domain/v20/traits';
+import { cycleHealthBox, type V20Character } from '../domain/v20/character';
 import { stepBlood, stepTemporaryWillpower, type Resource } from '../domain/v20/resources';
 import {
   browserStorage,
@@ -23,17 +10,20 @@ import {
   type CharacterStore,
 } from '../storage/characterStore';
 import { drawIdentity } from './sheet/identityCard';
-import { createMode, type Mode, type SheetMode } from './sheet/mode';
-import { createPool, type PoolRow } from './sheet/pool';
-import { announcePool, drawPoolCard } from './sheet/poolCard';
-import { drawRating } from './sheet/ratingDraw';
+import { createMode, type Mode } from './sheet/mode';
+import { observers } from './sheet/observers/index';
+import { createPool } from './sheet/pool';
 import { announce, announceWound, drawResourceCards } from './sheet/resourceCards';
-import { drawSideCards } from './sheet/sideCards';
-import { drawTraitCards } from './sheet/traitCards';
-import { STORAGE_UNAVAILABLE, reportSave, showStatus } from './status';
-
-type Update = (character: V20Character) => V20Character;
-type Apply = (update: Update) => V20Character;
+import { STORAGE_UNAVAILABLE, clearStatusIf, reportSave, showStatus, showStatusIfClear } from './status';
+import { hrefFor, titleFor } from './tabs/address';
+import type { Apply } from './tabs/context';
+import { discoverTabs } from './tabs/discover';
+import { bindFields, drawFields } from './tabs/fields';
+import { createTabHistory } from './tabs/history';
+import { focusPanel, hidePanel, showPanel } from './tabs/panels';
+import { createAnnouncer, realStamp } from './tabs/services';
+import { createShell } from './tabs/shell';
+import { createTabBar, type TabBar } from './tabs/tabBar';
 
 const STEPS: Record<Resource, (character: V20Character, delta: number) => V20Character> = {
   blood: stepBlood,
@@ -44,92 +34,18 @@ const sheet = document.querySelector<HTMLElement>('#sheet')!;
 const notFound = document.querySelector<HTMLElement>('#sheet-not-found')!;
 const unreadable = document.querySelector<HTMLElement>('#sheet-unreadable')!;
 
-const textInputs = sheet.querySelectorAll<HTMLInputElement>('[data-text]');
-
-const traitRatings = sheet.querySelectorAll<RatingControl>('[data-trait]');
-const rowNames = sheet.querySelectorAll<HTMLInputElement>('[data-row-name]');
-const specialtyInputs = sheet.querySelectorAll<HTMLInputElement>('[data-specialty]');
-const healthTrack = sheet.querySelector<HealthTrack>('health-track')!;
-const rowRatings = sheet.querySelectorAll<RatingControl>('[data-row-rating]');
-const stepperButtons = sheet.querySelectorAll<HTMLButtonElement>('[data-step]');
-
-// What is chosen for the dice pool: kept here, never saved, and cleared whenever the mode changes.
-const pool = createPool();
-
-const textFieldOf = (input: HTMLInputElement): TextRef => input.dataset.text as TextRef;
-
-const traitOf = (rating: RatingControl): TraitRef => rating.dataset.trait as TraitRef;
-
-// Leave a matching input alone so typing does not move the caret.
-function showText(input: HTMLInputElement, text: string): void {
-  if (input.value !== text) input.value = text;
-}
-
-function drawTextInputs(character: V20Character): void {
-  for (const input of textInputs) {
-    showText(input, textValue(character, textFieldOf(input)));
-  }
-}
-
-function drawTraitRatings(character: V20Character, mode: SheetMode): void {
-  for (const rating of traitRatings) {
-    const ref = traitOf(rating);
-    drawRating(rating, {
-      ref,
-      label: rating.dataset.label ?? '',
-      value: traitValue(character, ref),
-      storedMax: rangeOf(ref).max,
-      mode,
-    });
-  }
-}
-
-function drawRowNames(character: V20Character): void {
-  for (const input of rowNames) {
-    showText(input, namedRow(character, input.dataset.rowName as NamedRowRef)?.name ?? '');
-  }
-}
-
-function drawSpecialties(character: V20Character): void {
-  for (const input of specialtyInputs) {
-    showText(input, specialtyText(character, input.dataset.specialty as SpecialtyRef));
-  }
-}
-
-function drawRowRatings(character: V20Character, mode: SheetMode): void {
-  for (const rating of rowRatings) {
-    const ref = rating.dataset.rowRating as NamedRowRef;
-    const row = namedRow(character, ref);
-    if (row === undefined) continue;
-    // A write-in rating is announced with the name the player gave it.
-    const label = rating.dataset.label!;
-    const name = row.name.trim();
-    drawRating(rating, {
-      ref,
-      label: name ? `${label}: ${name}` : label,
-      value: row.rating,
-      storedMax: RATING_RANGE.max,
-      mode,
-    });
-  }
-}
-
-function render(character: V20Character, mode: SheetMode): void {
-  drawIdentity(sheet, character);
-  drawTextInputs(character);
-  drawTraitRatings(character, mode);
-  drawRowNames(character);
-  drawSpecialties(character);
-  drawRowRatings(character, mode);
-  drawTraitCards(sheet, character, mode, pool.selection());
-  drawResourceCards(sheet, character);
-  drawSideCards(sheet, character);
-  drawPoolCard(sheet, character, pool.selection());
-}
+// The parts of the page that belong to the shell: the same on every tab.
+const identity = sheet.querySelector<HTMLElement>('.identity')!;
+const resourcesRow = sheet.querySelector<HTMLElement>('.resources-row')!;
+const healthTrack = resourcesRow.querySelector<HealthTrack>('health-track')!;
+const stepperButtons = resourcesRow.querySelectorAll<HTMLButtonElement>('[data-step]');
 
 // The roster opens a new character's sheet with this marker: start editing, and do
 // not keep the marker, so a reload is play mode again.
 const EDIT_MARKER = '#edit';
+
+// The page's one polite live region: the mode change and the tabs both speak through it.
+const announceToPage = createAnnouncer(document.querySelector<HTMLElement>('#mode-announcement')!);
 
 function startMode(): Mode {
   const startsEditing = window.location.hash === EDIT_MARKER;
@@ -138,64 +54,13 @@ function startMode(): Mode {
     url.hash = '';
     history.replaceState(null, '', url);
   }
-  return createMode(sheet, startsEditing ? 'edit' : 'play');
-}
-
-function bindTextInputs(apply: Apply): void {
-  for (const input of textInputs) {
-    input.addEventListener('input', () => {
-      apply((current) => setText(current, textFieldOf(input), input.value));
-    });
-  }
-}
-
-function bindTraitRatings(apply: Apply): void {
-  for (const rating of traitRatings) {
-    rating.addEventListener('change', (event) => {
-      const { value } = (event as CustomEvent<RatingChange>).detail;
-      apply((current) => setTrait(current, traitOf(rating), value));
-    });
-  }
-}
-
-function bindRowNames(apply: Apply): void {
-  for (const input of rowNames) {
-    input.addEventListener('input', () => {
-      const row = input.dataset.rowName as NamedRowRef;
-      apply((current) => setNamedRow(current, row, { name: input.value }));
-    });
-  }
-}
-
-function bindSpecialties(apply: Apply): void {
-  for (const input of specialtyInputs) {
-    input.addEventListener('input', () => {
-      apply((current) => setSpecialty(current, input.dataset.specialty as SpecialtyRef, input.value));
-    });
-  }
-}
-
-function bindRowRatings(apply: Apply): void {
-  for (const rating of rowRatings) {
-    rating.addEventListener('change', (event) => {
-      const row = rating.dataset.rowRating as NamedRowRef;
-      const { value } = (event as CustomEvent<RatingChange>).detail;
-      apply((current) => setNamedRow(current, row, { rating: value }));
-    });
-  }
+  return createMode(sheet, startsEditing ? 'edit' : 'play', announceToPage);
 }
 
 function bindHealthTrack(apply: Apply): void {
   healthTrack.addEventListener('change', (event) => {
     const { level } = (event as CustomEvent<HealthChange>).detail;
-    let before!: V20Character;
-    const after = apply((current) => {
-      before = current;
-      return cycleHealthBox(current, level);
-    });
-    announceWound(sheet, before, after);
-    // The wound moves the pool's total: say the pool again so its status text matches its card.
-    announcePool(sheet, after, pool.selection());
+    apply((current) => cycleHealthBox(current, level));
   });
 }
 
@@ -211,53 +76,114 @@ function bindSteppers(apply: Apply): void {
   }
 }
 
-/** Wires every control on the sheet to `apply`, the one path an edit takes. */
-function bindEditListeners(apply: Apply): void {
-  bindTextInputs(apply);
-  bindTraitRatings(apply);
-  bindRowNames(apply);
-  bindSpecialties(apply);
-  bindRowRatings(apply);
-  bindHealthTrack(apply);
-  bindSteppers(apply);
+const TAB_FAILED = 'This tab could not be shown. Choose it again, or reload the page, to try again.';
+
+const PAGE_FAILED = 'This page could not be set up. Reload the page to try again.';
+
+// The text of the tab-failure message last shown, so showing a tab takes down that message and
+// only that one: a refused save's message that replaced it stays.
+let tabFailureText: string | undefined;
+
+function reportTabFailure(text: string): void {
+  tabFailureText = text;
+  showStatus(text);
 }
 
-function showSheet(loaded: V20Character, store: CharacterStore): void {
-  let character = loaded;
-  const mode = startMode();
+/** A switch that fails must not leave the page silent: say so, and leave the rest of the sheet working. */
+function surviving(switching: Promise<void>): void {
+  switching.catch(() => reportTabFailure(TAB_FAILED));
+}
 
-  /** The one path every edit takes: update the model, redraw, save. */
-  function apply(update: Update): V20Character {
-    character = update(character);
-    render(character, mode.current());
-    reportSave(store.save(character));
-    return character;
+async function showSheet(loaded: V20Character, store: CharacterStore): Promise<void> {
+  const mode = startMode();
+  const { tabs, showBar } = discoverTabs();
+  const history = createTabHistory(
+    window,
+    tabs.map((tab) => tab.key),
+  );
+  // The bar is drawn only when there is more than one tab; it is wired once the shell exists.
+  let bar: TabBar | undefined;
+
+  const shell = createShell({
+    tabs,
+    character: loaded,
+    mode: mode.current,
+    pool: createPool(),
+    rootOf: (key) => sheet.querySelector<HTMLElement>(`[data-tab-panel="${key}"]`)!,
+    save(character) {
+      reportSave(store.save(character));
+      // A refused save may have replaced the tab-failure message; once it is gone that message is still true.
+      if (tabFailureText !== undefined) showStatusIfClear(tabFailureText);
+    },
+    push: history.push,
+    announce: announceToPage,
+    stamp: realStamp,
+    observers,
+    restore: history.replace,
+    // The whole page: an observer's target, the application bar's label, is outside #sheet.
+    pageRoot: document.body,
+    view: {
+      show(tab) {
+        if (tabFailureText !== undefined) {
+          clearStatusIf(tabFailureText);
+          tabFailureText = undefined;
+        }
+        showPanel(sheet, tab.key);
+        bar?.select(tab.key);
+      },
+      focus: (tab) => focusPanel(sheet, tab.key),
+      loadFailed: (tab) =>
+        reportTabFailure(
+          showBar
+            ? `The ${tab.label} tab could not be loaded. Choose it again to try again.`
+            : `The ${tab.label} tab could not be loaded. Reload the page to try again.`,
+        ),
+      unavailable: (tab) => hidePanel(sheet, tab.key),
+      showResources: (visible) => void (resourcesRow.hidden = !visible),
+      afterRender(character, current, tab) {
+        drawIdentity(sheet, character);
+        drawFields(identity, character, current);
+        drawFields(resourcesRow, character, current);
+        drawResourceCards(sheet, character);
+        // With one tab the page is as it always was, title included.
+        if (showBar) document.title = titleFor(tab.label, character);
+      },
+      applied: (before, after) => announceWound(sheet, before, after),
+    },
+  });
+
+  const barElement = sheet.querySelector<HTMLElement>('[data-tab-bar]');
+  if (barElement !== null) {
+    bar = createTabBar(barElement, {
+      onSelect: (key) => surviving(shell.open(key)),
+      hrefFor: (key) => hrefFor(new URL(window.location.href), key),
+    });
   }
-  bindEditListeners(apply);
+  history.onPop((key) => surviving(shell.switchTo(key)));
+
+  const { apply } = shell;
+  bindFields(identity, apply);
+  bindFields(resourcesRow, apply);
+  bindHealthTrack(apply);
+  bindSteppers(apply);
 
   // Another tab changed or deleted this character: what this page holds is stale,
   // and saving it would undo that. Start again from what is stored now.
   window.addEventListener('storage', (event) => {
-    if (event.key === null || event.key === keyFor(character.id)) window.location.reload();
+    if (event.key === null || event.key === keyFor(loaded.id)) window.location.reload();
   });
 
-  // Choosing a trait redraws and says the pool once it is whole.
-  sheet.addEventListener('click', (event) => {
-    const row = (event.target as Element).closest('.trait-select')?.closest<HTMLElement>('[data-trait-key]');
-    if (row === null || row === undefined) return;
-    pool.toggle(row.dataset.traitKey as PoolRow);
-    render(character, mode.current());
-    announcePool(sheet, character, pool.selection());
-  });
-
-  // A mode change forgets the selection, and the pool said for it; the redraw after shows none.
-  mode.onChange(() => {
-    pool.clear();
-    announcePool(sheet, character, pool.selection());
-  });
-  mode.onChange((next) => render(character, next));
-  render(character, mode.current());
-  sheet.hidden = false;
+  mode.onChange(() => shell.modeChanged());
+  try {
+    await shell.switchTo(history.current());
+  } catch {
+    reportTabFailure(TAB_FAILED);
+  } finally {
+    // Whatever happened, the player gets the sheet back: the shell's own parts work without a tab.
+    sheet.hidden = false;
+  }
+  // Measured only now that the page is drawn: a tab far along the bar is brought into view.
+  bar?.select(history.current());
 }
 
 type PageState =
@@ -295,7 +221,11 @@ window.addEventListener('pageshow', (event) => {
 const state = pageState();
 switch (state.kind) {
   case 'loaded':
-    showSheet(state.character, state.store);
+    // Setup that throws before the first tab is shown must not leave a blank page.
+    showSheet(state.character, state.store).catch(() => {
+      sheet.hidden = false;
+      showStatus(PAGE_FAILED);
+    });
     break;
   case 'unavailable':
     showStatus(STORAGE_UNAVAILABLE);

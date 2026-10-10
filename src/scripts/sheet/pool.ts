@@ -6,6 +6,8 @@ export type PoolRow = NonNullable<PoolSelection['attribute'] | PoolSelection['ab
 export interface Pool {
   /** What is selected now; a copy. */
   selection(): PoolSelection;
+  /** Makes `selection` the whole choice, both rows at once, whatever was chosen before. */
+  select(selection: PoolSelection): void;
   /** Selects the row, replacing the selected one of its kind, or deselects it when it is the selected one. */
   toggle(row: PoolRow): void;
   clear(): void;
@@ -19,6 +21,12 @@ export function createPool(): Pool {
 
   return {
     selection: () => ({ ...selected }),
+    select({ attribute, ability }) {
+      selected = {
+        ...(attribute === undefined ? {} : { attribute }),
+        ...(ability === undefined ? {} : { ability }),
+      };
+    },
     toggle(row) {
       const kind = isAttribute(row) ? 'attribute' : 'ability';
       const { [kind]: current, ...rest } = selected;
