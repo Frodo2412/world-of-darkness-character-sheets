@@ -24,6 +24,11 @@
 	margin-block-start: calc(var(--space-2) * -1);
 }
 
+/* The sheet gives every label the height of a control; the search label is a caption over its field. */
+.disciplines .dossier-search-label {
+	min-block-size: 0;
+}
+
 .disciplines-layout {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
@@ -128,15 +133,13 @@
 	border-radius: var(--radius-row);
 }
 
-/* The heading sits in the summary, on the line with its state. */
-.disciplines-power-summary {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	gap: var(--space-1) var(--space-2);
+/* The heading sits in the summary, on the line with its state: all inline, so the disclosure's own marker stays. */
+.disciplines-power-summary > * {
+	margin-inline-end: var(--space-2);
 }
 
 .disciplines-power-name {
+	display: inline;
 	margin: 0;
 	font-family: var(--font-body);
 	font-size: var(--text-body);

@@ -740,7 +740,7 @@ This section is the machine-parseable recovery handle.
 ### Slices (grouped by wave)
 
 #### Wave 2
-- [ ] Slice 6: Disciplines tab
+- [x] Slice 6: Disciplines tab
   - [x] Step 6.1: The Discipline view model
   - [x] Step 6.2: The tab, list and empty state
   - [x] Step 6.3: Power panels
