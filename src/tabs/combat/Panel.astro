@@ -9,6 +9,7 @@ import EmptyState from '../../components/dossier/EmptyState.astro';
 import ReferenceTable from '../../components/dossier/ReferenceTable.astro';
 import SearchField from '../../components/dossier/SearchField.astro';
 import SegmentedControl from '../../components/dossier/SegmentedControl.astro';
+import Reminders from './Reminders.astro';
 import { calledShotLabel } from './text';
 import { SECTION_FILTERS } from './section';
 import './combat.css';
@@ -30,6 +31,10 @@ const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) =
 	<h2 class="combat-title" data-panel-heading>Combat</h2>
 	<!-- Shown while the health track is fully marked Incapacitated. -->
 	<p class="combat-incapacitated" data-field="incapacitated" hidden>{INCAPACITATED_REASON}</p>
+
+	<!-- What the tables are, and what their pools leave out. -->
+	<p class="combat-disclaimer">Rulebook reference — not owned equipment</p>
+	<p class="combat-disclaimer">Base pools shown without Celerity, blood boosts, armor or situational modifiers</p>
 
 	<div class="combat-controls">
 		<SearchField id="combat-search" label="Search manoeuvres and weapons" />
@@ -170,6 +175,8 @@ const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) =
 		</div>
 	</section>
 	</div>
+
+	<Reminders />
 
 	<!-- Drawn from, never shown: the script copies each into the tables above. -->
 	<template data-template="manoeuvre">

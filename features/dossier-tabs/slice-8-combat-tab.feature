@@ -174,3 +174,9 @@ Feature: Combat tab
     Then Strike shows "0 dice" with "Dexterity 3 + Brawl 1 − wound 5" on the Combat tab
     And "Incapacitated: every pool is 0 dice." is not shown on the Combat tab
 
+  Scenario: The reminders and disclaimers are shown
+    When the Combat tab is opened
+    Then the reminders card lists "Range and cover" (V20 p. 278), "Called shots" (V20 p. 274), "Staking" (V20 p. 280) and "Grappling" (V20 p. 276) on the Combat tab
+    And "Rulebook reference — not owned equipment" is shown on the Combat tab
+    And "Base pools shown without Celerity, blood boosts, armor or situational modifiers" is shown on the Combat tab
+

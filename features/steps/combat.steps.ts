@@ -250,6 +250,21 @@ Then('the attack pool reads {string} and the damage pool reads {string} on the C
   await expect(rollReading(page, 'damage-pool')).toHaveText(damage);
 });
 
+// The reminders card
+
+Then(/^the reminders card lists (.+) on the Combat tab$/, async ({ page }, reminders: string) => {
+  const items = combatPanel(page).getByRole('region', { name: 'Combat reminders', exact: true }).getByRole('listitem');
+  const wanted = [...reminders.matchAll(/"([^"]+)" \(V20 p\. (\d+)\)/g)].map(([, title, reference]) => ({ title, reference }));
+  expect(wanted.length).toBeGreaterThan(0);
+  await expect(items).toHaveCount(wanted.length);
+  for (const [index, { title, reference }] of wanted.entries()) {
+    await expect(items.nth(index).getByRole('heading', { name: title, exact: true })).toBeVisible();
+    await expect(items.nth(index).getByText(`V20 p. ${reference}`, { exact: true })).toBeVisible();
+    // A reminder with a title and a page and nothing to remind of would pass the two checks above.
+    await expect(items.nth(index).locator('p')).not.toBeEmpty();
+  }
+});
+
 // What the Weapon roll panel shows
 
 Then('the attack pool reads {string} with {string} on the Combat tab', async ({ page }, dice: string, formula: string) => {

@@ -144,7 +144,8 @@
 }
 
 .combat-roll-note,
-.combat-hint {
+.combat-hint,
+.combat-disclaimer {
 	margin: 0;
 	font-size: var(--text-small);
 	color: var(--color-muted);
@@ -279,4 +280,66 @@
 .combat-incapacitated {
 	font-weight: 600;
 	color: var(--color-danger);
+}
+
+.combat-disclaimer {
+	margin: calc(var(--space-2) * -1) 0 0;
+}
+
+.combat-reminders {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	padding: var(--space-card);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.combat-reminder-list {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.combat-reminder {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--space-1) var(--space-2);
+	min-inline-size: 0;
+	padding: var(--space-2) var(--space-row);
+	background: var(--color-row);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-row);
+}
+
+.combat-reminder-title {
+	margin: 0;
+	font-family: var(--font-body);
+	font-size: var(--text-body);
+	font-weight: 600;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.combat-reminder-page {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.combat-reminder-text {
+	flex-basis: 100%;
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+@media (min-width: 48rem) {
+	.combat-reminder-list {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
 }

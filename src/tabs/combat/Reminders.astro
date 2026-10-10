@@ -1,0 +1,46 @@
+---
+import { CALLED_SHOTS, RANGE_BANDS } from '../../domain/v20/combat/data/modifiers';
+import { calledShotLabel } from './text';
+
+// Rules the tables and the roll panel do not do for the player, each with the V20 page it is on. The
+// Targeting and Range values are the combat data's; the rest is typed from the book (pp. 276, 278, 280).
+const modifier = (value: number): string => (value === 0 ? 'no modifier' : `+${value}`);
+
+const REMINDERS = [
+	{
+		title: 'Range and cover',
+		page: 278,
+		text: `${RANGE_BANDS.map((band) => `${band.label.toLowerCase()} is difficulty ${band.difficulty}`).join(', ')}. Cover adds to the attacker's difficulty: light (lying prone) +1, good (behind a wall) +2, superior (only the head exposed) +3. An attacker firing back from cover is at one lower difficulty.`,
+	},
+	{
+		title: 'Called shots',
+		page: 274,
+		text: `Aiming at a specific location adds difficulty and can add damage. ${CALLED_SHOTS.map((shot) => `${calledShotLabel(shot)}: difficulty ${modifier(shot.difficulty)}, damage ${modifier(shot.damage)}`).join('; ')}.`,
+	},
+	{
+		title: 'Staking',
+		page: 280,
+		text: 'To stake a vampire, the attacker must target the heart (difficulty 9). If the attack inflicts at least three health levels of damage, the target is immobilized: conscious, but unable to move or spend blood points.',
+	},
+	{
+		title: 'Grappling',
+		page: 276,
+		text: 'A successful clinch lets either combatant inflict Strength damage each turn or try to escape with a resisted Strength + Brawl roll. A hold inflicts no damage: the target stays immobilized until she rolls more successes than the attacker on a resisted Strength + Brawl roll.',
+	},
+];
+---
+
+<section class="combat-reminders" aria-labelledby="combat-reminders-heading" data-reminders>
+	<h3 class="combat-roll-heading" id="combat-reminders-heading">Combat reminders</h3>
+	<ul class="combat-reminder-list">
+		{
+			REMINDERS.map((reminder) => (
+				<li class="combat-reminder">
+					<h4 class="combat-reminder-title">{reminder.title}</h4>
+					<span class="combat-reminder-page" data-field="page">V20 p. {reminder.page}</span>
+					<p class="combat-reminder-text">{reminder.text.charAt(0).toUpperCase() + reminder.text.slice(1)}</p>
+				</li>
+			))
+		}
+	</ul>
+</section>
