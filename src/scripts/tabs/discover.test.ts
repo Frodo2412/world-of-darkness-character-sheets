@@ -39,18 +39,34 @@ describe('folderOf', () => {
   });
 });
 
-describe('the tabs found in src/tabs', () => {
-  it('are only the Character sheet while no tab folder exists, with no bar', () => {
-    const { tabs, showBar } = discoverTabs();
+// The descriptor glob's result is given to the functions, so these do not depend on which tab
+// folders the repository has: a new tab folder changes nothing here.
+describe('the tabs found in the descriptor modules', () => {
+  const folder = (name: string) => ({ [`../../tabs/${name}/descriptor.ts`]: { default: tab(name) } });
+
+  it('are only the Character sheet when there is no tab folder, with no bar', () => {
+    const { tabs, showBar } = discoverTabs({});
     expect(tabs.map((entry) => entry.key)).toEqual(['sheet']);
     expect(showBar).toBe(false);
   });
 
-  it('pass the consistency check while no tab folder exists', () => {
-    expect(() => checkTabFolders([])).not.toThrow();
+  it('put the Character sheet first and show the bar once a tab folder exists', () => {
+    const { tabs, showBar } = discoverTabs(folder('zz-fake'));
+    expect(tabs.map((entry) => entry.key)).toEqual(['sheet', 'zz-fake']);
+    expect(showBar).toBe(true);
+  });
+
+  it('pass the consistency check when each descriptor has its panel', () => {
+    expect(() => checkTabFolders(['../tabs/zz-fake/Panel.astro'], folder('zz-fake'))).not.toThrow();
   });
 
   it('fail the check for a panel that has no descriptor', () => {
-    expect(() => checkTabFolders(['../tabs/combat/Panel.astro'])).toThrow('src/tabs/combat/ has a Panel.astro but no descriptor.ts');
+    expect(() => checkTabFolders(['../tabs/zz-fake/Panel.astro'], {})).toThrow(
+      'src/tabs/zz-fake/ has a Panel.astro but no descriptor.ts',
+    );
+  });
+
+  it('fail the check for a descriptor that has no panel', () => {
+    expect(() => checkTabFolders([], folder('zz-fake'))).toThrow('src/tabs/zz-fake/ has a descriptor.ts but no Panel.astro');
   });
 });

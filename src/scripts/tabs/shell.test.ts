@@ -314,6 +314,27 @@ describe('a tab that cannot be mounted', () => {
     expect(log.at(-1)).toBe('view:failed:combat');
   });
 
+  it('goes back to the tab that was drawn when the one that fails was asked for while another still loaded', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    // Still loading when the next request arrives, so it was never drawn: not what to go back to.
+    const pending: TabDescriptor = {
+      ...recordingTab('journal', log).descriptor,
+      mount: () => new Promise(() => {}),
+    };
+    const { descriptor: combat } = flakyTab('combat', log);
+    const { shell } = setup([sheet, pending, combat], log);
+    await shell.switchTo('sheet');
+    void shell.switchTo('journal');
+    log.length = 0;
+
+    await shell.switchTo('combat');
+
+    expect(log).toContain('restore:sheet');
+    expect(log).toContain('sheet:enter');
+    expect(log.at(-1)).toBe('view:failed:combat');
+  });
+
   it('is not reported when a later request has already moved on', async () => {
     const log: string[] = [];
     const sheet = recordingTab('sheet', log).descriptor;

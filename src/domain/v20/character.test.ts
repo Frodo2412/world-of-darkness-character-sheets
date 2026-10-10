@@ -738,6 +738,7 @@ describe('a fully filled-in character', () => {
     character = setText(character, 'weakness', 'Casts no reflection');
     character = setText(character, 'experience', '12');
     character = setText(character, 'notes', 'one\ntwo\nthree');
+    character = setSpecialty(character, 'abilities.academics', 'Art history');
     return {
       ...character,
       merits: [{ name: 'Eidetic Memory', category: 'Mental', points: 2, note: 'Never forgets' }],
@@ -775,6 +776,8 @@ describe('a fully filled-in character', () => {
     const filled = filledIn() as unknown as Record<string, unknown>;
     const unchanged = (before: unknown, after: unknown): string[] => {
       if (typeof before !== 'object' || before === null) return before === after ? ['<value>'] : [];
+      // An empty list or map has nothing to walk into: it is one value, and filling it in must change it.
+      if (Object.keys(before).length === 0) return JSON.stringify(before) === JSON.stringify(after) ? ['<empty>'] : [];
       return Object.keys(before).flatMap((key) =>
         unchanged((before as Record<string, unknown>)[key], (after as Record<string, unknown>)[key]).map(
           (path) => `${key}.${path}`,

@@ -1,10 +1,8 @@
+import type { Stamp } from '../../domain/v20/journal/stamp';
 import { generateId } from '../../storage/storagePort';
 
-/** What a tab uses to make ids and read the clock, handed over so a test can fix both. */
-export interface Stamp {
-  newId(): string;
-  now(): number;
-}
+// What a tab uses to make ids and read the clock is the domain's own port, defined once there.
+export type { Stamp };
 
 /** The real thing: ids that do not repeat and the time in milliseconds. */
 export const realStamp: Stamp = { newId: () => generateId(), now: () => Date.now() };

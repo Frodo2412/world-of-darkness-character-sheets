@@ -22,6 +22,11 @@ export function clearStatus(): void {
   region.textContent = '';
 }
 
+/** Takes the message down only if it is still `text`: another message that replaced it stays. */
+export function clearStatusIf(text: string): void {
+  if (region.textContent === text) clearStatus();
+}
+
 /**
  * Reports the outcome of a save: the application bar says whether the latest
  * change is stored, and a refusal is also announced by the status message.

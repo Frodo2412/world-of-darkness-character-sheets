@@ -141,10 +141,10 @@ Then('the character is listed and its sheet opens', async ({ page, memory }) => 
 });
 
 // The builder opens builds, which are stored apart from characters: a character's own id is a
-// "Build not found" there, and a build refuses more than six Backgrounds. So the character is taken
-// through the creator as a build that carries its id, name, clan and as many of its Backgrounds as
-// a build can hold, and that build is what is opened.
-Then('a build of that character in the builder reports progress without error', async ({ page, memory }) => {
+// "Build not found" there, and a build refuses more than six Backgrounds. So what is opened is a build
+// that carries the character's id, name, clan and its first six Backgrounds. That the builder's
+// progress counts more than six rated Backgrounds is a unit test (creation/progress.test.ts).
+Then('a build carrying that character\'s id and first six Backgrounds opens in the builder and reports progress', async ({ page, memory }) => {
   const { id, header, backgrounds } = memory.saved[0];
   const build = play(
     { ...buildWith({ concept: { name: header.name }, clan: header.clan }), id },

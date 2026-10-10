@@ -24,4 +24,4 @@ Feature: Stored character data for the dossier tabs
     Given a saved character with eight named backgrounds
     When the roster is opened and then the character's sheet
     Then the character is listed and its sheet opens
-    And a build of that character in the builder reports progress without error
+    And a build carrying that character's id and first six Backgrounds opens in the builder and reports progress

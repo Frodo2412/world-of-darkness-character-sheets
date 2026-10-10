@@ -14,7 +14,7 @@ import { createMode, type Mode } from './sheet/mode';
 import { observers } from './sheet/observers/index';
 import { createPool } from './sheet/pool';
 import { announce, announceWound, drawResourceCards } from './sheet/resourceCards';
-import { STORAGE_UNAVAILABLE, clearStatus, reportSave, showStatus } from './status';
+import { STORAGE_UNAVAILABLE, clearStatusIf, reportSave, showStatus } from './status';
 import { hrefFor, titleFor } from './tabs/address';
 import type { Apply } from './tabs/context';
 import { discoverTabs } from './tabs/discover';
@@ -78,11 +78,14 @@ function bindSteppers(apply: Apply): void {
 
 const TAB_FAILED = 'This tab could not be shown. Choose it again, or reload the page, to try again.';
 
-// Set while the status message is saying a tab failed, so showing a tab can take it down again.
-let tabFailureShown = false;
+const PAGE_FAILED = 'This page could not be set up. Reload the page to try again.';
+
+// The text of the tab-failure message last shown, so showing a tab takes down that message and
+// only that one: a refused save's message that replaced it stays.
+let tabFailureText: string | undefined;
 
 function reportTabFailure(text: string): void {
-  tabFailureShown = true;
+  tabFailureText = text;
   showStatus(text);
 }
 
@@ -117,9 +120,9 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
     pageRoot: document.body,
     view: {
       show(tab) {
-        if (tabFailureShown) {
-          tabFailureShown = false;
-          clearStatus();
+        if (tabFailureText !== undefined) {
+          clearStatusIf(tabFailureText);
+          tabFailureText = undefined;
         }
         showPanel(sheet, tab.key);
         bar?.select(tab.key);
@@ -208,7 +211,11 @@ window.addEventListener('pageshow', (event) => {
 const state = pageState();
 switch (state.kind) {
   case 'loaded':
-    void showSheet(state.character, state.store);
+    // Setup that throws before the first tab is shown must not leave a blank page.
+    showSheet(state.character, state.store).catch(() => {
+      sheet.hidden = false;
+      showStatus(PAGE_FAILED);
+    });
     break;
   case 'unavailable':
     showStatus(STORAGE_UNAVAILABLE);

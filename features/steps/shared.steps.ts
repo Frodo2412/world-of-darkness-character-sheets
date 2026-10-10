@@ -58,6 +58,9 @@ When(/^the (.+) tab is opened at 320 pixels wide with crowded content$/, async (
     await saveCharacters(page, memory.saved);
   }
   await openSheetTab(page, memory.saved[0].id, name);
+  // The sheet stays hidden until its tab is drawn, and a hidden sheet is 0 wide: measuring it then
+  // would pass without testing anything.
+  await expect(activePanel(page)).toBeVisible();
 });
 
 When(/^the (.+) tab is scanned for accessibility problems$/, async ({ page, memory }, name: string) => {

@@ -47,10 +47,13 @@ describe('createTabHistory', () => {
   });
 
   it('adds no entry for the tab the address already names', () => {
-    const win = fakeWindow('/sheet/?id=a1&tab=combat');
-    createTabHistory(win, keys).push('combat');
-    createTabHistory(fakeWindow('/sheet/?id=a1'), keys).push('sheet');
-    expect(win.entries).toHaveLength(1);
+    const named = fakeWindow('/sheet/?id=a1&tab=combat');
+    createTabHistory(named, keys).push('combat');
+    // The Character sheet is named by no tab at all.
+    const plain = fakeWindow('/sheet/?id=a1');
+    createTabHistory(plain, keys).push('sheet');
+    expect(named.entries).toHaveLength(1);
+    expect(plain.entries).toHaveLength(1);
   });
 
   it('puts a tab in the address in place of the current entry, adding none', () => {

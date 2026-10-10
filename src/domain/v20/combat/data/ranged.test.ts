@@ -24,7 +24,7 @@ describe('RANGED_WEAPONS', () => {
       for (const value of [entry.damage.flat, entry.range, entry.rate, entry.clip]) {
         expect(Number.isInteger(value) && (value as number) > 0, entry.name).toBe(true);
       }
-      expect('PJTN', entry.name).toContain(entry.conceal);
+      expect(['P', 'J', 'T', 'N'], entry.name).toContain(entry.conceal);
       expect(entry.page, entry.name).toBe(281);
       expect(typeof entry.chambered, entry.name).toBe('boolean');
       expect(typeof entry.automatic, entry.name).toBe('boolean');

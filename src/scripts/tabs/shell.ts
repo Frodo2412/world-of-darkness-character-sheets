@@ -71,6 +71,8 @@ export function createShell(options: ShellOptions): Shell {
   const descriptors = new Map(options.tabs.map((tab) => [tab.key, tab]));
   let character = options.character;
   let activeKey: TabKey | undefined;
+  /** The last tab that was entered and drawn: where a failed switch goes back to, whatever was requested in between. */
+  let shownKey: TabKey | undefined;
   const loading = new Map<TabKey, Promise<MountedTab>>();
   const loaded = new Map<TabKey, MountedTab>();
   /** Counts the requests to switch; a request that is no longer the latest does nothing when its tab arrives. */
@@ -142,7 +144,6 @@ export function createShell(options: ShellOptions): Shell {
   async function switchTo(key: TabKey): Promise<void> {
     if (isShown(key)) return;
     const thisSwitch = ++latestSwitch;
-    const previous = activeKey;
     active()?.leave?.();
     activeKey = key;
     const tab = descriptors.get(key)!;
@@ -152,23 +153,24 @@ export function createShell(options: ShellOptions): Shell {
     try {
       mounted = await load(key);
     } catch {
-      if (thisSwitch === latestSwitch) failed(tab, previous);
+      if (thisSwitch === latestSwitch) failed(tab);
       return;
     }
     if (thisSwitch !== latestSwitch) return;
+    shownKey = key;
     mounted.enter?.();
     draw();
   }
 
-  /** The tab could not be loaded: go back to the tab that was shown if there was one, and say so. */
-  function failed(tab: TabDescriptor, previous: TabKey | undefined): void {
-    if (previous !== undefined && loaded.has(previous)) {
-      activeKey = previous;
-      options.restore(previous);
-      const back = descriptors.get(previous)!;
+  /** The tab could not be loaded: go back to the tab that was last shown if there was one, and say so. */
+  function failed(tab: TabDescriptor): void {
+    if (shownKey !== undefined && loaded.has(shownKey)) {
+      activeKey = shownKey;
+      options.restore(shownKey);
+      const back = descriptors.get(shownKey)!;
       view.show(back);
       view.showResources(back.showsResources);
-      loaded.get(previous)!.enter?.();
+      loaded.get(shownKey)!.enter?.();
     }
     draw();
     // Last, so that showing the tab again does not take the message down.

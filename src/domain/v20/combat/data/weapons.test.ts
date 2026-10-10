@@ -14,7 +14,7 @@ describe('MELEE_WEAPONS', () => {
       expect(Object.keys(entry.damage), entry.name).toEqual(['strength']);
       expect(Number.isInteger(entry.damage.strength), entry.name).toBe(true);
       expect(['bashing', 'lethal'], entry.name).toContain(entry.type);
-      expect('PJTN', entry.name).toContain(entry.conceal);
+      expect(['P', 'J', 'T', 'N'], entry.name).toContain(entry.conceal);
       expect(entry.page, entry.name).toBeGreaterThanOrEqual(274);
       expect(entry.page, entry.name).toBeLessThanOrEqual(281);
       if (entry.note !== undefined) expect(entry.note.trim(), entry.name).not.toBe('');
