@@ -1,7 +1,7 @@
 # Plan: Dossier foundation (PR A of Dossier Tabs)
 
 **Created**: 2026-10-08
-**Split from**: `plans/dossier-tabs.md` on 2026-10-09 (the parent keeps Slices 6–14, PRs B and C)
+**Split from**: `plans/dossier-tabs.md` on 2026-10-10 (the parent keeps Slices 6–14, PRs B and C)
 **Branch**: `feat/dossier-foundation`
 **Status**: implemented
 **Gherkin persistence**: features
@@ -15,7 +15,7 @@ ledger (Slice 2), the shared dossier parts (Slice 3) and the two rulebook-data s
 No tab is visible yet: the Character sheet is the only registered tab, so the page is unchanged. Stored
 records written before this work keep loading. The approach stance, plan decisions, acceptance criteria
 and conventions for tab slices are in the parent plan and are not repeated here; the acceptance criteria
-this PR proves are F1, F2 (host half), F3 (unknown key, address), F5 and J6 (ledger arithmetic), and the host's part of F4 (arrows, Home, End, Enter, Space; axe on the Character sheet), F6 and F7 (identity, mode toggle, save status on the Character sheet). The rest of F3, F4, F6 and F7 is proven with the other tabs in Slice 14.
+this PR proves are F1, F2 (fixed order and the folder/descriptor consistency check, by unit tests; a second real tab reaching the bar is proven in Slice 14), F3 (unknown key, address), F5 and J6 (ledger arithmetic), and the host's part of F4 (arrows, Home, End, Enter, Space; axe on the Character sheet), F6 and F7 (identity, mode toggle, save status on the Character sheet). The rest of F3, F4, F6 and F7 is proven with the other tabs in Slice 14.
 
 ## Slices
 
