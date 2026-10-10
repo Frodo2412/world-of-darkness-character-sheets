@@ -362,7 +362,7 @@ describe('a tab that cannot be mounted', () => {
     expect(log.at(-1)).toBe('view:failed:combat');
   });
 
-  it('is mounted again when choosing it again after its enter threw, and the shown tab comes back meanwhile', async () => {
+  it('is entered again, on the same mounted tab, when chosen again after its enter threw, and the shown tab comes back meanwhile', async () => {
     const log: string[] = [];
     const sheet = recordingTab('sheet', log).descriptor;
     let throwing = true;
@@ -385,7 +385,7 @@ describe('a tab that cannot be mounted', () => {
     log.length = 0;
     await shell.open('combat');
 
-    expect(log).toContain('combat:mount');
+    expect(log).not.toContain('combat:mount');
     expect(log).toContain('combat:enter');
     expect(log.at(-1)).toBe('view:focus:combat');
   });

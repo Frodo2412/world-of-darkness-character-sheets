@@ -77,6 +77,8 @@ export function createShell(options: ShellOptions): Shell {
   let shownKey: TabKey | undefined;
   const loading = new Map<TabKey, Promise<MountedTab>>();
   const loaded = new Map<TabKey, MountedTab>();
+  /** Tabs mounted but whose enter or drawing threw: still mounted (once), but not shown until a retry draws them. */
+  const broken = new Set<TabKey>();
   /** Counts the requests to switch; a request that is no longer the latest does nothing when its tab arrives. */
   let latestSwitch = 0;
 
@@ -116,10 +118,12 @@ export function createShell(options: ShellOptions): Shell {
     return promise;
   }
 
-  const active = (): MountedTab | undefined => (activeKey === undefined ? undefined : loaded.get(activeKey));
+  const active = (): MountedTab | undefined =>
+    activeKey === undefined || broken.has(activeKey) ? undefined : loaded.get(activeKey);
 
   /** Whether the tab is shown, or on its way: a tab that failed to load is neither. */
-  const isShown = (key: TabKey): boolean => key === activeKey && (loaded.has(key) || loading.has(key));
+  const isShown = (key: TabKey): boolean =>
+    key === activeKey && !broken.has(key) && (loaded.has(key) || loading.has(key));
 
   /**
    * Redraws the active tab and then the shell. A tab still loading is drawn when it arrives, and one
@@ -167,12 +171,12 @@ export function createShell(options: ShellOptions): Shell {
       mounted.enter?.();
       draw();
     } catch {
-      // Not shown: forget it, so choosing it again mounts it again, and go back like a load that failed.
-      loaded.delete(key);
-      loading.delete(key);
+      // Not shown, but still mounted: choosing it again enters and draws it again, without mounting it twice.
+      broken.add(key);
       failed(tab);
       return;
     }
+    broken.delete(key);
     shownKey = key;
   }
 
@@ -197,7 +201,7 @@ export function createShell(options: ShellOptions): Shell {
     if (isShown(key)) return;
     options.push(key);
     await switchTo(key);
-    if (activeKey === key && loaded.has(key)) view.focus(descriptors.get(key)!);
+    if (activeKey === key && loaded.has(key) && !broken.has(key)) view.focus(descriptors.get(key)!);
   }
 
   return {
