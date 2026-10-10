@@ -2,12 +2,16 @@ import { expect } from '@playwright/test';
 import type { V20Character } from '../../src/domain/v20/character';
 import type { Haven } from '../../src/domain/v20/dossier/types';
 import { Given, Then, When } from './fixtures';
+import { doneButton, editButton } from './support/sheet';
 import {
   backgroundCard,
+  backgroundsPanel,
   backgroundCards,
+  countOf,
   cardsOf,
   emptyOf,
   entryCard,
+  indexEntries,
   openBackgroundsCharacter,
   saveBackgroundsCharacter,
   sectionNamed,
@@ -21,6 +25,10 @@ import {
 
 Given(/^a character with (.+) on the Backgrounds tab$/, async ({ page, memory }, words: string) => {
   await saveBackgroundsCharacter(page, memory, words);
+});
+
+Given(/^a character in edit mode with (.+) on the Backgrounds tab$/, async ({ page, memory }, words: string) => {
+  await openBackgroundsCharacter(page, memory, words, 'edit');
 });
 
 Given(/^a character in play mode with (.+) on the Backgrounds tab$/, async ({ page, memory }, words: string) => {
@@ -53,8 +61,7 @@ Then('{word} shows both people with their roles on the Backgrounds tab', async (
 });
 
 Then(/^(\w+) background cards are shown on the Backgrounds tab$/, async ({ page }, count: string) => {
-  const counts: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8 };
-  await expect(backgroundCards(page)).toHaveCount(counts[count]);
+  await expect(backgroundCards(page)).toHaveCount(countOf(count));
 });
 
 Then(/^the (.+) section shows "([^"]+)" on the Backgrounds tab$/, async ({ page }, section: string, message: string) => {
@@ -106,3 +113,36 @@ Then(
     }
   },
 );
+
+// Other traits and the notes card
+
+Then(
+  /^"([^"]+)" shows its kind "([^"]+)" and its note "([^"]+)" without dots on the Backgrounds tab$/,
+  async ({ page }, name: string, kind: string, note: string) => {
+    const card = entryCard(page, 'Other traits', name);
+    await expect(card.getByText(kind, { exact: true })).toBeVisible();
+    await expect(card.getByText(note, { exact: true })).toBeVisible();
+    await expect(card.getByRole('img')).toHaveCount(0);
+  },
+);
+
+Then('the note {string} is shown on the Backgrounds tab', async ({ page }, text: string) => {
+  await expect(backgroundsPanel(page).getByText(text, { exact: true })).toBeVisible();
+});
+
+// The section index
+
+When(/^the player switches to (play|edit) mode on the Backgrounds tab$/, async ({ page }, mode: string) => {
+  await (mode === 'play' ? doneButton(page) : editButton(page)).click();
+});
+
+Then(/^the section index reads (.+) on the Backgrounds tab$/, async ({ page }, quoted: string) => {
+  for (const [, entry] of quoted.matchAll(/"([^"]+)"/g)) {
+    await expect(indexEntries(page).getByText(entry, { exact: true })).toBeVisible();
+  }
+});
+
+Then('every count in the section index reads 0 on the Backgrounds tab', async ({ page }) => {
+  await expect(indexEntries(page)).toHaveCount(5);
+  for (const entry of await indexEntries(page).all()) await expect(entry).toHaveText(/ · 0$/);
+});

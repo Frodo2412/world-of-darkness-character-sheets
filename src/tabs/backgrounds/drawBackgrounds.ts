@@ -1,8 +1,7 @@
-import type { RatingControl } from '../../components/controls/rating-control';
-import { BACKGROUND_DOTS, type BackgroundCard } from '../../domain/v20/backgrounds/cards';
+import type { BackgroundCard } from '../../domain/v20/backgrounds/cards';
 import type { Person } from '../../domain/v20/dossier/types';
-import { drawRating } from '../../scripts/sheet/ratingDraw';
 import { cloneOf, field, reconcile, setText } from './dom';
+import { drawDots } from './dots';
 
 /** What the background cards copy their markup from. */
 export interface BackgroundTemplates {
@@ -40,14 +39,7 @@ function drawPeople(list: HTMLElement, people: readonly Person[], template: HTML
  */
 function drawCard(item: HTMLElement, card: BackgroundCard, templates: BackgroundTemplates): void {
   setText(field(item, 'name'), card.name);
-  drawRating(field(item, 'dots') as RatingControl, {
-    ref: `backgrounds.${card.index}`,
-    label: card.name,
-    value: card.dots,
-    storedMax: BACKGROUND_DOTS,
-    mode: 'play',
-  });
-  drawLine(field(item, 'overflow'), card.rating > BACKGROUND_DOTS ? `Rating ${card.rating}` : '');
+  drawDots(item, `backgrounds.${card.index}`, card);
   drawLine(field(item, 'summary'), card.summary);
   drawLine(field(item, 'note'), card.note);
   drawPeople(field(item, 'people'), card.people, templates.person);

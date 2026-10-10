@@ -2,6 +2,8 @@
 import EmptyState from '../../components/dossier/EmptyState.astro';
 import ReadOnlyHint from '../../components/dossier/ReadOnlyHint.astro';
 import SectionHeading from '../../components/dossier/SectionHeading.astro';
+import { SECTION_KEYS } from '../../domain/v20/backgrounds/counts';
+import { indexText } from './drawIndex';
 import './backgrounds.css';
 ---
 
@@ -9,6 +11,21 @@ import './backgrounds.css';
 	<!-- Where focus lands when the player opens this tab. -->
 	<h2 class="backgrounds-title" data-panel-heading>Backgrounds</h2>
 	<ReadOnlyHint />
+
+	<!-- How many entries each section holds; the script writes the counts and moves focus to a section's heading. -->
+	<nav class="backgrounds-index" aria-label="Sections" data-index>
+		<ul class="backgrounds-index-list">
+			{
+				SECTION_KEYS.map((key) => (
+					<li>
+						<a class="backgrounds-index-link" href={`#backgrounds-heading-${key}`} data-index={key}>
+							{indexText(key, 0)}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</nav>
 
 	<section class="backgrounds-section" aria-labelledby="backgrounds-heading-backgrounds" data-section="backgrounds">
 		<!-- The script writes the count into the heading. -->
@@ -42,6 +59,16 @@ import './backgrounds.css';
 			<EmptyState message="No flaws yet." />
 		</div>
 	</section>
+
+	<section class="backgrounds-section" aria-labelledby="backgrounds-heading-otherTraits" data-section="otherTraits">
+		<SectionHeading title="Other traits" count="" level={3} id="backgrounds-heading-otherTraits" />
+		<ul class="backgrounds-list" aria-labelledby="backgrounds-heading-otherTraits" data-list="otherTraits"></ul>
+		<div data-empty="otherTraits" hidden>
+			<EmptyState message="No other traits yet." />
+		</div>
+	</section>
+
+	<p class="backgrounds-notes">Character notes, not rule effects</p>
 
 	<!-- Drawn from, never shown: the script copies each into the lists above. -->
 	<template data-template="background">
@@ -77,6 +104,19 @@ import './backgrounds.css';
 					<h4 class="backgrounds-card-name" data-field="name"></h4>
 					<span class="dossier-chip backgrounds-kind" data-field="category"></span>
 					<span class="backgrounds-points" data-field="points"></span>
+				</div>
+				<p class="backgrounds-note" data-field="note"></p>
+			</div>
+		</li>
+	</template>
+	<template data-template="other">
+		<li class="backgrounds-card">
+			<div class="backgrounds-view" data-sheet-mode-only="play">
+				<div class="backgrounds-card-head">
+					<h4 class="backgrounds-card-name" data-field="name"></h4>
+					<span class="dossier-chip backgrounds-kind" data-field="kind"></span>
+					<dot-rating class="backgrounds-dots" readonly max="5" value="0" data-field="dots"></dot-rating>
+					<span class="backgrounds-overflow" data-field="overflow"></span>
 				</div>
 				<p class="backgrounds-note" data-field="note"></p>
 			</div>

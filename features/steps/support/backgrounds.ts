@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { V20Character } from '../../../src/domain/v20/character';
-import type { Haven, HavenKind, Merit, MeritCategory, Person } from '../../../src/domain/v20/dossier/types';
+import type { Haven, HavenKind, Merit, MeritCategory, OtherTrait, Person } from '../../../src/domain/v20/dossier/types';
 import { characterArranged, saveCharacters } from './seed';
 import { openSavedSheet, enterEditMode } from './sheet';
 import { openSheetTab, showTab, tabPanelOf } from './tabs';
@@ -14,7 +14,7 @@ const NAME = 'Marguerite';
 const BACKGROUND_NAMES = ['Allies', 'Contacts', 'Herd', 'Resources', 'Retainers', 'Status', 'Fame', 'Mentor'];
 
 const COUNTS: Record<string, number> = { a: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8 };
-const countOf = (word: string): number => COUNTS[word.toLowerCase()];
+export const countOf = (word: string): number => COUNTS[word.toLowerCase()];
 
 /** The sections of the tab by the name a scenario gives them, and the key the panel's markup gives each. */
 const SECTIONS: Record<string, string> = {
@@ -53,17 +53,42 @@ function havenOf(kind: HavenKind, name: string, clauses: string): Haven {
   };
 }
 
+/** The names a scenario's counted entries ("two havens") are given, in order. */
+const ENTRY_NAMES = {
+  haven: ['The Orangery', 'Rue Mouffetard flat', 'The Cellar'],
+  merit: ['Acute Sense', 'Eidetic Memory', 'Iron Will'],
+  flaw: ['Hunted', 'Dark Secret', 'Enemy'],
+  'other trait': ['Languages', 'Hobby', 'Pet'],
+};
+
+/** Adds the `place`th entry of the kind a scenario counts ("two havens", "three other traits"). */
+function addCounted(character: V20Character, kind: string, place: number): void {
+  const name = ENTRY_NAMES[kind as keyof typeof ENTRY_NAMES][place];
+  if (kind === 'haven') character.havens.push(havenOf('Other', name, ''));
+  else if (kind === 'other trait') character.otherTraits.push({ name, kind: '', note: '' });
+  else (kind === 'merit' ? character.merits : character.flaws).push({ name, category: 'Physical', points: 1, note: '' });
+}
+
 /**
  * Sets one thing a scenario says the character has: `Allies 2 summarised "...", noted "...", with the
  * people "A" (role) and "B" (role)`, "two named backgrounds", "four blank rows", "backgrounds", `a merit
- * "Acute Sense" (Physical, 1 point)` or a haven.
+ * "Acute Sense" (Physical, 1 point)`, a haven, `an unrated other trait "Languages" of kind "Skill" noted
+ * "French · native"`, or a count of entries ("two havens", "one flaw").
  */
 function arrange(character: V20Character, part: string, cursor: Cursor): void {
   const detailed = part.match(/^(\w+) (\d+) summarised "([^"]*)"(?:, noted "([^"]*)")?(?:, with the people (.+))?$/);
   const named = part.match(/^(\w+) named backgrounds?$/);
   const pointed = part.match(/^an? (merit|flaw) "([^"]+)" \((\w+), (\d+) points?\)$/);
+  const other = part.match(/^an unrated other trait "([^"]+)" of kind "([^"]*)" noted "([^"]*)"$/);
+  const counted = part.match(/^(\w+) (havens?|merits?|flaws?|other traits?)$/);
   const haven = part.match(/^an? (Primary|Secondary|Other) haven "([^"]+)"((?:,? (?:described|located|access|security) "[^"]*")*)$/);
-  if (pointed !== null) {
+  if (counted !== null) {
+    for (let count = 0; count < countOf(counted[1]); count += 1) addCounted(character, counted[2].replace(/s$/, ''), count);
+  } else if (other !== null) {
+    character.otherTraits.push({ name: other[1], kind: other[2], note: other[3] } satisfies OtherTrait);
+  } else if (/^a haven with no name$/.test(part)) {
+    character.havens.push(havenOf('Other', '', ''));
+  } else if (pointed !== null) {
     const entry: Merit = { name: pointed[2], category: pointed[3] as MeritCategory, points: Number(pointed[4]), note: '' };
     (pointed[1] === 'merit' ? character.merits : character.flaws).push(entry);
   } else if (haven !== null) {
@@ -159,3 +184,6 @@ export const entryCard = (page: Page, section: string, name: string): Locator =>
 /** The empty state of a section. */
 export const emptyOf = (page: Page, section: string): Locator =>
   backgroundsPanel(page).locator(`[data-empty="${SECTIONS[section]}"]`);
+
+/** The entries of the section index, as they read. */
+export const indexEntries = (page: Page): Locator => backgroundsPanel(page).locator('[data-index] li');

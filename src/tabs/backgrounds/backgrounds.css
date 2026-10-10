@@ -28,6 +28,38 @@
 	min-inline-size: 0;
 }
 
+/* The index: where each section is and how much is in it. */
+.backgrounds-index-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-1) var(--space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.backgrounds-index-link {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--control-compact);
+	padding: var(--space-1) var(--space-row);
+	font-size: var(--text-body);
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.backgrounds-notes {
+	margin: 0;
+	padding: var(--space-card);
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	background: var(--color-row);
+	border: var(--stroke) dashed var(--color-border-control);
+	border-radius: var(--radius-card);
+}
+
 .backgrounds-list {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
