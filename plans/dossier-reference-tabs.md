@@ -748,7 +748,7 @@ This section is the machine-parseable recovery handle.
   - [x] Step 6.5: Build pool
   - [x] Step 6.6: Accessibility and narrow screens
 - [ ] Slice 7: Backgrounds tab
-  - [ ] Step 7.1: Background view model
+  - [x] Step 7.1: Background view model
   - [ ] Step 7.2: The tab and background cards
   - [ ] Step 7.3: Havens
   - [ ] Step 7.4: Merits and Flaws with totals
