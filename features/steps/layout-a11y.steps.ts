@@ -74,7 +74,8 @@ Then('every control offered in play mode is visible and can be activated', async
     if (!atBound) await expect(control).toBeEnabled();
     const box = (await control.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width).toBeLessThanOrEqual(width);
+    // A link scrolled to the end of the sideways-scrolling tab bar can measure a fraction of a pixel past the edge.
+    expect(box.x + box.width).toBeLessThanOrEqual(width + 1);
     // Fails if something else would receive the click.
     if (atBound) {
       const reached = await control.evaluate((element) => {
