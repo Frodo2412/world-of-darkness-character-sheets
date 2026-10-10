@@ -78,10 +78,10 @@ Then('the read-only hint is shown', async ({ page }) => {
   await expect(activePanel(page).getByText(READ_ONLY_HINT, { exact: true })).toBeVisible();
 });
 
-/** Anything a player could type into or change the contents of the tab with. */
+/** Anything a player could type into or change the contents of the tab with (a search field narrows a list; it changes nothing). */
 const editors = (panel: Locator): Locator =>
   panel
-    .locator('input, textarea, select, [contenteditable]:not([contenteditable="false"])')
+    .locator('input:not([data-search-input]), textarea, select, [contenteditable]:not([contenteditable="false"])')
     .or(panel.getByRole('button', { name: /^(Add|Remove)\b/ }))
     .filter({ visible: true });
 

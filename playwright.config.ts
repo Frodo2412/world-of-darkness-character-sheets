@@ -1,8 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
 
-// Separate from the dev server's 4321 so both can run at once.
-const PORT = 4322;
+// Separate from the dev server's 4321 so both can run at once. E2E_PORT lets a run use another
+// port, so a dev server left on 4322 (and reused, as `reuseExistingServer` allows) cannot break it.
+const PORT = Number(process.env.E2E_PORT ?? 4322);
 const baseURL = `http://localhost:${PORT}`;
 
 // Feature files are the executable specification; step definitions bind them

@@ -445,9 +445,9 @@ Then(
 
 // What the redesign leaves out
 
-Then('there is no tab bar, session label or settings control', async ({ page }) => {
+// (The tab bar is no longer left out: the dossier tabs are in scope, and the bar shows once a second tab exists.)
+Then('there is no session label or settings control', async ({ page }) => {
   await expect(identityRegion(page)).toBeVisible();
-  await expect(page.getByRole('tablist')).toHaveCount(0);
   await expect(page.getByText(/session/i)).toHaveCount(0);
   await expect(page.getByRole('button', { name: /settings/i })).toHaveCount(0);
   await expect(page.getByRole('link', { name: /settings/i })).toHaveCount(0);
