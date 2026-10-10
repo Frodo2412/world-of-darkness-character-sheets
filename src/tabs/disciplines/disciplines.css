@@ -1,0 +1,172 @@
+/* The Disciplines tab: a list of Disciplines beside the selected one's powers. One column on a phone.
+   Colours, sizes and spacing come from the tokens in global.css; text is at least 12px and controls at least 24px. */
+
+.disciplines {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	padding: var(--space-3) var(--page-gutter);
+	line-height: var(--leading-compact);
+}
+
+/* The global heading rules (capitals, accent, an underline) are for the old pages. */
+.disciplines-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: var(--text-h2);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.disciplines-hint {
+	margin-block-start: calc(var(--space-2) * -1);
+}
+
+.disciplines-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+	align-items: start;
+}
+
+.disciplines-side {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	min-inline-size: 0;
+}
+
+.disciplines-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* A list entry: the name and the rating on one line, the dots and the levels on the next. */
+.disciplines-item {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	flex: 1;
+	min-inline-size: 0;
+	gap: 0 var(--space-2);
+}
+
+.disciplines-item-name {
+	overflow-wrap: anywhere;
+}
+
+.disciplines-item-rating,
+.disciplines-item-unlocked,
+.disciplines-unlocked {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.disciplines-item-unlocked {
+	grid-column: 1 / -1;
+}
+
+.disciplines-dots {
+	color: var(--color-text);
+	letter-spacing: 0.15em;
+	white-space: nowrap;
+}
+
+.disciplines-detail {
+	min-inline-size: 0;
+	padding: var(--space-card);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.disciplines-name {
+	margin: 0 0 var(--space-1);
+	font-size: var(--text-h3);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.disciplines-rating {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--space-1) var(--space-2);
+	margin: 0 0 var(--space-2);
+}
+
+.disciplines-label {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.disciplines-note {
+	margin: 0 0 var(--space-2);
+	color: var(--color-muted);
+}
+
+.disciplines-powers {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.disciplines-power {
+	padding-inline: var(--space-2);
+	background: var(--color-row);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-row);
+}
+
+/* The heading sits in the summary, on the line with its state. */
+.disciplines-power-summary {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--space-1) var(--space-2);
+}
+
+.disciplines-power-name {
+	margin: 0;
+	font-family: var(--font-body);
+	font-size: var(--text-body);
+	font-weight: 600;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+/* Known and Locked are words, so the state reads without colour. */
+.disciplines-power-state {
+	padding-inline: var(--space-1);
+	font-size: var(--text-small);
+	color: var(--color-text);
+	background: var(--color-control);
+	border-radius: var(--radius-badge);
+}
+
+.disciplines-power[data-state='locked'] .disciplines-power-state {
+	color: var(--color-muted);
+}
+
+.disciplines-power-requirement {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+@media (min-width: 48rem) {
+	.disciplines-layout {
+		grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
+	}
+}

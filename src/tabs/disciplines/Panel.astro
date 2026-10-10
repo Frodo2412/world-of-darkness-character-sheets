@@ -1,0 +1,67 @@
+---
+import EmptyState from '../../components/dossier/EmptyState.astro';
+import SegmentedControl from '../../components/dossier/SegmentedControl.astro';
+import SelectableItem from '../../components/dossier/SelectableItem.astro';
+import './disciplines.css';
+---
+
+<div class="disciplines" data-disciplines>
+	<!-- Where focus lands when the player opens this tab. -->
+	<h2 class="disciplines-title" data-panel-heading>Disciplines</h2>
+	<p class="dossier-hint disciplines-hint">Edit Discipline ratings on the <a href="./" data-open-sheet>Character sheet</a></p>
+
+	<div class="disciplines-layout">
+		<div class="disciplines-side">
+			<!-- Nothing is pressed in the markup: the script presses the one in use when it draws, so a tab nobody has opened holds no pressed button. -->
+			<SegmentedControl
+				label="Disciplines shown"
+				options={[
+					{ value: 'owned', label: 'Owned' },
+					{ value: 'all', label: 'All disciplines' },
+				]}
+				pressed=""
+			/>
+			<ul class="disciplines-list" aria-label="Disciplines" data-disciplines-list></ul>
+			<div data-state="none" hidden>
+				<EmptyState message="This character has no Disciplines.">
+					<button slot="action" type="button" data-show-all>All disciplines</button>
+				</EmptyState>
+			</div>
+		</div>
+
+		<section class="disciplines-detail" aria-labelledby="disciplines-selected-name" data-disciplines-detail hidden>
+			<h3 class="disciplines-name" id="disciplines-selected-name" data-field="name"></h3>
+			<p class="disciplines-rating">
+				<span class="disciplines-label">Your rating</span>
+				<span class="disciplines-dots" aria-hidden="true" data-field="dots"></span>
+				<span data-field="rating"></span>
+				<span class="disciplines-unlocked" data-field="unlocked"></span>
+			</p>
+			<p class="disciplines-note" data-field="note" hidden></p>
+			<ol class="disciplines-powers" aria-label="Powers" data-disciplines-powers></ol>
+		</section>
+	</div>
+
+	<!-- Drawn from, never shown: the script copies each into the lists above. -->
+	<template data-template="item">
+		<SelectableItem value="">
+			<span class="disciplines-item">
+				<span class="disciplines-item-name" data-field="name"></span>
+				<span class="disciplines-item-rating" data-field="rating"></span>
+				<span class="disciplines-dots" aria-hidden="true" data-field="dots"></span>
+				<span class="disciplines-item-unlocked" data-field="unlocked"></span>
+			</span>
+		</SelectableItem>
+	</template>
+	<template data-template="power">
+		<li class="disciplines-power">
+			<details class="dossier-disclosure disciplines-power-details">
+				<summary class="disciplines-power-summary">
+					<h4 class="disciplines-power-name" data-field="name"></h4>
+					<span class="disciplines-power-state" data-field="state"></span>
+					<span class="disciplines-power-requirement" data-field="requirement"></span>
+				</summary>
+			</details>
+		</li>
+	</template>
+</div>
