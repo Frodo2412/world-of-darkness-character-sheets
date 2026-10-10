@@ -252,6 +252,54 @@ describe('the shell drawing its own parts', () => {
   });
 });
 
+describe('a tab that fails while the shell cannot draw, or while it was the last shown', () => {
+  it('still reports the failure when the shell\'s own drawing throws', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    const { descriptor: combat } = flakyTab('combat', log);
+    let throwing = false;
+    const { shell } = setup([sheet, combat], log, { value: 'play' }, {
+      observers: [
+        {
+          afterRender() {
+            if (throwing) throw new Error('observer threw');
+          },
+        },
+      ],
+    });
+    await shell.switchTo('sheet');
+    throwing = true;
+
+    await expect(shell.switchTo('combat')).resolves.toBeUndefined();
+
+    expect(log).toContain('view:failed:combat');
+  });
+
+  it('does not go back to a tab that is itself broken', async () => {
+    const log: string[] = [];
+    let enters = 0;
+    const sheet = recordingTab('sheet', log, {
+      enter() {
+        enters += 1;
+        if (enters > 1) throw new Error('second enter threw');
+      },
+    }).descriptor;
+    const pending: TabDescriptor = {
+      ...recordingTab('journal', log).descriptor,
+      mount: () => new Promise(() => {}),
+    };
+    const { shell } = setup([sheet, pending], log);
+    await shell.switchTo('sheet');
+    void shell.switchTo('journal');
+    log.length = 0;
+
+    await shell.switchTo('sheet');
+
+    expect(log).toContain('view:unavailable:sheet');
+    expect(log).not.toContain('restore:sheet');
+  });
+});
+
 describe('a tab that throws while drawing', () => {
   it('does not stop an edit from being saved', async () => {
     const log: string[] = [];

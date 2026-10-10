@@ -212,11 +212,21 @@ export function createShell(options: ShellOptions): Shell {
       const back = descriptors.get(shownKey)!;
       view.show(back);
       view.showResources(back.showsResources);
-      loaded.get(shownKey)!.enter?.();
+      try {
+        loaded.get(shownKey)!.enter?.();
+      } catch (error) {
+        // The tab went back to was entered once already: say what is known, and keep going.
+        console.error(error);
+      }
     } else {
       view.unavailable(tab);
     }
-    draw();
+    try {
+      draw();
+    } catch (error) {
+      // Drawing must not decide whether the failure is reported.
+      console.error(error);
+    }
     // Last, so that showing the tab again does not take the message down.
     view.loadFailed(tab);
   }
