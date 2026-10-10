@@ -57,6 +57,15 @@ for (const step of [Given, When]) {
   });
 }
 
+// The control that chooses between the character's Disciplines and all of them, put in a state before the scenario acts.
+for (const step of [Given, When]) {
+  step(/^the "([^"]+)" view is chosen on the Disciplines tab$/, async ({ page, memory }, label: string) => {
+    await showDisciplines(page, memory);
+    await scopeButton(page, label).click();
+    await expect(scopeButton(page, label)).toHaveAttribute('aria-pressed', 'true');
+  });
+}
+
 When('the player presses {string} on the Disciplines tab', async ({ page, memory }, button: string) => {
   // Watched from here on, so the announcement the press makes is the one that is read.
   await watchAnnouncements(page);

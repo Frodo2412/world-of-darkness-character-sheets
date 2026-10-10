@@ -746,7 +746,7 @@ This section is the machine-parseable recovery handle.
   - [x] Step 6.3: Power panels
   - [x] Step 6.4: Search and Owned / All
   - [x] Step 6.5: Build pool
-  - [ ] Step 6.6: Accessibility and narrow screens
+  - [x] Step 6.6: Accessibility and narrow screens
 - [ ] Slice 7: Backgrounds tab
   - [ ] Step 7.1: Background view model
   - [ ] Step 7.2: The tab and background cards

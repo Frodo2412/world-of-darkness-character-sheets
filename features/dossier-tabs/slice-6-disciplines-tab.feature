@@ -112,3 +112,17 @@ Feature: Disciplines tab
     And the tab says "Edit Discipline ratings on the Character sheet" on the Disciplines tab
     When the player follows its link on the Disciplines tab
     Then the Character sheet tab is shown on the Disciplines tab
+
+  Scenario: The Disciplines tab is accessible and fits a phone
+    Given a character with Presence 3 and a Discipline named "SupercalifragilisticexpialidociousSupercalifragilisticexpialidocious" rated 5 on the Disciplines tab
+    And the Awe power is expanded on the Disciplines tab
+    And the "All disciplines" view is chosen on the Disciplines tab
+    When the Disciplines tab is scanned for accessibility problems
+    Then no problems are reported
+    When the player searches "zzzz" on the Disciplines tab
+    And the Disciplines tab is scanned for accessibility problems
+    Then no problems are reported
+    When the Disciplines tab is opened at 320 pixels wide with crowded content
+    And the Awe power is expanded on the Disciplines tab
+    And the "All disciplines" view is chosen on the Disciplines tab
+    Then the page does not scroll sideways
