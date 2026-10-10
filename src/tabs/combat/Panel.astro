@@ -1,0 +1,48 @@
+---
+import ReferenceTable from '../../components/dossier/ReferenceTable.astro';
+import SegmentedControl from '../../components/dossier/SegmentedControl.astro';
+import './combat.css';
+
+const MANOEUVRE_HEADINGS = ['Manoeuvre', 'Pool', 'Accuracy', 'Difficulty', 'Base damage', 'Page'];
+---
+
+<div class="combat" data-combat>
+	<!-- Where focus lands when the player opens this tab. -->
+	<h2 class="combat-title" data-panel-heading>Combat</h2>
+
+	<!-- Nothing is pressed in the markup: the script presses the one in use when it draws, and "All" presses neither. -->
+	<div data-control="tables">
+		<SegmentedControl
+			label="Combat tables"
+			options={[
+				{ value: 'melee', label: 'Melee' },
+				{ value: 'ranged', label: 'Ranged' },
+			]}
+			pressed=""
+		/>
+	</div>
+
+	<section class="combat-group" aria-label="Close combat" data-group="melee">
+		<div data-table="melee-manoeuvres">
+			<ReferenceTable caption="Close combat manoeuvres" headings={MANOEUVRE_HEADINGS} />
+		</div>
+	</section>
+
+	<!-- Drawn from, never shown: the script copies each into the tables above. -->
+	<template data-template="manoeuvre">
+		<tr>
+			<th scope="row" class="combat-name"><span data-field="name"></span></th>
+			<td>
+				<span class="combat-dice" data-field="pool"></span>
+				<span class="combat-formula" data-field="formula"></span>
+			</td>
+			<td data-field="accuracy"></td>
+			<td data-field="difficulty"></td>
+			<td>
+				<span data-field="damage"></span>
+				<span class="combat-effects" data-field="effects"></span>
+			</td>
+			<td class="combat-page" data-field="page"></td>
+		</tr>
+	</template>
+</div>

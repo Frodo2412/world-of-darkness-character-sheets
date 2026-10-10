@@ -1,0 +1,48 @@
+/* The Combat tab: the rulebook's tables with the character's pools, and the Weapon roll panel beside them.
+   Colours, sizes and spacing come from the tokens in global.css; text is at least 12px and controls at least 24px. */
+
+.combat {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	padding: var(--space-3) var(--page-gutter);
+	line-height: var(--leading-compact);
+}
+
+/* The global heading rules (capitals, accent, an underline) are for the old pages. */
+.combat-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: var(--text-h2);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.combat-group {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	min-inline-size: 0;
+}
+
+/* A pool is its dice and, under them, the words it is built from. */
+.combat-dice {
+	display: block;
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.combat-formula,
+.combat-effects,
+.combat-page {
+	display: block;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.combat-name {
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
