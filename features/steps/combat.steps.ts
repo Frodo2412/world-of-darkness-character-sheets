@@ -2,7 +2,19 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import type { DataTable } from 'playwright-bdd';
 import { Given, Then, When } from './fixtures';
 import { escaped } from './support/text';
-import { cellOf, combatPanel, rowsOf, saveCombatCharacter, showCombat, tableRow, tablesControl } from './support/combat';
+import {
+  cellOf,
+  combatPanel,
+  expectListed,
+  listedCounts,
+  rowsOf,
+  saveCombatCharacter,
+  searchField,
+  sectionControl,
+  showCombat,
+  tableRow,
+  tablesControl,
+} from './support/combat';
 
 // The steps of the Combat scenarios. Each one that is not shared names the tab ("on the Combat
 // tab"), so it never has the same words as a step of another tab.
@@ -18,6 +30,16 @@ Given(/^a character with (.+) on the Combat tab$/, async ({ page, memory }, word
 When(/^(Melee|Ranged) is chosen on the Combat tab$/, async ({ page, memory }, table: string) => {
   await showCombat(page, memory);
   await tablesControl(page).getByRole('button', { name: table, exact: true }).click();
+});
+
+When('the player chooses {string} on the Combat tab', async ({ page, memory }, label: string) => {
+  await showCombat(page, memory);
+  await sectionControl(page).getByRole('button', { name: label, exact: true }).click();
+});
+
+When('the player searches {string} on the Combat tab', async ({ page, memory }, query: string) => {
+  await showCombat(page, memory);
+  await searchField(page).fill(query);
 });
 
 When(/^the player presses "([^"]+)" for the (.+) on the Combat tab$/, async ({ page, memory }, button: string, weapon: string) => {
@@ -100,6 +122,40 @@ Then('{string} shows {string} on the Combat tab', async ({ page }, name: string,
 
 Then('{string} shows clip {string} on the Combat tab', async ({ page }, name: string, clip: string) => {
   await expect(cellOf(tableRow(page, name), 'clip')).toHaveText(clip);
+});
+
+// What the section control and the search leave listed
+
+Then('{string} is chosen on the Combat tab', async ({ page }, label: string) => {
+  await expect(sectionControl(page).getByRole('button', { name: label, exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(sectionControl(page).locator('[aria-pressed="true"]')).toHaveCount(1);
+});
+
+Then(/^"([^"]+)" is chosen and (.+) are listed on the Combat tab$/, async ({ page }, label: string, words: string) => {
+  await expect(sectionControl(page).getByRole('button', { name: label, exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expectListed(page, listedCounts(words));
+});
+
+Then(/^only (.+) are listed and the (Melee|Ranged) sub-tab is selected on the Combat tab$/, async ({ page }, words: string, table: string) => {
+  await expectListed(page, listedCounts(words));
+  await expect(tablesControl(page).getByRole('button', { name: table, exact: true })).toHaveAttribute('aria-pressed', 'true');
+});
+
+Then('only the one melee weapon {word} is listed on the Combat tab', async ({ page }, name: string) => {
+  await expectListed(page, { ...listedCounts(''), 'melee-weapons': 1 });
+  await expect(rowsOf(page, 'melee-weapons').locator('[data-field="name"]')).toHaveText([name]);
+});
+
+Then('only the two ranged weapons are listed on the Combat tab', async ({ page }) => {
+  await expectListed(page, listedCounts('two ranged weapons'));
+});
+
+Then('the ranged weapons table lists exactly {string} and {string} on the Combat tab', async ({ page }, first: string, second: string) => {
+  await expect(rowsOf(page, 'ranged-weapons').locator('[data-field="name"]')).toHaveText([first, second]);
+});
+
+Then('{string} is shown on the Combat tab', async ({ page }, text: string) => {
+  await expect(combatPanel(page).getByText(text, { exact: true })).toBeVisible();
 });
 
 // The weapon chosen for the roll

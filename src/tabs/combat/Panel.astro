@@ -1,7 +1,10 @@
 ---
 import { CONCEALMENT } from '../../domain/v20/combat/data/types';
+import EmptyState from '../../components/dossier/EmptyState.astro';
 import ReferenceTable from '../../components/dossier/ReferenceTable.astro';
+import SearchField from '../../components/dossier/SearchField.astro';
 import SegmentedControl from '../../components/dossier/SegmentedControl.astro';
+import { SECTION_FILTERS } from './section';
 import './combat.css';
 
 const MANOEUVRE_HEADINGS = ['Manoeuvre', 'Pool', 'Accuracy', 'Difficulty', 'Base damage', 'Page'];
@@ -16,16 +19,26 @@ const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) =
 	<!-- Where focus lands when the player opens this tab. -->
 	<h2 class="combat-title" data-panel-heading>Combat</h2>
 
-	<!-- Nothing is pressed in the markup: the script presses the one in use when it draws, and "All" presses neither. -->
-	<div data-control="tables">
-		<SegmentedControl
-			label="Combat tables"
-			options={[
-				{ value: 'melee', label: 'Melee' },
-				{ value: 'ranged', label: 'Ranged' },
-			]}
-			pressed=""
-		/>
+	<div class="combat-controls">
+		<SearchField id="combat-search" label="Search manoeuvres and weapons" />
+		<!-- Nothing is pressed in the markup: the script presses the one in use when it draws. "All" presses neither sub-tab. -->
+		<div data-control="section">
+			<SegmentedControl label="Section shown" options={SECTION_FILTERS} pressed="" />
+		</div>
+		<div data-control="tables">
+			<SegmentedControl
+				label="Combat tables"
+				options={[
+					{ value: 'melee', label: 'Melee' },
+					{ value: 'ranged', label: 'Ranged' },
+				]}
+				pressed=""
+			/>
+		</div>
+	</div>
+
+	<div data-state="no-match" hidden>
+		<EmptyState message="No manoeuvres or weapons match." />
 	</div>
 
 	<section class="combat-group" aria-label="Close combat" data-group="melee">

@@ -45,3 +45,34 @@ export const rowsOf = (page: Page, table: string): Locator => combatPanel(page).
 
 /** The control that chooses between the Melee and Ranged tables. */
 export const tablesControl = (page: Page): Locator => combatPanel(page).getByRole('group', { name: 'Combat tables', exact: true });
+
+/** The control that chooses what the tab lists: All, Close combat or Ranged combat. */
+export const sectionControl = (page: Page): Locator => combatPanel(page).getByRole('group', { name: 'Section shown', exact: true });
+
+/** The search field. */
+export const searchField = (page: Page): Locator => combatPanel(page).getByRole('searchbox', { name: 'Search manoeuvres and weapons', exact: true });
+
+const NUMBERS: Record<string, number> = { one: 1, two: 2, three: 3, five: 5, six: 6, eleven: 11, thirteen: 13 };
+
+/** The table each kind of row a scenario names is listed in. */
+const TABLES: Record<string, string> = {
+  'close combat manoeuvres': 'melee-manoeuvres',
+  'ranged manoeuvres': 'ranged-manoeuvres',
+  'melee weapons': 'melee-weapons',
+  'ranged weapons': 'ranged-weapons',
+  'melee weapon': 'melee-weapons',
+};
+
+/** How many rows each table lists, by table, as words say it: "the thirteen close combat manoeuvres and the six melee weapons". */
+export function listedCounts(words: string): Record<string, number> {
+  const counts = Object.fromEntries(Object.values(TABLES).map((table) => [table, 0]));
+  for (const [, count, kind] of words.matchAll(/(\w+) (close combat manoeuvres|ranged manoeuvres|melee weapons?|ranged weapons)/g)) {
+    counts[TABLES[kind]] = NUMBERS[count];
+  }
+  return counts;
+}
+
+/** Checks the number of rows each of the four tables lists. */
+export async function expectListed(page: Page, counts: Record<string, number>): Promise<void> {
+  for (const [table, count] of Object.entries(counts)) await expect(rowsOf(page, table), table).toHaveCount(count);
+}

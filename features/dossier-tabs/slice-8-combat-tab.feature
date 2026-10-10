@@ -41,3 +41,23 @@ Feature: Combat tab
     Then "Use in roll" is pressed for the Axe alone on the Combat tab
     When the player presses "Use in roll" for the Axe on the Combat tab
     Then "Use in roll" is pressed for no weapon on the Combat tab
+
+  Scenario: The section control and search narrow the tables
+    When the Combat tab is opened
+    Then "All" is chosen and thirteen close combat manoeuvres, five ranged manoeuvres, six melee weapons and eleven ranged weapons are listed on the Combat tab
+    When the player chooses "Close combat" on the Combat tab
+    Then only the thirteen close combat manoeuvres and the six melee weapons are listed and the Melee sub-tab is selected on the Combat tab
+    When the player chooses "Ranged combat" on the Combat tab
+    Then only the five ranged manoeuvres and the eleven ranged weapons are listed and the Ranged sub-tab is selected on the Combat tab
+    When Melee is chosen on the Combat tab
+    Then "Close combat" is chosen on the Combat tab
+    When the player chooses "All" on the Combat tab
+    And the player searches "stake" on the Combat tab
+    Then only the one melee weapon Stake is listed on the Combat tab
+    When the player searches "revolver" on the Combat tab
+    Then the ranged weapons table lists exactly "Revolver, Lt." and "Revolver, Hvy." on the Combat tab
+    And only the two ranged weapons are listed on the Combat tab
+    When the player chooses "Close combat" on the Combat tab
+    Then "No manoeuvres or weapons match." is shown on the Combat tab
+    When the player searches "zzzz" on the Combat tab
+    Then "No manoeuvres or weapons match." is shown on the Combat tab
