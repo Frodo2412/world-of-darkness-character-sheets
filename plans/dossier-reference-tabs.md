@@ -741,7 +741,7 @@ This section is the machine-parseable recovery handle.
 
 #### Wave 2
 - [ ] Slice 6: Disciplines tab
-  - [ ] Step 6.1: The Discipline view model
+  - [x] Step 6.1: The Discipline view model
   - [ ] Step 6.2: The tab, list and empty state
   - [ ] Step 6.3: Power panels
   - [ ] Step 6.4: Search and Owned / All
