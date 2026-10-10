@@ -5,10 +5,12 @@ import { Given, Then, When } from './fixtures';
 import {
   backgroundCard,
   backgroundCards,
+  cardsOf,
   emptyOf,
   entryCard,
   openBackgroundsCharacter,
   saveBackgroundsCharacter,
+  sectionNamed,
   showBackgrounds,
 } from './support/backgrounds';
 
@@ -86,3 +88,21 @@ Then(
 Then(/^"([^"]+)" shows its kind "([^"]+)" on the Backgrounds tab$/, async ({ page }, name: string, kind: string) => {
   await expect(entryCard(page, 'Havens', name).getByText(kind, { exact: true })).toBeVisible();
 });
+
+// Merits and Flaws
+
+Then(/^the (Merits|Flaws) heading reads "([^"]+)" on the Backgrounds tab$/, async ({ page }, section: string, text: string) => {
+  await expect(sectionNamed(page, section).locator('.dossier-heading-count')).toHaveText(text);
+});
+
+Then(
+  /^the merits show "([^"]+)" and "([^"]+)" and each entry shows its category on the Backgrounds tab$/,
+  async ({ page, memory }, first: string, second: string) => {
+    const cards = cardsOf(page, 'Merits');
+    await expect(cards).toHaveCount(2);
+    for (const [place, points] of [first, second].entries()) {
+      await expect(cards.nth(place).getByText(points, { exact: true })).toBeVisible();
+      await expect(cards.nth(place).getByText(memory.saved[0].merits[place].category, { exact: true })).toBeVisible();
+    }
+  },
+);

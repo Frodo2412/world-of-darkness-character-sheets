@@ -27,6 +27,22 @@ import './backgrounds.css';
 		</div>
 	</section>
 
+	<section class="backgrounds-section" aria-labelledby="backgrounds-heading-merits" data-section="merits">
+		<SectionHeading title="Merits" count="" level={3} id="backgrounds-heading-merits" />
+		<ul class="backgrounds-list" aria-labelledby="backgrounds-heading-merits" data-list="merits"></ul>
+		<div data-empty="merits" hidden>
+			<EmptyState message="No merits yet." />
+		</div>
+	</section>
+
+	<section class="backgrounds-section" aria-labelledby="backgrounds-heading-flaws" data-section="flaws">
+		<SectionHeading title="Flaws" count="" level={3} id="backgrounds-heading-flaws" />
+		<ul class="backgrounds-list" aria-labelledby="backgrounds-heading-flaws" data-list="flaws"></ul>
+		<div data-empty="flaws" hidden>
+			<EmptyState message="No flaws yet." />
+		</div>
+	</section>
+
 	<!-- Drawn from, never shown: the script copies each into the lists above. -->
 	<template data-template="background">
 		<li class="backgrounds-card">
@@ -50,6 +66,19 @@ import './backgrounds.css';
 					<span class="dossier-chip backgrounds-kind" data-field="kind"></span>
 				</div>
 				<dl class="backgrounds-details" data-field="details"></dl>
+			</div>
+		</li>
+	</template>
+	<!-- A Merit and a Flaw are the same card. -->
+	<template data-template="pointed">
+		<li class="backgrounds-card">
+			<div class="backgrounds-view" data-sheet-mode-only="play">
+				<div class="backgrounds-card-head">
+					<h4 class="backgrounds-card-name" data-field="name"></h4>
+					<span class="dossier-chip backgrounds-kind" data-field="category"></span>
+					<span class="backgrounds-points" data-field="points"></span>
+				</div>
+				<p class="backgrounds-note" data-field="note"></p>
 			</div>
 		</li>
 	</template>

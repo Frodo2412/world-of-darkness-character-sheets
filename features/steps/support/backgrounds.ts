@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { V20Character } from '../../../src/domain/v20/character';
-import type { Haven, HavenKind, Person } from '../../../src/domain/v20/dossier/types';
+import type { Haven, HavenKind, Merit, MeritCategory, Person } from '../../../src/domain/v20/dossier/types';
 import { characterArranged, saveCharacters } from './seed';
 import { openSavedSheet, enterEditMode } from './sheet';
 import { openSheetTab, showTab, tabPanelOf } from './tabs';
@@ -55,13 +55,18 @@ function havenOf(kind: HavenKind, name: string, clauses: string): Haven {
 
 /**
  * Sets one thing a scenario says the character has: `Allies 2 summarised "...", noted "...", with the
- * people "A" (role) and "B" (role)`, "two named backgrounds", "four blank rows" or "backgrounds".
+ * people "A" (role) and "B" (role)`, "two named backgrounds", "four blank rows", "backgrounds", `a merit
+ * "Acute Sense" (Physical, 1 point)` or a haven.
  */
 function arrange(character: V20Character, part: string, cursor: Cursor): void {
   const detailed = part.match(/^(\w+) (\d+) summarised "([^"]*)"(?:, noted "([^"]*)")?(?:, with the people (.+))?$/);
   const named = part.match(/^(\w+) named backgrounds?$/);
+  const pointed = part.match(/^an? (merit|flaw) "([^"]+)" \((\w+), (\d+) points?\)$/);
   const haven = part.match(/^an? (Primary|Secondary|Other) haven "([^"]+)"((?:,? (?:described|located|access|security) "[^"]*")*)$/);
-  if (haven !== null) {
+  if (pointed !== null) {
+    const entry: Merit = { name: pointed[2], category: pointed[3] as MeritCategory, points: Number(pointed[4]), note: '' };
+    (pointed[1] === 'merit' ? character.merits : character.flaws).push(entry);
+  } else if (haven !== null) {
     character.havens.push(havenOf(haven[1] as HavenKind, haven[2], haven[3]));
   } else if (detailed !== null) {
     const [, name, rating, summary, note, people] = detailed;

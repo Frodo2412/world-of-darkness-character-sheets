@@ -12,6 +12,13 @@ Feature: Backgrounds tab
     When the Backgrounds tab is opened
     Then two background cards are shown on the Backgrounds tab
 
+  Scenario: Merits and Flaws show points and totals
+    Given a character with a merit "Acute Sense" (Physical, 1 point), a merit "Eidetic Memory" (Mental, 2 points) and a flaw "Hunted" (Social, 1 point) on the Backgrounds tab
+    When the Backgrounds tab is opened
+    Then the Merits heading reads "2 entries · 3 points" on the Backgrounds tab
+    And the Flaws heading reads "1 entry · 1 point" on the Backgrounds tab
+    And the merits show "1 pt" and "2 pts" and each entry shows its category on the Backgrounds tab
+
   Scenario: Havens, other traits and the notes card are shown
     Given a character with a Primary haven "The Orangery" described "A glassed-in greenhouse", located "Quai de la Tournelle", access "Back stair only", security "Two ghouls", a Secondary haven "Rue Mouffetard flat" on the Backgrounds tab
     When the Backgrounds tab is opened
@@ -29,3 +36,5 @@ Feature: Backgrounds tab
     When the Backgrounds tab is opened
     Then the Backgrounds section shows "No backgrounds yet." on the Backgrounds tab
     And the Havens section shows "No havens yet." on the Backgrounds tab
+    And the Merits section shows "No merits yet." on the Backgrounds tab
+    And the Flaws section shows "No flaws yet." on the Backgrounds tab
