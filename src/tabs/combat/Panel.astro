@@ -138,8 +138,8 @@ const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) =
 				<input type="number" step="1" min="0" inputmode="numeric" data-input="extra" />
 			</label>
 		</div>
-		<!-- Said when an entry of extra successes below 0 is kept at 0. -->
-		<p class="combat-hint combat-hint-correction" role="status" data-field="extra-hint" hidden></p>
+		<!-- Said when an entry of extra successes below 0 is kept at 0. A live region stays in the page, empty, so that what it comes to say is announced. -->
+		<p class="combat-hint combat-hint-correction" role="status" data-field="extra-hint"></p>
 		<p class="combat-hint" data-field="target-note" hidden></p>
 		<p class="combat-hint" data-field="range-note" hidden></p>
 

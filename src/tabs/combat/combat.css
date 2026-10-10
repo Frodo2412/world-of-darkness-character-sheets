@@ -53,6 +53,11 @@
 	font-weight: 400;
 }
 
+/* "p. 276" is one reading: it stays on a line. */
+td.combat-page {
+	white-space: nowrap;
+}
+
 .combat-legend {
 	margin: var(--space-1) 0 0;
 }
@@ -215,6 +220,11 @@
 .combat-hint-correction {
 	font-weight: 600;
 	color: var(--color-text);
+}
+
+/* Empty, the live region takes no room: it cancels the gap the panel leaves between its parts. */
+.combat-hint-correction:empty {
+	margin-block-start: calc(var(--space-2) * -1);
 }
 
 .combat-pool-total {

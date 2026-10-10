@@ -43,7 +43,7 @@ function valuesOf({ weapon, pool }: WeaponRow): Record<string, string> {
 function drawRow(row: HTMLElement, weaponRow: WeaponRow): void {
   for (const [name, text] of Object.entries(valuesOf(weaponRow))) setField(row, name, text);
   // The letter's meaning is on hover; the table's legend says them all in words.
-  field(row, 'conceal').title = CONCEALMENT[weaponRow.weapon.conceal];
+  setAttr(field(row, 'conceal'), 'title', CONCEALMENT[weaponRow.weapon.conceal]);
   const use = field(row, 'use');
   setAttr(use, 'aria-pressed', String(weaponRow.selected));
   setAttr(use, 'aria-label', `Use in roll: ${weaponRow.weapon.name}`);

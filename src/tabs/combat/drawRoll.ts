@@ -49,7 +49,7 @@ export function drawRoll(parts: RollParts, state: RollState, view: RollView): vo
   showUnlessFocused(parts.extra, String(state.extraSuccesses));
   setField(parts.root, 'target-note', view.targetNote);
   setField(parts.root, 'range-note', view.rangeNote);
-  setField(parts.root, 'extra-hint', view.extraHint);
+  setText(field(parts.root, 'extra-hint'), view.extraHint);
   drawDamage(parts.root, view.damage);
 
   field(parts.root, 'choose-manoeuvre').hidden = view.attack !== undefined;
