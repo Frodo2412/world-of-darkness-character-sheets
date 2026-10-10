@@ -6,10 +6,14 @@ import { damagePool } from '../../domain/v20/combat/damage';
 import { MANOEUVRES } from '../../domain/v20/combat/data/manoeuvres';
 import { CALLED_SHOTS, RANGE_BANDS } from '../../domain/v20/combat/data/modifiers';
 import { RANGED_WEAPONS } from '../../domain/v20/combat/data/ranged';
+import type { Weapon } from '../../domain/v20/combat/data/types';
 import { MELEE_WEAPONS } from '../../domain/v20/combat/data/weapons';
 import type { V20Character } from '../../domain/v20/character';
 import { diceLabel } from '../../domain/v20/identity';
 import { accuracyText, calledShotNote, rangeNote } from './text';
+
+/** Every weapon of the Melee and Ranged Weapons Charts, melee first. */
+export const WEAPONS: readonly Weapon[] = [...MELEE_WEAPONS, ...RANGED_WEAPONS];
 
 export interface RollState {
   /** The weapon chosen, by name. */
@@ -69,7 +73,7 @@ export function rollView(character: V20Character, state: RollState): RollView {
     rangeNote: range === undefined ? '' : rangeNote(range),
     extraHint: state.extraCorrected ? EXTRA_SUCCESSES_HINT : '',
   };
-  const weapon = [...MELEE_WEAPONS, ...RANGED_WEAPONS].find(({ name }) => name === state.weapon);
+  const weapon = WEAPONS.find(({ name }) => name === state.weapon);
   if (weapon !== undefined) {
     const damage = damagePool(character, weapon, state.extraSuccesses, target);
     view.damage = {

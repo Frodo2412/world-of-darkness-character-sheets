@@ -30,6 +30,10 @@ import {
 
 // Arranging
 
+Given(/^a character with (.+?) and no weapon selected on the Combat tab$/, async ({ page, memory }, words: string) => {
+  await saveCombatCharacter(page, memory, words);
+});
+
 // A character with a weapon and manoeuvre already chosen (the tab is opened to choose them) or not.
 Given(/^a character with (.+?(?<! selected)) on the Combat tab$/, async ({ page, memory }, words: string) => {
   await saveCombatCharacter(page, memory, words);
@@ -63,6 +67,11 @@ When('the player searches {string} on the Combat tab', async ({ page, memory }, 
 
 When(/^the player selects (?:the )?"?([^"]+?)"? and "([^"]+)" on the Combat tab$/, async ({ page, memory }, weapon: string, manoeuvre: string) => {
   await selectInRoll(page, memory, weapon, manoeuvre);
+});
+
+When(/^the player selects the (\w+|SMG, Large) on the Combat tab$/, async ({ page, memory }, weapon: string) => {
+  await showCombat(page, memory);
+  await rollInput(page, 'Weapon').selectOption(weapon);
 });
 
 When('the player adds one die and raises the difficulty by one on the Combat tab', async ({ page }) => {
@@ -181,6 +190,64 @@ Then('{string} shows {string} on the Combat tab', async ({ page }, name: string,
 
 Then('{string} shows clip {string} on the Combat tab', async ({ page }, name: string, clip: string) => {
   await expect(cellOf(tableRow(page, name), 'clip')).toHaveText(clip);
+});
+
+// What a manoeuvre's row says about what it needs
+
+/** Every mark a row can carry: what the manoeuvre's state and tag read, and what it needs. */
+const MARKS = ['unavailable', 'tags', 'requirement', 'uses'];
+
+Then(/^(.+) is marked "([^"]+)" and "([^"]+)" on the Combat tab$/, async ({ page }, name: string, state: string, tag: string) => {
+  const row = tableRow(page, name);
+  await expect(cellOf(row, 'unavailable')).toHaveText(state);
+  await expect(cellOf(row, 'tags')).toHaveText(tag);
+});
+
+Then(/^(.+) is marked "([^"]+)" with "([^"]+)" on the Combat tab$/, async ({ page }, name: string, tag: string, requirement: string) => {
+  const row = tableRow(page, name);
+  await expect(cellOf(row, 'unavailable')).toHaveText('Unavailable');
+  await expect(cellOf(row, 'tags')).toHaveText(tag);
+  await expect(cellOf(row, 'requirement')).toHaveText(requirement);
+});
+
+Then(/^(.+) states its requirement "([^"]+)" on the Combat tab$/, async ({ page }, name: string, requirement: string) => {
+  await expect(cellOf(tableRow(page, name), 'requirement')).toHaveText(requirement);
+});
+
+Then(/^(.+) is marked "([^"]+)" and states "([^"]+)" on the Combat tab$/, async ({ page }, name: string, tag: string, requirement: string) => {
+  const row = tableRow(page, name);
+  await expect(cellOf(row, 'tags')).toHaveText(tag);
+  await expect(cellOf(row, 'requirement')).toHaveText(requirement);
+});
+
+Then(/^(.+) is not marked "([^"]+)" or "([^"]+)" on the Combat tab$/, async ({ page }, name: string, state: string, tag: string) => {
+  const row = tableRow(page, name);
+  await expect(row.getByText(state, { exact: true })).toBeHidden();
+  await expect(row.getByText(tag, { exact: true })).toBeHidden();
+});
+
+Then(/^(.+) is not marked on the Combat tab$/, async ({ page }, name: string) => {
+  const row = tableRow(page, name);
+  for (const mark of MARKS.filter((each) => each !== 'uses')) await expect(cellOf(row, mark), mark).toBeHidden();
+});
+
+Then(/^(.+) no longer says "([^"]+)" and uses the (.+) on the Combat tab$/, async ({ page }, name: string, tag: string, weapon: string) => {
+  const row = tableRow(page, name);
+  await expect(row.getByText(tag, { exact: true })).toBeHidden();
+  await expect(cellOf(row, 'unavailable')).toBeHidden();
+  await expect(cellOf(row, 'uses')).toHaveText(`Uses the ${weapon}`);
+});
+
+Then('every manoeuvre and weapon pool reads {string} on the Combat tab', async ({ page }, dice: string) => {
+  const pools = combatPanel(page).locator('tbody [data-field="pool"]');
+  // 18 manoeuvres and 17 weapons: a count of fewer would be a table that did not draw.
+  await expect(pools).toHaveCount(35);
+  for (const pool of await pools.all()) await expect(pool).toHaveText(dice);
+});
+
+Then('the attack pool reads {string} and the damage pool reads {string} on the Combat tab', async ({ page }, attack: string, damage: string) => {
+  await expect(rollReading(page, 'attack-pool')).toHaveText(attack);
+  await expect(rollReading(page, 'damage-pool')).toHaveText(damage);
 });
 
 // What the Weapon roll panel shows

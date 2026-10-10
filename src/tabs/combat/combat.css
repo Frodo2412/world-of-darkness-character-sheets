@@ -258,3 +258,25 @@
 		inset-block-start: var(--space-3);
 	}
 }
+
+/* A manoeuvre the character cannot use says so in words: a mark for the state and one for what it lacks. */
+.combat-mark {
+	display: inline-block;
+	margin-inline-end: var(--space-1);
+	padding-inline: var(--space-1);
+	font-size: var(--text-small);
+	font-weight: 600;
+	color: var(--color-text);
+	background: var(--color-control);
+	border-radius: var(--radius-badge);
+}
+
+.combat-requirement,
+.combat-incapacitated {
+	margin: 0;
+}
+
+.combat-incapacitated {
+	font-weight: 600;
+	color: var(--color-danger);
+}

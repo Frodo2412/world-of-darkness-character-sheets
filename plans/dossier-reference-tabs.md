@@ -763,6 +763,6 @@ This section is the machine-parseable recovery handle.
   - [x] Step 8.5: Search and the section control
   - [x] Step 8.6: Attack pool, Target and Range
   - [x] Step 8.7: Damage pool
-  - [ ] Step 8.8: Unavailable manoeuvres and incapacitation
+  - [x] Step 8.8: Unavailable manoeuvres and incapacitation
   - [ ] Step 8.9: Reminders and disclaimers
   - [ ] Step 8.10: Accessibility and narrow screens

@@ -122,3 +122,55 @@ Feature: Combat tab
     And the Weapon roll panel says "Pools only — roll your own dice." on the Combat tab
     And repeated redraws of the Weapon roll panel show no random result on the Combat tab
 
+  Scenario: A manoeuvre the character cannot use says why
+    Given a character with Protean 1 and no weapon selected on the Combat tab
+    When the Combat tab is opened
+    Then Claw is marked "Unavailable" and "Prerequisite" on the Combat tab
+    And Claw states its requirement "One of: Protean: Feral Claws; Vicissitude: Bonecraft" on the Combat tab
+    And Weapon Strike is marked "Weapon required" and states "A melee weapon" on the Combat tab
+
+  Scenario: A manoeuvre becomes usable when the requirement is met
+    Given a character with Protean 2 on the Combat tab
+    When the Combat tab is opened
+    Then Claw is not marked "Unavailable" or "Prerequisite" on the Combat tab
+    When the player selects the Sap on the Combat tab
+    Then Weapon Strike no longer says "Weapon required" and uses the Sap on the Combat tab
+
+  Scenario: A manoeuvre that needs a prior manoeuvre says what comes first
+    Given a character with Dexterity 3 on the Combat tab
+    When the Combat tab is opened
+    Then Bite is marked "Unavailable" and "Prerequisite" on the Combat tab
+    And Bite states its requirement "A successful Clinch, Hold, or Tackle first" on the Combat tab
+
+  Scenario: A ranged manoeuvre needs a ranged weapon, and bursts need one the chart marks
+    Given a character with Dexterity 3 and Firearms 2 with "Revolver, Lt." and "Multiple Shots" selected on the Combat tab
+    Then Multiple Shots no longer says "Weapon required" and uses the Revolver, Lt. on the Combat tab
+    And Three-Round Burst is marked "Weapon required" and states "A ranged weapon capable of bursts and full auto (asterisked on the chart)" on the Combat tab
+    When the player selects the SMG, Large on the Combat tab
+    Then Three-Round Burst no longer says "Weapon required" and uses the SMG, Large on the Combat tab
+
+  Scenario Outline: A Prerequisite manoeuvre is marked until its power is known
+    Given a character with <discipline> <rating> on the Combat tab
+    When the Combat tab is opened
+    Then Claw is <marking> on the Combat tab
+
+    Examples:
+      | discipline  | rating | marking                                                                           |
+      | Protean     | 1      | marked "Prerequisite" with "One of: Protean: Feral Claws; Vicissitude: Bonecraft" |
+      | Protean     | 2      | not marked                                                                        |
+      | Vicissitude | 2      | marked "Prerequisite" with "One of: Protean: Feral Claws; Vicissitude: Bonecraft" |
+      | Vicissitude | 3      | not marked                                                                        |
+
+  Scenario: An incapacitated character has no pools
+    Given a character with Dexterity 3, Strength 3 and the health track fully marked Incapacitated on the Combat tab
+    When the player selects the Sap and "Weapon Strike" on the Combat tab
+    Then every manoeuvre and weapon pool reads "0 dice" on the Combat tab
+    And the attack pool reads "0 dice" and the damage pool reads "0 dice" on the Combat tab
+    And "Incapacitated: every pool is 0 dice." is shown on the Combat tab
+
+  Scenario: A Crippled wound floors a pool at zero
+    Given a character with Dexterity 3, Brawl 1 and a Crippled wound (5 dice off every pool) on the Combat tab
+    When the Combat tab is opened
+    Then Strike shows "0 dice" with "Dexterity 3 + Brawl 1 − wound 5" on the Combat tab
+    And "Incapacitated: every pool is 0 dice." is not shown on the Combat tab
+

@@ -1,11 +1,13 @@
 import { manoeuvrePool, weaponPool } from '../../domain/v20/combat/pools';
+import { requirementChecker } from '../../domain/v20/combat/requirements';
+import { woundState } from '../../domain/v20/resources';
 import type { V20Character } from '../../domain/v20/character';
 import { wireSegmented } from '../../scripts/dossier/segmented';
 import { setAttr } from '../../scripts/sheet/draw';
 import type { MountedTab, TabContext } from '../../scripts/tabs/context';
 import { drawManoeuvres } from './drawManoeuvres';
 import { drawRoll, rollParts } from './drawRoll';
-import { blankRoll, clearedEntries, rollView, type RollState } from './roll';
+import { blankRoll, clearedEntries, rollView, WEAPONS, type RollState } from './roll';
 import { drawSearch, type SearchParts } from './drawSearch';
 import { drawWeapons } from './drawWeapons';
 import { listedCount, listing, type Listing, type Section } from './section';
@@ -47,6 +49,7 @@ export function mount(ctx: TabContext): MountedTab {
     count: one(root, '[data-search-count]'),
   };
   const noMatch = one<HTMLElement>(root, '[data-state="no-match"]');
+  const incapacitated = one<HTMLElement>(root, '[data-field="incapacitated"]');
   let section: Section = 'all';
   const roll = rollParts(one(root, '[data-roll]'));
   const result = one<HTMLElement>(root, '[data-result]');
@@ -60,10 +63,16 @@ export function mount(ctx: TabContext): MountedTab {
         setAttr(button, 'aria-pressed', String(button.dataset.value === section));
       }
     }
+    const chosen = WEAPONS.find(({ name }) => name === state.weapon);
+    const requirementsOf = requirementChecker(character, chosen);
     for (const table of manoeuvreTables) {
       const rows = table.rows(listed);
       table.block.hidden = rows.length === 0;
-      drawManoeuvres(table.body, manoeuvreTemplate, rows.map((manoeuvre) => ({ manoeuvre, pool: manoeuvrePool(character, manoeuvre) })));
+      drawManoeuvres(
+        table.body,
+        manoeuvreTemplate,
+        rows.map((manoeuvre) => ({ manoeuvre, pool: manoeuvrePool(character, manoeuvre), requirements: requirementsOf(manoeuvre), weapon: state.weapon })),
+      );
     }
     for (const table of weaponTables) {
       const rows = table.rows(listed);
@@ -76,6 +85,7 @@ export function mount(ctx: TabContext): MountedTab {
     }
     for (const group of groups) group.hidden = [...group.querySelectorAll<HTMLElement>('[data-table]')].every((block) => block.hidden);
     noMatch.hidden = listedCount(listed) > 0;
+    incapacitated.hidden = woundState(character) !== 'incapacitated';
     drawSearch(search, listedCount(listed));
     drawRoll(roll, state, rollView(character, state));
   }

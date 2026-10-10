@@ -1,4 +1,5 @@
 ---
+import { INCAPACITATED_REASON } from '../../domain/v20/combat/pools';
 import { MANOEUVRES } from '../../domain/v20/combat/data/manoeuvres';
 import { CALLED_SHOTS, RANGE_BANDS } from '../../domain/v20/combat/data/modifiers';
 import { RANGED_WEAPONS } from '../../domain/v20/combat/data/ranged';
@@ -27,6 +28,8 @@ const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) =
 <div class="combat" data-combat>
 	<!-- Where focus lands when the player opens this tab. -->
 	<h2 class="combat-title" data-panel-heading>Combat</h2>
+	<!-- Shown while the health track is fully marked Incapacitated. -->
+	<p class="combat-incapacitated" data-field="incapacitated" hidden>{INCAPACITATED_REASON}</p>
 
 	<div class="combat-controls">
 		<SearchField id="combat-search" label="Search manoeuvres and weapons" />
@@ -171,7 +174,14 @@ const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) =
 	<!-- Drawn from, never shown: the script copies each into the tables above. -->
 	<template data-template="manoeuvre">
 		<tr>
-			<th scope="row" class="combat-name"><span data-field="name"></span></th>
+			<th scope="row" class="combat-name">
+				<span data-field="name"></span>
+				<!-- What the manoeuvre needs and the character lacks, in words. -->
+				<span class="combat-mark" data-field="unavailable" hidden></span>
+				<span class="combat-mark" data-field="tags" hidden></span>
+				<span class="combat-note" data-field="requirement" hidden></span>
+				<span class="combat-note" data-field="uses" hidden></span>
+			</th>
 			<td>
 				<span class="combat-dice" data-field="pool"></span>
 				<span class="combat-formula" data-field="formula"></span>
