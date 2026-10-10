@@ -275,6 +275,27 @@ describe('a tab that fails while the shell cannot draw, or while it was the last
     expect(log).toContain('view:failed:combat');
   });
 
+  it('still reports the failure when the tab it goes back to cannot be entered again', async () => {
+    const log: string[] = [];
+    let enters = 0;
+    const sheet = recordingTab('sheet', log, {
+      enter() {
+        enters += 1;
+        if (enters > 1) throw new Error('second enter threw');
+        log.push('sheet:enter');
+      },
+    }).descriptor;
+    const { descriptor: combat } = flakyTab('combat', log);
+    const { shell } = setup([sheet, combat], log);
+    await shell.switchTo('sheet');
+    log.length = 0;
+
+    await expect(shell.switchTo('combat')).resolves.toBeUndefined();
+
+    expect(log).toContain('restore:sheet');
+    expect(log).toContain('view:failed:combat');
+  });
+
   it('does not go back to a tab that is itself broken', async () => {
     const log: string[] = [];
     let enters = 0;
