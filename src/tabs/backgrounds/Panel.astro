@@ -1,0 +1,43 @@
+---
+import EmptyState from '../../components/dossier/EmptyState.astro';
+import ReadOnlyHint from '../../components/dossier/ReadOnlyHint.astro';
+import SectionHeading from '../../components/dossier/SectionHeading.astro';
+import './backgrounds.css';
+---
+
+<div class="backgrounds" data-backgrounds>
+	<!-- Where focus lands when the player opens this tab. -->
+	<h2 class="backgrounds-title" data-panel-heading>Backgrounds</h2>
+	<ReadOnlyHint />
+
+	<section class="backgrounds-section" aria-labelledby="backgrounds-heading-backgrounds" data-section="backgrounds">
+		<!-- The script writes the count into the heading. -->
+		<SectionHeading title="Expanded backgrounds" count="" level={3} id="backgrounds-heading-backgrounds" />
+		<ul class="backgrounds-list" aria-labelledby="backgrounds-heading-backgrounds" data-list="backgrounds"></ul>
+		<div data-empty="backgrounds" hidden>
+			<EmptyState message="No backgrounds yet." />
+		</div>
+	</section>
+
+	<!-- Drawn from, never shown: the script copies each into the lists above. -->
+	<template data-template="background">
+		<li class="backgrounds-card">
+			<div class="backgrounds-view" data-sheet-mode-only="play">
+				<div class="backgrounds-card-head">
+					<h4 class="backgrounds-card-name" data-field="name"></h4>
+					<dot-rating class="backgrounds-dots" readonly max="5" value="0" data-field="dots"></dot-rating>
+					<span class="backgrounds-overflow" data-field="overflow"></span>
+				</div>
+				<p class="backgrounds-summary" data-field="summary"></p>
+				<p class="backgrounds-note" data-field="note"></p>
+				<ul class="dossier-chips backgrounds-people" aria-label="People" data-field="people"></ul>
+			</div>
+		</li>
+	</template>
+	<template data-template="person">
+		<li class="dossier-chip backgrounds-person">
+			<span class="backgrounds-person-name" data-field="name"></span>{' '}
+			<span class="backgrounds-person-role" data-field="role"></span>
+		</li>
+	</template>
+</div>

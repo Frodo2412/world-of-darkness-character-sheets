@@ -1,0 +1,96 @@
+/* The Backgrounds tab: a section per kind of entry, each a list of cards. One column on a phone.
+   Colours, sizes and spacing come from the tokens in global.css; text is at least 12px and controls at least 24px. */
+
+.backgrounds {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	padding: var(--space-3) var(--page-gutter);
+	line-height: var(--leading-compact);
+}
+
+/* The global heading rules (capitals, accent, an underline) are for the old pages. */
+.backgrounds-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: var(--text-h2);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.backgrounds .dossier-hint {
+	margin-block-start: calc(var(--space-2) * -1);
+}
+
+.backgrounds-section {
+	min-inline-size: 0;
+}
+
+.backgrounds-list {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.backgrounds-card {
+	min-inline-size: 0;
+	padding: var(--space-card);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.backgrounds-view {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+
+.backgrounds-card-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1) var(--space-3);
+}
+
+.backgrounds-card-name {
+	margin: 0;
+	font-family: var(--font-body);
+	font-size: var(--text-body);
+	font-weight: 600;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.backgrounds-overflow,
+.backgrounds-note,
+.backgrounds-person-role {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.backgrounds-summary,
+.backgrounds-note {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.backgrounds-person {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 0 var(--space-1);
+	overflow-wrap: anywhere;
+}
+
+@media (min-width: 48rem) {
+	.backgrounds-list {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}

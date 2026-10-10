@@ -1,0 +1,112 @@
+import { expect, type Locator, type Page } from '@playwright/test';
+import type { V20Character } from '../../../src/domain/v20/character';
+import type { Person } from '../../../src/domain/v20/dossier/types';
+import { characterArranged, saveCharacters } from './seed';
+import { openSavedSheet, enterEditMode } from './sheet';
+import { openSheetTab, showTab, tabPanelOf } from './tabs';
+
+// What the Backgrounds scenarios know about the tab: how to arrange a character from the words of a
+// scenario, and where the tab's parts are.
+
+const NAME = 'Marguerite';
+
+/** The names the scenarios' unnamed-by-the-scenario backgrounds take, in the order of the rows. */
+const BACKGROUND_NAMES = ['Allies', 'Contacts', 'Herd', 'Resources', 'Retainers', 'Status', 'Fame', 'Mentor'];
+
+const COUNTS: Record<string, number> = { a: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8 };
+const countOf = (word: string): number => COUNTS[word.toLowerCase()];
+
+/** Where the next entry of each kind goes while a character is being arranged. */
+interface Cursor {
+  background: number;
+}
+
+/** "Camille Arnaud" (museum curator) and "Lucien Voss" (dockside fixer): the people a background has. */
+export function peopleIn(text: string): Person[] {
+  return [...text.matchAll(/"([^"]+)" \(([^)]+)\)/g)].map(([, name, role]) => ({ name, role }));
+}
+
+/** Puts a background in the next row, growing the list past six when the scenario names more. */
+function putBackground(character: V20Character, cursor: Cursor, row: V20Character['backgrounds'][number]): void {
+  character.backgrounds[cursor.background++] = row;
+}
+
+/**
+ * Sets one thing a scenario says the character has: `Allies 2 summarised "...", noted "...", with the
+ * people "A" (role) and "B" (role)`, "two named backgrounds", "four blank rows" or "backgrounds".
+ */
+function arrange(character: V20Character, part: string, cursor: Cursor): void {
+  const detailed = part.match(/^(\w+) (\d+) summarised "([^"]*)"(?:, noted "([^"]*)")?(?:, with the people (.+))?$/);
+  const named = part.match(/^(\w+) named backgrounds?$/);
+  if (detailed !== null) {
+    const [, name, rating, summary, note, people] = detailed;
+    putBackground(character, cursor, {
+      name,
+      rating: Number(rating),
+      summary,
+      ...(note === undefined ? {} : { note }),
+      ...(people === undefined ? {} : { people: peopleIn(people) }),
+    });
+  } else if (named !== null) {
+    for (let count = 0; count < countOf(named[1]); count += 1) {
+      const place = cursor.background;
+      putBackground(character, cursor, { name: BACKGROUND_NAMES[place], rating: (place % 5) + 1 });
+    }
+  } else if (part === 'backgrounds') {
+    for (const [place, name] of ['Allies', 'Contacts'].entries()) putBackground(character, cursor, { name, rating: place + 2 });
+  } else if (!/^\w+ blank rows$/.test(part)) {
+    throw new Error(`a Backgrounds scenario cannot arrange "${part}"`);
+  }
+}
+
+/** The start of one thing a scenario says a character has: what a comma or "and" must be followed by to separate two of them. */
+const ITEM_START = '(?=(?:an? |one |two |three |four |five |six |seven |eight |the background ))';
+
+/** What a scenario says when it wants a character with nothing on the tab. */
+const NOTHING = 'no backgrounds, havens, merits, flaws or other traits';
+
+/** A character made from the words of a scenario: "two named backgrounds and four blank rows". */
+export function backgroundsCharacter(words: string): V20Character {
+  if (words === NOTHING) return characterArranged({ name: NAME, clan: 'Toreador' }, () => {});
+  const parts = words.split(new RegExp(`,\\s+${ITEM_START}|\\s+and\\s+${ITEM_START}`));
+  return characterArranged({ name: NAME, clan: 'Toreador' }, (character) => {
+    const cursor: Cursor = { background: 0 };
+    for (const part of parts) arrange(character, part.trim(), cursor);
+  });
+}
+
+/** Saves a character made from the words, as the scenario's character. */
+export async function saveBackgroundsCharacter(page: Page, memory: { saved: V20Character[] }, words: string): Promise<void> {
+  memory.saved = [backgroundsCharacter(words)];
+  await saveCharacters(page, memory.saved);
+}
+
+/** Saves a character made from the words and opens its sheet, in edit mode when asked. */
+export async function openBackgroundsCharacter(
+  page: Page,
+  memory: { saved: V20Character[] },
+  words: string,
+  mode: 'play' | 'edit',
+): Promise<void> {
+  memory.saved = [backgroundsCharacter(words)];
+  await openSavedSheet(page, memory.saved[0]);
+  if (mode === 'edit') await enterEditMode(page);
+}
+
+/** The tab's panel. */
+export const backgroundsPanel = (page: Page): Locator => tabPanelOf(page, 'backgrounds');
+
+/** Shows the Backgrounds tab: opens the sheet on it, or chooses it in the bar when the sheet is already open. */
+export async function showBackgrounds(page: Page, memory: { saved: V20Character[] }): Promise<void> {
+  if (new URL(page.url()).pathname.startsWith('/sheet/')) await showTab(page, 'Backgrounds');
+  else await openSheetTab(page, memory.saved[0].id, 'Backgrounds');
+  await expect(backgroundsPanel(page)).toBeVisible();
+}
+
+/** The cards of the Backgrounds section that are showing. */
+export const backgroundCards = (page: Page): Locator =>
+  backgroundsPanel(page).locator('[data-list="backgrounds"] > li').filter({ visible: true });
+
+/** One background's card, found by the heading with its name. */
+export const backgroundCard = (page: Page, name: string): Locator =>
+  backgroundCards(page).filter({ has: page.getByRole('heading', { name, exact: true }) });
