@@ -39,3 +39,9 @@ export const tableRow = (page: Page, name: string): Locator =>
 
 /** One cell of a row, by the field the markup names it. */
 export const cellOf = (row: Locator, field: string): Locator => row.locator(`[data-field="${field}"]`);
+
+/** The body rows of one of the tab's tables, by the name the markup gives it ("melee-weapons"). */
+export const rowsOf = (page: Page, table: string): Locator => combatPanel(page).locator(`[data-table="${table}"] tbody tr`);
+
+/** The control that chooses between the Melee and Ranged tables. */
+export const tablesControl = (page: Page): Locator => combatPanel(page).getByRole('group', { name: 'Combat tables', exact: true });

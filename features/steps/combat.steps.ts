@@ -1,7 +1,8 @@
-import { expect } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import type { DataTable } from 'playwright-bdd';
-import { Given, Then } from './fixtures';
-import { cellOf, saveCombatCharacter, tableRow } from './support/combat';
+import { Given, Then, When } from './fixtures';
+import { escaped } from './support/text';
+import { cellOf, combatPanel, rowsOf, saveCombatCharacter, showCombat, tableRow, tablesControl } from './support/combat';
 
 // The steps of the Combat scenarios. Each one that is not shared names the tab ("on the Combat
 // tab"), so it never has the same words as a step of another tab.
@@ -10,6 +11,18 @@ import { cellOf, saveCombatCharacter, tableRow } from './support/combat';
 
 Given(/^a character with (.+) on the Combat tab$/, async ({ page, memory }, words: string) => {
   await saveCombatCharacter(page, memory, words);
+});
+
+// Choosing
+
+When(/^(Melee|Ranged) is chosen on the Combat tab$/, async ({ page, memory }, table: string) => {
+  await showCombat(page, memory);
+  await tablesControl(page).getByRole('button', { name: table, exact: true }).click();
+});
+
+When(/^the player presses "([^"]+)" for the (.+) on the Combat tab$/, async ({ page, memory }, button: string, weapon: string) => {
+  await showCombat(page, memory);
+  await combatPanel(page).getByRole('button', { name: `${button}: ${weapon}`, exact: true }).click();
 });
 
 // What the tables show
@@ -29,4 +42,35 @@ Then('these manoeuvres show {string} and the rulebook\'s values on the Combat ta
     await expect(cellOf(row, 'damage'), values.Manoeuvre).toHaveText(values['Base damage']);
     await expect(cellOf(row, 'page'), values.Manoeuvre).toHaveText(values.Page);
   }
+});
+
+Then('every melee weapon shows {string} and its V20 page {string} on the Combat tab', async ({ page }, dice: string, reference: string) => {
+  const rows = rowsOf(page, 'melee-weapons');
+  await expect(rows).toHaveCount(6);
+  await expect(rows.locator('[data-field="pool"]')).toHaveText(Array(6).fill(dice));
+  await expect(rows.locator('[data-field="page"]')).toHaveText(Array(6).fill(reference));
+});
+
+Then('the melee weapons show the rulebook\'s damage, type and concealment on the Combat tab', async ({ page }, table: DataTable) => {
+  for (const values of table.hashes()) {
+    const row = tableRow(page, values.Weapon);
+    await expect(cellOf(row, 'damage'), values.Weapon).toHaveText(values.Damage);
+    await expect(cellOf(row, 'type'), values.Weapon).toHaveText(values.Type);
+    await expect(cellOf(row, 'conceal'), values.Weapon).toHaveText(values.Concealment);
+  }
+});
+
+// The weapon chosen for the roll
+
+/** The buttons called "<name>: <weapon>" that say they are pressed. */
+const pressedButtons = (page: Page, name: string): Locator =>
+  combatPanel(page).getByRole('button', { name: new RegExp(`^${escaped(name)}: `), pressed: true });
+
+Then('{string} is pressed for the {word} alone on the Combat tab', async ({ page }, button: string, weapon: string) => {
+  await expect(pressedButtons(page, button)).toHaveCount(1);
+  await expect(pressedButtons(page, button)).toHaveAccessibleName(`${button}: ${weapon}`);
+});
+
+Then('{string} is pressed for no weapon on the Combat tab', async ({ page }, button: string) => {
+  await expect(pressedButtons(page, button)).toHaveCount(0);
 });

@@ -36,6 +36,8 @@
 
 .combat-formula,
 .combat-effects,
+.combat-note,
+.combat-legend,
 .combat-page {
 	display: block;
 	font-size: var(--text-small);
@@ -45,4 +47,40 @@
 .combat-name {
 	font-weight: 600;
 	color: var(--color-text-strong);
+}
+
+.combat-note {
+	font-weight: 400;
+}
+
+.combat-legend {
+	margin: var(--space-1) 0 0;
+}
+
+/* The row action: a button that says whether it is pressed, in a mark as well as colour, like a segmented control. */
+.combat-use {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	min-block-size: var(--control-compact);
+	min-inline-size: var(--control-compact);
+	padding: var(--space-1) var(--space-row);
+	font-size: var(--text-body);
+	white-space: nowrap;
+}
+
+.combat-use[aria-pressed='true'] {
+	font-weight: 600;
+	color: var(--color-text-strong);
+	background: var(--color-selected);
+	border-color: var(--color-focus);
+}
+
+/* The mark takes its room whether shown or not, so pressing the button does not move its neighbours. */
+.combat-use-mark {
+	inline-size: 1em;
+}
+
+.combat-use[aria-pressed='false'] .combat-use-mark {
+	visibility: hidden;
 }

@@ -7,6 +7,14 @@ export function setText(element: Element, text: string): void {
   if (element.textContent !== text) element.textContent = text;
 }
 
+/** Writes the text into the element of the template's markup marked `data-field="<name>"`, when it has one; an element left with no text is hidden. */
+export function setField(scope: ParentNode, name: string, text: string): void {
+  const element = scope.querySelector<HTMLElement>(`[data-field="${name}"]`);
+  if (element === null) return;
+  setText(element, text);
+  element.hidden = text === '';
+}
+
 /** The element a template's markup marks `data-field="<name>"`, inside `scope`. */
 export function field(scope: ParentNode, name: string): HTMLElement {
   return scope.querySelector<HTMLElement>(`[data-field="${name}"]`)!;
