@@ -1,7 +1,7 @@
 # Plan: Dossier foundation (PR A of Dossier Tabs)
 
 **Created**: 2026-10-08
-**Split from**: `plans/dossier-tabs.md` on 2026-10-10 (the parent keeps Slices 6–14, PRs B and C)
+**Split from**: `plans/dossier-tabs.md` on 2026-10-09 (the parent keeps Slices 6–14, PRs B and C)
 **Branch**: `feat/dossier-foundation`
 **Status**: implemented
 **Gherkin persistence**: features
@@ -15,7 +15,7 @@ ledger (Slice 2), the shared dossier parts (Slice 3) and the two rulebook-data s
 No tab is visible yet: the Character sheet is the only registered tab, so the page is unchanged. Stored
 records written before this work keep loading. The approach stance, plan decisions, acceptance criteria
 and conventions for tab slices are in the parent plan and are not repeated here; the acceptance criteria
-this PR proves are F1, F2 (host half), F3 (unknown key), F5 and J6 (ledger arithmetic).
+this PR proves are F1, F2 (host half), F3 (unknown key, address), F5 and J6 (ledger arithmetic), and the host's part of F4 (arrows, Home, End, Enter, Space; axe on the Character sheet), F6 and F7 (identity, mode toggle, save status on the Character sheet). The rest of F3, F4, F6 and F7 is proven with the other tabs in Slice 14.
 
 ## Slices
 
@@ -251,7 +251,7 @@ Session and ledger arithmetic (J4, J6) is verified by unit and property tests on
 This slice has no scenarios of its own: its parts have no page. Pure parts are unit-tested; component
 markup is checked by Astro-container render tests; behavior is proven by the scenarios of the
 tabs that use them (disclosure in Slice 6, undo in Slice 7, the session prompt in Slices 10–12,
-the segmented control in Slice 8). If Vitest cannot render Astro components in this repository
+the segmented control in Slices 6 and 8). If Vitest cannot render Astro components in this repository
 the first sub-task of Step 3.3 is to say so, and the render tests move to the consuming slices.
 
 **Behavior:** none (see above).
@@ -425,6 +425,8 @@ Data only, extracted as in Slice 4 (V20 chapter nine, pp. 274–281 and the weap
 **Files**: `src/domain/v20/combat/data/ranged.ts`, `src/domain/v20/combat/data/ranged.test.ts`, `src/domain/v20/combat/data/modifiers.ts`, `src/domain/v20/combat/data/modifiers.test.ts`
 **Commit**: `feat(combat): ranged weapons and modifier tables`
 
+**Note (pinning):** the pinned ranged example is recorded in `docs/specs/dossier-tabs-combat-review.md` and checked against the data by `ranged.test.ts`. The Slice 8 feature file does not exist yet; Slice 8 copies the pinned literals into it when it is built.
+
 
 ## Pre-PR Quality Gate
 
@@ -436,8 +438,8 @@ Data only, extracted as in Slice 4 (V20 chapter nine, pp. 274–281 and the weap
 ## Risks & Open Questions
 
 - **Loader and rollback.** Today a stored record must have exactly six backgrounds and the same array lengths as the blank. Step 2.2 replaces that check for the new fields only and leaves `hasShapeOf` untouched, but it is the one change that could strand real data, so PR A is tried against real profiles first. Reverting a PR after the owner has saved new data (eight backgrounds, notes, XP) leaves a build from before this work reporting that character unreadable: revert is safe only before new data is entered, and the owner should export `localStorage` first. A damaged dossier field makes the whole character unreadable by design (never rewritten); a per-section fallback was considered and not adopted because it would need partial-write rules the store does not have.
-- **Astro glob rendering.** Step 1.4 starts with a spike on `import.meta.glob`; if Astro cannot render globbed components, the fallback is a `prebuild`-generated `src/tabs/index.ts` of the same shape, decided in Slice 1.
-- **Astro container tests.** Slice 3's component tests assume Vitest can render Astro components here. If not, they move into the consuming slices' scenarios (stated in Slice 3).
+- **Astro glob rendering (resolved: the glob works, no prebuild fallback).** Step 1.4 started with a spike on `import.meta.glob`; if Astro cannot render globbed components, the fallback is a `prebuild`-generated `src/tabs/index.ts` of the same shape, decided in Slice 1.
+- **Astro container tests (resolved: Vitest renders the components, tests are in Slice 3).** Slice 3's component tests assume Vitest can render Astro components here. If not, they move into the consuming slices' scenarios (stated in Slice 3).
 - **Sourcebook extraction.** About 85 Discipline powers and the combat tables come from the V20 PDF through `pypdf`; tables in this PDF may extract out of order, and worktrees cannot see the gitignored PDF, so extraction reads it by absolute path in the main checkout. Tests guard shape only: a plausible but wrong value passes them, so the human review checklist in PR A is the real gate. Unextractable fields stay undefined and show "See rulebook (V20 p. N)".
 - **Pinned combat values.** Slice 8's ranged scenario uses "as printed in the rulebook" until Step 5.3 pins literal values into the feature file; if the export has already run when that happens the feature file is edited by that step and re-checked.
 - **Parallel edits to shared files.** Slices in a wave own disjoint folders; `features/steps/shared.steps.ts`, `fixtures.ts`, `pages.ts`-adjacent support and every shared step phrase are owned by Slice 1 only. Step text uniqueness is enforced by the self-test in Step 1.8. `bddgen` aborts on duplicate step text, so a violation breaks the whole suite at merge.

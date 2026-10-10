@@ -1636,12 +1636,8 @@ Per PR (A, B, C):
 
 ## Risks & Open Questions
 
-- **Loader and rollback.** Today a stored record must have exactly six backgrounds and the same array lengths as the blank. Step 2.2 replaces that check for the new fields only and leaves `hasShapeOf` untouched, but it is the one change that could strand real data, so PR A is tried against real profiles first. Reverting a PR after the owner has saved new data (eight backgrounds, notes, XP) leaves a build from before this work reporting that character unreadable: revert is safe only before new data is entered, and the owner should export `localStorage` first. A damaged dossier field makes the whole character unreadable by design (never rewritten); a per-section fallback was considered and not adopted because it would need partial-write rules the store does not have.
-- **Astro glob rendering.** Step 1.4 starts with a spike on `import.meta.glob`; if Astro cannot render globbed components, the fallback is a `prebuild`-generated `src/tabs/index.ts` of the same shape, decided in Slice 1.
-- **Astro container tests.** Slice 3's component tests assume Vitest can render Astro components here. If not, they move into the consuming slices' scenarios (stated in Slice 3).
-- **Sourcebook extraction.** About 85 Discipline powers and the combat tables come from the V20 PDF through `pypdf`; tables in this PDF may extract out of order, and worktrees cannot see the gitignored PDF, so extraction reads it by absolute path in the main checkout. Tests guard shape only: a plausible but wrong value passes them, so the human review checklist in PR A is the real gate. Unextractable fields stay undefined and show "See rulebook (V20 p. N)".
-- **Pinned combat values.** Slice 8's ranged scenario uses "as printed in the rulebook" until Step 5.3 pins literal values into the feature file; if the export has already run when that happens the feature file is edited by that step and re-checked.
-- **Parallel edits to shared files.** Slices in a wave own disjoint folders; `features/steps/shared.steps.ts`, `fixtures.ts`, `pages.ts`-adjacent support and every shared step phrase are owned by Slice 1 only. Step text uniqueness is enforced by the self-test in Step 1.8. `bddgen` aborts on duplicate step text, so a violation breaks the whole suite at merge.
+The risks of Slices 1–5 (loader and rollback, Astro glob and container tests, sourcebook extraction, pinned combat values, parallel edits to shared files) are in `plans/dossier-foundation.md`.
+
 - **Level up writes permanent ratings in play mode.** Allowed because confirmation is an explicit commit; Undo, the persistent result message and the scenarios cover it.
 - **Journal is one tab, four slices.** Slices 11–13 edit disjoint sub-folders created as placeholders by Slice 9, with the section mount contract stated there; if the placeholders change shape the later three must be re-read before building.
 - **Branch and PR size.** Three stacked PRs: A (Slices 1–5), B (6–8), C (9–14). Slice 10 (Level up) is placed in PR C so it never ships without sessions and XP.
@@ -1655,7 +1651,11 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
 ### Slices (grouped by wave)
 
 #### Wave 1
-- Slices 1–5: built, see `plans/dossier-foundation.md`.
+- [x] Slice 1: Tab host and shell (steps in `plans/dossier-foundation.md`)
+- [x] Slice 2: Stored data and the experience ledger (steps in `plans/dossier-foundation.md`)
+- [x] Slice 3: Shared dossier parts (steps in `plans/dossier-foundation.md`)
+- [x] Slice 4: Discipline catalogue data (steps in `plans/dossier-foundation.md`)
+- [x] Slice 5: Combat reference data (steps in `plans/dossier-foundation.md`)
 
 #### Wave 2
 - [ ] Slice 6: Disciplines tab
