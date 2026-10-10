@@ -60,6 +60,48 @@ Then('the melee weapons show the rulebook\'s damage, type and concealment on the
   }
 });
 
+Then(
+  /^"([^"]+)" shows "([^"]+)", accuracy "([^"]+)", difficulty "([^"]+)" and damage "([^"]+)" on the Combat tab$/,
+  async ({ page }, name: string, dice: string, accuracy: string, difficulty: string, damage: string) => {
+    const row = tableRow(page, name);
+    await expect(cellOf(row, 'pool')).toHaveText(dice);
+    await expect(cellOf(row, 'accuracy')).toHaveText(accuracy);
+    await expect(cellOf(row, 'difficulty')).toHaveText(difficulty);
+    await expect(cellOf(row, 'damage')).toHaveText(String(damage));
+  },
+);
+
+Then(
+  /^"([^"]+)" shows accuracy "([^"]+)", difficulty "([^"]+)" and damage "([^"]+)" on the Combat tab$/,
+  async ({ page }, name: string, accuracy: string, difficulty: string, damage: string) => {
+    const row = tableRow(page, name);
+    await expect(cellOf(row, 'accuracy')).toHaveText(accuracy);
+    await expect(cellOf(row, 'difficulty')).toHaveText(difficulty);
+    await expect(cellOf(row, 'damage')).toHaveText(String(damage));
+  },
+);
+
+Then(
+  /^"([^"]+)" shows damage (\d+), range (\d+), rate (\d+), clip (\d+), concealment "([^"]+)" and "([^"]+)" on the Combat tab$/,
+  async ({ page }, name: string, damage: number, range: number, rate: number, clip: number, conceal: string, reference: string) => {
+    const row = tableRow(page, name);
+    await expect(cellOf(row, 'damage')).toHaveText(String(damage));
+    await expect(cellOf(row, 'range')).toHaveText(String(range));
+    await expect(cellOf(row, 'rate')).toHaveText(String(rate));
+    await expect(cellOf(row, 'clip')).toHaveText(String(clip));
+    await expect(cellOf(row, 'conceal')).toHaveText(conceal);
+    await expect(cellOf(row, 'page')).toHaveText(reference);
+  },
+);
+
+Then('{string} shows {string} on the Combat tab', async ({ page }, name: string, dice: string) => {
+  await expect(cellOf(tableRow(page, name), 'pool')).toHaveText(dice);
+});
+
+Then('{string} shows clip {string} on the Combat tab', async ({ page }, name: string, clip: string) => {
+  await expect(cellOf(tableRow(page, name), 'clip')).toHaveText(clip);
+});
+
 // The weapon chosen for the roll
 
 /** The buttons called "<name>: <weapon>" that say they are pressed. */

@@ -6,6 +6,7 @@ import './combat.css';
 
 const MANOEUVRE_HEADINGS = ['Manoeuvre', 'Pool', 'Accuracy', 'Difficulty', 'Base damage', 'Page'];
 const MELEE_WEAPON_HEADINGS = ['Weapon', 'Pool', 'Damage', 'Type', 'Conceal', 'Page', 'In roll'];
+const RANGED_WEAPON_HEADINGS = ['Weapon', 'Pool', 'Damage', 'Range', 'Rate', 'Clip', 'Conceal', 'Page', 'In roll'];
 
 /** What each concealment letter means, as the chart words it. */
 const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) => `${letter}: ${meaning}`);
@@ -33,6 +34,16 @@ const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) =
 		</div>
 		<div data-table="melee-weapons">
 			<ReferenceTable caption="Melee weapons" headings={MELEE_WEAPON_HEADINGS} />
+			<p class="combat-legend">Conceal: {CONCEALMENT_LEGEND.join(' · ')}</p>
+		</div>
+	</section>
+
+	<section class="combat-group" aria-label="Ranged combat" data-group="ranged">
+		<div data-table="ranged-manoeuvres">
+			<ReferenceTable caption="Ranged manoeuvres" headings={MANOEUVRE_HEADINGS} />
+		</div>
+		<div data-table="ranged-weapons">
+			<ReferenceTable caption="Ranged weapons" headings={RANGED_WEAPON_HEADINGS} />
 			<p class="combat-legend">Conceal: {CONCEALMENT_LEGEND.join(' · ')}</p>
 		</div>
 	</section>
@@ -66,6 +77,32 @@ const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) =
 			</td>
 			<td data-field="damage"></td>
 			<td data-field="type"></td>
+			<td data-field="conceal"></td>
+			<td class="combat-page" data-field="page"></td>
+			<td>
+				<button type="button" class="combat-use" aria-pressed="false" data-field="use">
+					<span class="combat-use-mark" aria-hidden="true">✓</span>
+					Use in roll
+				</button>
+			</td>
+		</tr>
+	</template>
+	<template data-template="ranged-weapon">
+		<tr>
+			<th scope="row" class="combat-name">
+				<span data-field="name"></span>
+				<span class="combat-note" data-field="automatic"></span>
+				<span class="combat-note" data-field="example"></span>
+				<span class="combat-note" data-field="note"></span>
+			</th>
+			<td>
+				<span class="combat-dice" data-field="pool"></span>
+				<span class="combat-formula" data-field="formula"></span>
+			</td>
+			<td data-field="damage"></td>
+			<td data-field="range"></td>
+			<td data-field="rate"></td>
+			<td data-field="clip"></td>
 			<td data-field="conceal"></td>
 			<td class="combat-page" data-field="page"></td>
 			<td>

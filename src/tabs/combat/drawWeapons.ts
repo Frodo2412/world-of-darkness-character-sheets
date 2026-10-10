@@ -31,6 +31,7 @@ function valuesOf({ weapon, pool }: WeaponRow): Record<string, string> {
   if (weapon.kind === 'melee') {
     values.type = capitalised(weapon.type);
   } else {
+    values.automatic = weapon.automatic ? 'Bursts and full auto' : '';
     values.example = weapon.example === undefined ? '' : `e.g. ${weapon.example}`;
     values.range = String(weapon.range);
     values.rate = String(weapon.rate);
