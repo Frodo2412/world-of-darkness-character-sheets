@@ -4,9 +4,20 @@ import { wireSegmented } from '../../scripts/dossier/segmented';
 import { setAttr } from '../../scripts/sheet/draw';
 import type { MountedTab, TabContext } from '../../scripts/tabs/context';
 import { drawManoeuvres } from './drawManoeuvres';
+import { drawRoll, rollParts } from './drawRoll';
+import { blankRoll, clearedEntries, rollView, type RollState } from './roll';
 import { drawSearch, type SearchParts } from './drawSearch';
 import { drawWeapons } from './drawWeapons';
 import { listedCount, listing, type Listing, type Section } from './section';
+
+/** The width below which the Weapon roll panel is under the tables, not beside them (as combat.css lays it out). */
+const COMPACT_LAYOUT = '(max-width: 69.99rem)';
+
+/** What the player typed as a whole number; nothing, or something that is not a number, is 0. */
+const wholeNumber = (text: string): number => {
+  const number = Math.trunc(Number(text));
+  return Number.isFinite(number) ? number : 0;
+};
 
 const one = <T extends Element>(root: ParentNode, selector: string): T => root.querySelector<T>(selector)!;
 
@@ -37,8 +48,10 @@ export function mount(ctx: TabContext): MountedTab {
   };
   const noMatch = one<HTMLElement>(root, '[data-state="no-match"]');
   let section: Section = 'all';
-  /** The weapon chosen for the roll, by name: page state, forgotten on leaving. */
-  let weapon: string | undefined;
+  const roll = rollParts(one(root, '[data-roll]'));
+  const result = one<HTMLElement>(root, '[data-result]');
+  /** What the player chose and entered for the Weapon roll: page state, never stored. */
+  let state: RollState = blankRoll();
 
   function draw(character: V20Character): void {
     const listed = listing(section, search.input.value);
@@ -58,12 +71,19 @@ export function mount(ctx: TabContext): MountedTab {
       drawWeapons(
         table.body,
         table.template,
-        rows.map((each) => ({ weapon: each, pool: weaponPool(character, each), selected: each.name === weapon })),
+        rows.map((each) => ({ weapon: each, pool: weaponPool(character, each), selected: each.name === state.weapon })),
       );
     }
     for (const group of groups) group.hidden = [...group.querySelectorAll<HTMLElement>('[data-table]')].every((block) => block.hidden);
     noMatch.hidden = listedCount(listed) > 0;
     drawSearch(search, listedCount(listed));
+    drawRoll(roll, state, rollView(character, state));
+  }
+
+  /** Changes what the player chose or entered, and redraws. */
+  function choose(change: Partial<RollState>): void {
+    state = { ...state, ...change };
+    draw(ctx.current());
   }
 
   // The filter and the sub-tabs choose the same section.
@@ -90,10 +110,24 @@ export function mount(ctx: TabContext): MountedTab {
       const button = (event.target as Element).closest('[data-field="use"]');
       if (button === null) return;
       const name = button.closest<HTMLElement>('[data-key]')!.dataset.key!;
-      weapon = weapon === name ? undefined : name;
-      draw(ctx.current());
+      const chosen = state.weapon !== name;
+      choose({ weapon: chosen ? name : undefined });
+      // Under the tables the roll panel is out of sight: bring its result into view and read it.
+      if (chosen && result.ownerDocument.defaultView!.matchMedia(COMPACT_LAYOUT).matches) {
+        result.scrollIntoView({ block: 'nearest' });
+        result.focus();
+      }
     });
   }
 
-  return { render: draw, leave: () => void (weapon = undefined) };
+  // The pickers and the entries of the Weapon roll panel.
+  const picked = (select: HTMLSelectElement): string | undefined => (select.value === '' ? undefined : select.value);
+  roll.weapon.addEventListener('change', () => choose({ weapon: picked(roll.weapon) }));
+  roll.manoeuvre.addEventListener('change', () => choose({ manoeuvre: picked(roll.manoeuvre) }));
+  roll.target.addEventListener('change', () => choose({ target: picked(roll.target) }));
+  roll.range.addEventListener('change', () => choose({ range: picked(roll.range) }));
+  roll.dice.addEventListener('input', () => choose({ diceModifier: wholeNumber(roll.dice.value) }));
+  roll.difficulty.addEventListener('input', () => choose({ difficultyModifier: wholeNumber(roll.difficulty.value) }));
+
+  return { render: draw, leave: () => void (state = { ...state, ...clearedEntries() }) };
 }

@@ -53,3 +53,8 @@ export function reconcile<T>(
   }
   for (const gone of existing.values()) gone.remove();
 }
+
+/** Puts the text in an input unless the player is in it: what they are typing is left as it is. */
+export function showUnlessFocused(input: HTMLInputElement | HTMLSelectElement, text: string): void {
+  if (input.ownerDocument.activeElement !== input && input.value !== text) input.value = text;
+}

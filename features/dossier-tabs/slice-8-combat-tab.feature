@@ -61,3 +61,45 @@ Feature: Combat tab
     Then "No manoeuvres or weapons match." is shown on the Combat tab
     When the player searches "zzzz" on the Combat tab
     Then "No manoeuvres or weapons match." is shown on the Combat tab
+
+  Scenario: Selecting a weapon and manoeuvre builds the attack pool
+    Given a character with Dexterity 3 and Melee 0 on the Combat tab
+    When the player selects the Sap and "Weapon Strike" on the Combat tab
+    Then the attack pool reads "3 dice" with "Dexterity 3 + Melee 0" on the Combat tab
+    And accuracy reads "Normal" and difficulty reads 6 on the Combat tab
+
+  Scenario: Modifiers and Target change the pool and are forgotten on leaving
+    Given a character with Dexterity 3, Melee 0 and Strength 2 with the Sap and "Weapon Strike" selected on the Combat tab
+    And the Weapon roll panel shows an attack pool of 3 dice, accuracy "Normal" and difficulty 6 on the Combat tab
+    When the player adds one die and raises the difficulty by one on the Combat tab
+    Then the attack pool reads "4 dice" and the difficulty reads 7 on the Combat tab
+    When the player chooses the Target "Small (hand, head, cellphone)" on the Combat tab
+    Then the difficulty reads 9 on the Combat tab
+    And the Targeting table entry it follows reads difficulty "+2" and damage "+1" (V20 p. 274) on the Combat tab
+    When the player leaves the Combat tab for the Character sheet tab and returns without reloading on the Combat tab
+    Then the dice modifier and the difficulty modifier read 0 on the Combat tab
+    And Target and Range are back at their defaults on the Combat tab
+    And the stored record is identical to the record before the visit on the Combat tab
+
+  Scenario: A dice modifier larger than the pool floors the attack pool at zero
+    Given a character with Dexterity 3 and Melee 0 with the Sap and "Weapon Strike" selected on the Combat tab
+    When the player sets the dice modifier to -5 on the Combat tab
+    Then the attack pool reads "0 dice" on the Combat tab
+
+  Scenario Outline: Range sets the base difficulty
+    Given a character with Dexterity 3 and Firearms 2 with "Revolver, Lt." and "Multiple Shots" selected on the Combat tab
+    When the player chooses the Range "<range>" on the Combat tab
+    Then the difficulty reads <difficulty> on the Combat tab
+
+    Examples:
+      | range       | difficulty |
+      | Point blank | 4          |
+      | Short range | 6          |
+      | Long range  | 8          |
+
+  Scenario: Nothing is rolled
+    Given a character with Dexterity 3 and Melee 0 with the Sap and "Weapon Strike" selected on the Combat tab
+    Then the Weapon roll panel has no control whose name contains "Roll" on the Combat tab
+    And the Weapon roll panel says "Pools only — roll your own dice." on the Combat tab
+    And repeated redraws of the Weapon roll panel show no random result on the Combat tab
+

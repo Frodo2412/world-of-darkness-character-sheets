@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { V20Character } from '../../../src/domain/v20/character';
+import { memoryFor, type ScenarioMemory } from '../fixtures';
 import { saveCharacters } from './seed';
 import { disciplineCharacter } from './disciplines';
 import { openSheetTab, showTab, tabPanelOf } from './tabs';
@@ -75,4 +76,31 @@ export function listedCounts(words: string): Record<string, number> {
 /** Checks the number of rows each of the four tables lists. */
 export async function expectListed(page: Page, counts: Record<string, number>): Promise<void> {
   for (const [table, count] of Object.entries(counts)) await expect(rowsOf(page, table), table).toHaveCount(count);
+}
+
+/** What this tab's steps remember about the scenario. */
+interface CombatMemory {
+  /** Every stored record as the scenario left the tab after arranging it, to check later that using the tab changed nothing. */
+  stored?: Record<string, string>;
+}
+
+export const combatMemory = (memory: ScenarioMemory): CombatMemory => memoryFor<CombatMemory>({ memory }, 'combat', () => ({}));
+
+/** The Weapon roll panel. */
+export const rollPanel = (page: Page): Locator => combatPanel(page).getByRole('region', { name: 'Weapon roll', exact: true });
+
+/** One of the panel's pickers or entries, by its label. */
+export const rollInput = (page: Page, label: string): Locator =>
+  rollPanel(page)
+    .getByRole('combobox', { name: label, exact: true })
+    .or(rollPanel(page).getByRole('spinbutton', { name: label, exact: true }));
+
+/** One of the panel's readings, by the field the markup names it. */
+export const rollReading = (page: Page, field: string): Locator => rollPanel(page).locator(`[data-field="${field}"]`);
+
+/** Chooses a weapon and a manoeuvre in the panel's pickers, opening the tab first when it is not showing. */
+export async function selectInRoll(page: Page, memory: { saved: V20Character[] }, weapon: string, manoeuvre: string): Promise<void> {
+  await showCombat(page, memory);
+  await rollInput(page, 'Weapon').selectOption(weapon);
+  await rollInput(page, 'Manoeuvre').selectOption(manoeuvre);
 }

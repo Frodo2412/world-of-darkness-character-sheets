@@ -1,16 +1,24 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { DataTable } from 'playwright-bdd';
 import { Given, Then, When } from './fixtures';
+import { controlNames } from './support/accessibility';
+import { storedRecords } from './support/storage';
+import { showTab } from './support/tabs';
 import { escaped } from './support/text';
 import {
   cellOf,
+  combatMemory,
   combatPanel,
   expectListed,
   listedCounts,
+  rollInput,
+  rollPanel,
+  rollReading,
   rowsOf,
   saveCombatCharacter,
   searchField,
   sectionControl,
+  selectInRoll,
   showCombat,
   tableRow,
   tablesControl,
@@ -21,9 +29,19 @@ import {
 
 // Arranging
 
-Given(/^a character with (.+) on the Combat tab$/, async ({ page, memory }, words: string) => {
+// A character with a weapon and manoeuvre already chosen (the tab is opened to choose them) or not.
+Given(/^a character with (.+?(?<! selected)) on the Combat tab$/, async ({ page, memory }, words: string) => {
   await saveCombatCharacter(page, memory, words);
 });
+
+Given(
+  /^a character with (.+?) with (?:the )?"?([^"]+?)"? and "([^"]+)" selected on the Combat tab$/,
+  async ({ page, memory }, words: string, weapon: string, manoeuvre: string) => {
+    await saveCombatCharacter(page, memory, words);
+    await selectInRoll(page, memory, weapon, manoeuvre);
+    combatMemory(memory).stored = await storedRecords(page);
+  },
+);
 
 // Choosing
 
@@ -40,6 +58,33 @@ When('the player chooses {string} on the Combat tab', async ({ page, memory }, l
 When('the player searches {string} on the Combat tab', async ({ page, memory }, query: string) => {
   await showCombat(page, memory);
   await searchField(page).fill(query);
+});
+
+When(/^the player selects (?:the )?"?([^"]+?)"? and "([^"]+)" on the Combat tab$/, async ({ page, memory }, weapon: string, manoeuvre: string) => {
+  await selectInRoll(page, memory, weapon, manoeuvre);
+});
+
+When('the player adds one die and raises the difficulty by one on the Combat tab', async ({ page }) => {
+  await rollInput(page, 'Dice modifier').fill('1');
+  await rollInput(page, 'Difficulty modifier').fill('1');
+});
+
+When('the player sets the dice modifier to {int} on the Combat tab', async ({ page }, dice: number) => {
+  await rollInput(page, 'Dice modifier').fill(String(dice));
+});
+
+When('the player chooses the Target {string} on the Combat tab', async ({ page }, target: string) => {
+  await rollInput(page, 'Target').selectOption({ label: target });
+});
+
+When('the player chooses the Range {string} on the Combat tab', async ({ page }, range: string) => {
+  await rollInput(page, 'Range').selectOption({ label: range });
+});
+
+// Leaving by the tab bar and coming back by it: the page is not reloaded.
+When('the player leaves the Combat tab for the Character sheet tab and returns without reloading on the Combat tab', async ({ page }) => {
+  await showTab(page, 'Character sheet');
+  await showTab(page, 'Combat');
 });
 
 When(/^the player presses "([^"]+)" for the (.+) on the Combat tab$/, async ({ page, memory }, button: string, weapon: string) => {
@@ -122,6 +167,91 @@ Then('{string} shows {string} on the Combat tab', async ({ page }, name: string,
 
 Then('{string} shows clip {string} on the Combat tab', async ({ page }, name: string, clip: string) => {
   await expect(cellOf(tableRow(page, name), 'clip')).toHaveText(clip);
+});
+
+// What the Weapon roll panel shows
+
+Then('the attack pool reads {string} with {string} on the Combat tab', async ({ page }, dice: string, formula: string) => {
+  await expect(rollReading(page, 'attack-pool')).toHaveText(dice);
+  await expect(rollReading(page, 'attack-formula')).toHaveText(formula);
+});
+
+Then('the attack pool reads {string} on the Combat tab', async ({ page }, dice: string) => {
+  await expect(rollReading(page, 'attack-pool')).toHaveText(dice);
+});
+
+Then('accuracy reads {string} and difficulty reads {int} on the Combat tab', async ({ page }, accuracy: string, difficulty: number) => {
+  await expect(rollReading(page, 'accuracy')).toHaveText(accuracy);
+  await expect(rollReading(page, 'difficulty')).toHaveText(String(difficulty));
+});
+
+Then('the attack pool reads {string} and the difficulty reads {int} on the Combat tab', async ({ page }, dice: string, difficulty: number) => {
+  await expect(rollReading(page, 'attack-pool')).toHaveText(dice);
+  await expect(rollReading(page, 'difficulty')).toHaveText(String(difficulty));
+});
+
+Then('the difficulty reads {int} on the Combat tab', async ({ page }, difficulty: number) => {
+  await expect(rollReading(page, 'difficulty')).toHaveText(String(difficulty));
+});
+
+// Also a check that the arrangement took, before the scenario acts.
+for (const step of [Given, Then]) {
+  step(
+    'the Weapon roll panel shows an attack pool of {int} dice, accuracy {string} and difficulty {int} on the Combat tab',
+    async ({ page }, dice: number, accuracy: string, difficulty: number) => {
+      await expect(rollReading(page, 'attack-pool')).toHaveText(`${dice} dice`);
+      await expect(rollReading(page, 'accuracy')).toHaveText(accuracy);
+      await expect(rollReading(page, 'difficulty')).toHaveText(String(difficulty));
+    },
+  );
+}
+
+Then(
+  /^the Targeting table entry it follows reads difficulty "([^"]+)" and damage "([^"]+)" \(V20 p\. (\d+)\) on the Combat tab$/,
+  async ({ page }, difficulty: string, damage: string, reference: number) => {
+    await expect(rollReading(page, 'target-note')).toHaveText(`Targeting table: difficulty ${difficulty}, damage ${damage} (V20 p. ${reference})`);
+  },
+);
+
+Then('the dice modifier and the difficulty modifier read {int} on the Combat tab', async ({ page }, value: number) => {
+  await expect(rollInput(page, 'Dice modifier')).toHaveValue(String(value));
+  await expect(rollInput(page, 'Difficulty modifier')).toHaveValue(String(value));
+});
+
+Then('Target and Range are back at their defaults on the Combat tab', async ({ page }) => {
+  await expect(rollInput(page, 'Target')).toHaveValue('');
+  await expect(rollInput(page, 'Range')).toHaveValue('');
+  await expect(rollReading(page, 'target-note')).toBeHidden();
+  await expect(rollReading(page, 'range-note')).toBeHidden();
+});
+
+Then('the stored record is identical to the record before the visit on the Combat tab', async ({ page, memory }) => {
+  const before = combatMemory(memory).stored;
+  expect(before, 'the scenario arranged no stored records to compare with').toBeDefined();
+  expect(await storedRecords(page)).toEqual(before);
+});
+
+// Nothing is rolled
+
+Then('the Weapon roll panel has no control whose name contains {string} on the Combat tab', async ({ page }, word: string) => {
+  const names = await controlNames(rollPanel(page));
+  // A panel with nothing to operate would pass for the wrong reason.
+  expect(names.length).toBeGreaterThan(0);
+  expect(names.filter((name) => name.toLowerCase().includes(word.toLowerCase()))).toEqual([]);
+});
+
+Then('the Weapon roll panel says {string} on the Combat tab', async ({ page }, text: string) => {
+  await expect(rollPanel(page).getByText(text, { exact: true })).toBeVisible();
+});
+
+Then('repeated redraws of the Weapon roll panel show no random result on the Combat tab', async ({ page }) => {
+  const reading = async (): Promise<string> => rollPanel(page).innerText();
+  const first = await reading();
+  // Every press of the section control redraws the panel.
+  for (const label of ['Close combat', 'Ranged combat', 'All', 'Close combat', 'All']) {
+    await sectionControl(page).getByRole('button', { name: label, exact: true }).click();
+    expect(await reading()).toBe(first);
+  }
 });
 
 // What the section control and the search leave listed

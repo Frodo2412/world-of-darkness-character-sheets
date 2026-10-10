@@ -1,6 +1,7 @@
 // How the book's combat values are written on the tables: "Normal", "+1", "Str +1", "Weapon".
 
 import type { Manoeuvre, Effect, ManoeuvreDamage } from '../../domain/v20/combat/data/manoeuvres';
+import type { CalledShot, RangeBand } from '../../domain/v20/combat/data/modifiers';
 import type { Damage } from '../../domain/v20/combat/data/types';
 
 /** "Normal" for no change and "+N" for N more; the entry's own word when it is "Special". */
@@ -47,3 +48,23 @@ export const effectsText = (effects: readonly Effect[]): string => effects.map((
 
 /** "p. 276". */
 export const pageText = (page: number): string => `p. ${page}`;
+
+/** "Small (hand, head, cellphone)": a Target the way the picker offers it. */
+export const calledShotLabel = ({ label, examples }: CalledShot): string => `${label} (${examples})`;
+
+/** "+2", or "no modifier" for nothing: a Targeting table value. */
+const modifierText = (value: number): string => (value === 0 ? 'no modifier' : `+${value}`);
+
+/** What the chosen Target adds, as the Targeting table prints it: "Targeting table: difficulty +2, damage +1 (V20 p. 274)". */
+export const calledShotNote = ({ difficulty, damage, page }: CalledShot): string =>
+  `Targeting table: difficulty ${modifierText(difficulty)}, damage ${modifierText(damage)} (V20 p. ${page})`;
+
+/** How far a Range is, as the Range maneuver words it: "Within 2 meters", "Up to 2 times the weapon's range". */
+function reachText({ reach }: RangeBand): string {
+  if ('withinMeters' in reach) return `Within ${reach.withinMeters} meters`;
+  return reach.timesRange === 1 ? "Up to the weapon's range" : `Up to ${reach.timesRange} times the weapon's range`;
+}
+
+/** What the chosen Range means: "Point blank: within 2 meters, difficulty 4 (V20 p. 278)". */
+export const rangeNote = (band: RangeBand): string =>
+  `${band.label}: ${reachText(band).toLowerCase()}, difficulty ${band.difficulty} (V20 p. ${band.page})`;

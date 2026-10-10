@@ -1,9 +1,14 @@
 ---
+import { MANOEUVRES } from '../../domain/v20/combat/data/manoeuvres';
+import { CALLED_SHOTS, RANGE_BANDS } from '../../domain/v20/combat/data/modifiers';
+import { RANGED_WEAPONS } from '../../domain/v20/combat/data/ranged';
 import { CONCEALMENT } from '../../domain/v20/combat/data/types';
+import { MELEE_WEAPONS } from '../../domain/v20/combat/data/weapons';
 import EmptyState from '../../components/dossier/EmptyState.astro';
 import ReferenceTable from '../../components/dossier/ReferenceTable.astro';
 import SearchField from '../../components/dossier/SearchField.astro';
 import SegmentedControl from '../../components/dossier/SegmentedControl.astro';
+import { calledShotLabel } from './text';
 import { SECTION_FILTERS } from './section';
 import './combat.css';
 
@@ -12,6 +17,10 @@ const MELEE_WEAPON_HEADINGS = ['Weapon', 'Pool', 'Damage', 'Type', 'Conceal', 'P
 const RANGED_WEAPON_HEADINGS = ['Weapon', 'Pool', 'Damage', 'Range', 'Rate', 'Clip', 'Conceal', 'Page', 'In roll'];
 
 /** What each concealment letter means, as the chart words it. */
+/** The manoeuvres a picker offers, by section. */
+const MELEE_MANOEUVRES = MANOEUVRES.filter((manoeuvre) => manoeuvre.section === 'melee');
+const RANGED_MANOEUVRES = MANOEUVRES.filter((manoeuvre) => manoeuvre.section === 'ranged');
+
 const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) => `${letter}: ${meaning}`);
 ---
 
@@ -41,6 +50,8 @@ const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) =
 		<EmptyState message="No manoeuvres or weapons match." />
 	</div>
 
+	<div class="combat-layout">
+	<div class="combat-tables">
 	<section class="combat-group" aria-label="Close combat" data-group="melee">
 		<div data-table="melee-manoeuvres">
 			<ReferenceTable caption="Close combat manoeuvres" headings={MANOEUVRE_HEADINGS} />
@@ -60,6 +71,79 @@ const CONCEALMENT_LEGEND = Object.entries(CONCEALMENT).map(([letter, meaning]) =
 			<p class="combat-legend">Conceal: {CONCEALMENT_LEGEND.join(' · ')}</p>
 		</div>
 	</section>
+
+	</div>
+
+	<section class="combat-roll" aria-labelledby="combat-roll-heading" data-roll>
+		<h3 class="combat-roll-heading" id="combat-roll-heading">Weapon roll</h3>
+		<p class="combat-roll-note">Pools only — roll your own dice.</p>
+
+		<div class="combat-roll-fields">
+			<label class="combat-field">
+				<span class="combat-field-label">Weapon</span>
+				<select data-input="weapon">
+					<option value="">No weapon</option>
+					<optgroup label="Melee weapons">
+						{MELEE_WEAPONS.map((weapon) => <option value={weapon.name}>{weapon.name}</option>)}
+					</optgroup>
+					<optgroup label="Ranged weapons">
+						{RANGED_WEAPONS.map((weapon) => <option value={weapon.name}>{weapon.name}</option>)}
+					</optgroup>
+				</select>
+			</label>
+			<label class="combat-field">
+				<span class="combat-field-label">Manoeuvre</span>
+				<select data-input="manoeuvre">
+					<option value="">Choose a manoeuvre</option>
+					<optgroup label="Close combat">
+						{MELEE_MANOEUVRES.map((manoeuvre) => <option value={manoeuvre.name}>{manoeuvre.name}</option>)}
+					</optgroup>
+					<optgroup label="Ranged combat">
+						{RANGED_MANOEUVRES.map((manoeuvre) => <option value={manoeuvre.name}>{manoeuvre.name}</option>)}
+					</optgroup>
+				</select>
+			</label>
+			<label class="combat-field">
+				<span class="combat-field-label">Target</span>
+				<select data-input="target">
+					<option value="">Any size</option>
+					{CALLED_SHOTS.map((shot) => <option value={shot.key}>{calledShotLabel(shot)}</option>)}
+				</select>
+			</label>
+			<label class="combat-field">
+				<span class="combat-field-label">Range</span>
+				<select data-input="range">
+					<option value="">Standard difficulty</option>
+					{RANGE_BANDS.map((band) => <option value={band.key}>{band.label}</option>)}
+				</select>
+			</label>
+			<label class="combat-field">
+				<span class="combat-field-label">Dice modifier</span>
+				<input type="number" step="1" inputmode="numeric" data-input="dice" />
+			</label>
+			<label class="combat-field">
+				<span class="combat-field-label">Difficulty modifier</span>
+				<input type="number" step="1" inputmode="numeric" data-input="difficulty" />
+			</label>
+		</div>
+		<p class="combat-hint" data-field="target-note" hidden></p>
+		<p class="combat-hint" data-field="range-note" hidden></p>
+
+		<!-- What "Use in roll" brings into view and focuses on a narrow screen. -->
+		<div class="combat-result" role="group" aria-labelledby="combat-result-heading" tabindex="-1" data-result>
+			<h4 class="combat-result-heading" id="combat-result-heading">Attack pool</h4>
+			<p class="combat-hint" data-field="choose-manoeuvre">Choose a manoeuvre to see the attack pool.</p>
+			<div data-field="attack" hidden>
+				<p class="combat-pool-total" data-field="attack-pool"></p>
+				<p class="combat-formula" data-field="attack-formula"></p>
+				<dl class="combat-readout">
+					<div class="combat-readout-row"><dt>Accuracy</dt><dd data-field="accuracy"></dd></div>
+					<div class="combat-readout-row"><dt>Difficulty</dt><dd data-field="difficulty"></dd></div>
+				</dl>
+			</div>
+		</div>
+	</section>
+	</div>
 
 	<!-- Drawn from, never shown: the script copies each into the tables above. -->
 	<template data-template="manoeuvre">
