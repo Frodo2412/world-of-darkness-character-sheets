@@ -3,7 +3,7 @@
 
 import { namedRows, type V20Character } from '../character';
 import type { BackgroundRow, Person } from '../dossier/types';
-import { listed, type ListMode } from './sections';
+import { cardList, type CardList, type ListMode } from './sections';
 
 /** The dots a background is drawn with: the frame has five. A rating above it still reads in full as text. */
 export const BACKGROUND_DOTS = 5;
@@ -30,12 +30,6 @@ export interface BackgroundCard {
   needsName: boolean;
 }
 
-export interface BackgroundsView {
-  cards: BackgroundCard[];
-  /** How many rows are shown: the section index and heading count this. */
-  count: number;
-}
-
 function cardOf(index: number, row: BackgroundRow): BackgroundCard {
   const { summary = '', note = '', people = [] } = row;
   const name = namedRows([row])[0]?.name ?? '';
@@ -54,7 +48,6 @@ function cardOf(index: number, row: BackgroundRow): BackgroundCard {
 }
 
 /** The background cards for the mode: only the named rows in play, every row in edit. */
-export function backgroundCards(character: V20Character, mode: ListMode): BackgroundsView {
-  const cards = listed(character.backgrounds, mode).map(({ index, entry }) => cardOf(index, entry));
-  return { cards, count: cards.length };
+export function backgroundCards(character: V20Character, mode: ListMode): CardList<BackgroundCard> {
+  return cardList(character.backgrounds, mode, cardOf);
 }

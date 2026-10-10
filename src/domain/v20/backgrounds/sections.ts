@@ -18,3 +18,19 @@ export const isNamed = (entry: { name: string }): boolean => entry.name.trim() !
 export function listed<T extends { name: string }>(entries: readonly T[], mode: ListMode): Listed<T>[] {
   return entries.map((entry, index) => ({ index, entry })).filter(({ entry }) => mode === 'edit' || isNamed(entry));
 }
+
+/** What a section draws: a card for each row shown, and how many that is (the heading and the section index count it). */
+export interface CardList<C> {
+  cards: C[];
+  count: number;
+}
+
+/** The cards for the rows shown in the mode. */
+export function cardList<T extends { name: string }, C>(
+  entries: readonly T[],
+  mode: ListMode,
+  card: (index: number, entry: T) => C,
+): CardList<C> {
+  const cards = listed(entries, mode).map(({ index, entry }) => card(index, entry));
+  return { cards, count: cards.length };
+}

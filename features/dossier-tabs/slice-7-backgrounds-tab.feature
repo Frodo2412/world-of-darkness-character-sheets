@@ -12,6 +12,12 @@ Feature: Backgrounds tab
     When the Backgrounds tab is opened
     Then two background cards are shown on the Backgrounds tab
 
+  Scenario: Havens, other traits and the notes card are shown
+    Given a character with a Primary haven "The Orangery" described "A glassed-in greenhouse", located "Quai de la Tournelle", access "Back stair only", security "Two ghouls", a Secondary haven "Rue Mouffetard flat" on the Backgrounds tab
+    When the Backgrounds tab is opened
+    Then "The Orangery" shows its kind "Primary", description, location, access and security on the Backgrounds tab
+    And "Rue Mouffetard flat" shows its kind "Secondary" on the Backgrounds tab
+
   Scenario: Play mode is read-only
     Given a character in play mode with backgrounds on the Backgrounds tab
     When the Backgrounds tab is chosen from the tab bar on the Backgrounds tab
@@ -22,3 +28,4 @@ Feature: Backgrounds tab
     Given a character with no backgrounds, havens, merits, flaws or other traits on the Backgrounds tab
     When the Backgrounds tab is opened
     Then the Backgrounds section shows "No backgrounds yet." on the Backgrounds tab
+    And the Havens section shows "No havens yet." on the Backgrounds tab

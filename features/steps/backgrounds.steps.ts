@@ -1,9 +1,12 @@
 import { expect } from '@playwright/test';
+import type { V20Character } from '../../src/domain/v20/character';
+import type { Haven } from '../../src/domain/v20/dossier/types';
 import { Given, Then, When } from './fixtures';
 import {
   backgroundCard,
   backgroundCards,
-  backgroundsPanel,
+  emptyOf,
+  entryCard,
   openBackgroundsCharacter,
   saveBackgroundsCharacter,
   showBackgrounds,
@@ -52,6 +55,34 @@ Then(/^(\w+) background cards are shown on the Backgrounds tab$/, async ({ page 
   await expect(backgroundCards(page)).toHaveCount(counts[count]);
 });
 
-Then('the Backgrounds section shows {string} on the Backgrounds tab', async ({ page }, message: string) => {
-  await expect(backgroundsPanel(page).locator('[data-empty="backgrounds"]').getByText(message, { exact: true })).toBeVisible();
+Then(/^the (.+) section shows "([^"]+)" on the Backgrounds tab$/, async ({ page }, section: string, message: string) => {
+  await expect(emptyOf(page, section).getByText(message, { exact: true })).toBeVisible();
+});
+
+// Havens
+
+/** The haven the scenario arranged, by name. */
+const havenArranged = (memory: { saved: V20Character[] }, name: string): Haven =>
+  memory.saved[0].havens.find((haven) => haven.name === name)!;
+
+Then(
+  /^"([^"]+)" shows its kind "([^"]+)", description, location, access and security on the Backgrounds tab$/,
+  async ({ page, memory }, name: string, kind: string) => {
+    const card = entryCard(page, 'Havens', name);
+    await expect(card.getByText(kind, { exact: true })).toBeVisible();
+    const haven = havenArranged(memory, name);
+    for (const [label, value] of [
+      ['Description', haven.description],
+      ['Location', haven.location],
+      ['Access', haven.access],
+      ['Security', haven.security],
+    ]) {
+      expect(value, `the scenario gave ${name} no ${label.toLowerCase()}`).not.toBe('');
+      await expect(card.locator('.backgrounds-detail').filter({ has: page.getByText(label, { exact: true }) }).locator('dd')).toHaveText(value);
+    }
+  },
+);
+
+Then(/^"([^"]+)" shows its kind "([^"]+)" on the Backgrounds tab$/, async ({ page }, name: string, kind: string) => {
+  await expect(entryCard(page, 'Havens', name).getByText(kind, { exact: true })).toBeVisible();
 });

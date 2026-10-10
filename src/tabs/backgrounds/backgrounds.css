@@ -71,7 +71,8 @@
 
 .backgrounds-overflow,
 .backgrounds-note,
-.backgrounds-person-role {
+.backgrounds-person-role,
+.backgrounds-detail dt {
 	font-size: var(--text-small);
 	color: var(--color-muted);
 }
@@ -87,6 +88,33 @@
 	flex-wrap: wrap;
 	gap: 0 var(--space-1);
 	overflow-wrap: anywhere;
+}
+
+/* A haven's details: a label over its text on a phone, side by side where there is room. */
+.backgrounds-details {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	margin: 0;
+}
+
+.backgrounds-detail {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0 var(--space-3);
+}
+
+.backgrounds-detail dd {
+	margin: 0;
+	min-inline-size: 0;
+	overflow-wrap: anywhere;
+	color: var(--color-text);
+}
+
+@media (min-width: 30rem) {
+	.backgrounds-detail {
+		grid-template-columns: 6rem minmax(0, 1fr);
+	}
 }
 
 @media (min-width: 48rem) {

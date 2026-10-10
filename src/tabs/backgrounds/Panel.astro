@@ -19,6 +19,14 @@ import './backgrounds.css';
 		</div>
 	</section>
 
+	<section class="backgrounds-section" aria-labelledby="backgrounds-heading-havens" data-section="havens">
+		<SectionHeading title="Havens" count="" level={3} id="backgrounds-heading-havens" />
+		<ul class="backgrounds-list" aria-labelledby="backgrounds-heading-havens" data-list="havens"></ul>
+		<div data-empty="havens" hidden>
+			<EmptyState message="No havens yet." />
+		</div>
+	</section>
+
 	<!-- Drawn from, never shown: the script copies each into the lists above. -->
 	<template data-template="background">
 		<li class="backgrounds-card">
@@ -33,6 +41,23 @@ import './backgrounds.css';
 				<ul class="dossier-chips backgrounds-people" aria-label="People" data-field="people"></ul>
 			</div>
 		</li>
+	</template>
+	<template data-template="haven">
+		<li class="backgrounds-card">
+			<div class="backgrounds-view" data-sheet-mode-only="play">
+				<div class="backgrounds-card-head">
+					<h4 class="backgrounds-card-name" data-field="name"></h4>
+					<span class="dossier-chip backgrounds-kind" data-field="kind"></span>
+				</div>
+				<dl class="backgrounds-details" data-field="details"></dl>
+			</div>
+		</li>
+	</template>
+	<template data-template="detail">
+		<div class="backgrounds-detail">
+			<dt data-field="label"></dt>
+			<dd data-field="value"></dd>
+		</div>
 	</template>
 	<template data-template="person">
 		<li class="dossier-chip backgrounds-person">
