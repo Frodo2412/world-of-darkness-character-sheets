@@ -16,6 +16,49 @@ Feature: Disciplines tab
     And Summon is Locked with "Requires Presence 4" on the Disciplines tab
     And Majesty is Locked with "Requires Presence 5" on the Disciplines tab
 
+  Scenario: An expanded power shows its rules and the character's pool
+    Given a character with Presence 1, Charisma 3, Performance 3 and a Hurt wound (1 die off every pool) on the Disciplines tab
+    When the Awe power is expanded on the Disciplines tab
+    Then it shows activation cost "1 blood point" on the Disciplines tab
+    And it shows duration "Remainder of the scene or until the character chooses to drop it" on the Disciplines tab
+    And it shows prerequisite "Presence 1" and difficulty "7" on the Disciplines tab
+    And it shows its dice pool "Charisma + Performance" and its book reference "V20 p. 193" on the Disciplines tab
+    And it shows "Your pool: 5 dice" with "Charisma 3 + Performance 3 − wound 1" on the Disciplines tab
+
+  Scenario: A heavy wound floors the pool at zero
+    Given a character with Presence 1, Charisma 1, Performance 0 and a Crippled wound (5 dice off every pool) on the Disciplines tab
+    When the Awe power is expanded on the Disciplines tab
+    Then it shows "Your pool: 0 dice" with "Charisma 1 + Performance 0 − wound 5" on the Disciplines tab
+    And "Incapacitated: every pool is 0 dice." is not shown on the Disciplines tab
+
+  Scenario: An incapacitated character has no pool
+    Given a character with Presence 1, Charisma 3, Performance 3 and the health track fully marked Incapacitated on the Disciplines tab
+    When the Awe power is expanded on the Disciplines tab
+    Then it shows "Your pool: 0 dice" on the Disciplines tab
+    And it shows "Incapacitated: every pool is 0 dice." on the Disciplines tab
+
+  Scenario: A Locked power shows its rules but no pool
+    Given a character with Presence 3 on the Disciplines tab
+    When the Summon power is expanded on the Disciplines tab
+    Then it shows "Locked — requires Presence 4" on the Disciplines tab
+    And it shows activation cost "1 blood point", duration "Until dawn" and its book reference "V20 p. 195" on the Disciplines tab
+    And it shows difficulty "5 base; 7 if met only briefly; 4 after an earlier success; 8 after an earlier failure" on the Disciplines tab
+    And it has no pool and no "Build pool" button on the Disciplines tab
+
+  Scenario: A power that uses no roll says what it uses instead
+    Given a character with Protean 1 on the Disciplines tab
+    When the Eyes of the Beast power is expanded on the Disciplines tab
+    Then what it uses instead of a roll is shown as "No roll" on the Disciplines tab
+    And it has no "Your pool" line and no "Build pool" button on the Disciplines tab
+    And it shows activation cost "None" and prerequisite "Protean 1" on the Disciplines tab
+    And its duration reads "See rulebook (V20 p. 199)" on the Disciplines tab
+    And its difficulty reads "See rulebook (V20 p. 199)" on the Disciplines tab
+
+  Scenario: A power opens and closes from the keyboard
+    Given a character with Presence 3 on the Disciplines tab
+    When the player focuses the Awe heading on the Disciplines tab and presses Enter, then Space
+    Then its panel is shown and its state is "expanded", then hidden and "collapsed" on the Disciplines tab
+
   Scenario: A Discipline rated 0 or unknown shows no powers
     Given a character with a Discipline named "Homebrewed" rated 2 and Dominate rated 0 on the Disciplines tab
     When the Disciplines tab is opened

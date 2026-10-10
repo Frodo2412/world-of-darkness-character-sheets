@@ -165,6 +165,94 @@
 	color: var(--color-muted);
 }
 
+/* An opened power: what the book says, then what the character has of it. */
+.disciplines-power-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	padding-block: var(--space-2);
+}
+
+.disciplines-summary {
+	margin: 0;
+	color: var(--color-text);
+}
+
+.disciplines-rules {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	margin: 0;
+}
+
+.disciplines-rule {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0 var(--space-3);
+}
+
+.disciplines-rule dt {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.disciplines-rule dd {
+	margin: 0;
+	min-inline-size: 0;
+	overflow-wrap: anywhere;
+	color: var(--color-text);
+}
+
+.disciplines-locked,
+.disciplines-pool-total,
+.disciplines-pool-formula,
+.disciplines-pool-flag {
+	margin: 0;
+}
+
+.disciplines-locked {
+	font-weight: 600;
+	color: var(--color-muted);
+}
+
+.disciplines-pool {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--space-1);
+	padding: var(--space-2) var(--space-row);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-row);
+}
+
+.disciplines-pool-total {
+	font-size: var(--text-h3);
+	font-family: var(--font-display);
+	color: var(--color-text-strong);
+}
+
+.disciplines-pool-formula {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.disciplines-pool-flag {
+	font-weight: 600;
+	color: var(--color-danger);
+}
+
+.disciplines-build {
+	min-block-size: var(--control-compact);
+	padding-block: var(--space-1);
+}
+
+@media (min-width: 30rem) {
+	.disciplines-rule {
+		grid-template-columns: 11rem minmax(0, 1fr);
+	}
+}
+
 @media (min-width: 48rem) {
 	.disciplines-layout {
 		grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);

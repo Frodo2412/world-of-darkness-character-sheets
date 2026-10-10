@@ -8,8 +8,11 @@ import {
   type AttributeKey,
   type HealthLevelKey,
 } from '../../../src/domain/v20/traits';
+import { DISCIPLINE_CATALOGUE } from '../../../src/domain/v20/disciplines';
+import type { ScenarioMemory } from '../fixtures';
 import { characterArranged, saveCharacters } from './seed';
 import { openSheetTab, showTab, tabPanelOf } from './tabs';
+import { memoryFor } from '../fixtures';
 
 // What the Disciplines scenarios know about the tab: how to arrange a character from the words of a
 // scenario, and where the tab's parts are.
@@ -101,3 +104,48 @@ export const editors = (page: Page): Locator =>
 
 /** Splits "Awe, Dread Gaze and Entrancement" into its names. */
 export const namesIn = (list: string): string[] => list.split(/,\s*|\s+and\s+/);
+
+/** What this tab's steps remember about the scenario. */
+interface DisciplinesMemory {
+  /** The power the scenario has expanded, which later "it shows" steps are about. */
+  power?: string;
+  /** What each key press did to the power's panel, in order. */
+  panelStates: { state: 'expanded' | 'collapsed'; shown: boolean }[];
+}
+
+export const disciplinesMemory = (memory: ScenarioMemory): DisciplinesMemory =>
+  memoryFor<DisciplinesMemory>({ memory }, 'disciplines', () => ({ panelStates: [] }));
+
+/** The Discipline whose catalogue entry lists the power. */
+const ownerOf = (power: string): string => {
+  const owner = DISCIPLINE_CATALOGUE.find((entry) => entry.powers.some((candidate) => candidate.name === power));
+  if (owner === undefined) throw new Error(`no catalogued Discipline lists a power called "${power}"`);
+  return owner.name;
+};
+
+/** Selects the Discipline in the list, unless it is the one selected. */
+export async function selectDiscipline(page: Page, name: string): Promise<void> {
+  const button = disciplineItem(page, name).getByRole('button');
+  if ((await button.getAttribute('aria-current')) !== 'true') await button.click();
+  await expect(button).toHaveAttribute('aria-current', 'true');
+}
+
+/** The disclosure of a power: the <details> that opens to its panel. */
+export const powerDetails = (page: Page, name: string): Locator => powerRow(page, name).locator('details');
+
+/** The line of a power's rules called `label`: "Activation cost", "Duration", "Dice pool". */
+export const ruleOf = (page: Page, power: string, label: string): Locator =>
+  powerRow(page, power)
+    .locator('.disciplines-rule')
+    .filter({ has: page.getByText(label, { exact: true }) })
+    .locator('dd');
+
+/** Shows the Disciplines tab, selects the power's Discipline, opens the power's panel and remembers it. */
+export async function expandPower(page: Page, memory: ScenarioMemory & { saved: V20Character[] }, power: string): Promise<void> {
+  await showDisciplines(page, memory);
+  await selectDiscipline(page, ownerOf(power));
+  const details = powerDetails(page, power);
+  if (!(await details.evaluate((element: HTMLDetailsElement) => element.open))) await details.locator('summary').click();
+  await expect(details).toHaveJSProperty('open', true);
+  disciplinesMemory(memory).power = power;
+}

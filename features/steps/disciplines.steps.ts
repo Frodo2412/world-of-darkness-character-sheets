@@ -4,11 +4,15 @@ import { doneButton } from './support/sheet';
 import { tabPanelOf } from './support/tabs';
 import {
   disciplineItem,
+  disciplinesMemory,
   disciplinesPanel,
   editors,
+  expandPower,
   namesIn,
+  powerDetails,
   powerRow,
   powerRows,
+  ruleOf,
   saveDisciplineCharacter,
   showDisciplines,
 } from './support/disciplines';
@@ -37,15 +41,38 @@ When('the player follows its link on the Disciplines tab', async ({ page }) => {
   await disciplinesPanel(page).getByRole('link', { name: 'Character sheet', exact: true }).click();
 });
 
+When(/^the (.+) power is expanded on the Disciplines tab$/, async ({ page, memory }, power: string) => {
+  await expandPower(page, memory, power);
+});
+
+When(
+  /^the player focuses the (.+) heading on the Disciplines tab and presses Enter, then Space$/,
+  async ({ page, memory }, power: string) => {
+    await showDisciplines(page, memory);
+    const summary = powerDetails(page, power).locator('summary');
+    await summary.focus();
+    const { panelStates } = disciplinesMemory(memory);
+    for (const key of ['Enter', 'Space']) {
+      await page.keyboard.press(key);
+      const open = await powerDetails(page, power).evaluate((element: HTMLDetailsElement) => element.open);
+      panelStates.push({
+        state: open ? 'expanded' : 'collapsed',
+        shown: await powerDetails(page, power).locator('.disciplines-power-body').isVisible(),
+      });
+    }
+  },
+);
+
 // What the list shows
 
-Then('{word} shows {string} and {string} on the Disciplines tab', async ({ page }, name: string, rating: string, unlocked: string) => {
+// A Discipline's name starts with a capital, which keeps these apart from the power steps' "it shows".
+Then(/^([A-Z]\w*) shows "([^"]+)" and "([^"]+)" on the Disciplines tab$/, async ({ page }, name: string, rating: string, unlocked: string) => {
   const item = disciplineItem(page, name);
   await expect(item.getByText(rating, { exact: true })).toBeVisible();
   await expect(item.getByText(unlocked, { exact: true })).toBeVisible();
 });
 
-Then('{word} shows {string} on the Disciplines tab', async ({ page }, name: string, text: string) => {
+Then(/^([A-Z]\w*) shows "([^"]+)" on the Disciplines tab$/, async ({ page }, name: string, text: string) => {
   await expect(disciplineItem(page, name).getByText(text, { exact: true })).toBeVisible();
 });
 
@@ -120,4 +147,93 @@ Then('nothing on the Disciplines tab can be edited', async ({ page }) => {
 
 Then('the tab says {string} on the Disciplines tab', async ({ page }, text: string) => {
   await expect(disciplinesPanel(page).getByText(text, { exact: true })).toBeVisible();
+});
+
+// What an expanded power shows. They are about the power the scenario expanded.
+
+const expanded = (memory: Parameters<typeof disciplinesMemory>[0]): string => {
+  const { power } = disciplinesMemory(memory);
+  if (power === undefined) throw new Error('no power was expanded: an "is expanded on the Disciplines tab" step must come first');
+  return power;
+};
+
+Then('it shows activation cost {string} on the Disciplines tab', async ({ page, memory }, cost: string) => {
+  await expect(ruleOf(page, expanded(memory), 'Activation cost')).toHaveText(cost);
+});
+
+Then('it shows duration {string} on the Disciplines tab', async ({ page, memory }, duration: string) => {
+  await expect(ruleOf(page, expanded(memory), 'Duration')).toHaveText(duration);
+});
+
+Then('it shows prerequisite {string} and difficulty {string} on the Disciplines tab', async ({ page, memory }, prerequisite: string, difficulty: string) => {
+  await expect(ruleOf(page, expanded(memory), 'Prerequisite')).toHaveText(prerequisite);
+  await expect(ruleOf(page, expanded(memory), 'Difficulty / resistance')).toHaveText(difficulty);
+});
+
+Then('it shows its dice pool {string} and its book reference {string} on the Disciplines tab', async ({ page, memory }, dice: string, reference: string) => {
+  await expect(ruleOf(page, expanded(memory), 'Dice pool')).toHaveText(dice);
+  await expect(ruleOf(page, expanded(memory), 'Book reference')).toHaveText(reference);
+});
+
+Then(
+  'it shows activation cost {string}, duration {string} and its book reference {string} on the Disciplines tab',
+  async ({ page, memory }, cost: string, duration: string, reference: string) => {
+    await expect(ruleOf(page, expanded(memory), 'Activation cost')).toHaveText(cost);
+    await expect(ruleOf(page, expanded(memory), 'Duration')).toHaveText(duration);
+    await expect(ruleOf(page, expanded(memory), 'Book reference')).toHaveText(reference);
+  },
+);
+
+Then('it shows difficulty {string} on the Disciplines tab', async ({ page, memory }, difficulty: string) => {
+  await expect(ruleOf(page, expanded(memory), 'Difficulty / resistance')).toHaveText(difficulty);
+});
+
+Then('it shows activation cost {string} and prerequisite {string} on the Disciplines tab', async ({ page, memory }, cost: string, prerequisite: string) => {
+  await expect(ruleOf(page, expanded(memory), 'Activation cost')).toHaveText(cost);
+  await expect(ruleOf(page, expanded(memory), 'Prerequisite')).toHaveText(prerequisite);
+});
+
+Then('its duration reads {string} on the Disciplines tab', async ({ page, memory }, duration: string) => {
+  await expect(ruleOf(page, expanded(memory), 'Duration')).toHaveText(duration);
+});
+
+Then('its difficulty reads {string} on the Disciplines tab', async ({ page, memory }, difficulty: string) => {
+  await expect(ruleOf(page, expanded(memory), 'Difficulty / resistance')).toHaveText(difficulty);
+});
+
+Then('what it uses instead of a roll is shown as {string} on the Disciplines tab', async ({ page, memory }, instead: string) => {
+  await expect(ruleOf(page, expanded(memory), 'Dice pool')).toHaveText(instead);
+});
+
+Then('it shows {string} with {string} on the Disciplines tab', async ({ page, memory }, total: string, formula: string) => {
+  const row = powerRow(page, expanded(memory));
+  await expect(row.getByText(total, { exact: true })).toBeVisible();
+  await expect(row.getByText(formula, { exact: true })).toBeVisible();
+});
+
+Then('it shows {string} on the Disciplines tab', async ({ page, memory }, text: string) => {
+  await expect(powerRow(page, expanded(memory)).getByText(text, { exact: true })).toBeVisible();
+});
+
+Then('{string} is not shown on the Disciplines tab', async ({ page, memory }, text: string) => {
+  await expect(powerRow(page, expanded(memory)).getByText(text, { exact: true })).toBeHidden();
+});
+
+Then('it has no pool and no {string} button on the Disciplines tab', async ({ page, memory }, button: string) => {
+  const row = powerRow(page, expanded(memory));
+  await expect(row.getByText(/^Your pool:/)).toBeHidden();
+  await expect(row.getByRole('button', { name: button, exact: true })).toBeHidden();
+});
+
+Then('it has no {string} line and no {string} button on the Disciplines tab', async ({ page, memory }, line: string, button: string) => {
+  const row = powerRow(page, expanded(memory));
+  await expect(row.getByText(new RegExp(`^${line}`))).toBeHidden();
+  await expect(row.getByRole('button', { name: button, exact: true })).toBeHidden();
+});
+
+Then('its panel is shown and its state is {string}, then hidden and {string} on the Disciplines tab', async ({ memory }, first: string, second: string) => {
+  expect(disciplinesMemory(memory).panelStates).toEqual([
+    { state: first, shown: true },
+    { state: second, shown: false },
+  ]);
 });

@@ -61,6 +61,24 @@ import './disciplines.css';
 					<span class="disciplines-power-state" data-field="state"></span>
 					<span class="disciplines-power-requirement" data-field="requirement"></span>
 				</summary>
+				<div class="disciplines-power-body">
+					<p class="disciplines-summary" data-field="summary"></p>
+					<dl class="disciplines-rules">
+						<div class="disciplines-rule"><dt>Activation cost</dt><dd data-field="cost"></dd></div>
+						<div class="disciplines-rule"><dt>Duration</dt><dd data-field="duration"></dd></div>
+						<div class="disciplines-rule"><dt>Prerequisite</dt><dd data-field="prerequisite"></dd></div>
+						<div class="disciplines-rule"><dt>Dice pool</dt><dd data-field="dice"></dd></div>
+						<div class="disciplines-rule"><dt>Difficulty / resistance</dt><dd data-field="difficulty"></dd></div>
+						<div class="disciplines-rule"><dt>Book reference</dt><dd data-field="reference"></dd></div>
+					</dl>
+					<p class="disciplines-locked" data-field="locked"></p>
+					<div class="disciplines-pool" data-field="pool-block">
+						<p class="disciplines-pool-total" data-field="pool"></p>
+						<p class="disciplines-pool-formula" data-field="formula"></p>
+						<p class="disciplines-pool-flag" data-field="incapacitated">Incapacitated: every pool is 0 dice.</p>
+						<button type="button" class="disciplines-build" data-field="build">Build pool</button>
+					</div>
+				</div>
 			</details>
 		</li>
 	</template>
