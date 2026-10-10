@@ -102,6 +102,12 @@ export const editors = (page: Page): Locator =>
     .or(disciplinesPanel(page).getByRole('button', { name: /^(Add|Remove)\b/ }))
     .filter({ visible: true });
 
+/** A button of the control that chooses between the character's Disciplines and all of them, by what it starts with ("Owned" for "Owned · 3"). */
+export const scopeButton = (page: Page, label: string): Locator =>
+  disciplinesPanel(page)
+    .getByRole('group', { name: 'Disciplines shown' })
+    .getByRole('button', { name: new RegExp(`^${label}\\b`) });
+
 /** Splits "Awe, Dread Gaze and Entrancement" into its names. */
 export const namesIn = (list: string): string[] => list.split(/,\s*|\s+and\s+/);
 

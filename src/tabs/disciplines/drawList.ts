@@ -24,6 +24,8 @@ export interface Parts {
   powers: HTMLElement;
   /** Shown instead of the list when the character has no Disciplines. */
   none: HTMLElement;
+  /** Shown instead of the list when a search leaves no Discipline or power. */
+  noMatch: HTMLElement;
 }
 
 /** The button reads "Owned · 3": its text is changed, its mark left in place. */

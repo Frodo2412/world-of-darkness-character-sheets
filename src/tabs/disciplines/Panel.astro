@@ -1,5 +1,6 @@
 ---
 import EmptyState from '../../components/dossier/EmptyState.astro';
+import SearchField from '../../components/dossier/SearchField.astro';
 import SegmentedControl from '../../components/dossier/SegmentedControl.astro';
 import SelectableItem from '../../components/dossier/SelectableItem.astro';
 import './disciplines.css';
@@ -12,6 +13,7 @@ import './disciplines.css';
 
 	<div class="disciplines-layout">
 		<div class="disciplines-side">
+			<SearchField id="disciplines-search" label="Search Disciplines and powers" />
 			<!-- Nothing is pressed in the markup: the script presses the one in use when it draws, so a tab nobody has opened holds no pressed button. -->
 			<SegmentedControl
 				label="Disciplines shown"
@@ -22,6 +24,9 @@ import './disciplines.css';
 				pressed=""
 			/>
 			<ul class="disciplines-list" aria-label="Disciplines" data-disciplines-list></ul>
+			<div data-state="no-match" hidden>
+				<EmptyState message="No Disciplines or powers match." />
+			</div>
 			<div data-state="none" hidden>
 				<EmptyState message="This character has no Disciplines.">
 					<button slot="action" type="button" data-show-all>All disciplines</button>

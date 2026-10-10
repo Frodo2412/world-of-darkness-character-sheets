@@ -14,6 +14,7 @@ import {
   powerRows,
   ruleOf,
   saveDisciplineCharacter,
+  scopeButton,
   showDisciplines,
 } from './support/disciplines';
 
@@ -63,6 +64,20 @@ When(
   },
 );
 
+When('the player searches {string} on the Disciplines tab', async ({ page, memory }, query: string) => {
+  await showDisciplines(page, memory);
+  await disciplinesPanel(page).getByRole('searchbox', { name: 'Search Disciplines and powers' }).fill(query);
+});
+
+When(/^the player chooses "([^"]+)"(?: again)? on the Disciplines tab$/, async ({ page, memory }, label: string) => {
+  await showDisciplines(page, memory);
+  await scopeButton(page, label).click();
+});
+
+When('the player presses {string} in the empty state on the Disciplines tab', async ({ page }, label: string) => {
+  await disciplinesPanel(page).locator('.dossier-empty').getByRole('button', { name: label, exact: true }).click();
+});
+
 // What the list shows
 
 // A Discipline's name starts with a capital, which keeps these apart from the power steps' "it shows".
@@ -106,6 +121,38 @@ Then('{string} is shown with an {string} button on the Disciplines tab', async (
   const empty = disciplinesPanel(page).locator('.dossier-empty');
   await expect(empty.getByText(message, { exact: true })).toBeVisible();
   await expect(empty.getByRole('button', { name: button, exact: true })).toBeVisible();
+});
+
+Then('exactly seventeen Disciplines are listed on the Disciplines tab', async ({ page }) => {
+  await expect(disciplinesPanel(page).locator('[data-disciplines-list] > li')).toHaveCount(17);
+});
+
+Then(/^only (.+) are listed on the Disciplines tab$/, async ({ page }, names: string) => {
+  await expect(disciplinesPanel(page).locator('[data-disciplines-list] .disciplines-item-name')).toHaveText(namesIn(names));
+});
+
+Then(
+  'Animalism, which the character lacks, shows its five powers all Locked, the first as {string} on the Disciplines tab',
+  async ({ page }, requirement: string) => {
+    await disciplineItem(page, 'Animalism').getByRole('button').click();
+    await expect(powerRows(page)).toHaveCount(5);
+    for (const row of await powerRows(page).all()) await expect(row).toHaveAttribute('data-state', 'locked');
+    await expect(powerRows(page).first().getByText(requirement, { exact: true })).toBeVisible();
+  },
+);
+
+Then(/^(.+) remains under (\w+) on the Disciplines tab$/, async ({ page }, power: string, discipline: string) => {
+  await expect(disciplineItem(page, discipline).getByRole('button')).toHaveAttribute('aria-current', 'true');
+  await expect(powerRow(page, power)).toBeVisible();
+});
+
+Then(/^(.+) remains and (.+) does not on the Disciplines tab$/, async ({ page }, kept: string, dropped: string) => {
+  await expect(powerRow(page, kept)).toBeVisible();
+  await expect(powerRow(page, dropped)).toHaveCount(0);
+});
+
+Then('{string} is shown on the Disciplines tab', async ({ page }, text: string) => {
+  await expect(disciplinesPanel(page).getByText(text, { exact: true })).toBeVisible();
 });
 
 // What the powers show

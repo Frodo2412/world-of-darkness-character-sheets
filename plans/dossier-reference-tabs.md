@@ -744,7 +744,7 @@ This section is the machine-parseable recovery handle.
   - [x] Step 6.1: The Discipline view model
   - [x] Step 6.2: The tab, list and empty state
   - [x] Step 6.3: Power panels
-  - [ ] Step 6.4: Search and Owned / All
+  - [x] Step 6.4: Search and Owned / All
   - [ ] Step 6.5: Build pool
   - [ ] Step 6.6: Accessibility and narrow screens
 - [ ] Slice 7: Backgrounds tab

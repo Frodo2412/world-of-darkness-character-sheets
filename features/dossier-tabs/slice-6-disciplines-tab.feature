@@ -59,18 +59,41 @@ Feature: Disciplines tab
     When the player focuses the Awe heading on the Disciplines tab and presses Enter, then Space
     Then its panel is shown and its state is "expanded", then hidden and "collapsed" on the Disciplines tab
 
+  Scenario: Search matches a power's name or its summary
+    Given a character with Presence 3 and Auspex 2 on the Disciplines tab
+    When the player searches "dread" on the Disciplines tab
+    Then Dread Gaze remains under Presence on the Disciplines tab
+    When the player searches "receptive" on the Disciplines tab
+    Then Awe remains and Dread Gaze does not on the Disciplines tab
+    When the player searches "zzzz" on the Disciplines tab
+    Then "No Disciplines or powers match." is shown on the Disciplines tab
+
+  Scenario: Owned and All disciplines switch the list
+    Given a character with Presence 3, Auspex 2 and Celerity 1 on the Disciplines tab
+    When the Disciplines tab is opened
+    Then the "Owned" control reads "Owned · 3" on the Disciplines tab
+    When the player chooses "All disciplines" on the Disciplines tab
+    Then exactly seventeen Disciplines are listed on the Disciplines tab
+    And Animalism, which the character lacks, shows its five powers all Locked, the first as "Requires Animalism 1" on the Disciplines tab
+    When the player chooses "Owned" again on the Disciplines tab
+    Then only Presence, Auspex and Celerity are listed on the Disciplines tab
+
   Scenario: A Discipline rated 0 or unknown shows no powers
     Given a character with a Discipline named "Homebrewed" rated 2 and Dominate rated 0 on the Disciplines tab
     When the Disciplines tab is opened
     Then the "Owned" control reads "Owned · 1" on the Disciplines tab
     And "Homebrewed" shows its name and "2 / 5" and no powers on the Disciplines tab
     And Dominate is not listed on the Disciplines tab
+    When the player chooses "All disciplines" on the Disciplines tab
+    Then "Dominate" shows its name and "0 / 5" and no powers on the Disciplines tab
 
   Scenario: A character with no Disciplines sees an empty state
     Given a character with no named Disciplines on the Disciplines tab
     When the Disciplines tab is opened
     Then "This character has no Disciplines." is shown with an "All disciplines" button on the Disciplines tab
     And the "Owned" control reads "Owned · 0" on the Disciplines tab
+    When the player presses "All disciplines" in the empty state on the Disciplines tab
+    Then exactly seventeen Disciplines are listed on the Disciplines tab
 
   Scenario: The Disciplines tab has nothing to edit
     Given a character in edit mode
