@@ -1,0 +1,23 @@
+---
+import '../../styles/dossier.css';
+
+interface Props {
+	/** The input's id: the label points at it, and so can the list it filters (aria-controls). */
+	id: string;
+	label: string;
+	placeholder?: string;
+}
+
+const { id, label, placeholder } = Astro.props;
+---
+
+<div class="dossier-search" data-search>
+	<label class="dossier-search-label" for={id}>{label}</label>
+	<div class="dossier-search-box">
+		<input class="dossier-search-input" id={id} type="search" autocomplete="off" placeholder={placeholder} data-search-input />
+		<!-- Shown by the script once there is something to clear. -->
+		<button type="button" class="dossier-search-clear" aria-label="Clear search" data-search-clear hidden>Clear</button>
+	</div>
+	<!-- The script says how many items match; a status region is polite. -->
+	<p class="dossier-search-count" role="status" data-search-count></p>
+</div>

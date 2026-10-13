@@ -1,0 +1,21 @@
+---
+import '../../styles/dossier.css';
+
+interface Props {
+	tags: readonly string[];
+	/** Names the list for assistive technology ("Tags", "People"). */
+	label?: string;
+}
+
+const { tags, label } = Astro.props;
+---
+
+{
+	tags.length > 0 && (
+		<ul class="dossier-chips" aria-label={label}>
+			{tags.map((tag) => (
+				<li class="dossier-chip">{tag}</li>
+			))}
+		</ul>
+	)
+}

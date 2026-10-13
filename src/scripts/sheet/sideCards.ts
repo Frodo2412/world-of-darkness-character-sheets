@@ -1,8 +1,8 @@
 import { namedRows, type V20Character } from '../../domain/v20/character';
 import { disciplineReadings, type DisciplineReading, type PowerReading } from '../../domain/v20/disciplines';
 import { diceLabel } from '../../domain/v20/identity';
+import { poolFormula } from '../../domain/v20/poolText';
 import { lookup, showBlock } from './draw';
-import { poolFormula } from './poolCard';
 
 /** One line per named Discipline, "Presence 3", in the order stored; a Discipline rated 0 is still listed. */
 export function disciplineLines(character: V20Character): string[] {

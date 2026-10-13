@@ -1,20 +1,24 @@
 ---
-import Abilities from '../components/sheet/Abilities.astro';
-import Attributes from '../components/sheet/Attributes.astro';
+import { panelOf } from '../components/tabs/panelOf';
+import TabBar from '../components/tabs/TabBar.astro';
+import TabPanel from '../components/tabs/TabPanel.astro';
 import BloodPool from '../components/sheet/BloodPool.astro';
-import Disciplines from '../components/sheet/Disciplines.astro';
 import Health from '../components/sheet/Health.astro';
 import Humanity from '../components/sheet/Humanity.astro';
 import Identity from '../components/sheet/Identity.astro';
-import SelectedPool from '../components/sheet/SelectedPool.astro';
-import Virtues from '../components/sheet/Virtues.astro';
 import Willpower from '../components/sheet/Willpower.astro';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
+import { discoverTabs } from '../scripts/tabs/discover';
 import '../styles/sheet.css';
+import '../styles/tabs.css';
+
+// Each tab is a folder under src/tabs; the page lists whatever folders it finds.
+const { tabs, showBar } = discoverTabs();
 ---
 
 <Layout title="Character sheet">
+	<p slot="app-bar-label" class="app-bar-label" data-app-bar-label></p>
 	<main class="sheet-page">
 		<StatusMessage />
 		<!-- Spoken when the mode changes; in the page from load so it is already a live region. -->
@@ -23,24 +27,23 @@ import '../styles/sheet.css';
 			<!-- The page's one heading for the sheet itself; the identity below is the visible title. -->
 			<h1 class="visually-hidden">Character sheet</h1>
 			<Identity />
+			<TabBar tabs={tabs} />
 			<div class="resources-row">
 				<BloodPool />
 				<Willpower />
 				<Health />
 				<Humanity />
 			</div>
-			<div class="workspace">
-				<!-- First in the markup so that a narrow screen shows it above the traits; the stylesheet puts it at the top of the side column when wide. -->
-				<SelectedPool />
-				<div class="workspace-traits">
-					<Attributes />
-					<Abilities />
-				</div>
-				<div class="workspace-side">
-					<Disciplines />
-					<Virtues />
-				</div>
-			</div>
+			{
+				tabs.map((tab, index) => {
+					const Panel = panelOf(tab.key);
+					return (
+						<TabPanel tab={tab} bar={showBar} first={index === 0}>
+							<Panel />
+						</TabPanel>
+					);
+				})
+			}
 		</div>
 		<div id="sheet-unreadable" hidden>
 			<h1>Character could not be read</h1>

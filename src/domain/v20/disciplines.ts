@@ -4,14 +4,28 @@
 // System entries of V20 chapter four (Disciplines).
 
 import { namedRows, type V20Character } from './character';
+import { DISCIPLINE_CATALOGUE } from './disciplineData';
 import { dicePool, type DicePool } from './resources';
 import type { AbilityKey, AttributeKey } from './traits';
+
+export { DISCIPLINE_CATALOGUE };
 
 /** One power of a Discipline. A power with no attribute + ability roll says in `note` what it uses instead; one with a roll may add to it. */
 export interface Power {
   readonly name: string;
   readonly roll?: readonly [AttributeKey, AbilityKey];
   readonly note?: string;
+  /** What activating it spends, as V20 chapter four states it; "None" when the entry spends nothing. */
+  readonly cost?: string;
+  readonly duration?: string;
+  /** The Discipline level that unlocks it, e.g. "Presence 1". */
+  readonly prerequisite?: string;
+  /** The difficulty or the resisting roll, as the System entry states it. */
+  readonly difficulty?: string;
+  /** One sentence of the book's description of what the power does. */
+  readonly summary?: string;
+  /** The V20 page where the power's entry begins. */
+  readonly page: number;
 }
 
 export interface DisciplineEntry {
@@ -21,157 +35,6 @@ export interface DisciplineEntry {
   /** The powers in level order: the first is the level 1 power. */
   readonly powers: readonly Power[];
 }
-
-const NO_ROLL = 'No roll';
-
-/** The Disciplines of the thirteen clans. Thaumaturgy and Necromancy are learned by path, so they list no powers. */
-export const DISCIPLINE_CATALOGUE: readonly DisciplineEntry[] = [
-  {
-    name: 'Animalism',
-    powers: [
-      { name: 'Feral Whispers', roll: ['manipulation', 'animalKen'] },
-      { name: 'Beckoning', roll: ['charisma', 'survival'] },
-      { name: 'Quell the Beast', roll: ['manipulation', 'intimidation'], note: 'or Manipulation + Empathy' },
-      { name: 'Subsume the Spirit', roll: ['manipulation', 'animalKen'] },
-      { name: 'Drawing Out the Beast', note: 'Manipulation + Self-Control/Instinct' },
-    ],
-  },
-  {
-    name: 'Auspex',
-    powers: [
-      { name: 'Heightened Senses', note: NO_ROLL },
-      { name: 'Aura Perception', roll: ['perception', 'empathy'] },
-      { name: "The Spirit's Touch", roll: ['perception', 'empathy'] },
-      { name: 'Telepathy', roll: ['intelligence', 'subterfuge'] },
-      { name: 'Psychic Projection', roll: ['perception', 'awareness'] },
-    ],
-  },
-  {
-    name: 'Celerity',
-    note: 'Each dot adds a die to Dexterity pools, or 1 blood buys an extra action',
-    powers: [],
-  },
-  {
-    name: 'Chimerstry',
-    powers: [
-      { name: 'Ignis Fatuus', note: NO_ROLL },
-      { name: 'Fata Morgana', note: NO_ROLL },
-      { name: 'Apparition', note: NO_ROLL },
-      { name: 'Permanency', note: NO_ROLL },
-      { name: 'Horrid Reality', roll: ['manipulation', 'subterfuge'] },
-    ],
-  },
-  {
-    name: 'Dementation',
-    powers: [
-      { name: 'Passion', roll: ['charisma', 'empathy'] },
-      { name: 'The Haunting', roll: ['manipulation', 'subterfuge'] },
-      { name: 'Eyes of Chaos', roll: ['perception', 'occult'] },
-      { name: 'Voice of Madness', roll: ['manipulation', 'empathy'] },
-      { name: 'Total Insanity', roll: ['manipulation', 'intimidation'] },
-    ],
-  },
-  {
-    name: 'Dominate',
-    powers: [
-      { name: 'Command', roll: ['manipulation', 'intimidation'] },
-      { name: 'Mesmerize', roll: ['manipulation', 'leadership'] },
-      { name: 'The Forgetful Mind', roll: ['wits', 'subterfuge'] },
-      { name: 'Conditioning', roll: ['charisma', 'leadership'] },
-      { name: 'Possession', roll: ['charisma', 'intimidation'] },
-    ],
-  },
-  {
-    name: 'Fortitude',
-    note: 'Each dot adds a die to soak bashing and lethal damage; its dots alone soak aggravated',
-    powers: [],
-  },
-  {
-    name: 'Necromancy',
-    note: 'Powers follow the path studied',
-    powers: [],
-  },
-  {
-    name: 'Obfuscate',
-    powers: [
-      { name: 'Cloak of Shadows', note: NO_ROLL },
-      { name: 'Unseen Presence', note: NO_ROLL },
-      { name: 'Mask of a Thousand Faces', roll: ['manipulation', 'performance'] },
-      { name: "Vanish from the Mind's Eye", roll: ['charisma', 'stealth'] },
-      { name: 'Cloak the Gathering', note: NO_ROLL },
-    ],
-  },
-  {
-    name: 'Obtenebration',
-    powers: [
-      { name: 'Shadow Play', note: NO_ROLL },
-      { name: 'Shroud of Night', roll: ['manipulation', 'occult'] },
-      { name: 'Arms of the Abyss', roll: ['manipulation', 'occult'] },
-      { name: 'Black Metamorphosis', note: 'Manipulation + Courage' },
-      { name: 'Tenebrous Form', note: NO_ROLL },
-    ],
-  },
-  {
-    name: 'Potence',
-    note: 'Each dot adds a die to Strength pools; 1 blood turns those dice into automatic successes',
-    powers: [],
-  },
-  {
-    name: 'Presence',
-    powers: [
-      { name: 'Awe', roll: ['charisma', 'performance'] },
-      { name: 'Dread Gaze', roll: ['charisma', 'intimidation'] },
-      { name: 'Entrancement', roll: ['appearance', 'empathy'] },
-      { name: 'Summon', roll: ['charisma', 'subterfuge'] },
-      { name: 'Majesty', note: NO_ROLL },
-    ],
-  },
-  {
-    name: 'Protean',
-    powers: [
-      { name: 'Eyes of the Beast', note: NO_ROLL },
-      { name: 'Feral Claws', note: NO_ROLL },
-      { name: 'Earth Meld', note: NO_ROLL },
-      { name: 'Shape of the Beast', note: NO_ROLL },
-      { name: 'Mist Form', note: NO_ROLL },
-    ],
-  },
-  {
-    name: 'Quietus',
-    powers: [
-      { name: 'Silence of Death', note: NO_ROLL },
-      { name: "Scorpion's Touch", note: 'Willpower' },
-      { name: "Dagon's Call", note: 'Stamina' },
-      { name: "Baal's Caress", note: NO_ROLL },
-      { name: 'Taste of Death', roll: ['stamina', 'athletics'] },
-    ],
-  },
-  {
-    name: 'Serpentis',
-    powers: [
-      { name: 'The Eyes of the Serpent', note: NO_ROLL },
-      { name: 'The Tongue of the Asp', note: 'An attack · Strength aggravated damage' },
-      { name: 'The Skin of the Adder', note: NO_ROLL },
-      { name: 'The Form of the Cobra', note: NO_ROLL },
-      { name: 'The Heart of Darkness', note: NO_ROLL },
-    ],
-  },
-  {
-    name: 'Thaumaturgy',
-    note: 'Powers follow the path studied',
-    powers: [],
-  },
-  {
-    name: 'Vicissitude',
-    powers: [
-      { name: 'Malleable Visage', roll: ['intelligence', 'medicine'] },
-      { name: 'Fleshcraft', roll: ['dexterity', 'medicine'] },
-      { name: 'Bonecraft', roll: ['strength', 'medicine'] },
-      { name: 'Horrid Form', note: NO_ROLL },
-      { name: 'Bloodform', note: NO_ROLL },
-    ],
-  },
-];
 
 /** Names match whatever their case and spacing: "  dominate " is Dominate. */
 const catalogueKey = (name: string): string => name.trim().replace(/\s+/g, ' ').toLowerCase();

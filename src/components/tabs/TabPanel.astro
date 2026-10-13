@@ -1,0 +1,24 @@
+---
+interface Props {
+	tab: { key: string; label: string };
+	/** Whether a tab bar is drawn: the panel is a tab panel only when there are tabs to name it. */
+	bar: boolean;
+	/** The panel shown before the script chooses; the rest start hidden. */
+	first?: boolean;
+}
+
+const { tab, bar, first = false } = Astro.props;
+---
+
+<!-- Hidden panels are removed from the page, the accessibility tree and the tab order; the script reveals the active one. -->
+<div
+	class="tab-panel"
+	id={`tab-panel-${tab.key}`}
+	data-tab-panel={tab.key}
+	role={bar ? 'tabpanel' : undefined}
+	aria-labelledby={bar ? `tab-${tab.key}` : undefined}
+	tabindex={bar ? -1 : undefined}
+	hidden={!first}
+>
+	<slot />
+</div>

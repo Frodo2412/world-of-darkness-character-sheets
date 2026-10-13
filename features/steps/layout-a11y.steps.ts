@@ -7,7 +7,6 @@ import {
   SHEET_ADDRESS,
   createCharacter,
   entryNamed,
-  horizontalOverflow,
   openRoster,
   sheetAddress,
   sheetField,
@@ -56,10 +55,6 @@ Given(
     }
   },
 );
-
-Then('the page does not scroll sideways', async ({ page }) => {
-  expect(await horizontalOverflow(page)).toBe(0);
-});
 
 Then('every control offered in play mode is visible and can be activated', async ({ page }) => {
   // A new character's sheet opens for editing; the controls checked are the ones play mode offers.

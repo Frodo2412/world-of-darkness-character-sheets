@@ -25,7 +25,9 @@ const { title } = Astro.props;
 		<title>{title} · World of Darkness Character Sheets</title>
 	</head>
 	<body>
-		<header><AppBar /></header>
+		<header>
+			<AppBar><slot name="app-bar-label" slot="label" /></AppBar>
+		</header>
 		<slot />
 	</body>
 </html>

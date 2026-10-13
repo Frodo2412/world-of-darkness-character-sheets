@@ -1,0 +1,25 @@
+---
+import '../../styles/dossier.css';
+
+interface Props {
+	/** Names the group for assistive technology ("Weapon type"). */
+	label: string;
+	options: readonly { value: string; label: string }[];
+	/** The value of the pressed option. */
+	pressed: string;
+}
+
+const { label, options, pressed } = Astro.props;
+---
+
+<!-- Buttons that each say whether they are pressed; the mark is text, so the pressed one reads without colour. A script flips aria-pressed and the stylesheet shows or hides the mark. -->
+<div class="dossier-segmented" role="group" aria-label={label} data-segmented>
+	{
+		options.map((option) => (
+			<button type="button" class="dossier-segment" data-value={option.value} aria-pressed={option.value === pressed ? 'true' : 'false'}>
+				<span class="dossier-segment-mark" aria-hidden="true">✓</span>
+				{option.label}
+			</button>
+		))
+	}
+</div>

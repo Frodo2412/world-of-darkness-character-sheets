@@ -1,0 +1,19 @@
+---
+import '../../styles/dossier.css';
+
+interface Props {
+	/** Makes the title field's id; prompts on different tabs are on one page, so each needs its own. */
+	id: string;
+}
+
+const { id } = Astro.props;
+---
+
+<!-- Submitting raises `start-session` (see scripts/dossier/sessionPrompt.ts); the tab that listens starts the session. -->
+<form class="dossier-session-prompt" data-session-prompt aria-labelledby={`${id}-heading`}>
+	<h3 class="dossier-session-prompt-heading" id={`${id}-heading`}>Start a session first</h3>
+	<p class="dossier-session-prompt-text">Notes, experience and level-ups are recorded in a session.</p>
+	<label class="dossier-session-prompt-label" for={`${id}-title`}>Session title</label>
+	<input class="dossier-session-prompt-input" id={`${id}-title`} type="text" name="title" autocomplete="off" data-session-title />
+	<button type="submit" class="dossier-session-prompt-start">Start session</button>
+</form>

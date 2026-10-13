@@ -1,4 +1,18 @@
-import { blankCharacter, type V20Character } from '../domain/v20/character';
+import {
+  DOSSIER_FIELDS,
+  blankCharacter,
+  type DossierField,
+  type V20Character,
+} from '../domain/v20/character';
+import {
+  validBackgrounds,
+  validFlaws,
+  validHavens,
+  validMerits,
+  validOtherTraits,
+} from '../domain/v20/dossier/validate';
+import { validJournal } from '../domain/v20/journal/validate';
+import type { Check } from '../domain/v20/shape';
 import { DAMAGE_TYPES, HEALTH_LEVELS } from '../domain/v20/traits';
 import { generateId, hasShapeOf, storedIds, type StoragePort } from './storagePort';
 
@@ -36,28 +50,52 @@ function serialise(character: V20Character): string {
   return JSON.stringify(character);
 }
 
+/** One validator per dossier field; the record type makes a missing entry a compile error. */
+const DOSSIER_VALIDATORS: Record<DossierField, Check> = {
+  merits: validMerits,
+  flaws: validFlaws,
+  otherTraits: validOtherTraits,
+  havens: validHavens,
+  journal: validJournal,
+};
+
+/** Fields a record saved before they existed may lack: each reads as its blank default. */
+const BACKFILLED_FIELDS = ['specialties', ...DOSSIER_FIELDS] as const;
+
+/** The fields every record has always had, checked against a blank character's shape. */
+const LEGACY_TEMPLATE: Record<string, unknown> = (() => {
+  const template: Record<string, unknown> = { ...blankCharacter('') };
+  // Backgrounds may exceed the six blank rows, so they have their own check.
+  for (const field of [...DOSSIER_FIELDS, 'backgrounds']) delete template[field];
+  return template;
+})();
+
 function isV20Character(value: unknown, id: string): value is V20Character {
-  if (!hasShapeOf(value, blankCharacter(id))) return false;
+  if (!hasShapeOf(value, LEGACY_TEMPLATE)) return false;
   const character = value as V20Character;
   return (
     character.id === id &&
     character.system === 'v20' &&
     character.schemaVersion === 1 &&
     HEALTH_LEVELS.every((level) => DAMAGE_TYPES.includes(character.health[level.key])) &&
-    Object.values(character.specialties).every((specialty) => typeof specialty === 'string')
+    Object.values(character.specialties).every((specialty) => typeof specialty === 'string') &&
+    validBackgrounds(character.backgrounds) &&
+    DOSSIER_FIELDS.every((field) => DOSSIER_VALIDATORS[field](character[field]))
   );
 }
 
-/** A record saved before specialties existed has none: it is read as a character with no specialties. */
-function withSpecialties(value: unknown): unknown {
-  if (typeof value !== 'object' || value === null || 'specialties' in value) return value;
-  return { ...value, specialties: {} };
+/** A record saved before a field existed has none: it is read with that field's blank default. */
+function withBlankDefaults(value: unknown, id: string): unknown {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return value;
+  const blank = blankCharacter(id);
+  const missing = BACKFILLED_FIELDS.filter((field) => !(field in value));
+  return { ...value, ...Object.fromEntries(missing.map((field) => [field, blank[field]])) };
 }
 
 /** The only way stored text becomes a character. */
 function parseRecord(text: string, id: string): V20Character | undefined {
   try {
-    const value: unknown = withSpecialties(JSON.parse(text));
+    const value: unknown = withBlankDefaults(JSON.parse(text), id);
     return isV20Character(value, id) ? value : undefined;
   } catch {
     return undefined;
