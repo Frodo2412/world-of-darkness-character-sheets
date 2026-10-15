@@ -1,0 +1,40 @@
+---
+import '../../styles/dossier.css';
+
+// The Combat reminders card: short table references with the pages they come from. The page and its
+// numbers are the book's; values here are checked by the data review, not by tests.
+const reminders = [
+	{
+		title: 'Range & cover',
+		page: 'p. 278',
+		text: 'Point-blank (≤ 2 m): difficulty 4. Short range: 6. Long range (up to twice short range): 8. Cover adds +1 prone, +2 wall, +3 only head exposed.',
+	},
+	{
+		title: 'Called shots',
+		page: 'p. 274',
+		text: 'Medium: +1 difficulty. Small (head): +2 difficulty and +1 damage. Precise (heart): +3 difficulty and +2 damage. Automatic fire cannot target body parts.',
+	},
+	{
+		title: 'Staking & grappling',
+		page: 'pp. 276, 280',
+		text: 'Stake: heart at difficulty 9 and three or more health levels paralyzes, not kills. Clinch permits only damage or escape. Tackle leaves the target at +1 difficulty next turn even if they stay upright.',
+	},
+];
+---
+
+<section class="combat-reminders" aria-labelledby="combat-reminders-title">
+	<div class="combat-section-heading">
+		<h3 class="combat-section-title" id="combat-reminders-title">Combat reminders</h3>
+		<span class="combat-pages-text">V20 · pp. 274–281</span>
+	</div>
+	<div class="combat-reminders-card">
+		{
+			reminders.map((reminder) => (
+				<div class="combat-reminder">
+					<h4 class="combat-reminder-title">{reminder.title} <span class="combat-reminder-page">V20 {reminder.page}</span></h4>
+					<p class="combat-reminder-text">{reminder.text}</p>
+				</div>
+			))
+		}
+	</div>
+</section>

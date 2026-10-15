@@ -1,0 +1,192 @@
+---
+import ReferenceTable from '../../components/dossier/ReferenceTable.astro';
+import SearchField from '../../components/dossier/SearchField.astro';
+import SegmentedControl from '../../components/dossier/SegmentedControl.astro';
+import '../../styles/dossier.css';
+import './combat.css';
+import Reminders from './Reminders.astro';
+
+// Static markup only; `mount.ts` fills the tables, the pickers and the results from the character.
+const filters = [
+	{ value: 'all', label: 'All manoeuvres' },
+	{ value: 'melee', label: 'Close combat' },
+	{ value: 'ranged', label: 'Ranged combat' },
+];
+const subtabs = [
+	{ value: 'melee', label: 'Melee' },
+	{ value: 'ranged', label: 'Ranged' },
+];
+const manoeuvreHeadings = ['Manoeuvre / rule', 'Attack pool · wound included', 'Acc.', 'Diff.', 'Base dmg.', 'Use'];
+---
+
+<div class="dossier-panel combat">
+	<div class="combat-heading">
+		<div class="combat-intro">
+			<h2 class="dossier-title" data-panel-heading>Combat</h2>
+			<p class="combat-lead" data-lead>Manoeuvres, defensive actions and weapon rolls for this character.</p>
+		</div>
+		<span class="dossier-badge combat-pages">V20 · pp. 274–281</span>
+	</div>
+	<div class="combat-tools">
+		<SearchField id="combat-search" label="Search manoeuvres or weapons" placeholder="Search manoeuvres or weapons…" />
+		<SegmentedControl label="Manoeuvres shown" options={filters} pressed="all" />
+	</div>
+	<p class="combat-banner" data-incapacitated hidden>Incapacitated · every pool reads 0 and the character cannot act.</p>
+	<div class="combat-body">
+		<div class="combat-tables">
+			<div class="combat-subtabs" data-subtabs>
+				<SegmentedControl label="Weapon type" options={subtabs} pressed="melee" />
+			</div>
+			<p class="dossier-empty dossier-empty-message" data-no-match hidden>No manoeuvres or weapons match.</p>
+			<section class="combat-section" data-section="melee" aria-labelledby="combat-melee-title">
+				<div class="combat-group" data-group="melee-manoeuvres">
+					<div class="combat-section-heading">
+						<h3 class="combat-section-title" id="combat-melee-title">Melee</h3>
+						<span class="combat-pages-text">V20 · pp. 276–279</span>
+					</div>
+					<div data-table="melee-manoeuvres">
+						<ReferenceTable caption="Close combat manoeuvres" captionHidden headings={manoeuvreHeadings} />
+					</div>
+					<p class="combat-footnote">
+						Damage is a separate pool, not attack dice. A rating of 0 in Brawl or Melee still rolls the attribute alone.
+					</p>
+				</div>
+				<div class="combat-group" data-group="melee-weapons">
+					<div class="combat-section-heading">
+						<h3 class="combat-section-title" id="combat-melee-weapons-title">Melee Weapons</h3>
+						<span class="combat-pages-text">V20 · p. 280</span>
+					</div>
+					<p class="combat-bar" data-bar="melee"></p>
+					<div data-table="melee-weapons">
+						<ReferenceTable caption="Melee weapons" captionHidden headings={['Weapon', 'Attack pool · wound included', 'Damage', 'Type', 'Conceal', 'Use']} />
+					</div>
+					<p class="combat-footnote" data-conceal-note="melee"></p>
+				</div>
+			</section>
+			<section class="combat-section" data-section="ranged" aria-labelledby="combat-ranged-title">
+				<div class="combat-group" data-group="ranged-manoeuvres">
+					<div class="combat-section-heading">
+						<h3 class="combat-section-title" id="combat-ranged-title">Ranged</h3>
+						<span class="combat-pages-text">Weapon required · V20 pp. 278–279</span>
+					</div>
+					<div data-table="ranged-manoeuvres">
+						<ReferenceTable caption="Ranged manoeuvres" captionHidden headings={manoeuvreHeadings} />
+					</div>
+					<p class="combat-footnote">
+						Burst and automatic manoeuvres need a ranged weapon the chart marks as capable of them. Damage is the weapon's own pool.
+					</p>
+				</div>
+				<div class="combat-group" data-group="ranged-weapons">
+					<div class="combat-section-heading">
+						<h3 class="combat-section-title" id="combat-ranged-weapons-title">Ranged Weapons</h3>
+						<span class="combat-pages-text">Reference only · V20 p. 281</span>
+					</div>
+					<p class="combat-bar" data-bar="ranged"></p>
+					<div data-table="ranged-weapons">
+						<ReferenceTable
+							caption="Ranged weapons"
+							captionHidden
+							headings={['Weapon', 'Attack pool · wound included', 'Damage', 'Range', 'Rate', 'Cap.', 'Conceal', 'Use']}
+						/>
+					</div>
+					<p class="combat-footnote" data-conceal-note="ranged"></p>
+				</div>
+			</section>
+		</div>
+		<aside class="combat-side">
+			<section class="combat-roll" aria-labelledby="combat-roll-title" data-roll>
+				<div class="combat-section-heading">
+					<h3 class="combat-section-title" id="combat-roll-title">Weapon roll</h3>
+					<span class="combat-pages-text" data-selected-label></span>
+				</div>
+				<div class="combat-roll-card">
+					<span class="dossier-badge combat-roll-chip">Rulebook weapon · not owned</span>
+					<p class="combat-roll-lead" data-roll-lead></p>
+					<div class="combat-field">
+						<label class="combat-label" for="combat-weapon">Weapon reference</label>
+						<select class="combat-select" id="combat-weapon" data-pick="weapon"></select>
+					</div>
+					<div class="combat-field">
+						<label class="combat-label" for="combat-manoeuvre">Manoeuvre</label>
+						<select class="combat-select" id="combat-manoeuvre" data-pick="manoeuvre"></select>
+					</div>
+					<div class="combat-pair">
+						<div class="combat-field">
+							<label class="combat-label" for="combat-target">Target</label>
+							<select class="combat-select" id="combat-target" data-pick="target"></select>
+						</div>
+						<div class="combat-field">
+							<label class="combat-label" for="combat-range">Range</label>
+							<select class="combat-select" id="combat-range" data-pick="range"></select>
+						</div>
+					</div>
+					<hr class="combat-rule" />
+					<div class="combat-stage">
+						<div class="combat-stage-heading">
+							<h4 class="combat-stage-title">Attack roll</h4>
+							<span class="combat-stage-chip">1 · Hit</span>
+						</div>
+						<p class="combat-formula" data-attack-formula></p>
+						<p class="combat-reason" data-attack-reason hidden></p>
+						<dl class="combat-stats">
+							<div class="combat-stat"><dt>Attack dice</dt><dd data-attack-dice></dd></div>
+							<div class="combat-stat"><dt>Accuracy</dt><dd data-attack-accuracy></dd></div>
+							<div class="combat-stat"><dt>Difficulty</dt><dd data-attack-difficulty></dd></div>
+						</dl>
+						<div class="combat-stepper">
+							<label class="combat-label" for="combat-dice">Other attack dice modifier</label>
+							<div class="combat-stepper-controls">
+								<button type="button" class="combat-step" data-step="dice:-1" aria-label="Decrease other attack dice modifier">−</button>
+								<input class="combat-number" id="combat-dice" type="number" step="1" inputmode="numeric" data-input="dice" />
+								<button type="button" class="combat-step" data-step="dice:1" aria-label="Increase other attack dice modifier">+</button>
+							</div>
+						</div>
+						<div class="combat-stepper">
+							<label class="combat-label" for="combat-difficulty">Difficulty · no cover / targeting</label>
+							<div class="combat-stepper-controls">
+								<button type="button" class="combat-step" data-step="difficulty:-1" aria-label="Decrease difficulty">−</button>
+								<input class="combat-number" id="combat-difficulty" type="number" step="1" inputmode="numeric" data-input="difficulty" />
+								<button type="button" class="combat-step" data-step="difficulty:1" aria-label="Increase difficulty">+</button>
+							</div>
+						</div>
+						<p class="combat-note">Accuracy adds dice; difficulty changes the success threshold. Celerity and blood boosts are not included.</p>
+						<p class="combat-pools-only">Pools only — roll your own dice.</p>
+					</div>
+					<hr class="combat-rule" />
+					<div class="combat-stage">
+						<div class="combat-stage-heading">
+							<h4 class="combat-stage-title">Damage roll</h4>
+							<span class="combat-stage-chip">2 · After hit</span>
+						</div>
+						<div class="combat-stepper">
+							<label class="combat-label" for="combat-extra">Extra successes · after defence</label>
+							<div class="combat-stepper-controls">
+								<button type="button" class="combat-step" data-step="extra:-1" aria-label="Decrease extra successes">−</button>
+								<input class="combat-number" id="combat-extra" type="number" step="1" min="0" inputmode="numeric" data-input="extra" aria-describedby="combat-extra-hint" />
+								<button type="button" class="combat-step" data-step="extra:1" aria-label="Increase extra successes">+</button>
+							</div>
+						</div>
+						<p class="combat-hint" id="combat-extra-hint" data-extra-hint hidden></p>
+						<div class="combat-result">
+							<p class="combat-result-formula" data-damage-formula></p>
+							<div class="combat-result-line">
+								<p class="combat-result-dice" data-damage-dice></p>
+								<p class="combat-result-type" data-damage-type></p>
+							</div>
+							<p class="combat-note" data-damage-note>No wound penalty to damage or soak.</p>
+						</div>
+						<p class="combat-note">
+							Only count damage on a hit. Melee weapons deal bashing to vampires; head shots are lethal. The defender soaks separately.
+						</p>
+					</div>
+					<p class="combat-source">V20 · combat pp. 274–279 · weapons pp. 280–281</p>
+				</div>
+			</section>
+			<Reminders />
+		</aside>
+	</div>
+	<p class="combat-disclaimer">
+		Base pools shown without Celerity, blood boosts, armor or situational modifiers. These are concise table references; the Storyteller
+		adjudicates exceptions. V20 core rulebook · pp. 274–281.
+	</p>
+</div>

@@ -53,9 +53,9 @@ Given(CHARACTER_WITH, async ({ page, memory }, phrase: string) => {
   await givenSaved(page, memory, { name: 'Marguerite', clan: 'Toreador' }, (character) => arrangeTraits(character, phrase));
 });
 
-Given(/^a character who is Incapacitated(?: with (.+))?$/, async ({ page, memory }, phrase: string | undefined) => {
+Given(/^a character who is Incapacitated(?: with (.+))?$/, async ({ page, memory }, phrase: string | null | undefined) => {
   await givenSaved(page, memory, { name: 'Marguerite', clan: 'Toreador' }, (character) => {
-    if (phrase !== undefined) arrangeTraits(character, phrase);
+    if (phrase != null) arrangeTraits(character, phrase);
     wound(character, 'Incapacitated');
   });
 });
