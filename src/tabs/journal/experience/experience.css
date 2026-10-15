@@ -118,6 +118,8 @@
 .journal-xp-caption {
 	font-size: var(--text-small);
 	color: var(--color-muted);
+	/* It names the current session, whose title is the player's and may be one long word. */
+	overflow-wrap: anywhere;
 }
 
 .journal-xp-columns {

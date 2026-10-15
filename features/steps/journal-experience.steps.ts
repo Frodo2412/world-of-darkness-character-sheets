@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
 import { characterArranged, saveCharacters } from './support/seed';
-import { openSavedSheet, savedCharacter } from './support/sheet';
+import { savedCharacter } from './support/sheet';
 import { announcements } from './support/announcements';
 import {
   amountField,

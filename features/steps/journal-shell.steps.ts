@@ -155,7 +155,7 @@ Then('the application bar reads {string}', async ({ page }, label: string) => {
 });
 
 Then('{string}, {string} and {string} are headings in that order', async ({ page }, first: string, second: string, third: string) => {
-  await expect(journalPanel(page).locator('[data-journal-section] > h2')).toHaveText([first, second, third]);
+  await expect(journalPanel(page).locator('[data-journal-section] h2')).toHaveText([first, second, third]);
 });
 
 Then('a sub-navigation links to each of them', async ({ page }) => {
