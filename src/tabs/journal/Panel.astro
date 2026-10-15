@@ -1,0 +1,90 @@
+---
+import pencil from '../../assets/icons/pencil.svg';
+import '../../styles/dossier.css';
+import './journal.css';
+import Experience from './experience/Experience.astro';
+import Notes from './notes/Notes.astro';
+import Record from './record/Record.astro';
+
+// Static markup only; `mount.ts` fills the label, the sessions and each section from the character.
+// The sections are the folders beside this file; the sub-navigation links to them in this order.
+const sections = [
+	{ key: 'notes', label: 'Notes' },
+	{ key: 'experience', label: 'Experience' },
+	{ key: 'record', label: 'Character Record' },
+];
+---
+
+<div class="dossier-panel journal">
+	<div class="journal-heading">
+		<div class="journal-intro">
+			<h2 class="dossier-title" data-panel-heading>Journal</h2>
+			<p class="journal-lead">Keep the night's discoveries, promises and unfinished business close at hand.</p>
+		</div>
+		<div class="journal-actions">
+			<span class="journal-where" data-where></span>
+			<button type="button" class="journal-primary" data-new-note>
+				<img src={pencil.src} alt="" width="14" height="14" />
+				New note
+			</button>
+		</div>
+	</div>
+	<nav class="journal-subnav-bar" aria-label="Journal sections">
+		<ul class="journal-subnav">
+			{
+				sections.map((section, index) => (
+					<li>
+						<a href={`#journal-${section.key}`} data-section-link={section.key} aria-current={index === 0 ? 'true' : undefined}>
+							{section.label}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</nav>
+	<div class="dossier-empty journal-empty" data-journal-empty hidden>
+		<p class="dossier-empty-message">Nothing in the journal yet. Start a session, then write your first note.</p>
+		<div class="dossier-empty-action journal-empty-actions">
+			<button type="button" class="journal-primary" data-focus-start>Start session</button>
+			<button type="button" data-new-note>New note</button>
+		</div>
+	</div>
+	<section class="journal-sessions" aria-labelledby="journal-sessions-title" data-sessions>
+		<div class="journal-card-heading">
+			<h3 class="dossier-card-title" id="journal-sessions-title">Sessions</h3>
+			<span class="journal-count" data-sessions-count></span>
+		</div>
+		<div class="journal-sessions-body">
+			<div class="journal-sessions-list">
+				<p class="journal-none" data-no-sessions>No session started yet.</p>
+				<ul class="dossier-list journal-session-list" aria-label="Sessions" data-session-list></ul>
+				<button type="button" class="journal-link" data-show-all-sessions hidden></button>
+			</div>
+			<form class="journal-start" data-start-form>
+				<label class="journal-label" for="journal-session-title">Title for the new session</label>
+				<div class="journal-start-row">
+					<input
+						class="journal-input"
+						id="journal-session-title"
+						type="text"
+						autocomplete="off"
+						aria-describedby="journal-start-explanation"
+						data-start-title
+					/>
+					<button type="submit" class="journal-primary">Start new session</button>
+				</div>
+				<p class="journal-explanation" id="journal-start-explanation" data-explanation></p>
+			</form>
+		</div>
+		<p class="journal-change" data-change hidden></p>
+	</section>
+	{
+		sections.map((section) => (
+			<section class="journal-section" id={`journal-${section.key}`} data-journal-section={section.key} aria-labelledby={`journal-${section.key}-title`}>
+				{section.key === 'notes' && <Notes />}
+				{section.key === 'experience' && <Experience />}
+				{section.key === 'record' && <Record />}
+			</section>
+		))
+	}
+</div>

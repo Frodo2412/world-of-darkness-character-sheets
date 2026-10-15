@@ -46,7 +46,12 @@
 .app-bar-label {
 	margin: 0;
 	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
 	color: var(--color-muted);
+	/* A long chronicle or session title wraps inside the bar instead of widening the page. */
+	min-inline-size: 0;
+	overflow-wrap: anywhere;
 }
 
 .app-bar-label:empty {
