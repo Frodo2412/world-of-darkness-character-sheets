@@ -1,0 +1,18 @@
+---
+import SearchField from '../../../components/dossier/SearchField.astro';
+---
+
+<section class="journal-note-column" aria-labelledby="journal-list-title">
+	<SearchField id="journal-notes-search" label="Search notes" placeholder="Search notes, people or tags…" />
+	<div class="journal-list-heading">
+		<h3 class="journal-list-title" id="journal-list-title" data-list-title></h3>
+		<span class="journal-list-count" data-list-count></span>
+	</div>
+	<div class="journal-list-sorting">
+		<span data-list-caption></span>
+		<span>Last edited</span>
+	</div>
+	<p class="journal-none" data-no-notes hidden>No notes in this list yet.</p>
+	<p class="journal-none" data-no-match hidden>No notes match.</p>
+	<ul class="dossier-list journal-note-list" aria-label="Notes" data-note-list></ul>
+</section>

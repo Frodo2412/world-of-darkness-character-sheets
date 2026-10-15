@@ -290,3 +290,149 @@ input.journal-input {
 	text-transform: none;
 	color: var(--color-text-strong);
 }
+
+/* The icons the frame draws in the Journal, kept as the SVG files from Figma. */
+.journal-icon {
+	display: inline-block;
+	flex: none;
+	inline-size: 14px;
+	block-size: 14px;
+	background: center / contain no-repeat;
+}
+
+.journal-icon-pencil {
+	background-image: url('../../assets/icons/pencil-line.svg');
+}
+
+.journal-icon-notebook {
+	background-image: url('../../assets/icons/notebook.svg');
+}
+
+.journal-icon-pin {
+	background-image: url('../../assets/icons/pin.svg');
+}
+
+.journal-icon-file-pen {
+	background-image: url('../../assets/icons/file-pen-line.svg');
+}
+
+.journal-icon-bold {
+	background-image: url('../../assets/icons/bold.svg');
+}
+
+.journal-icon-italic {
+	background-image: url('../../assets/icons/italic.svg');
+}
+
+.journal-icon-list {
+	background-image: url('../../assets/icons/list.svg');
+}
+
+.journal-icon-list-checks {
+	background-image: url('../../assets/icons/list-checks.svg');
+}
+
+.journal-icon-link {
+	background-image: url('../../assets/icons/link.svg');
+}
+
+.journal-icon-quote {
+	background-image: url('../../assets/icons/quote.svg');
+}
+
+/* The frame's outlined button: "Add note", "Save note", "Award XP". */
+button.journal-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-2);
+	min-block-size: 2.25rem;
+	padding: 0 var(--space-row) 0 14px;
+	font-size: var(--text-body);
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
+}
+
+button.journal-button:hover:not(:disabled) {
+	border-color: var(--color-focus);
+}
+
+/* A small caption over a list: "SESSIONS", "MENTIONED". */
+.journal-overline {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-body);
+	font-size: var(--text-small);
+	font-weight: 400;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.journal-divider {
+	inline-size: 100%;
+	block-size: 1px;
+	margin: 0;
+	border: 0;
+	background: var(--color-line);
+}
+
+/* A short word in a box: a tag, a category, a mentioned name. */
+.journal-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.journal-chip {
+	max-inline-size: 100%;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	padding: 0 var(--space-2);
+	min-block-size: 1.5rem;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	background: var(--color-control);
+	border-radius: var(--radius-badge);
+	overflow-wrap: anywhere;
+}
+
+button.journal-chip-remove {
+	min-block-size: 1.5rem;
+	min-inline-size: 1.5rem;
+	padding: 0;
+	font-size: var(--text-body);
+	line-height: 1;
+	color: var(--color-text);
+	background: transparent;
+	border: 0;
+}
+
+button.journal-chip-button {
+	min-block-size: 1.75rem;
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.journal-inline-form {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.journal-inline-form .journal-input {
+	flex: 0 1 9rem;
+	min-block-size: 1.75rem;
+}

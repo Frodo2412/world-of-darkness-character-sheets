@@ -1,0 +1,105 @@
+---
+import SessionPrompt from '../../../components/dossier/SessionPrompt.astro';
+import { NOTE_CATEGORIES } from '../../../domain/v20/journal/notes/notes';
+
+// The editor and the three things that stand in for it: nothing chosen yet, the start-a-session prompt,
+// and the read-only earlier notes. `drawEditor.ts` fills the form from the chosen note.
+const tools = [
+	{ action: 'bold', label: 'Bold', icon: 'bold' },
+	{ action: 'italic', label: 'Italic', icon: 'italic' },
+	{ action: 'bullets', label: 'Bulleted list', icon: 'list' },
+	{ action: 'numbers', label: 'Numbered list', text: '1.' },
+	{ action: 'checklist', label: 'Checklist', icon: 'list-checks' },
+	{ action: 'link', label: 'Link', icon: 'link' },
+	{ action: 'quote', label: 'Quote', icon: 'quote' },
+];
+---
+
+<section class="journal-editor" aria-labelledby="journal-editor-title" data-editor>
+	<h3 class="visually-hidden" id="journal-editor-title">Note editor</h3>
+	<p class="journal-editor-empty" data-editor-empty>Select a note or start a new one</p>
+	<div class="journal-editor-prompt" data-editor-prompt hidden>
+		<SessionPrompt id="journal-notes-prompt" />
+	</div>
+	<div class="journal-earlier" data-editor-earlier hidden>
+		<h4 class="journal-earlier-title">Earlier notes</h4>
+		<p class="journal-none">Written before the Journal existed. Shown as it was saved; it cannot be edited here.</p>
+		<p class="journal-earlier-text" data-earlier-text></p>
+	</div>
+	<div class="journal-editor-form" data-editor-form hidden>
+		<div class="journal-editor-head">
+			<span class="journal-editor-context">
+				<span class="journal-icon journal-icon-file-pen" aria-hidden="true"></span>
+				<span data-editor-context></span>
+			</span>
+			<span class="journal-editor-pin">
+				<span class="journal-pinned-text" data-pinned-text hidden>Pinned</span>
+				<button type="button" class="journal-pin-button" data-editor-pin aria-pressed="false">
+					<span class="journal-icon journal-icon-pin" aria-hidden="true"></span>
+					Pin
+				</button>
+			</span>
+		</div>
+		<div class="journal-editor-identity">
+			<label class="visually-hidden" for="journal-note-title">Note title</label>
+			<input class="journal-note-title-input" id="journal-note-title" type="text" autocomplete="off" placeholder="Untitled note" data-field="title" />
+			<div class="journal-editor-organisation">
+				<label class="visually-hidden" for="journal-note-category">Category</label>
+				<select class="journal-select" id="journal-note-category" data-field="category">
+					{NOTE_CATEGORIES.map((category) => <option value={category}>{category}</option>)}
+				</select>
+				<ul class="journal-chips" aria-label="Tags" data-tags></ul>
+				<form class="journal-inline-form" data-tag-form>
+					<label class="visually-hidden" for="journal-tag-input">Add tag</label>
+					<input class="journal-input" id="journal-tag-input" type="text" autocomplete="off" placeholder="Add tag" data-tag-input />
+					<button type="submit" class="journal-chip-button">Add tag</button>
+				</form>
+			</div>
+		</div>
+		<div class="journal-toolbar" role="group" aria-label="Formatting" data-toolbar>
+			{
+				tools.map((tool) => (
+					<button type="button" class="journal-tool" data-format={tool.action} aria-label={tool.label}>
+						{tool.icon !== undefined ? (
+							<span class={`journal-icon journal-icon-${tool.icon}`} aria-hidden="true" />
+						) : (
+							<span aria-hidden="true">{tool.text}</span>
+						)}
+					</button>
+				))
+			}
+		</div>
+		<form class="journal-link-form" data-link-form hidden>
+			<label class="journal-label" for="journal-link-input">Link address</label>
+			<input class="journal-input" id="journal-link-input" type="text" autocomplete="off" placeholder="https://" data-link-input />
+			<button type="submit" class="journal-chip-button">Add link</button>
+			<button type="button" class="journal-chip-button" data-link-cancel>Cancel</button>
+		</form>
+		<div class="journal-body">
+			<div class="journal-body-edit">
+				<label class="journal-label" for="journal-note-body">Note text</label>
+				<textarea class="journal-textarea" id="journal-note-body" rows="12" data-field="body"></textarea>
+			</div>
+			<div class="journal-body-preview">
+				<p class="journal-label" id="journal-preview-label">Preview</p>
+				<div class="journal-preview" aria-labelledby="journal-preview-label" role="group" data-preview></div>
+			</div>
+		</div>
+		<div class="journal-mentions">
+			<h4 class="journal-overline" id="journal-mentions-label">Mentioned</h4>
+			<ul class="journal-chips" aria-labelledby="journal-mentions-label" data-mentions></ul>
+			<form class="journal-inline-form" data-mention-form>
+				<label class="visually-hidden" for="journal-mention-input">Add mentioned name</label>
+				<input class="journal-input" id="journal-mention-input" type="text" autocomplete="off" placeholder="Add name" data-mention-input />
+				<button type="submit" class="journal-chip-button">Add name</button>
+			</form>
+		</div>
+		<div class="journal-save">
+			<p class="journal-save-status" data-save-status></p>
+			<button type="button" class="journal-button" data-save>
+				<span class="journal-icon journal-icon-pencil" aria-hidden="true"></span>
+				Save note
+			</button>
+		</div>
+	</div>
+</section>

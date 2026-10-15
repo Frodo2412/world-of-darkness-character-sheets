@@ -27,7 +27,7 @@ export const sessionRow = (page: Page, title: string): Locator =>
 /** The rows marked current. */
 export const currentRows = (page: Page): Locator => sessionsCard(page).locator('li.journal-session').filter({ has: page.locator('.journal-session-mark') });
 
-export const startTitleField = (page: Page): Locator => sessionsCard(page).getByLabel('Title for the new session', { exact: true });
+export const startTitleField = (page: Page): Locator => sessionsCard(page).getByLabel('Name for the new session', { exact: true });
 export const startButton = (page: Page): Locator => sessionsCard(page).getByRole('button', { name: 'Start new session', exact: true });
 
 /** The empty state above the sections. */
@@ -50,10 +50,11 @@ export async function startSessionOnPage(page: Page, title: string): Promise<voi
   await startButton(page).click();
 }
 
-/** Ids the page will never make, so a seeded session cannot be mistaken for one the player started. */
+let madeSessions = 0;
+
+/** Ids the page will never make, so a seeded session cannot be mistaken for one the player started; none repeats within a run. */
 function seededStamp(): Stamp {
-  let made = 0;
-  return { newId: () => `seeded-session-${(made += 1)}`, now: () => 1_700_000_000_000 };
+  return { newId: () => `seeded-session-${(madeSessions += 1)}`, now: () => 1_700_000_000_000 };
 }
 
 /** The character with these sessions started in this order, so the last is the current one. */

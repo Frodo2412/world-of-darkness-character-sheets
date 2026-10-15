@@ -8,7 +8,7 @@ import type { SheetMode } from '../../scripts/sheet/mode';
 import { appBarLabel } from '../../scripts/sheet/observers/appBarLabel';
 import type { MountedTab, TabContext } from '../../scripts/tabs/context';
 import { drawSessions, type SessionsState } from './drawSessions';
-import { NEW_NOTE_EVENT } from './events';
+import { NEW_NOTE_EVENT, SECTION_DRAWN_EVENT } from './events';
 import { mount as mountExperience } from './experience/mount';
 import { mount as mountNotes } from './notes/mount';
 import { mount as mountRecord } from './record/mount';
@@ -43,11 +43,11 @@ export function mount(ctx: TabContext): MountedTab {
 
   const focusRename = (id: string): void => root.querySelector<HTMLElement>(`[data-focus-key="rename-button:${id}"]`)?.focus();
 
-  /** Brings a section to the top of the screen and puts focus on its heading. */
-  function showSection(key: SectionKey): void {
+  /** Brings a section to the top of the screen and, unless the caller puts focus somewhere better, on its heading. */
+  function showSection(key: SectionKey, focusHeading = true): void {
     const section = sectionRoot(key);
     section.scrollIntoView({ block: 'start' });
-    section.querySelector<HTMLElement>('[id$="-title"]')?.focus({ preventScroll: true });
+    if (focusHeading) section.querySelector<HTMLElement>('[id$="-title"]')?.focus({ preventScroll: true });
     for (const link of root.querySelectorAll<HTMLElement>('[data-section-link]')) {
       if (link.dataset.sectionLink === key) link.setAttribute('aria-current', 'true');
       else link.removeAttribute('aria-current');
@@ -96,8 +96,9 @@ export function mount(ctx: TabContext): MountedTab {
       return;
     }
     if (target.closest('[data-new-note]') !== null) {
+      // The notes take focus themselves: into the new note, or into the prompt for a session.
       sectionRoot('notes').dispatchEvent(new CustomEvent(NEW_NOTE_EVENT));
-      showSection('notes');
+      showSection('notes', false);
       return;
     }
     if (target.closest('[data-focus-start]') !== null) {
@@ -150,11 +151,20 @@ export function mount(ctx: TabContext): MountedTab {
     }
   });
 
+  /**
+   * The empty state: no sessions and no notes. It steps aside while the notes ask for a session themselves,
+   * so the page never offers "Start session" twice.
+   */
+  function drawEmptyState(character: V20Character): void {
+    const empty = character.journal.sessions.length === 0 && character.journal.notes.length === 0;
+    find('[data-journal-empty]').hidden = !empty || root.querySelector('[data-editor-prompt]:not([hidden])') !== null;
+  }
+
+  root.addEventListener(SECTION_DRAWN_EVENT, () => drawEmptyState(ctx.current()));
+
   function drawShell(character: V20Character): void {
     const where = find('[data-where]');
     setText(where, appBarLabel(character));
-    const empty = character.journal.sessions.length === 0 && character.journal.notes.length === 0;
-    find('[data-journal-empty]').hidden = !empty;
     const view = sessionsView(character.journal);
     drawSessions(root, view, state);
     startTitle.placeholder = `Session ${character.journal.sessions.length + 1}`;
