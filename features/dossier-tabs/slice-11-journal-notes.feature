@@ -15,7 +15,7 @@ Feature: Journal notes
   Scenario: Writing a note with no session asks for one
     Given a character with no session
     When the player presses "New note" on the Journal notes
-    Then the start-a-session prompt is shown
+    Then the start-a-session prompt is shown in the Notes section
 
   Scenario: A new note while viewing an older session lands in the current one
     Given "Session 12" is current and the player is viewing "Session 10" on the Journal notes

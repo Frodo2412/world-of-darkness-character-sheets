@@ -322,6 +322,15 @@ Then('the view switches to Session 12 and the new note is shown and focused', as
   await expect(titleField(page)).toHaveValue('');
 });
 
+// The Journal asks for a session in more than one section, so each prompt is checked in its own.
+Then('the start-a-session prompt is shown in the Notes section', async ({ page }) => {
+  const section = notesSection(page);
+  await expect(section.getByRole('heading', { name: 'Start a session first', exact: true })).toBeVisible();
+  await expect(section.getByText('Notes, experience and level-ups are recorded in a session.', { exact: true })).toBeVisible();
+  await expect(section.getByRole('textbox', { name: /title/i })).toBeVisible();
+  await expect(section.getByRole('button', { name: 'Start session', exact: true })).toBeVisible();
+});
+
 Then('the same status is shown', async ({ page }) => {
   await expect(saveStatus(page)).toHaveText('All changes saved · 23:42');
 });

@@ -1,0 +1,319 @@
+/* The Experience section of the Journal, as the Figma frame draws it: four figures, the award log and
+   the spending record side by side, and the cost reference under the record. Text is held to the shared
+   12px minimum, so the frame's 9-11px captions are drawn at 12px. */
+
+.journal-xp-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-3);
+}
+
+.journal-xp-intro {
+	display: grid;
+	gap: 5px;
+}
+
+.journal-award,
+.journal-award-prompt {
+	max-inline-size: 40rem;
+}
+
+.journal-award-form {
+	display: grid;
+	gap: var(--space-row);
+	padding: var(--space-3);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.journal-award-fields {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+}
+
+@media (min-width: 40rem) {
+	.journal-award-fields {
+		grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr);
+	}
+}
+
+.journal-field {
+	display: grid;
+	gap: var(--space-1);
+	align-content: start;
+}
+
+.journal-award-hint {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-danger);
+}
+
+.journal-award-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
+.journal-xp-cards {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+@media (min-width: 36rem) {
+	.journal-xp-cards {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 64rem) {
+	.journal-xp-cards {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+.journal-xp-card {
+	display: grid;
+	gap: var(--space-2);
+	align-content: space-between;
+	min-block-size: 7rem;
+	padding: var(--space-3);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.journal-xp-card-available {
+	background: var(--color-selected);
+	border-color: var(--color-focus);
+}
+
+.journal-xp-label {
+	font-size: var(--text-small);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.journal-xp-value {
+	font-family: var(--font-display);
+	font-size: var(--text-display);
+	line-height: 1;
+	color: var(--color-text-strong);
+}
+
+.journal-xp-card.is-overspent .journal-xp-value,
+.journal-xp-card.is-overspent .journal-xp-caption {
+	color: var(--color-danger);
+}
+
+.journal-xp-caption {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.journal-xp-columns {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+	align-items: start;
+}
+
+@media (min-width: 64rem) {
+	.journal-xp-columns {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.journal-xp-columns > [data-log='awards'] {
+		grid-column: 1;
+		grid-row: 1 / span 2;
+	}
+
+	.journal-xp-columns > [data-log='spendings'] {
+		grid-column: 2;
+		grid-row: 1;
+	}
+
+	.journal-xp-columns > .journal-xp-reference {
+		grid-column: 2;
+		grid-row: 2;
+	}
+}
+
+.journal-xp-column {
+	display: grid;
+	gap: var(--space-row);
+	align-content: start;
+	min-inline-size: 0;
+}
+
+.journal-xp-subheading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+}
+
+.journal-xp-subtitle {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h2);
+	font-weight: 400;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text);
+}
+
+.journal-xp-list-card {
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+	overflow: hidden;
+}
+
+.journal-xp-none {
+	padding: var(--space-3);
+}
+
+.journal-xp-list {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0;
+}
+
+.journal-xp-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	min-block-size: 4rem;
+	padding: var(--space-row) var(--space-3);
+	border-inline-start: 2px solid transparent;
+}
+
+.journal-xp-row + .journal-xp-row {
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+/* The current session's award is marked "current" in words, and tinted and edged as well. */
+.journal-xp-row.is-current {
+	background: var(--color-selected);
+	border-inline-start-color: var(--color-focus);
+}
+
+.journal-xp-row-main {
+	display: grid;
+	gap: var(--space-1);
+	min-inline-size: 0;
+	flex: 1 1 10rem;
+}
+
+.journal-xp-row-title {
+	font-size: var(--text-body);
+	font-weight: 600;
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.journal-xp-mark {
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	font-weight: 400;
+	line-height: var(--leading-compact);
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+	border-radius: var(--radius-badge);
+}
+
+.journal-xp-row-detail {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.journal-xp-row-amount {
+	display: grid;
+	justify-items: end;
+}
+
+.journal-xp-amount {
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	line-height: 1.1;
+	color: var(--color-focus);
+}
+
+.journal-xp-row.is-negative .journal-xp-amount,
+.journal-xp-row-spending .journal-xp-amount {
+	color: var(--color-accent-text);
+}
+
+.journal-xp-amount-caption {
+	font-size: var(--text-small);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.journal-xp-footer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+	padding: var(--space-row) var(--space-3);
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+.journal-xp-reference {
+	display: grid;
+	gap: var(--space-row);
+	padding: var(--space-3);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.journal-xp-costs {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+	gap: var(--space-row) var(--space-3);
+	margin: 0;
+}
+
+.journal-xp-cost {
+	display: grid;
+	gap: 2px;
+	font-size: var(--text-small);
+}
+
+.journal-xp-cost dt {
+	color: var(--color-text);
+}
+
+.journal-xp-cost dd {
+	margin: 0;
+	color: var(--color-muted);
+}
+
+.journal-xp-earlier {
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-3);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
