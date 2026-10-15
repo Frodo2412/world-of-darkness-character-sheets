@@ -248,7 +248,7 @@ button.journal-link {
 	gap: var(--space-2);
 }
 
-input.journal-input {
+input[type].journal-input {
 	flex: 1 1 12rem;
 	min-block-size: 2.25rem;
 	padding: 0 var(--space-2);
@@ -435,4 +435,23 @@ button.journal-chip-button {
 .journal-inline-form .journal-input {
 	flex: 0 1 9rem;
 	min-block-size: 1.75rem;
+}
+
+textarea.journal-input {
+	inline-size: 100%;
+	padding: var(--space-2);
+	font: inherit;
+	font-size: var(--text-body);
+	line-height: 1.5;
+	color: var(--color-text);
+	background: var(--color-row);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
+	resize: vertical;
+}
+
+.journal-footnote {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
 }

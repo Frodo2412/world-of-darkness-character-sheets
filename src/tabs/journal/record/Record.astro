@@ -1,6 +1,111 @@
 ---
-// The Character Record section: filled by `mount.ts` beside this file.
+import ReadOnlyHint from '../../../components/dossier/ReadOnlyHint.astro';
+import UndoNotice from '../../../components/dossier/UndoNotice.astro';
+import { DESCRIPTION_FIELDS } from '../../../domain/v20/journal/record/view';
+import './record.css';
+
+// The Character Record: possessions, blood bonds, derangements, goals and the description. Static markup;
+// `mount.ts` fills each list from the character. In edit mode each list also offers its Add control, and
+// each entry its fields and Remove control.
+const lists = [
+	{ key: 'gear', empty: 'No gear recorded yet.', add: 'Add gear' },
+	{ key: 'equipment', empty: 'No equipment recorded yet.', add: 'Add equipment' },
+	{ key: 'bloodBonds', empty: 'No blood bonds or vinculi recorded yet.', add: 'Add blood bond' },
+	{ key: 'derangements', empty: 'No derangements recorded yet.', add: 'Add derangement' },
+	{ key: 'goals', empty: 'No goals recorded yet.', add: 'Add goal' },
+];
+const listOf = (key: string) => lists.find((list) => list.key === key)!;
 ---
 
-<h2 class="journal-section-title" id="journal-record-title" tabindex="-1">Character Record</h2>
-<p class="journal-none" data-record-placeholder>Possessions, vinculi, derangements, goals and description are kept here.</p>
+<div class="journal-record-heading">
+	<div class="journal-record-intro">
+		<h2 class="journal-section-title" id="journal-record-title" tabindex="-1">Character Record</h2>
+		<p class="journal-lead">Possessions, vinculi, derangements, goals and physical description.</p>
+	</div>
+	<ReadOnlyHint />
+</div>
+<div class="journal-record-undo" data-sheet-mode-only="edit">
+	<UndoNotice />
+</div>
+<div class="journal-record-workspace">
+	<div class="journal-record-main">
+		<section class="journal-record-section" aria-labelledby="journal-possessions-title">
+			<div class="journal-record-section-heading">
+				<h3 class="journal-record-title" id="journal-possessions-title">Possessions</h3>
+			</div>
+			<div class="journal-record-pair">
+				{
+					['gear', 'equipment'].map((key) => (
+						<div class="journal-record-card" data-card={key}>
+							<h4 class="journal-overline" id={`journal-${key}-title`}>{key === 'gear' ? 'Gear (carried)' : 'Equipment (owned)'}</h4>
+							<ul class="journal-record-list" aria-labelledby={`journal-${key}-title`} data-list={key} />
+							<p class="journal-none" data-empty={key} hidden>{listOf(key).empty}</p>
+							<button type="button" class="journal-chip-button journal-record-add" data-add={key} data-sheet-mode-only="edit">{listOf(key).add}</button>
+						</div>
+					))
+				}
+			</div>
+		</section>
+		<section class="journal-record-section" aria-labelledby="journal-bonds-title">
+			<div class="journal-record-section-heading">
+				<h3 class="journal-record-title" id="journal-bonds-title">Blood Bonds &amp; Vinculi</h3>
+			</div>
+			<div class="journal-record-card">
+				<div class="journal-bond-head" aria-hidden="true" data-sheet-mode-only="play">
+					<span>Bound to / bound by</span>
+					<span>Rating</span>
+					<span>Type</span>
+				</div>
+				<ul class="journal-record-list" aria-labelledby="journal-bonds-title" data-list="bloodBonds" />
+				<p class="journal-none" data-empty="bloodBonds" hidden>{listOf('bloodBonds').empty}</p>
+				<button type="button" class="journal-chip-button journal-record-add" data-add="bloodBonds" data-sheet-mode-only="edit">{listOf('bloodBonds').add}</button>
+			</div>
+		</section>
+	</div>
+	<div class="journal-record-side">
+		<section class="journal-record-section" aria-labelledby="journal-derangements-title">
+			<div class="journal-record-section-heading">
+				<h3 class="journal-record-title" id="journal-derangements-title">Derangements</h3>
+				<span class="journal-count" data-count="derangements"></span>
+			</div>
+			<ul class="journal-record-list journal-record-cards" aria-labelledby="journal-derangements-title" data-list="derangements" />
+			<p class="journal-none" data-empty="derangements" hidden>{listOf('derangements').empty}</p>
+			<button type="button" class="journal-chip-button journal-record-add" data-add="derangements" data-sheet-mode-only="edit">{listOf('derangements').add}</button>
+			<p class="journal-record-note">Record triggers and agreed effects with your Storyteller.</p>
+		</section>
+		<section class="journal-record-section" aria-labelledby="journal-goals-title">
+			<div class="journal-record-section-heading">
+				<h3 class="journal-record-title" id="journal-goals-title">Goals</h3>
+				<span class="journal-count" data-count="goals"></span>
+			</div>
+			<ol class="journal-record-list journal-record-cards" aria-labelledby="journal-goals-title" data-list="goals" />
+			<p class="journal-none" data-empty="goals" hidden>{listOf('goals').empty}</p>
+			<button type="button" class="journal-chip-button journal-record-add" data-add="goals" data-sheet-mode-only="edit">{listOf('goals').add}</button>
+		</section>
+		<section class="journal-record-section" aria-labelledby="journal-description-title">
+			<div class="journal-record-section-heading">
+				<h3 class="journal-record-title" id="journal-description-title">Description</h3>
+			</div>
+			<dl class="journal-record-card journal-facts" data-description-list>
+				{
+					DESCRIPTION_FIELDS.map(({ field, label }) => (
+						<div class="journal-fact">
+							<dt id={`journal-fact-${field}`}>{label}</dt>
+							<dd data-sheet-mode-only="play" data-fact={field} />
+							<dd data-sheet-mode-only="edit">
+								<input class="journal-input" type="text" autocomplete="off" aria-labelledby={`journal-fact-${field}`} data-description={field} />
+							</dd>
+						</div>
+					))
+				}
+			</dl>
+		</section>
+		<aside class="journal-record-aside">
+			<h3 class="journal-aside-title">Narrative record, not mechanical sheet</h3>
+			<p>
+				This section captures possession inventory, blood obligations and personal details for play reference. Confirm vinculi
+				ratings and derangements with your Storyteller.
+			</p>
+		</aside>
+	</div>
+</div>

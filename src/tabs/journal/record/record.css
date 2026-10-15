@@ -1,0 +1,412 @@
+/* The Character Record of the Journal, as the Figma frame draws it: possessions and blood bonds on the
+   left, derangements, goals and the description on the right. Text is held to the shared 12px minimum,
+   so the frame's 9-11px captions are drawn at 12px. In edit mode each entry swaps its read-only view for
+   a form in the same card. */
+
+.journal-record-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-3);
+}
+
+.journal-record-intro {
+	display: grid;
+	gap: 5px;
+}
+
+.journal-record-undo {
+	min-block-size: 0;
+}
+
+.journal-record-workspace {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-4);
+	align-items: start;
+}
+
+@media (min-width: 64rem) {
+	.journal-record-workspace {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 28.9rem);
+	}
+}
+
+.journal-record-main,
+.journal-record-side {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-4);
+	align-content: start;
+	min-inline-size: 0;
+}
+
+.journal-record-section {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-row);
+	align-content: start;
+}
+
+.journal-record-section-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+}
+
+.journal-record-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: 1.75rem;
+	font-weight: 400;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text);
+}
+
+.journal-record-pair {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+}
+
+@media (min-width: 40rem) {
+	.journal-record-pair {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.journal-record-card {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-2);
+	align-content: start;
+	min-inline-size: 0;
+	padding: var(--space-3);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.journal-record-list {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.journal-record-row {
+	min-inline-size: 0;
+}
+
+/* An entry with nothing written in it is not shown in play, as a blank Background row is not. */
+.sheet[data-sheet-mode='play'] .journal-record-row[data-blank='true'] {
+	display: none;
+}
+
+.journal-record-row + .journal-record-row {
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+.journal-record-view {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	min-block-size: 2.0625rem;
+	padding-block: var(--space-2);
+}
+
+.journal-record-item {
+	font-size: var(--text-body);
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+.journal-record-detail {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+/* The bonds, as a table of three columns. */
+.journal-bond-head,
+.journal-bond .journal-record-view {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 4.5rem minmax(0, 8rem);
+	align-items: center;
+	gap: var(--space-3);
+}
+
+.journal-bond-head {
+	font-size: var(--text-small);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.journal-bond-who {
+	display: grid;
+	gap: 2px;
+	min-inline-size: 0;
+}
+
+.journal-bond-name {
+	font-size: var(--text-body);
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.journal-bond-relation {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.journal-bond-rating {
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	text-align: center;
+	color: var(--color-accent-text);
+}
+
+.journal-bond-type,
+.journal-record-status {
+	justify-self: start;
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	line-height: 1.5rem;
+	color: var(--color-muted);
+	background: var(--color-control);
+	border-radius: var(--radius-badge);
+	overflow-wrap: anywhere;
+}
+
+.journal-record-status {
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+}
+
+/* Derangements and goals are lists of cards. */
+.journal-record-cards {
+	gap: var(--space-row);
+}
+
+.journal-derangement {
+	padding: var(--space-3);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.journal-record-cards > .journal-derangement + .journal-derangement {
+	border-block-start-width: var(--stroke);
+}
+
+.journal-derangement .journal-record-view {
+	display: grid;
+	gap: var(--space-2);
+	padding: 0;
+}
+
+.journal-derangement-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
+.journal-derangement-name {
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	line-height: 1.2;
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.journal-derangement-note {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.journal-derangement-text {
+	font-size: var(--text-body);
+	line-height: 1.6;
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+ol.journal-record-cards {
+	gap: 0;
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.journal-goal {
+	padding: var(--space-row) var(--space-3);
+}
+
+.journal-goal .journal-record-view {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: flex-start;
+	justify-content: flex-start;
+	gap: var(--space-row);
+	padding: 0;
+}
+
+.journal-goal-number {
+	flex: none;
+	display: inline-grid;
+	place-items: center;
+	inline-size: 1.75rem;
+	block-size: 1.75rem;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	background: var(--color-control);
+	border-radius: 50%;
+}
+
+.journal-goal-body {
+	display: grid;
+	flex: 1 1 0;
+	gap: var(--space-1);
+	min-inline-size: 0;
+}
+
+.journal-goal-text {
+	font-size: var(--text-body);
+	line-height: 1.5;
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+.journal-record-note {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: 1.6;
+	color: var(--color-muted);
+}
+
+/* The description: a label and its value on each line. */
+.journal-facts {
+	gap: 0;
+	margin: 0;
+}
+
+.journal-fact {
+	display: grid;
+	grid-template-columns: minmax(5.5rem, 9rem) minmax(0, 1fr);
+	align-items: center;
+	gap: var(--space-3);
+	min-block-size: 2.25rem;
+	padding-block: var(--space-1);
+}
+
+.journal-fact + .journal-fact {
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+.journal-fact dt {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.journal-fact dd {
+	margin: 0;
+	font-size: var(--text-body);
+	text-align: end;
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.journal-fact dd.is-empty {
+	color: var(--color-muted);
+}
+
+.journal-record-aside {
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-3);
+	font-size: var(--text-small);
+	line-height: 1.6;
+	color: var(--color-muted);
+	background: var(--color-selected);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.journal-record-aside p {
+	margin: 0;
+}
+
+.journal-aside-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-body);
+	font-size: var(--text-body);
+	font-weight: 600;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text);
+}
+
+/* Edit mode */
+
+.journal-record-edit {
+	display: grid;
+	gap: var(--space-row);
+	padding-block: var(--space-2);
+}
+
+.journal-record-fields {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-row);
+}
+
+@media (min-width: 40rem) {
+	.journal-record-fields {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.journal-record-field-wide {
+		grid-column: 1 / -1;
+	}
+}
+
+.journal-record-field {
+	display: grid;
+	gap: var(--space-1);
+	align-content: start;
+	min-inline-size: 0;
+}
+
+/* The sheet's own label rule (a flex row as tall as a control) is for its fields; these labels sit over theirs. */
+.sheet .journal-record-field .journal-label {
+	display: block;
+	min-block-size: 0;
+	white-space: normal;
+}
+
+.journal-record-hint {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-danger);
+}
+
+button.journal-record-remove,
+button.journal-record-add {
+	justify-self: start;
+}
