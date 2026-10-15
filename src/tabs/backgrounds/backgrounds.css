@@ -1,0 +1,451 @@
+/* The Backgrounds tab, as the Figma frame "Backgrounds and personal traits" draws it: Backgrounds and
+   Havens on the left, Merits, Flaws and Other Traits on the right. Text is held to the shared 12px
+   minimum, so the frame's 9-11px captions are drawn at 12px. Edit mode swaps each entry's read-only
+   view for a form in the same card. */
+
+.backgrounds {
+	padding-block-start: var(--space-4);
+	padding-block-end: 2rem;
+	gap: var(--space-3);
+}
+
+.backgrounds-heading {
+	display: grid;
+	gap: 5px;
+}
+
+.backgrounds .dossier-title {
+	font-size: 2rem;
+}
+
+.backgrounds-lead {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-muted);
+}
+
+.backgrounds-index-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-4);
+	padding-block-end: var(--space-row);
+	border-block-end: var(--stroke) solid var(--color-line);
+}
+
+.backgrounds-index {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-1) var(--space-4);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.backgrounds-undo {
+	min-block-size: 0;
+}
+
+.backgrounds-workspace {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-4);
+	align-items: start;
+}
+
+@media (min-width: 64rem) {
+	.backgrounds-workspace {
+		grid-template-columns: minmax(0, 1fr) 29rem;
+	}
+}
+
+.backgrounds-main,
+.backgrounds-side {
+	display: grid;
+	gap: var(--space-4);
+	min-inline-size: 0;
+}
+
+.backgrounds-section {
+	display: grid;
+	gap: var(--space-row);
+	align-content: start;
+	min-inline-size: 0;
+}
+
+.backgrounds-section-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+}
+
+.backgrounds-section-title {
+	margin: 0;
+	padding: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h2);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.backgrounds-count {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.backgrounds-grid,
+.backgrounds-trait-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.backgrounds-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+}
+
+@media (min-width: 40rem) {
+	.backgrounds-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.backgrounds-add {
+	justify-self: start;
+	min-block-size: var(--control-compact);
+	padding-block: var(--space-1);
+}
+
+/* A card of one entry: a Background, a Haven, or one line of Merits, Flaws and Other Traits. */
+.bg-card,
+.bg-haven {
+	display: grid;
+	align-content: start;
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.bg-card {
+	min-block-size: 7.75rem;
+	padding: var(--space-3);
+}
+
+.bg-haven {
+	padding: 18px;
+}
+
+.bg-view,
+.bg-edit {
+	display: grid;
+	gap: var(--space-2);
+	align-content: start;
+	min-inline-size: 0;
+}
+
+.bg-haven .bg-view {
+	gap: var(--space-row);
+}
+
+.bg-card-head,
+.bg-other-head,
+.bg-trait-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-row);
+}
+
+.bg-card-name,
+.bg-haven-name,
+.bg-trait-name,
+.bg-other-name {
+	margin: 0;
+	font-family: var(--font-display);
+	font-weight: 400;
+	line-height: var(--leading-tight);
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.bg-card-name {
+	font-size: 1.4375rem;
+}
+
+.bg-haven-name {
+	font-size: 1.4375rem;
+	line-height: 1.1;
+}
+
+.bg-trait-name,
+.bg-other-name {
+	font-size: 1.375rem;
+}
+
+.bg-card-rating {
+	display: flex;
+	align-items: center;
+	gap: var(--space-row);
+}
+
+.bg-card-number {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.bg-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.bg-pill {
+	display: inline-flex;
+	align-items: baseline;
+	gap: var(--space-2);
+	padding: 6px var(--space-row);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-divider);
+	border-radius: 999px;
+}
+
+.bg-pill-name {
+	font-size: var(--text-small);
+	font-weight: 600;
+	color: var(--color-text);
+}
+
+.bg-pill-role {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.bg-view p,
+.bg-edit p {
+	margin: 0;
+}
+
+.bg-card-summary {
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-text);
+}
+
+.bg-card-note,
+.bg-trait-note,
+.bg-haven-description {
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-muted);
+}
+
+/* A Haven. */
+.bg-haven-kind[data-kind='Primary'] {
+	justify-self: start;
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+	border-color: var(--color-selected);
+}
+
+.bg-haven-kind {
+	justify-self: start;
+	color: var(--color-muted);
+	background: var(--color-control);
+	border-color: var(--color-control);
+}
+
+.bg-rule {
+	inline-size: 100%;
+	block-size: 0;
+	margin: 0;
+	border: 0;
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+.bg-haven-details {
+	display: grid;
+	gap: var(--space-row);
+	margin: 0;
+}
+
+.bg-haven-place {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	gap: var(--space-row) var(--space-3);
+}
+
+.bg-haven-detail {
+	display: grid;
+	gap: var(--space-1);
+	align-content: start;
+	min-inline-size: 0;
+}
+
+.bg-haven-detail dt {
+	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.bg-haven-value {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+/* Merits, Flaws and Other Traits: one card holding a line for each entry. */
+.backgrounds-trait-list {
+	overflow: hidden;
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.bg-trait,
+.bg-other {
+	padding: var(--space-3);
+}
+
+.bg-trait + .bg-trait,
+.bg-other + .bg-other {
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+.bg-trait-identity {
+	display: grid;
+	gap: var(--space-1);
+	min-inline-size: 0;
+}
+
+.bg-trait-kind,
+.bg-other-kind {
+	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.bg-points {
+	color: var(--color-muted);
+	background: var(--color-control);
+	border-color: var(--color-control);
+}
+
+.bg-points[data-family='flaws'] {
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+	border-color: var(--color-selected);
+}
+
+.backgrounds-guidance {
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-3);
+	background: var(--color-selected);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.backgrounds-guidance p {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-muted);
+}
+
+.backgrounds-guidance .backgrounds-guidance-title {
+	font-weight: 600;
+	color: var(--color-text);
+}
+
+/* Edit mode: the same cards, with a field for each part. */
+.bg-fields {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+	gap: var(--space-row) var(--space-3);
+}
+
+.bg-field {
+	display: grid;
+	gap: var(--space-1);
+	align-content: start;
+	min-inline-size: 0;
+}
+
+.bg-field-wide {
+	grid-column: 1 / -1;
+}
+
+/* The sheet's own label rule (a flex row as tall as a control) is for its fields; these sit over theirs. */
+.sheet .bg-field-label {
+	display: block;
+	min-block-size: 0;
+	font-size: var(--text-small);
+	white-space: normal;
+	color: var(--color-muted);
+}
+
+.sheet .bg-input {
+	inline-size: 100%;
+	min-inline-size: 0;
+	min-block-size: var(--control-compact);
+	padding: var(--space-1) var(--space-2);
+	font: inherit;
+	font-size: var(--text-small);
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.sheet textarea.bg-input {
+	resize: vertical;
+}
+
+.bg-people {
+	display: grid;
+	gap: var(--space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.bg-person {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: var(--space-2) var(--space-3);
+}
+
+.bg-person .bg-fields {
+	flex: 1 1 14rem;
+}
+
+.bg-add-person,
+.bg-remove {
+	justify-self: start;
+	min-block-size: var(--control-compact);
+	padding-block: var(--space-1);
+}
+
+.bg-flag,
+.bg-hint {
+	font-size: var(--text-small);
+	color: var(--color-accent-text);
+}

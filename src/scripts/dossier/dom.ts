@@ -37,3 +37,32 @@ export function replaceKeepingFocus(container: Element, children: readonly Node[
     same?.focus();
   }
 }
+
+/**
+ * Draws a keyed list into `container`. When the keys are the same as last time and in the same order
+ * the existing elements are only updated, so a field the player is typing in is left alone; otherwise
+ * the list is built again, keeping focus on the control with the same `data-focus-key`.
+ */
+export function reconcile<T>(
+  container: Element,
+  items: readonly T[],
+  keyOf: (item: T) => string,
+  build: (item: T) => HTMLElement,
+  update: (element: HTMLElement, item: T) => void,
+): void {
+  const existing = [...container.children] as HTMLElement[];
+  const same = existing.length === items.length && existing.every((element, at) => element.dataset.key === keyOf(items[at]));
+  if (same) {
+    existing.forEach((element, at) => update(element, items[at]));
+    return;
+  }
+  replaceKeepingFocus(
+    container,
+    items.map((item) => {
+      const element = build(item);
+      element.dataset.key = keyOf(item);
+      update(element, item);
+      return element;
+    }),
+  );
+}
