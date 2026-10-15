@@ -18,7 +18,7 @@ const { label, options, pressed } = Astro.props;
 		options.map((option) => (
 			<button type="button" class="dossier-segment" data-value={option.value} aria-pressed={option.value === pressed ? 'true' : 'false'}>
 				<span class="dossier-segment-mark" aria-hidden="true">✓</span>
-				{option.label}
+				<span class="dossier-segment-label">{option.label}</span>
 			</button>
 		))
 	}

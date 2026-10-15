@@ -41,6 +41,11 @@ const catalogueKey = (name: string): string => name.trim().replace(/\s+/g, ' ').
 
 const BY_NAME = new Map(DISCIPLINE_CATALOGUE.map((entry) => [catalogueKey(entry.name), entry]));
 
+/** The catalogue's entry for a Discipline name, whatever its case and spacing; undefined for one the catalogue does not know. */
+export function disciplineEntry(name: string): DisciplineEntry | undefined {
+  return BY_NAME.get(catalogueKey(name));
+}
+
 /** A power as the character has it: its dice pool now, or what it uses instead of one. */
 export interface PowerReading {
   name: string;

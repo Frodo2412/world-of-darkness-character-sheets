@@ -22,3 +22,30 @@ export function wireSegmented(group: HTMLElement): void {
     buttons[target].focus();
   });
 }
+
+/** Marks the button holding `value` as the pressed one and the rest as not, changing only what differs. */
+export function setPressed(group: ParentNode, value: string): void {
+  for (const button of group.querySelectorAll<HTMLButtonElement>('button[data-value]')) {
+    const pressed = String(button.dataset.value === value);
+    if (button.getAttribute('aria-pressed') !== pressed) button.setAttribute('aria-pressed', pressed);
+  }
+}
+
+/** Rewrites the visible words of the button holding `value`, keeping its mark. */
+export function setSegmentLabel(group: ParentNode, value: string, text: string): void {
+  const label = [...group.querySelectorAll<HTMLButtonElement>('button[data-value]')]
+    .find((button) => button.dataset.value === value)
+    ?.querySelector('.dossier-segment-label');
+  if (label !== null && label !== undefined && label.textContent !== text) label.textContent = text;
+}
+
+/** Keyboard support, plus: pressing a segment presses it and tells `onPress` which value. */
+export function wireSegmentedPress(group: HTMLElement, onPress: (value: string) => void): void {
+  wireSegmented(group);
+  group.addEventListener('click', (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('button[data-value]');
+    if (button === null || !group.contains(button)) return;
+    setPressed(group, button.dataset.value!);
+    onPress(button.dataset.value!);
+  });
+}

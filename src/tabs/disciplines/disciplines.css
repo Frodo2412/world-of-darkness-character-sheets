@@ -1,0 +1,149 @@
+/* The Disciplines tab: a list of the character's Disciplines and the chosen one's powers beside it. */
+
+.disciplines-none,
+.disciplines-no-match {
+	max-inline-size: 36rem;
+}
+
+.disciplines-list {
+	align-content: start;
+}
+
+.discipline-item {
+	align-items: flex-start;
+	padding-block: var(--space-2);
+}
+
+.discipline-item-body {
+	display: grid;
+	gap: var(--space-1);
+	min-inline-size: 0;
+}
+
+.discipline-item-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--space-1) var(--space-3);
+}
+
+.discipline-item-name {
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.discipline-item-rating,
+.discipline-item-unlocked {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.disciplines-detail {
+	display: grid;
+	gap: var(--space-3);
+	padding: var(--space-3);
+}
+
+.disciplines-detail-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+}
+
+.disciplines-rating {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	margin: 0;
+}
+
+.disciplines-rating-label {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.disciplines-rating-value {
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.disciplines-powers {
+	display: grid;
+	gap: var(--space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.discipline-power {
+	background: var(--color-row);
+	border-radius: var(--radius-row);
+}
+
+.discipline-power-summary {
+	padding-inline: var(--space-row);
+}
+
+.discipline-power-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1) var(--space-3);
+}
+
+.discipline-power-level {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.discipline-power-name {
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.discipline-power-requires {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.discipline-power-body {
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-1) var(--space-row) var(--space-row);
+}
+
+.discipline-power-body p {
+	margin: 0;
+}
+
+.discipline-power-locked {
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.discipline-power-pool {
+	display: grid;
+	justify-items: start;
+	gap: var(--space-1);
+	padding: var(--space-2) var(--space-row);
+	background: var(--color-control);
+	border-radius: var(--radius-row);
+}
+
+.discipline-power-pool-total {
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.discipline-power-pool-formula,
+.discipline-power-pool-instead,
+.discipline-power-pool-flag {
+	color: var(--color-muted);
+}
+
+.discipline-power-build-pool {
+	min-block-size: var(--control-compact);
+	padding-block: var(--space-1);
+}

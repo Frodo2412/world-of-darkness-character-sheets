@@ -268,3 +268,133 @@
 	max-inline-size: 24rem;
 	min-block-size: var(--control-compact);
 }
+
+/* A tab's panel: the page gutter, then its parts one under another. */
+.dossier-panel {
+	display: grid;
+	gap: var(--space-3);
+	padding: var(--space-3) var(--page-gutter) var(--space-5);
+}
+
+.dossier-panel > * {
+	min-inline-size: 0;
+}
+
+/* The panel's own title: where focus lands on a tab switch. The global heading rules (capitals, accent, an underline) are for the old pages. */
+.dossier-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h2);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+/* A card's own heading: a label over what the card holds. */
+.dossier-card-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.dossier-lead {
+	margin: 0;
+	color: var(--color-muted);
+}
+
+/* Label and value pairs: a power's rules, a haven's details. */
+.dossier-fields {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr);
+	gap: var(--space-1) var(--space-3);
+	margin: 0;
+}
+
+.dossier-fields dt {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.dossier-fields dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+/* A rating drawn as read-only dots: the number beside them says it too. */
+.dossier-dots {
+	--mark-size: 0.5rem;
+	gap: 0.3125rem;
+	cursor: default;
+	color: var(--color-text);
+}
+
+.dossier-dots .rating-mark {
+	border-width: 1px;
+	border-color: var(--color-border-control);
+	background: var(--color-row);
+}
+
+.dossier-dots .rating-mark.is-filled {
+	border-color: currentColor;
+	background: currentColor;
+}
+
+/* A short word that sets a state apart: its text says it, the outline only agrees. */
+.dossier-badge {
+	display: inline-block;
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	line-height: var(--leading-compact);
+	color: var(--color-text);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+	white-space: nowrap;
+}
+
+/* The list of one thing and the detail of the chosen one, side by side when there is room. */
+.dossier-split {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+	align-items: start;
+}
+
+@media (min-width: 60rem) {
+	.dossier-split {
+		grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
+	}
+}
+
+.dossier-list {
+	display: grid;
+	gap: var(--space-1);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dossier-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: var(--space-3);
+}
+
+.dossier-toolbar > .dossier-search {
+	flex: 1 1 16rem;
+	max-inline-size: 28rem;
+}
+
+/* The sheet's own label rule (a flex row as tall as a control) is for its fields; these labels sit over theirs. */
+.sheet :is(.dossier-search-label, .dossier-session-prompt-label) {
+	display: block;
+	min-block-size: 0;
+	white-space: normal;
+}

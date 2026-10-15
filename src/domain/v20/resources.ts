@@ -98,8 +98,13 @@ const TRAIT_LABELS = new Map<string, string>(
   ],
 );
 
+/** The label the sheet gives a fixed attribute or ability: "Dexterity", "Animal Ken". */
+export function traitLabel(trait: `attributes.${AttributeKey}` | `abilities.${AbilityKey}`): string {
+  return TRAIT_LABELS.get(trait)!;
+}
+
 function fixedTerm(character: V20Character, trait: `attributes.${AttributeKey}` | `abilities.${AbilityKey}`): PoolTerm {
-  const term: PoolTerm = { label: TRAIT_LABELS.get(trait)!, rating: traitValue(character, trait) };
+  const term: PoolTerm = { label: traitLabel(trait), rating: traitValue(character, trait) };
   const specialty = specialtyOf(character, trait);
   if (specialty !== undefined) term.specialty = specialty;
   return term;

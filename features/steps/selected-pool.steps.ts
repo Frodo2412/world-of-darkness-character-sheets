@@ -7,7 +7,7 @@ const formula = (page: Page): Locator => selectedPoolCard(page).locator('[data-s
 const total = (page: Page): Locator => selectedPoolCard(page).locator('[data-show="pool.total"]');
 
 /** Everything on the sheet that reports itself as chosen for the pool. */
-const pressed = (page: Page): Locator => page.locator('[aria-pressed="true"]');
+const pressed = (page: Page): Locator => page.locator('[aria-pressed="true"]:visible');
 
 // Arranging
 
