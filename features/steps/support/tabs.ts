@@ -3,9 +3,9 @@ import { sheetAddress } from './pages';
 
 const CHARACTER_SHEET = 'Character sheet';
 
-/** The key a tab's name goes by in the sheet's address: "Level up" is `level-up`; the Character sheet has none. */
+/** The key a tab's name goes by in the sheet's address: "Level up" is `levelup` (its folder's name); the Character sheet has none. */
 export const tabKeyOf = (name: string): string | undefined =>
-  name === CHARACTER_SHEET ? undefined : name.toLowerCase().replace(/\s+/g, '-');
+  name === CHARACTER_SHEET ? undefined : name.toLowerCase().replace(/\s+/g, '');
 
 /** The address of a character's sheet on the tab called `name`, or on the tab named by the address itself, however odd. */
 export function tabAddress(id: string, tab: string | undefined): string {

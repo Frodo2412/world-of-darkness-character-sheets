@@ -2,7 +2,7 @@ import { expect } from '@playwright/test';
 import { Given, Then, When, memoryFor } from './fixtures';
 import { characterArranged, saveCharacters } from './support/seed';
 import { openSavedSheet } from './support/sheet';
-import { showTab } from './support/tabs';
+import { activePanel, showTab } from './support/tabs';
 import {
   appBarLabel,
   currentRows,
@@ -105,9 +105,10 @@ When(/^the player starts "([^"]*)" and opens the Character sheet tab$/, async ({
   await showTab(page, 'Character sheet');
 });
 
+// Reloading keeps the address, so the same tab is shown again: whichever it was.
 When('the sheet is reloaded', async ({ page }) => {
   await page.reload();
-  await expect(journalPanel(page)).toBeVisible();
+  await expect(activePanel(page)).toBeVisible();
 });
 
 // Checking

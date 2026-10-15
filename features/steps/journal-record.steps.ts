@@ -3,6 +3,7 @@ import { Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
 import { announcements } from './support/announcements';
 import { characterArranged, saveCharacters } from './support/seed';
 import { enterEditMode, openSavedSheet } from './support/sheet';
+import { activePanel } from './support/tabs';
 import { DESCRIPTION_FIELDS } from '../../src/domain/v20/journal/record/view';
 import {
   addButton,
@@ -106,8 +107,9 @@ When('the player removes the first goal on the Journal record', async ({ page, m
   await recordSection(page).getByRole('button', { name: 'Remove Uncover the owner of the portrait', exact: true }).click();
 });
 
+// "Undo" names the one shown notice on whichever tab is open (the record's removal, Level up's result), so the step is shared.
 When('the player presses Undo', async ({ page }) => {
-  await recordSection(page).getByRole('button', { name: 'Undo', exact: true }).click();
+  await activePanel(page).getByRole('button', { name: 'Undo', exact: true }).click();
 });
 
 When('the player enters a bond rating of {int}, then {int}, on the Journal record', async ({ page, memory }, first: number, second: number) => {
