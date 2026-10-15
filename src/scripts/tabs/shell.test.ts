@@ -51,6 +51,7 @@ function setup(
   const view: ShellView = {
     show: (tab) => void log.push(`view:show:${tab.key}`),
     focus: (tab) => void log.push(`view:focus:${tab.key}`),
+    reveal: (tab) => void log.push(`view:reveal:${tab.key}`),
     loadFailed: (tab) => void log.push(`view:failed:${tab.key}`),
     unavailable: (tab) => void log.push(`view:unavailable:${tab.key}`),
     showResources: (visible) => void resources.push(visible),
@@ -621,6 +622,20 @@ describe('opening a tab as the player does', () => {
       'view:after:combat',
       'view:focus:combat',
     ]);
+  });
+
+  it('a choice made in the tab bar keeps focus where it is and only brings the panel into view', async () => {
+    const log: string[] = [];
+    const sheet = recordingTab('sheet', log).descriptor;
+    const { shell } = setup([sheet, recordingTab('combat', log).descriptor], log);
+    await shell.switchTo('sheet');
+    log.length = 0;
+
+    await shell.open('combat', { focus: false });
+
+    expect(log[0]).toBe('push:combat');
+    expect(log.at(-1)).toBe('view:reveal:combat');
+    expect(log.some((entry) => entry.startsWith('view:focus'))).toBe(false);
   });
 
   it('does nothing for the tab already shown', async () => {

@@ -4,7 +4,7 @@ import { Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
 import { announcements } from './support/announcements';
 import { arrangeTraits } from './support/arrange';
 import { withLedger } from './support/journal-experience';
-import { characterArranged, saveCharacters } from './support/seed';
+import { characterArranged } from './support/seed';
 import { editButton, enterEditMode, openSavedSheet, savedCharacter } from './support/sheet';
 import { rating, setRating } from './support/ratings';
 import { showTab } from './support/tabs';

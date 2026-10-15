@@ -3,6 +3,7 @@ import { ABILITY_GROUPS } from '../../src/domain/v20/traits';
 import { Given, Then } from './fixtures';
 import { crowdedCharacter, givenSaved } from './support/seed';
 import { boxOf, card, expectReadAs, openSavedSheet, visibleDots } from './support/sheet';
+import { tabPanelOf } from './support/tabs';
 
 /** Every row the group is showing, fixed and custom, in the order drawn. */
 const shownRows = (group: Locator): Locator => group.locator('[data-trait-key]:visible');
@@ -156,10 +157,12 @@ Then(
 
 // What the play view no longer shows
 
+// Other tabs have a Notes section and an Experience section of their own, in panels that are not shown: the Character sheet is what is checked.
 Then('there is no field for Notes, Weakness or Experience', async ({ page }) => {
+  const sheet = tabPanelOf(page, 'sheet');
   for (const label of ['Notes', 'Weakness', 'Experience']) {
-    await expect(page.getByLabel(label)).toHaveCount(0);
-    await expect(page.getByRole('heading', { name: new RegExp(label) })).toHaveCount(0);
+    await expect(sheet.getByLabel(label)).toHaveCount(0);
+    await expect(sheet.getByRole('heading', { name: new RegExp(label) })).toHaveCount(0);
   }
 });
 

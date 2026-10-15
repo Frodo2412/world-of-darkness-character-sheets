@@ -153,7 +153,8 @@ Then('no text on the sheet is wider than the element that holds it', async ({ pa
         return display !== 'inline' && display !== 'contents' && element.clientWidth > 1 && element.checkVisibility();
       })
       // A text field scrolls a value longer than itself by design; its box is checked below instead.
-      .filter((element) => !(element instanceof HTMLInputElement) && element.scrollWidth > element.clientWidth)
+      // So does a box that says it scrolls (the tab bar, a table): what it holds is reached by scrolling it.
+      .filter((element) => !(element instanceof HTMLInputElement) && !['auto', 'scroll'].includes(getComputedStyle(element).overflowX) && element.scrollWidth > element.clientWidth)
       .map((element) => `${element.tagName.toLowerCase()}.${element.className}`),
   );
   expect(overflowing).toEqual([]);

@@ -12,6 +12,8 @@ export interface ShellView {
   show(tab: TabDescriptor): void;
   /** Moves keyboard focus into the tab's panel, to its heading. */
   focus(tab: TabDescriptor): void;
+  /** Brings the tab's panel into view when it is out of it, and moves no focus. */
+  reveal(tab: TabDescriptor): void;
   /** Says the tab could not be loaded or mounted; choosing it again tries again. */
   loadFailed(tab: TabDescriptor): void;
   /** Takes the tab's panel away when it failed and there is no tab to go back to: a panel nothing drew or bound is not shown. */
@@ -55,8 +57,11 @@ export interface Shell {
    * shown before it is shown again, and choosing the failed tab again tries again.
    */
   switchTo(key: TabKey): Promise<void>;
-  /** A player's choice of tab: as `switchTo`, and also a history entry and focus in the panel. */
-  open(key: TabKey): Promise<void>;
+  /**
+   * A player's choice of tab: as `switchTo`, and also a history entry and focus in the panel. A choice made in
+   * the tab bar passes `focus: false`: the bar keeps focus, as a tab list does, and the panel is only brought into view.
+   */
+  open(key: TabKey, options?: { focus?: boolean }): Promise<void>;
   /** The one path every edit takes: update the model, redraw, save. */
   apply(update: Update): V20Character;
   /** The mode changed: forget the pool and redraw. */
@@ -231,11 +236,13 @@ export function createShell(options: ShellOptions): Shell {
     view.loadFailed(tab);
   }
 
-  async function open(key: TabKey): Promise<void> {
+  async function open(key: TabKey, { focus = true }: { focus?: boolean } = {}): Promise<void> {
     if (isShown(key)) return;
     options.push(key);
     await switchTo(key);
-    if (activeKey === key && loaded.has(key) && !broken.has(key)) view.focus(descriptors.get(key)!);
+    if (activeKey !== key || !loaded.has(key) || broken.has(key)) return;
+    if (focus) view.focus(descriptors.get(key)!);
+    else view.reveal(descriptors.get(key)!);
   }
 
   return {

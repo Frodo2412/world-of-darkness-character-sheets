@@ -20,7 +20,7 @@ import type { Apply } from './tabs/context';
 import { discoverTabs } from './tabs/discover';
 import { bindFields, drawFields } from './tabs/fields';
 import { createTabHistory } from './tabs/history';
-import { focusPanel, hidePanel, showPanel } from './tabs/panels';
+import { focusPanel, revealPanel, hidePanel, showPanel } from './tabs/panels';
 import { createAnnouncer, realStamp } from './tabs/services';
 import { createShell } from './tabs/shell';
 import { createTabBar, type TabBar } from './tabs/tabBar';
@@ -132,6 +132,7 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
         bar?.select(tab.key);
       },
       focus: (tab) => focusPanel(sheet, tab.key),
+      reveal: (tab) => revealPanel(sheet, tab.key),
       loadFailed: (tab) =>
         reportTabFailure(
           showBar
@@ -155,7 +156,8 @@ async function showSheet(loaded: V20Character, store: CharacterStore): Promise<v
   const barElement = sheet.querySelector<HTMLElement>('[data-tab-bar]');
   if (barElement !== null) {
     bar = createTabBar(barElement, {
-      onSelect: (key) => surviving(shell.open(key)),
+      // The bar keeps focus on the tab chosen, so the arrow keys carry on from it.
+      onSelect: (key) => surviving(shell.open(key, { focus: false })),
       hrefFor: (key) => hrefFor(new URL(window.location.href), key),
     });
   }

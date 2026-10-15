@@ -6,6 +6,7 @@ import { setRating } from './support/ratings';
 import { characterArranged, characterWith, givenSaved, saveCharacters } from './support/seed';
 import { enterEditMode, openSavedSheet } from './support/sheet';
 import { escaped } from './support/text';
+import { tabPanelOf } from './support/tabs';
 
 const disciplinesCard = (page: Page): Locator => page.getByRole('region', { name: 'Disciplines', exact: true });
 
@@ -202,11 +203,13 @@ Then('no Discipline name field or rating control is offered', async ({ page }) =
 
 // Backgrounds
 
+// The Backgrounds tab has them, in a panel that is not shown: the Character sheet is what is checked.
 Then('there is no field for any Background', async ({ page }) => {
-  await expect(page.getByLabel(/Background/)).toHaveCount(0);
-  await expect(page.getByRole('textbox', { name: /Background/ })).toHaveCount(0);
-  await expect(page.getByRole('slider', { name: /Background/ })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: /Background/ })).toHaveCount(0);
+  const sheet = tabPanelOf(page, 'sheet');
+  await expect(sheet.getByLabel(/Background/)).toHaveCount(0);
+  await expect(sheet.getByRole('textbox', { name: /Background/ })).toHaveCount(0);
+  await expect(sheet.getByRole('slider', { name: /Background/ })).toHaveCount(0);
+  await expect(sheet.getByRole('heading', { name: /Background/ })).toHaveCount(0);
 });
 
 // Virtues
