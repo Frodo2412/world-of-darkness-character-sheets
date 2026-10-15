@@ -112,7 +112,7 @@ When(
 );
 
 const searchBox = (page: Parameters<typeof disciplinesPanel>[0]) =>
-  disciplinesPanel(page).getByRole('searchbox', { name: 'Search disciplines and powers', exact: true });
+  disciplinesPanel(page).getByRole('searchbox', { name: 'Search disciplines or powers', exact: true });
 
 When(/^the player searches "([^"]+)" on the Disciplines tab$/, async ({ page, memory }, query: string) => {
   if (!(await disciplinesPanel(page).isVisible())) await showDisciplines(page, memory.saved[0].id);
@@ -169,7 +169,8 @@ Then('a Discipline the character lacks shows every power Locked on the Disciplin
 Then(/^"?(.+?)"? shows its name and rating and no powers on the Disciplines tab$/, async ({ page }, name: string) => {
   await selectDiscipline(page, name);
   await expect(disciplineDetail(page).getByRole('heading', { name, exact: true })).toBeVisible();
-  await expect(disciplineDetail(page).locator('[data-detail-rating]')).toContainText('/');
+  await expect(disciplineItem(page, name)).toContainText('/');
+  await expect(disciplineDetail(page).locator('[data-detail-rating]')).toContainText('Your rating');
   await expect(disciplinesPanel(page).locator('details.discipline-power')).toHaveCount(0);
 });
 
@@ -226,7 +227,7 @@ Then(
   async ({ page, memory }, pool: string, reference: string) => {
     const row = currentPower(page, memory);
     await expect(ruleValue(row, 'Dice pool')).toHaveText(pool);
-    await expect(ruleValue(row, 'Reference')).toHaveText(reference);
+    await expect(row.locator('.discipline-power-source')).toContainText(reference);
   },
 );
 

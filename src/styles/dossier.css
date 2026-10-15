@@ -107,7 +107,11 @@
 .dossier-segmented {
 	display: inline-flex;
 	flex-wrap: wrap;
-	gap: var(--space-1);
+	gap: 3px;
+	padding: 3px;
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
 }
 
 .dossier-segment,
@@ -123,7 +127,20 @@
 	border-radius: var(--radius-segment);
 }
 
-.dossier-segment[aria-pressed='true'],
+.dossier-segment {
+	padding: var(--space-2) 15px;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: 3px;
+}
+
+.dossier-segment[aria-pressed='true'] {
+	font-weight: 400;
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+}
+
 .dossier-item-button[aria-current='true'] {
 	font-weight: 600;
 	color: var(--color-text-strong);
@@ -171,28 +188,49 @@
 	gap: var(--space-1);
 }
 
+/* Named for assistive technology; the box says what it is for in its placeholder. */
 .dossier-search-label {
-	font-size: var(--text-small);
-	color: var(--color-muted);
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
 }
 
 .dossier-search-box {
 	display: flex;
 	align-items: center;
-	gap: var(--space-2);
+	gap: 10px;
+	padding: var(--space-row) var(--space-card);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.dossier-search-box::before {
+	content: '';
+	flex: none;
+	inline-size: 16px;
+	block-size: 16px;
+	background: url('../assets/icons/search.svg') center / contain no-repeat;
 }
 
 .dossier-search-input {
 	flex: 1;
 	min-inline-size: 0;
 	min-block-size: var(--control-compact);
-	padding: var(--space-1);
+	padding: 0;
 	font: inherit;
+	font-size: var(--text-small);
 	color: var(--color-text);
-	background: var(--color-control);
-	border: var(--stroke) solid var(--color-border-control);
-	border-radius: var(--radius-button);
+	background: transparent;
+	border: 0;
 	appearance: none;
+}
+
+.dossier-search-input::placeholder {
+	color: var(--color-muted);
 }
 
 /* The clear button is ours; the browser's own would be a second one. */

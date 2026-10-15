@@ -12,10 +12,12 @@ const views = [
 ---
 
 <div class="dossier-panel disciplines">
-	<h2 class="dossier-title" data-panel-heading>Disciplines</h2>
-	<p class="dossier-lead">Edit Discipline ratings on the <a href="/" data-open-sheet>Character sheet</a>.</p>
-	<div class="dossier-toolbar">
-		<SearchField id="disciplines-search" label="Search disciplines and powers" placeholder="Name or summary" />
+	<div class="disciplines-heading">
+		<h2 class="dossier-title" data-panel-heading>Disciplines</h2>
+		<p class="disciplines-edit-hint">Edit Discipline ratings on the <a href="/" data-open-sheet>Character sheet</a>.</p>
+	</div>
+	<div class="disciplines-tools">
+		<SearchField id="disciplines-search" label="Search disciplines or powers" placeholder="Search disciplines or powers…" />
 		<SegmentedControl label="Disciplines shown" options={views} pressed="owned" />
 	</div>
 	<div class="dossier-empty disciplines-none" data-none hidden>
@@ -25,19 +27,26 @@ const views = [
 		</div>
 	</div>
 	<p class="dossier-empty dossier-empty-message disciplines-no-match" data-no-match hidden>No Disciplines or powers match the search.</p>
-	<div class="dossier-split" data-split>
-		<ul class="dossier-list disciplines-list" aria-label="Disciplines" data-discipline-list></ul>
-		<section class="card disciplines-detail" aria-labelledby="discipline-detail-title" data-discipline-detail>
+	<div class="disciplines-body" data-split>
+		<div class="disciplines-library">
+			<p class="disciplines-library-label" data-library-label>Disciplines</p>
+			<ul class="disciplines-list" aria-label="Disciplines" data-discipline-list></ul>
+			<hr class="disciplines-divider" />
+			<p class="disciplines-library-note">Reference library: V20 core rulebook. Power level is separate from your Discipline rating.</p>
+		</div>
+		<section class="disciplines-detail" aria-labelledby="discipline-detail-title" data-discipline-detail>
 			<div class="disciplines-detail-head">
-				<h3 class="dossier-card-title" id="discipline-detail-title" data-detail-name></h3>
-				<p class="disciplines-rating">
-					<span class="disciplines-rating-label">Your rating</span>
-					<span class="disciplines-rating-dots" data-detail-dots></span>
+				<div class="disciplines-intro">
+					<h3 class="disciplines-detail-name" id="discipline-detail-title" data-detail-name></h3>
+					<p class="disciplines-detail-note" data-detail-note hidden></p>
+				</div>
+				<div class="disciplines-rating">
 					<span class="disciplines-rating-value" data-detail-rating></span>
-				</p>
+					<span class="disciplines-rating-dots" data-detail-dots></span>
+				</div>
 			</div>
-			<p class="dossier-lead" data-detail-note hidden></p>
 			<ul class="disciplines-powers" aria-label="Powers" data-power-list></ul>
+			<p class="disciplines-footnote">Brief table references, not full rules. See the page given for each power for exceptions and the complete system.</p>
 		</section>
 	</div>
 </div>

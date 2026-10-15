@@ -4,25 +4,76 @@ import { el, replaceKeepingFocus } from '../../scripts/dossier/dom';
 /** What identifies a power across redraws: which of the open ones to keep open. */
 export const powerKey = (discipline: string, power: PowerView): string => `${discipline}/${power.name}`;
 
-function field(label: string, value: string): [HTMLElement, HTMLElement] {
-  return [el('dt', undefined, label), el('dd', undefined, value)];
+const stateText = (power: PowerView): string => (power.state === 'known' ? 'Known' : 'Locked');
+
+function rule(label: string, value: string): HTMLElement {
+  const block = el('div', 'discipline-rule');
+  block.append(el('dt', undefined, label), el('dd', undefined, value));
+  return block;
 }
 
-function poolBlock(discipline: string, power: PowerView): HTMLElement | undefined {
-  if (power.state === 'locked') return undefined;
-  const block = el('div', 'discipline-power-pool');
-  if (power.yourPool !== undefined) {
-    const { text, formula, incapacitated } = power.yourPool;
-    block.append(el('p', 'discipline-power-pool-total', text), el('p', 'discipline-power-pool-formula', formula));
-    if (incapacitated) block.append(el('p', 'discipline-power-pool-flag', 'Incapacitated · cannot act'));
-    const build = el('button', 'discipline-power-build-pool', 'Build pool');
-    build.type = 'button';
-    build.dataset.buildPool = powerKey(discipline, power);
-    block.append(build);
-  } else {
-    block.append(el('p', 'discipline-power-pool-instead', `Uses instead of a roll: ${power.usesInstead ?? ''}`));
+function icon(name: string): HTMLElement {
+  const mark = el('span', `discipline-icon discipline-icon-${name}`);
+  mark.setAttribute('aria-hidden', 'true');
+  return mark;
+}
+
+/** The line that is always shown: the level, the name and what it is, and (closed) a line of what it does. */
+function summaryOf(discipline: string, power: PowerView): HTMLElement {
+  const summary = el('summary', 'discipline-power-summary');
+  summary.dataset.focusKey = powerKey(discipline, power);
+
+  const level = el('span', 'discipline-power-level');
+  level.append(el('span', 'visually-hidden', 'Level '), String(power.level));
+
+  const title = el('span', 'discipline-power-title');
+  const state = el('span', 'discipline-power-state', stateText(power));
+  state.dataset.state = power.state;
+  title.append(el('span', 'discipline-power-name', power.name), state);
+
+  const info = el('span', 'discipline-power-info');
+  // Closed: a line of what the power does. Open: what it is. The stylesheet shows one.
+  const blurb = power.requires === undefined ? power.summary : `${power.requires} · ${power.summary}`;
+  info.append(title, el('span', 'discipline-power-kind', `Level ${power.level} power · ${stateText(power)}`), el('span', 'discipline-power-blurb', blurb));
+
+  const marks = el('span', 'discipline-power-marks');
+  marks.append(icon('book'), icon(power.state === 'locked' ? 'lock' : 'chevron'));
+  summary.append(level, info, marks);
+  return summary;
+}
+
+function poolBox(discipline: string, power: PowerView): HTMLElement {
+  const box = el('div', 'discipline-power-pool');
+  if (power.state === 'locked') {
+    box.append(el('p', 'discipline-power-locked', `Locked — requires ${power.requires!.replace(/^Requires /, '')}`));
+    return box;
   }
-  return block;
+  if (power.yourPool === undefined) {
+    box.append(el('p', 'discipline-power-pool-instead', `Uses instead of a roll: ${power.usesInstead ?? ''}`));
+    return box;
+  }
+  const { text, formula, incapacitated } = power.yourPool;
+  const words = el('div', 'discipline-power-pool-words');
+  words.append(el('p', 'discipline-power-pool-total', text), el('p', 'discipline-power-pool-formula', formula));
+  if (incapacitated) words.append(el('p', 'discipline-power-pool-flag', 'Incapacitated · cannot act'));
+  const build = el('button', 'discipline-power-build');
+  build.type = 'button';
+  build.dataset.buildPool = powerKey(discipline, power);
+  build.append(icon('arrow'), 'Build pool');
+  box.append(words, build);
+  return box;
+}
+
+function bodyOf(discipline: string, power: PowerView): HTMLElement {
+  const body = el('div', 'discipline-power-body');
+  const first = el('dl', 'discipline-rules discipline-rules-three');
+  first.append(rule('Activation cost', power.cost), rule('Duration', power.duration), rule('Prerequisite', power.prerequisite));
+  const second = el('dl', 'discipline-rules discipline-rules-two');
+  second.append(rule('Dice pool', power.poolRule), rule('Difficulty / resistance', power.difficulty));
+  const source = el('p', 'discipline-power-source');
+  source.append(icon('book-small'), `${power.reference} · Disciplines → ${discipline} → ${power.name}`);
+  body.append(el('p', 'discipline-power-text', power.summary), el('hr', 'discipline-power-rule'), first, second, poolBox(discipline, power), source);
+  return body;
 }
 
 function powerItem(discipline: string, power: PowerView, open: boolean): HTMLElement {
@@ -30,33 +81,8 @@ function powerItem(discipline: string, power: PowerView, open: boolean): HTMLEle
   const details = el('details', 'dossier-disclosure discipline-power');
   details.open = open;
   details.dataset.power = powerKey(discipline, power);
-
-  const summary = el('summary', 'discipline-power-summary');
-  summary.dataset.focusKey = powerKey(discipline, power);
-  const state = el('span', 'dossier-badge discipline-power-state', power.state === 'known' ? 'Known' : 'Locked');
-  state.dataset.state = power.state;
-  // The summary stays a list item, which is what draws its disclosure marker; its line is laid out inside.
-  const line = el('span', 'discipline-power-line');
-  line.append(el('span', 'discipline-power-level', `Level ${power.level}`), el('span', 'discipline-power-name', power.name), state);
-  if (power.requires !== undefined) line.append(el('span', 'discipline-power-requires', power.requires));
-  summary.append(line);
-
-  const body = el('div', 'discipline-power-body');
-  const rules = el('dl', 'dossier-fields');
-  rules.append(
-    ...field('Activation cost', power.cost),
-    ...field('Duration', power.duration),
-    ...field('Prerequisite', power.prerequisite),
-    ...field('Dice pool', power.poolRule),
-    ...field('Difficulty / resistance', power.difficulty),
-    ...field('Reference', power.reference),
-  );
-  body.append(el('p', 'discipline-power-text', power.summary), rules);
-  if (power.requires !== undefined) body.append(el('p', 'discipline-power-locked', `Locked — requires ${power.requires.replace(/^Requires /, '')}`));
-  const pool = poolBlock(discipline, power);
-  if (pool !== undefined) body.append(pool);
-
-  details.append(summary, body);
+  details.dataset.state = power.state;
+  details.append(summaryOf(discipline, power), bodyOf(discipline, power));
   item.append(details);
   return item;
 }

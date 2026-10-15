@@ -7,10 +7,17 @@ import { setPressed, setSegmentLabel, wireSegmentedPress } from '../../scripts/d
 import { focusSelectedPool } from '../../scripts/dossier/poolFocus';
 import type { MountedTab, TabContext } from '../../scripts/tabs/context';
 import { drawDetailHead, drawList } from './drawList';
+import { setText } from '../../scripts/dossier/dom';
 import { drawPowers, powerKey } from './drawPower';
 import { filterDisciplines, selectedDiscipline } from './filter';
 
 type Shown = 'owned' | 'all';
+
+/** "Éloïse's": the first name with the possessive, or a plain heading while the character has no name. */
+function possessive(name: string): string {
+  const first = name.trim().split(/\s+/)[0] ?? '';
+  return first === '' ? 'Owned' : `${first}\u2019s`;
+}
 
 /** The Disciplines tab: the character's Disciplines and the book's powers, read-only in both modes. */
 export function mount(ctx: TabContext): MountedTab {
@@ -23,6 +30,7 @@ export function mount(ctx: TabContext): MountedTab {
   const noMatch = find('[data-no-match]');
   const segmented = find('.dossier-segmented');
   const powerList = find('[data-power-list]');
+  const libraryLabel = find('[data-library-label]');
 
   const state = { shown: 'owned' as Shown, query: '', chosen: undefined as string | undefined };
   /** The powers the player has opened, by key: kept across redraws, forgotten with the page. */
@@ -101,6 +109,7 @@ export function mount(ctx: TabContext): MountedTab {
     views = filtered;
 
     setSegmentLabel(segmented, 'owned', `Owned · ${all.owned.length}`);
+    setText(libraryLabel, state.shown === 'owned' ? `${possessive(ctx.current().header.name)} Disciplines` : 'All Disciplines');
     search.say(state.query.trim() === '' ? '' : matchesText(filtered.length));
 
     const nothingOwned = state.shown === 'owned' && all.owned.length === 0 && state.query.trim() === '';

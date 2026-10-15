@@ -445,10 +445,11 @@ Then(
 
 // What the redesign leaves out
 
-Then('there is no tab bar, session label or settings control', async ({ page }) => {
+// The tab bar was left out of the redesign until the dossier tabs were built; it is no longer left out.
+// A session label shows once a session or chronicle exists, and this character has neither.
+Then('there is no session label or settings control', async ({ page }) => {
   await expect(identityRegion(page)).toBeVisible();
-  await expect(page.getByRole('tablist')).toHaveCount(0);
-  await expect(page.getByText(/session/i)).toHaveCount(0);
+  await expect(page.getByText(/session/i).filter({ visible: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /settings/i })).toHaveCount(0);
   await expect(page.getByRole('link', { name: /settings/i })).toHaveCount(0);
 });

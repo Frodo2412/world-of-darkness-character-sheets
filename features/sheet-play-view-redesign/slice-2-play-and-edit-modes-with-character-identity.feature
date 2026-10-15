@@ -137,7 +137,7 @@ Feature: Play and edit modes
 
   Scenario: Nothing from the out-of-scope design is shown
     Given the player has a saved character's sheet open in play mode
-    Then there is no tab bar, session label or settings control
+    Then there is no session label or settings control
 
   Scenario: A sheet address with no character still explains itself in the new look
     When the player opens the sheet address with no character id

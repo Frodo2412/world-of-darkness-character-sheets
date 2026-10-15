@@ -1,4 +1,5 @@
-import '../../components/controls/dot-rating';
+// `dot-rating` is defined by the sheet's own script, which is loaded before any tab; importing it here
+// would reorder the stylesheets it brings and let the controls' sizes beat the sheet's phone rules.
 
 /**
  * A rating drawn as read-only dots. The dots carry no meaning of their own: whoever draws them writes

@@ -6,24 +6,23 @@ import { readOnlyDots } from '../../scripts/dossier/dots';
 export const ratingText = (view: DisciplineView): string => `${view.rating} / ${view.dots}`;
 
 function listItem(view: DisciplineView, current: boolean): HTMLElement {
-  const item = el('li', 'dossier-item');
-  const button = el('button', 'dossier-item-button discipline-item');
+  const item = el('li', 'discipline-library-item');
+  const button = el('button', 'discipline-item');
   button.type = 'button';
   button.dataset.value = view.name;
   button.dataset.focusKey = view.name;
   if (current) button.setAttribute('aria-current', 'true');
-  const body = el('span', 'discipline-item-body');
-  const line = el('span', 'discipline-item-line');
-  line.append(el('span', 'discipline-item-name', view.name), el('span', 'discipline-item-rating', ratingText(view)));
-  body.append(line, readOnlyDots(view.name, view.rating, view.dots), el('span', 'discipline-item-unlocked', view.unlocked));
-  const mark = el('span', 'dossier-item-mark', '▸');
+  // The mark that shows the chosen Discipline in text as well as in its border.
+  const mark = el('span', 'discipline-item-mark', '▸');
   mark.setAttribute('aria-hidden', 'true');
-  button.append(mark, body);
+  const title = el('span', 'discipline-item-title');
+  title.append(el('span', 'discipline-item-name', view.name), el('span', 'discipline-item-rating', ratingText(view)));
+  button.append(mark, title, readOnlyDots(view.name, view.rating, view.dots), el('span', 'discipline-item-unlocked', view.unlocked));
   item.append(button);
   return item;
 }
 
-/** Draws the left list, one selectable item for each Discipline, the shown one marked. */
+/** Draws the left list, one card for each Discipline, the shown one marked. */
 export function drawList(list: HTMLElement, views: readonly DisciplineView[], shown: string | undefined): void {
   replaceKeepingFocus(list, views.map((view) => listItem(view, view.name === shown)));
 }
@@ -31,7 +30,7 @@ export function drawList(list: HTMLElement, views: readonly DisciplineView[], sh
 /** Draws the chosen Discipline's heading, rating and note; the powers are drawn by `drawPowers`. */
 export function drawDetailHead(detail: HTMLElement, view: DisciplineView): void {
   setText(detail.querySelector('[data-detail-name]')!, view.name);
-  setText(detail.querySelector('[data-detail-rating]')!, ratingText(view));
+  setText(detail.querySelector('[data-detail-rating]')!, `Your rating · ${view.rating}`);
   detail.querySelector('[data-detail-dots]')!.replaceChildren(readOnlyDots(view.name, view.rating, view.dots));
   const note = detail.querySelector<HTMLElement>('[data-detail-note]')!;
   setText(note, view.note ?? '');

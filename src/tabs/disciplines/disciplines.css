@@ -1,35 +1,130 @@
-/* The Disciplines tab: a list of the character's Disciplines and the chosen one's powers beside it. */
+/* The Disciplines tab, as the Figma frame "Disciplines and power detail" draws it: a library of the
+   character's Disciplines on the left, the chosen Discipline's powers on the right. Text is held to
+   the shared 12px minimum, so the frame's 9-11px captions are drawn at 12px. */
+
+.disciplines {
+	padding-block-start: var(--space-4);
+	padding-block-end: 2rem;
+	gap: var(--space-section);
+}
+
+.disciplines-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+}
+
+.disciplines .dossier-title {
+	font-size: 1.75rem;
+}
+
+.disciplines-edit-hint {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.disciplines-tools {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-3);
+}
+
+.disciplines-tools > .dossier-search {
+	flex: 1 1 16rem;
+}
 
 .disciplines-none,
 .disciplines-no-match {
 	max-inline-size: 36rem;
 }
 
-.disciplines-list {
-	align-content: start;
-}
-
-.discipline-item {
-	align-items: flex-start;
-	padding-block: var(--space-2);
-}
-
-.discipline-item-body {
+.disciplines-body {
 	display: grid;
-	gap: var(--space-1);
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-4);
+	align-items: start;
+}
+
+@media (min-width: 60rem) {
+	.disciplines-body {
+		grid-template-columns: 14rem minmax(0, 1fr);
+	}
+}
+
+/* The library: a label, one card for each Discipline and a note. */
+.disciplines-library {
+	display: grid;
+	gap: var(--space-3);
 	min-inline-size: 0;
 }
 
-.discipline-item-line {
+.disciplines-library-label {
+	margin: 0;
+	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.disciplines-list {
+	display: grid;
+	gap: var(--space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.discipline-library-item {
+	list-style: none;
+}
+
+.discipline-item {
+	position: relative;
+	display: grid;
+	gap: 9px;
+	inline-size: 100%;
+	padding: 14px;
+	text-align: start;
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
+}
+
+.discipline-item[aria-current='true'] {
+	border-color: var(--color-focus);
+}
+
+/* The chosen card is also marked in text, so it does not rest on its border colour. */
+.discipline-item-mark {
+	position: absolute;
+	inset-block-start: 14px;
+	inset-inline-start: 3px;
+	font-size: var(--text-small);
+	color: var(--color-focus);
+}
+
+.discipline-item:not([aria-current='true']) .discipline-item-mark {
+	visibility: hidden;
+}
+
+.discipline-item-title {
 	display: flex;
-	flex-wrap: wrap;
 	align-items: baseline;
-	gap: var(--space-1) var(--space-3);
+	justify-content: space-between;
+	gap: var(--space-2);
 }
 
 .discipline-item-name {
-	font-weight: 600;
+	font-family: var(--font-display);
+	font-size: 1.4375rem;
+	line-height: var(--leading-tight);
 	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
 }
 
 .discipline-item-rating,
@@ -38,112 +133,351 @@
 	color: var(--color-muted);
 }
 
+.discipline-item[aria-current='true'] .dossier-dots {
+	color: var(--color-accent-text);
+}
+
+.disciplines-divider {
+	inline-size: 100%;
+	block-size: 0;
+	margin: 0;
+	border: 0;
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+.disciplines-library-note,
+.disciplines-footnote {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+/* The chosen Discipline: its heading and rating, then its powers in one list. */
 .disciplines-detail {
 	display: grid;
-	gap: var(--space-3);
-	padding: var(--space-3);
+	gap: 14px;
+	min-inline-size: 0;
 }
 
 .disciplines-detail-head {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: baseline;
+	align-items: flex-start;
 	justify-content: space-between;
-	gap: var(--space-1) var(--space-3);
+	gap: var(--space-2) var(--space-3);
+}
+
+.disciplines-intro {
+	display: grid;
+	gap: 5px;
+	min-inline-size: 0;
+}
+
+.disciplines-detail-name {
+	margin: 0;
+	padding: 0;
+	font-family: var(--font-display);
+	font-size: 1.8125rem;
+	letter-spacing: normal;
+	text-transform: none;
+	line-height: var(--leading-tight);
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.disciplines-detail-note {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
 }
 
 .disciplines-rating {
-	display: flex;
-	align-items: center;
-	gap: var(--space-2);
-	margin: 0;
-}
-
-.disciplines-rating-label {
-	font-size: var(--text-small);
-	color: var(--color-muted);
+	display: grid;
+	justify-items: end;
+	gap: 6px;
 }
 
 .disciplines-rating-value {
-	font-weight: 600;
-	color: var(--color-text-strong);
+	font-size: var(--text-small);
+	color: var(--color-text);
 }
 
 .disciplines-powers {
-	display: grid;
-	gap: var(--space-2);
 	margin: 0;
 	padding: 0;
 	list-style: none;
+	overflow: hidden;
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
 }
 
-.discipline-power {
-	background: var(--color-row);
-	border-radius: var(--radius-row);
+.discipline-power-item {
+	list-style: none;
 }
 
-.discipline-power-summary {
-	padding-inline: var(--space-row);
+.discipline-power-item + .discipline-power-item {
+	border-block-start: var(--stroke) solid var(--color-line);
 }
 
-.discipline-power-line {
+/* A power is a native disclosure. The marker is the chevron or lock drawn at the end of its line. */
+.discipline-power > summary {
 	display: flex;
-	flex-wrap: wrap;
 	align-items: center;
-	gap: var(--space-1) var(--space-3);
+	gap: 14px;
+	padding: 13px 18px;
+	list-style: none;
+	cursor: pointer;
+}
+
+.discipline-power > summary::-webkit-details-marker {
+	display: none;
 }
 
 .discipline-power-level {
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 28px;
+	block-size: 28px;
 	font-size: var(--text-small);
-	color: var(--color-muted);
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-divider);
+	border-radius: var(--radius-badge);
+}
+
+.discipline-power-info {
+	flex: 1;
+	display: grid;
+	gap: 3px;
+	min-inline-size: 0;
+}
+
+.discipline-power-title {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
 }
 
 .discipline-power-name {
-	font-weight: 600;
+	font-family: var(--font-display);
+	font-size: 1.375rem;
+	line-height: var(--leading-tight);
 	color: var(--color-text-strong);
 }
 
-.discipline-power-requires {
+.discipline-power-state,
+.discipline-power-kind {
 	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
 	color: var(--color-muted);
+}
+
+.discipline-power-blurb {
+	overflow: hidden;
+	font-size: var(--text-small);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--color-muted);
+}
+
+.discipline-power[data-state='locked'] .discipline-power-name {
+	color: var(--color-muted);
+}
+
+.discipline-power-marks {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+
+.discipline-icon {
+	flex: none;
+	display: inline-block;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.discipline-icon-book {
+	inline-size: 15px;
+	block-size: 15px;
+	background-image: url('../../assets/icons/book-open.svg');
+}
+
+.discipline-icon-chevron {
+	inline-size: 14px;
+	block-size: 14px;
+	background-image: url('../../assets/icons/chevron-down-lg.svg');
+}
+
+.discipline-icon-lock {
+	inline-size: 14px;
+	block-size: 14px;
+	background-image: url('../../assets/icons/lock-keyhole.svg');
+}
+
+.discipline-icon-arrow {
+	inline-size: 14px;
+	block-size: 14px;
+	background-image: url('../../assets/icons/arrow-right-lg.svg');
+}
+
+.discipline-icon-book-small {
+	inline-size: 12px;
+	block-size: 12px;
+	background-image: url('../../assets/icons/book-open-sm.svg');
+}
+
+/* Closed: the name with its state and one line of what the power does. Open: the name large, with what it is. */
+.discipline-power:not([open]) .discipline-power-kind,
+.discipline-power[open] .discipline-power-state,
+.discipline-power[open] .discipline-power-blurb {
+	display: none;
+}
+
+.discipline-power[open] > summary {
+	padding: 20px 20px 0;
+}
+
+.discipline-power[open] .discipline-power-level {
+	inline-size: 32px;
+	block-size: 32px;
+	font-size: var(--text-body);
+	background: var(--color-selected);
+	border-color: var(--color-accent);
+}
+
+.discipline-power[open] .discipline-power-name {
+	font-size: 1.8125rem;
+}
+
+.discipline-power[open] .discipline-icon-book {
+	inline-size: 17px;
+	block-size: 17px;
+	background-image: url('../../assets/icons/book-open-lg.svg');
+}
+
+.discipline-power[open] .discipline-icon-chevron {
+	inline-size: 15px;
+	block-size: 15px;
+	background-image: url('../../assets/icons/chevron-up-lg.svg');
 }
 
 .discipline-power-body {
 	display: grid;
-	gap: var(--space-2);
-	padding: var(--space-1) var(--space-row) var(--space-row);
+	gap: var(--space-3);
+	padding: var(--space-3) 20px 20px;
 }
 
 .discipline-power-body p {
 	margin: 0;
 }
 
-.discipline-power-locked {
-	font-weight: 600;
-	color: var(--color-text-strong);
+.discipline-power-text {
+	font-size: var(--text-body);
+	line-height: 1.65;
+	color: var(--color-text);
 }
 
-.discipline-power-pool {
+.discipline-power-rule {
+	inline-size: 100%;
+	block-size: 0;
+	margin: 0;
+	border: 0;
+	border-block-start: var(--stroke) solid var(--color-divider);
+}
+
+.discipline-rules {
 	display: grid;
-	justify-items: start;
-	gap: var(--space-1);
-	padding: var(--space-2) var(--space-row);
-	background: var(--color-control);
-	border-radius: var(--radius-row);
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3) var(--space-4);
+	margin: 0;
 }
 
-.discipline-power-pool-total {
-	font-weight: 600;
-	color: var(--color-text-strong);
+@media (min-width: 40rem) {
+	.discipline-rules-three {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.discipline-rules-two {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
 }
 
-.discipline-power-pool-formula,
-.discipline-power-pool-instead,
-.discipline-power-pool-flag {
+.discipline-rule {
+	display: grid;
+	gap: 5px;
+	align-content: start;
+	min-inline-size: 0;
+}
+
+.discipline-rule dt {
+	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
 	color: var(--color-muted);
 }
 
-.discipline-power-build-pool {
-	min-block-size: var(--control-compact);
-	padding-block: var(--space-1);
+.discipline-rule dd {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+.discipline-power-pool {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-3);
+	padding: var(--space-row) var(--space-3);
+	background: var(--color-control);
+	border-radius: var(--radius-badge);
+}
+
+.discipline-power-pool-words {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.discipline-power-pool-total,
+.discipline-power-locked,
+.discipline-power-pool-instead {
+	font-size: var(--text-small);
+	color: var(--color-text);
+}
+
+.discipline-power-pool-formula,
+.discipline-power-pool-flag {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.discipline-power-build {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-block-size: 2.125rem;
+	padding: var(--space-row) 14px;
+	font-size: var(--text-small);
+	font-weight: 600;
+	color: var(--color-text-strong);
+	background: var(--color-accent);
+	border: var(--stroke) solid var(--color-accent);
+	border-radius: var(--radius-badge);
+}
+
+.discipline-power-source {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	font-size: var(--text-small);
+	color: var(--color-muted);
 }
