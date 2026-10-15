@@ -21,6 +21,13 @@ describe('validJournal', () => {
     expect(validJournal(blankJournal())).toBe(true);
   });
 
+  test('accepts a note with or without hand-added mentions', () => {
+    const withNotes = journal();
+    withNotes.sessions = [session];
+    withNotes.notes = [note, { ...note, id: 'n2', mentions: ['Camille Arnaud'] }];
+    expect(validJournal(withNotes)).toBe(true);
+  });
+
   test('accepts a journal with sessions, notes, awards and spendings', () => {
     const full = journal();
     full.sessions = [session];
@@ -36,6 +43,7 @@ describe('validJournal', () => {
     ['a session flag that is not a boolean', (j: any) => (j.sessions = [{ ...session, current: 'yes' }])],
     ['a note without an id', (j: any) => (j.notes = [{ ...note, id: undefined }])],
     ['note tags that are not a list', (j: any) => (j.notes = [{ ...note, tags: 'a' }])],
+    ['note mentions that are not a list', (j: any) => (j.notes = [{ ...note, mentions: 'Camille' }])],
     ['a note date that is text', (j: any) => (j.notes = [{ ...note, createdAt: 'today' }])],
     ['an award amount that is text', (j: any) => (j.xp.awards = [{ id: 'a', sessionId: 's', amount: '3', note: '' }])],
     ['missing spendings', (j: any) => delete j.xp.spendings],

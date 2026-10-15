@@ -1,7 +1,7 @@
 // Whether a stored journal is usable as stored. A damaged journal is reported
 // by the store, never repaired.
 
-import { isFlag, isNumber, isText, listOf, objectOf, type Check } from '../shape';
+import { isFlag, isNumber, isText, listOf, objectOf, optional, type Check } from '../shape';
 
 const session = objectOf({ id: isText, title: isText, summary: isText, current: isFlag });
 
@@ -19,6 +19,7 @@ const note = objectOf({
   body: isText,
   createdAt: isNumber,
   editedAt: isNumber,
+  mentions: optional(listOf(isText)),
 });
 
 const award = objectOf({ id: isText, sessionId: isText, amount: isNumber, note: isText });
