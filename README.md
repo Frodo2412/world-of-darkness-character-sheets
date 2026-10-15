@@ -8,6 +8,14 @@ sheet: the character's identity, attributes, abilities, Disciplines, virtues, Hu
 Willpower, Blood Pool and health, with a dice-pool calculator. A step-by-step
 **builder** creates a new character by the V20 creation rules.
 
+Beside the Character sheet, five more tabs turn the sheet into a character dossier:
+**Disciplines** (every power with its rules and your dice pool), **Backgrounds** (with
+Merits, Flaws, Havens and other traits), **Combat** (manoeuvres, weapons and a pool
+calculator), **Journal** (sessions, notes, experience and the character record) and
+**Level up** (spend the experience you have earned on advancements, applied together).
+They keep to the same record: nothing is rolled, and a character saved before the tabs
+existed opens on every one of them.
+
 ## What it does and does not do
 
 - **The sheet is a record, not a rules engine.** It accepts anything the printed sheet
@@ -17,7 +25,7 @@ Willpower, Blood Pool and health, with a dice-pool calculator. A step-by-step
 - **Saved automatically, in this browser only.** Every change is written to the
   browser's `localStorage`. There is no account, no server and no sync: characters do
   not follow you to another browser or device, and clearing site data removes them.
-- **Page 1 only.** Pages 2–4 of the V20 sheet, export/import and printing are not built.
+- **Page 1 of the printed sheet, plus the dossier tabs.** Pages 2–4 of the V20 sheet, export/import and printing are not built.
 
 ## Building a character
 

@@ -2,7 +2,7 @@ import { expect, type Page } from '@playwright/test';
 import type { V20Character } from '../../src/domain/v20/character';
 import { Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
 import { announcements, watchAnnouncements } from './support/announcements';
-import { addressedTab, asSavedBeforeTheTabs, legacyTextOf, openSheetOn, tabKeys, tabNamed, tabNames, tabs, withLegacyText } from './support/dossier';
+import { addressedTab, asSavedBeforeTheTabs, legacyTextOf, openSheetOn, tabKeys, tabNamed, tabNames, withLegacyText } from './support/dossier';
 import { selectDiscipline } from './support/disciplines';
 import { addButton, backgroundsPanel } from './support/backgrounds';
 import { awardOnPage } from './support/journal-experience';

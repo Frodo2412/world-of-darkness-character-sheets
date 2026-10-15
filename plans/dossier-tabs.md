@@ -1658,76 +1658,76 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
 - [x] Slice 5: Combat reference data (steps in `plans/dossier-foundation.md`)
 
 #### Wave 2
-- [ ] Slice 6: Disciplines tab
-  - [ ] Step 6.1: The Discipline view model
-  - [ ] Step 6.2: The tab, list and empty state
-  - [ ] Step 6.3: Power panels
-  - [ ] Step 6.4: Search and Owned / All
-  - [ ] Step 6.5: Build pool
-  - [ ] Step 6.6: Accessibility and narrow screens
-- [ ] Slice 7: Backgrounds tab
-  - [ ] Step 7.1: Background view model
-  - [ ] Step 7.2: The tab and background cards
-  - [ ] Step 7.3: Havens
-  - [ ] Step 7.4: Merits and Flaws with totals
-  - [ ] Step 7.5: Other traits, notes card and section index
-  - [ ] Step 7.6: Editing, adding, removing and undo
-  - [ ] Step 7.7: Accessibility and narrow screens
-- [ ] Slice 8: Combat tab
-  - [ ] Step 8.1: Pools
-  - [ ] Step 8.2: The tab and the melee manoeuvre table
-  - [ ] Step 8.3: Melee weapons
-  - [ ] Step 8.4: Ranged manoeuvres and weapons
-  - [ ] Step 8.5: Search and the section control
-  - [ ] Step 8.6: Attack pool, Target and Range
-  - [ ] Step 8.7: Damage pool
-  - [ ] Step 8.8: Unavailable manoeuvres and incapacitation
-  - [ ] Step 8.9: Reminders and disclaimers
-  - [ ] Step 8.10: Accessibility and narrow screens
-- [ ] Slice 9: Journal shell and sessions
-  - [ ] Step 9.1: The Journal tab, empty state and sections
-  - [ ] Step 9.2: Sessions
-  - [ ] Step 9.3: The application-bar label
-  - [ ] Step 9.4: Accessibility
-- [ ] Slice 10: Level up tab
-  - [ ] Step 10.1: Advancement costs
-  - [ ] Step 10.2: Availability and shortfall
-  - [ ] Step 10.3: Pending, applying and undoing
-  - [ ] Step 10.4: The tab, XP cards and notices
-  - [ ] Step 10.5: Advancement cards
-  - [ ] Step 10.6: Upgrade review, pending bar and announcements
-  - [ ] Step 10.7: Confirm, undo, clear, cancel and back
-  - [ ] Step 10.8: Search, Storyteller guidance and cost reference
-  - [ ] Step 10.9: Accessibility and narrow screens
+- [x] Slice 6: Disciplines tab
+  - [x] Step 6.1: The Discipline view model
+  - [x] Step 6.2: The tab, list and empty state
+  - [x] Step 6.3: Power panels
+  - [x] Step 6.4: Search and Owned / All
+  - [x] Step 6.5: Build pool
+  - [x] Step 6.6: Accessibility and narrow screens
+- [x] Slice 7: Backgrounds tab
+  - [x] Step 7.1: Background view model
+  - [x] Step 7.2: The tab and background cards
+  - [x] Step 7.3: Havens
+  - [x] Step 7.4: Merits and Flaws with totals
+  - [x] Step 7.5: Other traits, notes card and section index
+  - [x] Step 7.6: Editing, adding, removing and undo
+  - [x] Step 7.7: Accessibility and narrow screens
+- [x] Slice 8: Combat tab
+  - [x] Step 8.1: Pools
+  - [x] Step 8.2: The tab and the melee manoeuvre table
+  - [x] Step 8.3: Melee weapons
+  - [x] Step 8.4: Ranged manoeuvres and weapons
+  - [x] Step 8.5: Search and the section control
+  - [x] Step 8.6: Attack pool, Target and Range
+  - [x] Step 8.7: Damage pool
+  - [x] Step 8.8: Unavailable manoeuvres and incapacitation
+  - [x] Step 8.9: Reminders and disclaimers
+  - [x] Step 8.10: Accessibility and narrow screens
+- [x] Slice 9: Journal shell and sessions
+  - [x] Step 9.1: The Journal tab, empty state and sections
+  - [x] Step 9.2: Sessions
+  - [x] Step 9.3: The application-bar label
+  - [x] Step 9.4: Accessibility
+- [x] Slice 10: Level up tab
+  - [x] Step 10.1: Advancement costs
+  - [x] Step 10.2: Availability and shortfall
+  - [x] Step 10.3: Pending, applying and undoing
+  - [x] Step 10.4: The tab, XP cards and notices
+  - [x] Step 10.5: Advancement cards
+  - [x] Step 10.6: Upgrade review, pending bar and announcements
+  - [x] Step 10.7: Confirm, undo, clear, cancel and back
+  - [x] Step 10.8: Search, Storyteller guidance and cost reference
+  - [x] Step 10.9: Accessibility and narrow screens
 
 #### Wave 3
-- [ ] Slice 11: Journal notes
-  - [ ] Step 11.1: The Markdown subset renderer
-  - [ ] Step 11.2: The note model
-  - [ ] Step 11.3: Sidebar and list
-  - [ ] Step 11.4: The editor, Save note and autosave
-  - [ ] Step 11.5: The toolbar and the preview
-  - [ ] Step 11.6: Ticking checklist items
-  - [ ] Step 11.7: Search and mentions
-  - [ ] Step 11.8: Earlier notes
-  - [ ] Step 11.9: Accessibility and narrow screens
-- [ ] Slice 12: Journal experience
-  - [ ] Step 12.1: Summary cards
-  - [ ] Step 12.2: Award XP
-  - [ ] Step 12.3: Award log
-  - [ ] Step 12.4: Spending record
-  - [ ] Step 12.5: Cost reference and the earlier experience note
-  - [ ] Step 12.6: Accessibility and narrow screens
-- [ ] Slice 13: Journal character record
-  - [ ] Step 13.1: The five parts, read-only
-  - [ ] Step 13.2: Record setters
-  - [ ] Step 13.3: Editing and undo
-  - [ ] Step 13.4: Accessibility and narrow screens
+- [x] Slice 11: Journal notes
+  - [x] Step 11.1: The Markdown subset renderer
+  - [x] Step 11.2: The note model
+  - [x] Step 11.3: Sidebar and list
+  - [x] Step 11.4: The editor, Save note and autosave
+  - [x] Step 11.5: The toolbar and the preview
+  - [x] Step 11.6: Ticking checklist items
+  - [x] Step 11.7: Search and mentions
+  - [x] Step 11.8: Earlier notes
+  - [x] Step 11.9: Accessibility and narrow screens
+- [x] Slice 12: Journal experience
+  - [x] Step 12.1: Summary cards
+  - [x] Step 12.2: Award XP
+  - [x] Step 12.3: Award log
+  - [x] Step 12.4: Spending record
+  - [x] Step 12.5: Cost reference and the earlier experience note
+  - [x] Step 12.6: Accessibility and narrow screens
+- [x] Slice 13: Journal character record
+  - [x] Step 13.1: The five parts, read-only
+  - [x] Step 13.2: Record setters
+  - [x] Step 13.3: Editing and undo
+  - [x] Step 13.4: Accessibility and narrow screens
 
 #### Wave 4
-- [ ] Slice 14: Dossier integration
-  - [ ] Step 14.1: Bar, descriptors, addressing and history
-  - [ ] Step 14.2: Shell, mode and resources across tabs
-  - [ ] Step 14.3: Keyboard
-  - [ ] Step 14.4: Old records on every tab
+- [x] Slice 14: Dossier integration
+  - [x] Step 14.1: Bar, descriptors, addressing and history
+  - [x] Step 14.2: Shell, mode and resources across tabs
+  - [x] Step 14.3: Keyboard
+  - [x] Step 14.4: Old records on every tab
 
