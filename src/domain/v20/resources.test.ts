@@ -196,6 +196,7 @@ describe('dicePool', () => {
     expect(dicePool(character(), { attribute: 'attributes.intelligence', ability: 'abilities.investigation' })).toEqual({
       attribute: { label: 'Intelligence', rating: 4 },
       ability: { label: 'Investigation', rating: 3 },
+      raw: 7,
       total: 7,
       incapacitated: false,
     });
@@ -237,6 +238,7 @@ describe('dicePool', () => {
     expect(pool).toEqual({
       attribute: { label: 'Intelligence', rating: 4 },
       ability: { label: 'Investigation', rating: 3 },
+      raw: 7,
       total: 0,
       incapacitated: true,
     });

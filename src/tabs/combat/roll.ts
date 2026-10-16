@@ -62,6 +62,9 @@ export interface RollView {
 /** What the player is told when an entry of extra successes is below 0. */
 export const EXTRA_SUCCESSES_HINT = 'Extra successes kept at 0 or more.';
 
+/** Said instead of a Range's difficulty when a close combat manoeuvre is chosen: the Range does not apply to it. */
+export const RANGE_MELEE_NOTE = 'Range applies to ranged manoeuvres only.';
+
 const capitalised = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 
 export function rollView(character: V20Character, state: RollState): RollView {
@@ -70,7 +73,7 @@ export function rollView(character: V20Character, state: RollState): RollView {
   const range = RANGE_BANDS.find(({ key }) => key === state.range);
   const view: RollView = {
     targetNote: target === undefined ? '' : calledShotNote(target),
-    rangeNote: range === undefined ? '' : rangeNote(range),
+    rangeNote: range === undefined ? '' : manoeuvre?.section === 'melee' ? RANGE_MELEE_NOTE : rangeNote(range),
     extraHint: state.extraCorrected ? EXTRA_SUCCESSES_HINT : '',
   };
   const weapon = WEAPONS.find(({ name }) => name === state.weapon);

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { blankCharacter, type V20Character } from '../../domain/v20/character';
-import { blankRoll, clearedEntries, rollView, type RollState } from './roll';
+import { blankRoll, clearedEntries, RANGE_MELEE_NOTE, rollView, type RollState } from './roll';
 
 function character(): V20Character {
   const made = blankCharacter('abc');
@@ -31,6 +31,13 @@ describe('rollView', () => {
     expect(view.attack).toMatchObject({ dice: '4 dice', difficulty: '11' });
     expect(view.targetNote).toBe('Targeting table: difficulty +2, damage +1 (V20 p. 274)');
     expect(view.rangeNote).toBe("Long range: up to 2 times the weapon's range, difficulty 8 (V20 p. 278)");
+  });
+
+  test('a close combat manoeuvre says the Range does not apply, instead of quoting a difficulty it does not use', () => {
+    const view = rollView(character(), roll({ manoeuvre: 'Weapon Strike', range: 'long' }));
+
+    expect(view.attack).toMatchObject({ difficulty: '6' });
+    expect(view.rangeNote).toBe(RANGE_MELEE_NOTE);
   });
 
   test('the Medium Target says it has no damage modifier, and point blank says how near it is', () => {

@@ -26,7 +26,7 @@ export interface AttackInput {
 export interface AttackPool extends CombatPool {
   /** Dice added to the roll to hit, shown beside the pool and not part of it. */
   accuracy: Manoeuvre['accuracy'];
-  /** The base difficulty (the Range's when one is chosen), then the manoeuvre's, the Target's and the player's modifier. */
+  /** The base difficulty (the Range's when one is chosen for a ranged manoeuvre), then the manoeuvre's, the Target's and the player's modifier. */
   difficulty: number;
 }
 

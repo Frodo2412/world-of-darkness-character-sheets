@@ -114,7 +114,9 @@ export function wireEdit({ ctx, lists, messages }: EditParts, notice: UndoNotice
     undo.hold(name, () => {
       messages.clear();
       ctx.apply((character) => restoreEntry(character, family, index, entry as EntryOf['merits']));
-      focusEntry(family, index);
+      // A base row filled in since is not overwritten: the entry went to the end of the list.
+      if (entryAt(ctx.current(), family, index) === entry) focusEntry(family, index);
+      else lists[family].lastElementChild?.querySelector<HTMLElement>('[data-edit="name"]')?.focus();
     });
     ctx.announce(removedText(name));
     notice.button.focus();

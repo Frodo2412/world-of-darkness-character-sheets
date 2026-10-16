@@ -62,6 +62,9 @@ const withRows = <F extends Family>(character: V20Character, family: F, rows: En
 /** Whether the list has an entry at the place. */
 const has = (rows: readonly unknown[], index: number): boolean => Number.isInteger(index) && index >= 0 && index < rows.length;
 
+/** Whether the place is one of the six base background rows. */
+const isBaseRow = (family: Family, index: number): boolean => family === 'backgrounds' && index < BACKGROUND_ROWS;
+
 /** A base row that holds nothing: there is nothing in it to remove. */
 const isBlankBase = (row: BackgroundRow, index: number): boolean =>
   index < BACKGROUND_ROWS && row.name === '' && row.rating === 0 && !row.summary && !row.note && !(row.people?.length);
@@ -159,7 +162,7 @@ export function canRemove(character: V20Character, family: Family, index: number
 export function removeEntry(character: V20Character, family: Family, index: number): V20Character {
   const rows = rowsOf(character, family);
   if (!has(rows, index)) return character;
-  if (family === 'backgrounds' && index < BACKGROUND_ROWS) {
+  if (isBaseRow(family, index)) {
     return withRows(character, 'backgrounds', character.backgrounds.map((row, place) => (place === index ? BLANK.backgrounds() : row)));
   }
   return withRows(character, family, rows.filter((_row, place) => place !== index) as never);
@@ -172,9 +175,9 @@ export function removeEntry(character: V20Character, family: Family, index: numb
  */
 export function restoreEntry<F extends Family>(character: V20Character, family: F, index: number, entry: EntryOf[F]): V20Character {
   const rows = rowsOf(character, family);
-  if (family === 'backgrounds' && has(rows, index) && index < BACKGROUND_ROWS && isBlankBase(rows[index] as BackgroundRow, index)) {
+  if (isBaseRow(family, index) && has(rows, index) && isBlankBase(rows[index] as BackgroundRow, index)) {
     return withRows(character, family, rows.map((row, place) => (place === index ? entry : row)));
   }
-  const at = family === 'backgrounds' && index < BACKGROUND_ROWS ? rows.length : Math.min(Math.max(index, 0), rows.length);
+  const at = isBaseRow(family, index) ? rows.length : Math.min(Math.max(index, 0), rows.length);
   return withRows(character, family, [...rows.slice(0, at), entry, ...rows.slice(at)]);
 }

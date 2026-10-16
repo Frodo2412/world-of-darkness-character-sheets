@@ -86,6 +86,8 @@ export interface DicePool {
   ability?: PoolTerm;
   /** Dice the wound takes off, when it takes any. */
   woundPenalty?: number;
+  /** The attribute and ability less the wound before any floor: what a modifier is added to. Only when both are selected. */
+  raw?: number;
   /** Only when both an attribute and an ability are selected. */
   total?: number;
   incapacitated: boolean;
@@ -123,7 +125,10 @@ export function dicePool(character: V20Character, selection: PoolSelection): Dic
   if (attribute) pool.attribute = attribute;
   if (ability) pool.ability = ability;
   if (penalty > 0) pool.woundPenalty = penalty;
-  if (attribute && ability) pool.total = incapacitated ? 0 : Math.max(0, attribute.rating + ability.rating - penalty);
+  if (attribute && ability) {
+    pool.raw = attribute.rating + ability.rating - penalty;
+    pool.total = incapacitated ? 0 : Math.max(0, pool.raw);
+  }
   return pool;
 }
 

@@ -60,7 +60,6 @@ export interface DisciplineListView {
   ownedCount: number;
 }
 
-/** Names match whatever their case and spacing, as the catalogue's lookup does: "  dominate " is Dominate. */
 const ENTRY_BY_KEY = new Map(DISCIPLINE_CATALOGUE.map((entry) => [disciplineKey(entry.name), entry]));
 
 /** The power's rule field as the book states it, or where to look when the book's wording was not extracted. */

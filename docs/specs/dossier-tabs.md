@@ -58,9 +58,10 @@ DOM.
 | Reused components | Section heading + count, reference-table, expandable row, tag chips, search field and "Read-only in play · edit character to change" hint are extracted once from the existing sheet and roster styles and used by every tab |
 | Shared model helpers | The dice-pool and wound-penalty functions already in `src/domain/v20/resources.ts` are the only pool arithmetic; tabs call them |
 
-**Files per slice.** Each slice owns a disjoint set of files: `src/domain/v20/<tab>/`,
-`src/tabs/<key>/` (descriptor, panel, drawing, wiring and stylesheet; a refinement of the
-first layout, see `plans/dossier-tabs.md`), and its `features/<tab>/` scenarios and step file. The foundation owns every shared file.
+**Files per slice.** Each slice owns a disjoint set of files: the tab's model in `src/domain/v20/` (a `<tab>/` folder or a named module such as
+`disciplineView.ts`), `src/tabs/<key>/` (descriptor, panel, drawing, wiring and stylesheet; a
+refinement of the first layout, see `plans/dossier-tabs.md`), and its
+`features/dossier-tabs/slice-<n>-*.feature` scenarios and `features/steps/<tab>.steps.ts`. The foundation owns every shared file.
 
 **Data added to the character (all optional on read, blank by default).**
 

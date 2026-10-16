@@ -24,8 +24,7 @@ export interface CombatPool {
 
 function readPool(character: V20Character, selection: PoolSelection): CombatPool {
   const pool = dicePool(character, selection);
-  const raw = (pool.attribute?.rating ?? 0) + (pool.ability?.rating ?? 0) - (pool.woundPenalty ?? 0);
-  const read: CombatPool = { dice: pool.total ?? 0, raw, formula: poolFormula(pool), incapacitated: pool.incapacitated };
+  const read: CombatPool = { dice: pool.total ?? 0, raw: pool.raw ?? 0, formula: poolFormula(pool), incapacitated: pool.incapacitated };
   if (pool.incapacitated) read.reason = INCAPACITATED_REASON;
   return read;
 }
