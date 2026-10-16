@@ -204,6 +204,17 @@ describe('removeEntry and restoreEntry', () => {
     }
   });
 
+  test('does not overwrite a blanked row filled in since: the entry goes to the end instead', () => {
+    const before = character();
+    const { character: removed, removal } = removeEntry(before, 'backgrounds', 0)!;
+    const refilled = { ...removed, backgrounds: removed.backgrounds.map((row, at) => (at === 0 ? { name: 'Contacts', rating: 2 } : row)) };
+
+    const after = restoreEntry(refilled, removal);
+
+    expect(after.backgrounds[0]).toMatchObject({ name: 'Contacts', rating: 2 });
+    expect(after.backgrounds.at(-1)).toEqual(removal.entry);
+  });
+
   test('leaves one of the first six Backgrounds as an empty row, and restores it in place', () => {
     const before = character();
     const { character: removed, removal } = removeEntry(before, 'backgrounds', 0)!;

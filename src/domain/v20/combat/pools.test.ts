@@ -18,7 +18,7 @@ describe('manoeuvrePool', () => {
   test('Strike with Dexterity 3, Brawl 1 and a Hurt wound is 3 dice, said in full', () => {
     const pool = manoeuvrePool(character((c) => (c.health.hurt = 'lethal')), manoeuvre('Strike'));
 
-    expect(pool).toEqual({ dice: 3, formula: 'Dexterity 3 + Brawl 1 − wound 1', incapacitated: false });
+    expect(pool).toEqual({ dice: 3, unfloored: 3, formula: 'Dexterity 3 + Brawl 1 − wound 1', incapacitated: false });
   });
 
   test('without a wound the formula has no wound', () => {
@@ -34,7 +34,7 @@ describe('manoeuvrePool', () => {
   test('a manoeuvre with accuracy adds those dice before the wound comes off', () => {
     const pool = manoeuvrePool(character((c) => (c.health.hurt = 'lethal')), manoeuvre('Bite'));
 
-    expect(pool).toEqual({ dice: 4, formula: 'Dexterity 3 + Brawl 1 + accuracy 1 − wound 1', incapacitated: false });
+    expect(pool).toEqual({ dice: 4, unfloored: 4, formula: 'Dexterity 3 + Brawl 1 + accuracy 1 − wound 1', incapacitated: false });
   });
 
   test('a manoeuvre whose accuracy is Special adds none', () => {

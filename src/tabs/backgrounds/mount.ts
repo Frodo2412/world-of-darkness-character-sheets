@@ -83,8 +83,10 @@ export function mount(ctx: TabContext): MountedTab {
     if (removal === undefined) return;
     const taken = removal;
     undo.hold(label, () => {
-      ctx.apply((character) => restoreEntry(character, taken));
-      focusEntry(family, taken.index);
+      const restored = ctx.apply((character) => restoreEntry(character, taken));
+      // A blanked row filled in since is not overwritten: the entry went to the end of the list.
+      const placed = (restored[family] as unknown[])[taken.index] === taken.entry ? taken.index : restored[family].length - 1;
+      focusEntry(family, placed);
     });
     ctx.announce(removedText(label));
     notice.querySelector<HTMLElement>('[data-undo-button]')!.focus();

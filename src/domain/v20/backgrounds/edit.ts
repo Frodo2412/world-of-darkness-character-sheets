@@ -165,12 +165,20 @@ export function removeEntry(character: V20Character, family: Family, index: numb
   };
 }
 
-/** Puts a removed entry back where it was. */
+const isEmptyRow = (row: BackgroundRow): boolean => row.name === '' && row.rating === 0 && !row.summary && !row.note && !row.people?.length;
+
+/**
+ * Puts a removed entry back where it was. A blanked row that has been filled in since is never
+ * overwritten: the entry goes to the end of the list instead.
+ */
 export function restoreEntry(character: V20Character, removal: Removal): V20Character {
   if (removal.family === 'backgrounds') {
-    const backgrounds = removal.blanked
-      ? updateAt(character.backgrounds, removal.index, () => removal.entry)
-      : inserted(character.backgrounds, removal.index, removal.entry);
+    const row = character.backgrounds[removal.index];
+    const backgrounds = !removal.blanked
+      ? inserted(character.backgrounds, removal.index, removal.entry)
+      : row !== undefined && isEmptyRow(row)
+        ? updateAt(character.backgrounds, removal.index, () => removal.entry)
+        : [...character.backgrounds, removal.entry];
     return { ...character, backgrounds };
   }
   const list = character[removal.family] as unknown[];

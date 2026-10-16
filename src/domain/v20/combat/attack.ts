@@ -50,7 +50,7 @@ export function baseDifficulty(manoeuvre: Manoeuvre, weapon: Weapon | undefined,
 /** The attack pool, accuracy and difficulty of a manoeuvre, with the weapon and the player's modifiers. */
 export function attackPool(character: V20Character, manoeuvre: Manoeuvre, weapon: Weapon | undefined, modifiers: AttackModifiers = NO_MODIFIERS): AttackPool {
   const pool = manoeuvrePool(character, manoeuvre);
-  const dice = pool.incapacitated ? 0 : Math.max(0, pool.dice + modifiers.dice);
+  const dice = pool.incapacitated ? 0 : Math.max(0, pool.unfloored + modifiers.dice);
   const rangeOnly = { range: modifiers.range };
   return {
     ...pool,

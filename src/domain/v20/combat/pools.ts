@@ -11,6 +11,8 @@ import type { Manoeuvre } from './data/manoeuvres';
 export interface CombatPool {
   /** The dice to roll, never below 0, and 0 when the character is incapacitated. */
   dice: number;
+  /** The sum before any floor: what a modifier is added to, so the whole sum is floored once. */
+  unfloored: number;
   /** "Dexterity 3 + Brawl 1 + accuracy 1 − wound 1". */
   formula: string;
   incapacitated: boolean;
@@ -27,6 +29,7 @@ export function traitsPool(character: V20Character, attribute: AttributeKey, abi
   if (penalty > 0) parts.push(`${MINUS_SIGN} wound ${penalty}`);
   return {
     dice: pool.incapacitated ? 0 : Math.max(0, base + accuracy - penalty),
+    unfloored: base + accuracy - penalty,
     formula: parts.join(' '),
     incapacitated: pool.incapacitated,
   };

@@ -34,6 +34,16 @@ describe('attackPool', () => {
     expect(attackPool(character(), manoeuvre('Strike'), undefined, { ...NO_MODIFIERS, dice: -9 }).dice).toBe(0);
   });
 
+  test('a wound larger than the pool is not paid back by a dice modifier: the sum is floored once', () => {
+    const crippled = character((c) => {
+      c.attributes.dexterity = 1;
+      c.abilities.brawl = 0;
+      c.health.crippled = 'lethal';
+    });
+
+    expect(attackPool(crippled, manoeuvre('Strike'), undefined, { ...NO_MODIFIERS, dice: 3 }).dice).toBe(0);
+  });
+
   test('is 0 dice, whatever is added, when the character is incapacitated', () => {
     const arranged = character((c) => (c.health.incapacitated = 'lethal'));
 
