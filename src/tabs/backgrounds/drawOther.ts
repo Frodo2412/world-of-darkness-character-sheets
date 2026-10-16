@@ -1,5 +1,5 @@
 import type { OtherTraitCard } from '../../domain/v20/backgrounds/others';
-import { cloneOf, field, reconcile, setText } from './dom';
+import { cloneOf, field, reconcile, setText } from '../../scripts/dossier/dom';
 import { drawDots } from './dots';
 
 /** One trait as it reads in play mode: its name, its kind, its dots when it has a rating, and its note. */

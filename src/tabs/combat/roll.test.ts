@@ -26,7 +26,7 @@ describe('rollView', () => {
   });
 
   test('the dice, difficulty, Target and Range choices change it and are described', () => {
-    const view = rollView(character(), roll({ manoeuvre: 'Weapon Strike', diceModifier: 1, difficultyModifier: 1, target: 'small', range: 'long' }));
+    const view = rollView(character(), roll({ manoeuvre: 'Multiple Shots', diceModifier: 1, difficultyModifier: 1, target: 'small', range: 'long' }));
 
     expect(view.attack).toMatchObject({ dice: '4 dice', difficulty: '11' });
     expect(view.targetNote).toBe('Targeting table: difficulty +2, damage +1 (V20 p. 274)');

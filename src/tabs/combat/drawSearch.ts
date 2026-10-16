@@ -1,5 +1,5 @@
 import { countLabel } from '../../domain/v20/labels';
-import { setText } from './dom';
+import { setText } from '../../scripts/dossier/dom';
 
 /** The parts of the panel's search field the draw writes into. */
 export interface SearchParts {

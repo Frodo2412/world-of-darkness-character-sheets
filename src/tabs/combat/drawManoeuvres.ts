@@ -2,7 +2,7 @@ import { diceLabel } from '../../domain/v20/identity';
 import type { Manoeuvre } from '../../domain/v20/combat/data/manoeuvres';
 import type { CombatPool } from '../../domain/v20/combat/pools';
 import type { RequirementReading } from '../../domain/v20/combat/requirements';
-import { cloneOf, field, reconcile, setField, setText } from './dom';
+import { cloneOf, field, reconcile, setField, setText } from '../../scripts/dossier/dom';
 import { accuracyText, difficultyText, effectsText, manoeuvreDamageText, pageText } from './text';
 
 /** A manoeuvre, the character's pool for it and what it needs: one row of a manoeuvre table. */

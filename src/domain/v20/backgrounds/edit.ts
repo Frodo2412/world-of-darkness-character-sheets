@@ -92,7 +92,17 @@ export const addFlaw = (character: V20Character): V20Character => addEntry(chara
 export const addHaven = (character: V20Character): V20Character => addEntry(character, 'havens');
 export const addOtherTrait = (character: V20Character): V20Character => addEntry(character, 'otherTraits');
 
-/** Changes some fields of the entry at the place. Points and ratings are corrected; a place with no entry changes nothing. */
+/** A change without a cleared rating: only an other trait may be left unrated, every other entry keeps the rating it has. */
+function withoutClearedRating<F extends Family>(family: F, change: Partial<EntryOf[F]>): Partial<EntryOf[F]> {
+  if (family === 'otherTraits' || !('rating' in change) || (change as { rating?: number }).rating !== undefined) return change;
+  const { rating: _cleared, ...rest } = change as Partial<EntryOf[F]> & { rating?: number };
+  return rest as Partial<EntryOf[F]>;
+}
+
+/**
+ * Changes some fields of the entry at the place. Points and ratings are corrected, and only an other trait
+ * can have its rating cleared; a place with no entry changes nothing.
+ */
 export function updateEntry<F extends Family>(
   character: V20Character,
   family: F,
@@ -101,7 +111,7 @@ export function updateEntry<F extends Family>(
 ): V20Character {
   const rows = rowsOf(character, family);
   if (!has(rows, index)) return character;
-  return withRows(character, family, rows.map((row, place) => (place === index ? kept({ ...row, ...change }) : row)));
+  return withRows(character, family, rows.map((row, place) => (place === index ? kept({ ...row, ...withoutClearedRating(family, change) }) : row)));
 }
 
 /** Changes the summary, the note or the people of a background; its name and rating are kept. */
@@ -158,12 +168,13 @@ export function removeEntry(character: V20Character, family: Family, index: numb
 /**
  * Puts a removed entry back, every field as it was, at the place it was removed from: into the blank
  * base row, or back among the entries it was taken out of (at the end when the list has since shrunk).
+ * A base row filled in since is never overwritten: the entry goes to the end of the list instead.
  */
 export function restoreEntry<F extends Family>(character: V20Character, family: F, index: number, entry: EntryOf[F]): V20Character {
   const rows = rowsOf(character, family);
-  if (family === 'backgrounds' && has(rows, index) && index < BACKGROUND_ROWS) {
+  if (family === 'backgrounds' && has(rows, index) && index < BACKGROUND_ROWS && isBlankBase(rows[index] as BackgroundRow, index)) {
     return withRows(character, family, rows.map((row, place) => (place === index ? entry : row)));
   }
-  const at = Math.min(Math.max(index, 0), rows.length);
+  const at = family === 'backgrounds' && index < BACKGROUND_ROWS ? rows.length : Math.min(Math.max(index, 0), rows.length);
   return withRows(character, family, [...rows.slice(0, at), entry, ...rows.slice(at)]);
 }

@@ -1,5 +1,5 @@
 import { SECTION_KEYS, type SectionKey } from '../../domain/v20/backgrounds/counts';
-import { setText } from './dom';
+import { setText } from '../../scripts/dossier/dom';
 
 /** What each section is called in the index, which is not always what its heading says. */
 export const INDEX_LABELS: Record<SectionKey, string> = {

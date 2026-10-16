@@ -1141,7 +1141,7 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
 - [x] Slice 5: Combat reference data (steps in `plans/dossier-foundation.md`)
 
 #### Wave 2
-- [ ] Slices 6–8: Disciplines, Backgrounds and Combat tabs (steps in `plans/dossier-reference-tabs.md`)
+- [x] Slices 6–8: Disciplines, Backgrounds and Combat tabs (steps in `plans/dossier-reference-tabs.md`)
 - [ ] Slice 9: Journal shell and sessions
   - [ ] Step 9.1: The Journal tab, empty state and sections
   - [ ] Step 9.2: Sessions

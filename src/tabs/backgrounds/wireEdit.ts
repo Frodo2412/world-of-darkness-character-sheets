@@ -14,7 +14,7 @@ import {
 } from '../../domain/v20/backgrounds/edit';
 import { createUndoWindow, removedText, type UndoWindow } from '../../scripts/dossier/undoWindow';
 import type { TabContext } from '../../scripts/tabs/context';
-import { setText } from './dom';
+import { setText } from '../../scripts/dossier/dom';
 import type { EditControl } from './drawEdit';
 
 /** What each kind of entry is called when it has no name to be called by. */

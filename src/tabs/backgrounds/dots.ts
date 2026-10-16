@@ -1,7 +1,7 @@
 import type { RatingControl } from '../../components/controls/rating-control';
 import { BACKGROUND_DOTS } from '../../domain/v20/backgrounds/cards';
 import { drawRating } from '../../scripts/sheet/ratingDraw';
-import { field, setText } from './dom';
+import { field, setText } from '../../scripts/dossier/dom';
 
 /** What a rated entry's dots show. */
 export interface DotsView {

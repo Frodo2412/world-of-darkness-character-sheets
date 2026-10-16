@@ -1,4 +1,4 @@
-import { setText } from './dom';
+import { setText } from '../../scripts/dossier/dom';
 
 /** The parts every section of the tab has: its list of cards, the empty state, and the count in its heading. */
 export interface SectionParts {

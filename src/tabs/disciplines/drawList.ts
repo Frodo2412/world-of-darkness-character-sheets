@@ -1,6 +1,6 @@
 import { DISCIPLINE_LEVELS, type DisciplineScope, type DisciplineView } from '../../domain/v20/disciplineView';
 import { setAttr } from '../../scripts/sheet/draw';
-import { cloneOf, field, reconcile, setText } from './dom';
+import { cloneOf, field, reconcile, setText } from '../../scripts/dossier/dom';
 import { drawPower } from './drawPower';
 
 /** The five dots of a rating, filled up to what it unlocks. Drawn for the eye; the rating is also in words. */

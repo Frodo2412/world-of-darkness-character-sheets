@@ -28,6 +28,7 @@ describe('attackPool', () => {
   test('is the manoeuvre\'s pool against the standard difficulty 6, with its accuracy beside it', () => {
     expect(attack()).toEqual({
       dice: 3,
+      raw: 3,
       formula: 'Dexterity 3 + Melee 0',
       incapacitated: false,
       accuracy: 0,
@@ -77,8 +78,21 @@ describe('attackPool', () => {
     ['point-blank', 4],
     ['short', 6],
     ['long', 8],
-  ])('the %s range replaces the base difficulty', (key, difficulty) => {
-    expect(attack({ range: rangeBand(key) }).difficulty).toBe(difficulty);
+  ])('the %s range replaces the base difficulty of a ranged manoeuvre', (key, difficulty) => {
+    expect(attack({ manoeuvre: manoeuvre('Multiple Shots'), range: rangeBand(key) }).difficulty).toBe(difficulty);
+  });
+
+  test('a range does not change the difficulty of a close combat manoeuvre', () => {
+    expect(attack({ range: rangeBand('long') }).difficulty).toBe(6);
+  });
+
+  test('a wound larger than the pool is not paid back by a dice modifier: the sum is floored once', () => {
+    const crippled = swordsman((c) => {
+      c.attributes.dexterity = 1;
+      c.health.crippled = 'lethal';
+    });
+
+    expect(attack({ character: crippled, diceModifier: 3 })).toMatchObject({ dice: 0 });
   });
 
   test('range, manoeuvre, called shot and modifier all add up', () => {

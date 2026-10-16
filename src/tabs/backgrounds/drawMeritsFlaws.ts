@@ -1,6 +1,6 @@
 import type { PointCard } from '../../domain/v20/backgrounds/points';
 import { countLabel, pointsLabel, pointsTotalLabel } from '../../domain/v20/labels';
-import { cloneOf, field, reconcile, setText } from './dom';
+import { cloneOf, field, reconcile, setText } from '../../scripts/dossier/dom';
 
 /** What a heading says of its entries: "2 entries · 3 points". */
 export const totalsText = (count: number, total: number): string =>

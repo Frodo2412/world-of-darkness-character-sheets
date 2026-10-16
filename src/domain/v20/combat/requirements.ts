@@ -3,7 +3,7 @@
 // every draw, never stored.
 
 import type { V20Character } from '../character';
-import { disciplineReadings } from '../disciplines';
+import { disciplineKey, disciplineReadings } from '../disciplines';
 import type { Manoeuvre, ManoeuvreTag, Requirement } from './data/manoeuvres';
 import type { Weapon } from './data/types';
 
@@ -37,7 +37,7 @@ export function requirementText(requirement: Requirement): string {
   }
 }
 
-const powerKey = (discipline: string, power: string): string => `${discipline.trim().replace(/\s+/g, ' ').toLowerCase()}:${power}`;
+const powerKey = (discipline: string, power: string): string => `${disciplineKey(discipline)}:${power}`;
 
 /**
  * Reads the requirements of manoeuvres for a character with `weapon` chosen. A weapon requirement is

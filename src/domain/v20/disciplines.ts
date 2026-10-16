@@ -36,10 +36,10 @@ export interface DisciplineEntry {
   readonly powers: readonly Power[];
 }
 
-/** Names match whatever their case and spacing: "  dominate " is Dominate. */
-const catalogueKey = (name: string): string => name.trim().replace(/\s+/g, ' ').toLowerCase();
+/** Names match whatever their case and spacing: "  dominate " is Dominate. The one rule every tab uses to tell whether two Discipline names are the same. */
+export const disciplineKey = (name: string): string => name.trim().replace(/\s+/g, ' ').toLowerCase();
 
-const BY_NAME = new Map(DISCIPLINE_CATALOGUE.map((entry) => [catalogueKey(entry.name), entry]));
+const BY_NAME = new Map(DISCIPLINE_CATALOGUE.map((entry) => [disciplineKey(entry.name), entry]));
 
 /** A power as the character has it: its dice pool now, or what it uses instead of one. */
 export interface PowerReading {
@@ -74,7 +74,7 @@ function powerReading(character: V20Character, power: Power, level: number): Pow
  */
 export function disciplineReadings(character: V20Character): DisciplineReading[] {
   return namedRows(character.disciplines).map((row) => {
-    const entry = row.rating > 0 ? BY_NAME.get(catalogueKey(row.name)) : undefined;
+    const entry = row.rating > 0 ? BY_NAME.get(disciplineKey(row.name)) : undefined;
     const reading: DisciplineReading = {
       name: row.name,
       rating: row.rating,

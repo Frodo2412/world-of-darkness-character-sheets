@@ -52,7 +52,8 @@ as you go, and builds in progress are listed on the roster to continue or delete
 The sheet opens in **play mode**, for use at the table. Only the Blood Pool, Willpower
 and Health change there (the steppers spend and regain blood and temporary Willpower;
 health boxes step through bashing (`/`), lethal (`X`), aggravated (`*`) and empty).
-Everything else is read-only. Select one attribute and one ability to see a dice pool,
+Everything else is read-only, except the Weapon roll inputs on the Combat tab, which are
+not saved. Select one attribute and one ability to see a dice pool,
 less any wound penalty; the selection is never saved.
 
 **Edit character** switches to **edit mode**, where every field can be changed: the
@@ -63,8 +64,19 @@ Dots and boxes in edit mode: activate a dot to set the rating to it; activate th
 current dot again to lower the rating by one. From the keyboard, focus a rating and use
 the arrow keys, Page Up/Down, Home and End.
 
-Player, Chronicle, Sire, Backgrounds, Notes, Weakness, Experience and Bearing are kept
-in the saved data but are no longer shown. The design is in
+A tab bar above the sheet opens the reference tabs, each linkable with `?tab=`:
+
+- **Disciplines** lists the character's Disciplines with each power's rule text and the
+  character's pool for it, with search, an Owned / All switch and a Build pool button
+  that selects the power's pool on the Character sheet tab.
+- **Backgrounds** shows the Backgrounds, Havens, Merits and Flaws (with point totals) and
+  other traits; in edit mode they can be changed, added and removed, with Undo.
+- **Combat** has the manoeuvre and weapon tables with the character's pools, search, a
+  Close combat / Ranged combat filter, and a Weapon roll panel that states the attack and
+  damage pools and difficulty. It never rolls dice.
+
+Player, Chronicle, Sire, Notes, Weakness, Experience and Bearing are kept in the saved
+data but are no longer shown. The design is in
 [`docs/specs/sheet-play-view-redesign.md`](docs/specs/sheet-play-view-redesign.md).
 
 ## Running it
@@ -106,6 +118,9 @@ with an undefined step fails the run. The first run needs a browser:
 | `src/components/sheet/`     | Astro components for the sheet's sections                               |
 | `src/components/builder/`   | Astro components for the builder's steps                                |
 | `src/scripts/`              | Page wiring: a control changes, the model updates, the store saves      |
+| `src/scripts/tabs/`         | The tab host: finds tabs, shows one, keeps the address and history      |
+| `src/scripts/dossier/`, `src/components/dossier/` | Parts shared by the tabs: DOM helpers, search, segmented control, undo |
+| `src/tabs/<tab>/`           | One folder per tab (descriptor, panel, drawing, wiring), found by the host |
 | `src/pages/`                | The roster (`/`), the sheet (`/sheet/?id=…`) and the builder (`/build/?id=…`) |
 | `docs/specs/`, `plans/`     | The spec and the plan this was built from                               |
 

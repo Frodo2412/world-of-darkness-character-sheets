@@ -4,7 +4,7 @@ import type { OtherTraitCard } from '../../domain/v20/backgrounds/others';
 import type { PointCard } from '../../domain/v20/backgrounds/points';
 import type { Person } from '../../domain/v20/dossier/types';
 import { showText } from '../../scripts/tabs/showText';
-import { cloneOf, field, reconcile, setText } from './dom';
+import { cloneOf, field, reconcile, setText } from '../../scripts/dossier/dom';
 
 /** The controls a player changes an entry with. */
 export type EditControl = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;

@@ -1,7 +1,7 @@
 import { diceLabel } from '../../domain/v20/identity';
 import { fieldText, type PowerField, type PowerView } from '../../domain/v20/disciplineView';
 import { poolFormula } from '../../domain/v20/poolText';
-import { field, setText } from './dom';
+import { field, setText } from '../../scripts/dossier/dom';
 
 const STATE_WORD: Record<PowerView['state'], string> = { known: 'Known', locked: 'Locked' };
 

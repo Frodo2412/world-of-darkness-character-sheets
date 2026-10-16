@@ -2,7 +2,7 @@ import { CONCEALMENT, type Weapon } from '../../domain/v20/combat/data/types';
 import type { CombatPool } from '../../domain/v20/combat/pools';
 import { diceLabel } from '../../domain/v20/identity';
 import { setAttr } from '../../scripts/sheet/draw';
-import { cloneOf, field, reconcile, setField } from './dom';
+import { cloneOf, field, reconcile, setField } from '../../scripts/dossier/dom';
 import { damageText, pageText } from './text';
 
 /** A weapon, the character's pool for it and whether it is the one chosen for the roll: one row of a weapons table. */

@@ -13,6 +13,8 @@ export const INCAPACITATED_REASON = 'Incapacitated: every pool is 0 dice.';
 export interface CombatPool {
   /** The dice the character rolls: floored at 0, and 0 while Incapacitated. */
   dice: number;
+  /** The attribute and ability less the wound before any floor: what a modifier is added to. */
+  raw: number;
   /** The words of the pool with full labels: "Dexterity 3 + Brawl 1 − wound 1". */
   formula: string;
   incapacitated: boolean;
@@ -22,7 +24,8 @@ export interface CombatPool {
 
 function readPool(character: V20Character, selection: PoolSelection): CombatPool {
   const pool = dicePool(character, selection);
-  const read: CombatPool = { dice: pool.total ?? 0, formula: poolFormula(pool), incapacitated: pool.incapacitated };
+  const raw = (pool.attribute?.rating ?? 0) + (pool.ability?.rating ?? 0) - (pool.woundPenalty ?? 0);
+  const read: CombatPool = { dice: pool.total ?? 0, raw, formula: poolFormula(pool), incapacitated: pool.incapacitated };
   if (pool.incapacitated) read.reason = INCAPACITATED_REASON;
   return read;
 }

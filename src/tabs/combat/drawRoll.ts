@@ -1,4 +1,4 @@
-import { field, setField, setText, showUnlessFocused } from './dom';
+import { field, setField, setText, showUnlessFocused } from '../../scripts/dossier/dom';
 import type { RollState, RollView } from './roll';
 
 /** The parts of the panel the Weapon roll draws into and reads from. */

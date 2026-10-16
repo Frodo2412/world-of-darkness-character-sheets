@@ -260,6 +260,22 @@ describe('removing a background', () => {
   });
 });
 
+describe('clearing a rating', () => {
+  test('an other trait can be left unrated', () => {
+    const rated = updateEntry(addEntry(blankCharacter('abc'), 'otherTraits'), 'otherTraits', 0, { name: 'Humanity', rating: 7 });
+
+    expect(entryAt(updateEntry(rated, 'otherTraits', 0, { rating: undefined }), 'otherTraits', 0)).not.toHaveProperty('rating');
+  });
+
+  test('a background keeps its rating, so the saved character still loads', () => {
+    const rated = updateEntry(blankCharacter('abc'), 'backgrounds', 0, { name: 'Allies', rating: 3 });
+    const after = updateEntry(rated, 'backgrounds', 0, { rating: undefined });
+
+    expect(entryAt(after, 'backgrounds', 0)).toMatchObject({ name: 'Allies', rating: 3 });
+    expect(validBackgrounds(after.backgrounds)).toBe(true);
+  });
+});
+
 describe('putting an entry back', () => {
   test('puts a blanked base row back with every field, people included', () => {
     const before = withBackgrounds();
@@ -274,6 +290,15 @@ describe('putting an entry back', () => {
     const removed = entryAt(before, 'backgrounds', 6)!;
     const after = restoreEntry(removeEntry(before, 'backgrounds', 6), 'backgrounds', 6, removed);
     expect(after).toEqual(before);
+  });
+
+  test('does not overwrite a base row filled in since: the entry goes to the end instead', () => {
+    const before = withBackgrounds();
+    const removed = entryAt(before, 'backgrounds', 1)!;
+    const refilled = updateEntry(removeEntry(before, 'backgrounds', 1), 'backgrounds', 1, { name: 'Contacts', rating: 2 });
+    const after = restoreEntry(refilled, 'backgrounds', 1, removed);
+    expect(after.backgrounds[1]).toMatchObject({ name: 'Contacts', rating: 2 });
+    expect(after.backgrounds.at(-1)).toEqual(removed);
   });
 
   test('puts the last row back at the end', () => {

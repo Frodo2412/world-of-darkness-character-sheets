@@ -59,8 +59,8 @@ DOM.
 | Shared model helpers | The dice-pool and wound-penalty functions already in `src/domain/v20/resources.ts` are the only pool arithmetic; tabs call them |
 
 **Files per slice.** Each slice owns a disjoint set of files: `src/domain/v20/<tab>/`,
-`src/components/<tab>/`, `src/scripts/<tab>/`, `src/styles/<tab>.css`, and its
-`features/<tab>/` scenarios and step file. The foundation owns every shared file.
+`src/tabs/<key>/` (descriptor, panel, drawing, wiring and stylesheet; a refinement of the
+first layout, see `plans/dossier-tabs.md`), and its `features/<tab>/` scenarios and step file. The foundation owns every shared file.
 
 **Data added to the character (all optional on read, blank by default).**
 
@@ -94,7 +94,7 @@ field shows "See rulebook" for it. Both are extracted from the V20 PDF in
   rulebook says (Dexterity + Melee with Melee 0 uses Dexterity alone). Accuracy and
   difficulty come from the manoeuvre or weapon; the user-adjustable "other dice
   modifier", difficulty modifier and net-successes inputs are page state, not stored.
-  The damage pool is weapon damage + extra successes; Strength-based damage uses the
+  The damage pool is weapon damage + extra successes + the Target bonus of a called shot; Strength-based damage uses the
   character's Strength.
 - *Experience*: Total earned = sum of awards; Total spent = sum of spendings; Available
   = earned − spent; This session = awards of the current session.
@@ -123,7 +123,7 @@ name, dots, summary, note, named people), Havens, Merits (with point total), Fla
 point total), Other traits, and the "Character notes, not rule effects" note. Play mode
 read-only; edit mode edits and adds/removes entries.
 
-*Combat.* Search field and filter (All manoeuvres / Close combat / Ranged combat),
+*Combat.* Search field and filter (All / Close combat / Ranged combat),
 Melee / Ranged sub-tabs, a manoeuvre table with the character's pool, accuracy,
 difficulty and base damage, a weapons table, a **Weapon roll** panel (weapon reference,
 manoeuvre, target, range, attack pool + accuracy + difficulty with ± modifier inputs,

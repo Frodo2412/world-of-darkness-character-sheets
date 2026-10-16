@@ -23,6 +23,7 @@ describe('manoeuvrePool', () => {
 
     expect(manoeuvrePool(hurt, manoeuvre('Strike'))).toEqual({
       dice: 3,
+      raw: 3,
       formula: 'Dexterity 3 + Brawl 1 − wound 1',
       incapacitated: false,
     });
@@ -43,6 +44,7 @@ describe('manoeuvrePool', () => {
 
     expect(manoeuvrePool(crippled, manoeuvre('Strike'))).toEqual({
       dice: 0,
+      raw: -1,
       formula: 'Dexterity 3 + Brawl 1 − wound 5',
       incapacitated: false,
     });
@@ -57,6 +59,7 @@ describe('manoeuvrePool', () => {
 
     expect(manoeuvrePool(down, manoeuvre('Strike'))).toEqual({
       dice: 0,
+      raw: 4,
       formula: 'Dexterity 3 + Brawl 1',
       incapacitated: true,
       reason: 'Incapacitated: every pool is 0 dice.',

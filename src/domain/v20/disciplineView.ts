@@ -5,6 +5,7 @@
 import { countLabel } from './labels';
 import {
   DISCIPLINE_CATALOGUE,
+  disciplineKey,
   disciplineReadings,
   type DisciplineEntry,
   type DisciplineReading,
@@ -60,9 +61,7 @@ export interface DisciplineListView {
 }
 
 /** Names match whatever their case and spacing, as the catalogue's lookup does: "  dominate " is Dominate. */
-const keyOf = (name: string): string => name.trim().replace(/\s+/g, ' ').toLowerCase();
-
-const ENTRY_BY_KEY = new Map(DISCIPLINE_CATALOGUE.map((entry) => [keyOf(entry.name), entry]));
+const ENTRY_BY_KEY = new Map(DISCIPLINE_CATALOGUE.map((entry) => [disciplineKey(entry.name), entry]));
 
 /** The power's rule field as the book states it, or where to look when the book's wording was not extracted. */
 export function fieldText(power: Power, field: PowerField): string {
@@ -103,7 +102,7 @@ function viewOf(
     ? entry.powers.map((_, index) => powerView(character, entry, index + 1, reading?.powers[index]))
     : [];
   const view: DisciplineView = {
-    key: keyOf(name),
+    key: disciplineKey(name),
     name,
     rating,
     ratingText: `${rating} / ${DISCIPLINE_LEVELS}`,
@@ -118,7 +117,7 @@ function viewOf(
 function rowsByKey(readings: readonly DisciplineReading[]): Map<string, DisciplineReading> {
   const rows = new Map<string, DisciplineReading>();
   for (const reading of readings) {
-    const key = keyOf(reading.name);
+    const key = disciplineKey(reading.name);
     const held = rows.get(key);
     if (held === undefined || reading.rating > held.rating) rows.set(key, reading);
   }
@@ -133,16 +132,16 @@ function rowsByKey(readings: readonly DisciplineReading[]): Map<string, Discipli
 export function disciplineView(character: V20Character, scope: DisciplineScope): DisciplineListView {
   const rows = rowsByKey(disciplineReadings(character));
   const viewOfRow = (reading: DisciplineReading): DisciplineView => {
-    const entry = ENTRY_BY_KEY.get(keyOf(reading.name));
+    const entry = ENTRY_BY_KEY.get(disciplineKey(reading.name));
     return viewOf(character, entry?.name ?? reading.name, reading.rating, entry, reading);
   };
   const owned = [...rows.values()].filter((reading) => reading.rating >= 1).map(viewOfRow);
   if (scope === 'owned') return { disciplines: owned, ownedCount: owned.length };
 
   const catalogued = DISCIPLINE_CATALOGUE.map((entry) => {
-    const reading = rows.get(keyOf(entry.name));
+    const reading = rows.get(disciplineKey(entry.name));
     return reading === undefined ? viewOf(character, entry.name, 0, entry) : viewOfRow(reading);
   });
-  const unknown = [...rows.values()].filter((reading) => !ENTRY_BY_KEY.has(keyOf(reading.name))).map(viewOfRow);
+  const unknown = [...rows.values()].filter((reading) => !ENTRY_BY_KEY.has(disciplineKey(reading.name))).map(viewOfRow);
   return { disciplines: [...catalogued, ...unknown], ownedCount: owned.length };
 }

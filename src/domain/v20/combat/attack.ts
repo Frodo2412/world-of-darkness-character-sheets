@@ -7,7 +7,7 @@ import type { Manoeuvre } from './data/manoeuvres';
 import type { CalledShot, RangeBand } from './data/modifiers';
 import { manoeuvrePool, type CombatPool } from './pools';
 
-/** Most attacks are made against difficulty 6 (V20 p. 272); a chosen Range replaces it. */
+/** Most attacks are made against difficulty 6 (V20 p. 272); a chosen Range replaces it for a ranged manoeuvre. */
 export const BASE_DIFFICULTY = 6;
 
 export interface AttackInput {
@@ -37,15 +37,16 @@ function modifierWords(diceModifier: number): string {
 }
 
 /**
- * The attack: the manoeuvre's pool (already less the wound) plus the dice modifier, never below 0,
+ * The attack: the manoeuvre's pool (less the wound) plus the dice modifier, floored once at 0 over the whole sum,
  * and 0 while Incapacitated whatever the modifier. Accuracy is the manoeuvre's own.
  */
 export function attackPool({ character, manoeuvre, diceModifier, difficultyModifier, target, range }: AttackInput): AttackPool {
   const pool = manoeuvrePool(character, manoeuvre);
-  const difficulty = (range?.difficulty ?? BASE_DIFFICULTY) + manoeuvre.difficulty + (target?.difficulty ?? 0) + difficultyModifier;
+  const base = manoeuvre.section === 'ranged' ? (range?.difficulty ?? BASE_DIFFICULTY) : BASE_DIFFICULTY;
+  const difficulty = base + manoeuvre.difficulty + (target?.difficulty ?? 0) + difficultyModifier;
   return {
     ...pool,
-    dice: pool.incapacitated ? 0 : Math.max(0, pool.dice + diceModifier),
+    dice: pool.incapacitated ? 0 : Math.max(0, pool.raw + diceModifier),
     formula: pool.incapacitated ? pool.formula : pool.formula + modifierWords(diceModifier),
     accuracy: manoeuvre.accuracy,
     difficulty,

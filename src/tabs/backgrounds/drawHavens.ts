@@ -1,5 +1,5 @@
 import type { HavenCard } from '../../domain/v20/backgrounds/havens';
-import { cloneOf, field, reconcile, setText } from './dom';
+import { cloneOf, field, reconcile, setText } from '../../scripts/dossier/dom';
 
 /** The details a haven can have, each with the label it is shown under: the one list the card is drawn from. */
 export const HAVEN_FIELDS = [

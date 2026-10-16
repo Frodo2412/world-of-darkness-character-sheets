@@ -1,6 +1,6 @@
 import type { BackgroundCard } from '../../domain/v20/backgrounds/cards';
 import type { Person } from '../../domain/v20/dossier/types';
-import { cloneOf, field, reconcile, setText } from './dom';
+import { cloneOf, field, reconcile, setText } from '../../scripts/dossier/dom';
 import { drawDots } from './dots';
 
 /** What the background cards copy their markup from. */

@@ -1,7 +1,7 @@
 import { countLabel } from '../../domain/v20/labels';
 import type { DisciplineView } from '../../domain/v20/disciplineView';
 import { filterBy } from '../../scripts/dossier/filterBy';
-import { setText } from './dom';
+import { setText } from '../../scripts/dossier/dom';
 
 /** The parts of the panel's search field the draw writes into. */
 export interface SearchParts {
