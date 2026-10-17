@@ -178,6 +178,7 @@
 	padding: 0;
 	font-family: var(--font-display);
 	font-size: 1.8125rem;
+	font-weight: 400;
 	letter-spacing: normal;
 	text-transform: none;
 	line-height: var(--leading-tight);
@@ -271,6 +272,7 @@
 .discipline-power-state,
 .discipline-power-kind {
 	font-size: var(--text-small);
+	font-weight: 400;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 	color: var(--color-muted);
@@ -342,6 +344,7 @@
 
 .discipline-power[open] > summary {
 	padding: 20px 20px 0;
+	font-weight: 400;
 }
 
 .discipline-power[open] .discipline-power-level {

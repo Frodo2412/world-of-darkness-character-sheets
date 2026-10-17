@@ -35,6 +35,8 @@ export function mount(ctx: TabContext): MountedTab {
   const state = { shown: 'owned' as Shown, query: '', chosen: undefined as string | undefined };
   /** The powers the player has opened, by key: kept across redraws, forgotten with the page. */
   const open = new Set<string>();
+  /** The Disciplines already drawn once: the first time one is shown, its first known power is open, as the design draws it. */
+  const introduced = new Set<string>();
   let drawn = '';
   /** What is on screen now, for the handlers. */
   let views: DisciplineView[] = [];
@@ -43,6 +45,15 @@ export function mount(ctx: TabContext): MountedTab {
     state.query = query;
     redraw();
   });
+  // The "⌘ K" in the search box: the key puts the player in it while this tab is the one shown.
+  const searchInput = find<HTMLInputElement>('[data-search-input]');
+  const onShortcut = (event: KeyboardEvent): void => {
+    if (event.key.toLowerCase() !== 'k' || !(event.metaKey || event.ctrlKey) || root.hidden || root.offsetParent === null) return;
+    event.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+  };
+  document.addEventListener('keydown', onShortcut);
   wireSegmentedPress(segmented, (value) => {
     state.shown = value as Shown;
     redraw();
@@ -122,6 +133,11 @@ export function mount(ctx: TabContext): MountedTab {
     drawn = signature;
     drawList(list, filtered, shown.name);
     drawDetailHead(detail, shown);
+    if (!introduced.has(shown.name)) {
+      introduced.add(shown.name);
+      const first = shown.powers.find((power) => power.state === 'known');
+      if (first !== undefined) open.add(powerKey(shown.name, first));
+    }
     drawPowers(powerList, shown, (key) => open.has(key));
   }
 

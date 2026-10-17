@@ -21,6 +21,7 @@
 	padding: 0;
 	border: 0;
 	font-family: var(--font-display);
+	font-weight: 400;
 	font-size: var(--text-h3);
 	letter-spacing: normal;
 	text-transform: none;
@@ -202,7 +203,7 @@
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	padding: var(--space-row) var(--space-card);
+	padding: 0.5625rem var(--space-card);
 	background: var(--color-surface);
 	border: var(--stroke) solid var(--color-border-control);
 	border-radius: var(--radius-badge);
@@ -231,6 +232,20 @@
 
 .dossier-search-input::placeholder {
 	color: var(--color-muted);
+}
+
+.dossier-search-shortcut {
+	flex: none;
+	font: inherit;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+/* The hint is for a keyboard; a phone has none. */
+@media (max-width: 40rem) {
+	.dossier-search-shortcut {
+		display: none;
+	}
 }
 
 /* The clear button is ours; the browser's own would be a second one. */
@@ -324,6 +339,7 @@
 	padding: 0;
 	border: 0;
 	font-family: var(--font-display);
+	font-weight: 400;
 	font-size: var(--text-h2);
 	letter-spacing: normal;
 	text-transform: none;
@@ -336,6 +352,7 @@
 	padding: 0;
 	border: 0;
 	font-family: var(--font-display);
+	font-weight: 400;
 	font-size: var(--text-h3);
 	letter-spacing: normal;
 	text-transform: none;

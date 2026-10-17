@@ -6,9 +6,11 @@ interface Props {
 	id: string;
 	label: string;
 	placeholder?: string;
+	/** A key hint drawn at the end of the box ("⌘ K"); the page wires the key itself. */
+	shortcut?: string;
 }
 
-const { id, label, placeholder } = Astro.props;
+const { id, label, placeholder, shortcut } = Astro.props;
 ---
 
 <div class="dossier-search" data-search>
@@ -17,6 +19,7 @@ const { id, label, placeholder } = Astro.props;
 		<input class="dossier-search-input" id={id} type="search" autocomplete="off" placeholder={placeholder} data-search-input />
 		<!-- Shown by the script once there is something to clear. -->
 		<button type="button" class="dossier-search-clear" aria-label="Clear search" data-search-clear hidden>Clear</button>
+		{shortcut && <kbd class="dossier-search-shortcut" aria-hidden="true">{shortcut}</kbd>}
 	</div>
 	<!-- The script says how many items match; a status region is polite. -->
 	<p class="dossier-search-count" role="status" data-search-count></p>

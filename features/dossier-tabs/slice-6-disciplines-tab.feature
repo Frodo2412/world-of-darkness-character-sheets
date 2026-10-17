@@ -55,7 +55,7 @@ Feature: Disciplines tab
 
   Scenario: A power opens and closes from the keyboard
     Given a character with Presence 3
-    When the player focuses the Awe heading on the Disciplines tab and presses Enter, then Space
+    When the player focuses the Dread Gaze heading on the Disciplines tab and presses Enter, then Space
     Then its panel is shown and open, then hidden and closed, on the Disciplines tab
 
   Scenario: Search matches a power's name or its summary
