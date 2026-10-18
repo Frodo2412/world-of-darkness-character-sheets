@@ -151,6 +151,19 @@ describe('undoApply', () => {
     const undone = undoApply(edited, result.applied);
 
     expect(undone.abilities.stealth).toBe(5);
-    expect(undone.journal.xp.spendings).toEqual([]);
+  });
+
+  test('keeps the spending record of a rating it did not restore, so the ledger still matches the sheet', () => {
+    const { character, stamp } = setup(10);
+    const result = applyPending(character, choose(character, 10, 'abilities.stealth', 'abilities.melee'), stamp);
+    if (!result.ok) throw new Error(result.reason);
+    const edited = { ...result.character, abilities: { ...result.character.abilities, stealth: 4 } };
+
+    const undone = undoApply(edited, result.applied);
+
+    expect(undone.abilities.stealth).toBe(4);
+    expect(undone.abilities.melee).toBe(0);
+    expect(undone.journal.xp.spendings.map((spending) => spending.label)).toEqual(['Stealth 3']);
+    expect(experienceTotals(undone.journal).spent).toBe(4);
   });
 });

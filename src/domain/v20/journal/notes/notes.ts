@@ -115,8 +115,8 @@ export function removeTag(journal: Journal, id: string, tag: string, stamp: Stam
   return editNote(journal, id, { tags: note.tags.filter((kept) => caseFolded(kept) !== caseFolded(tag)) }, stamp);
 }
 
-/** "@" and then capitalised words ("@Camille Arnaud"), or any name in brackets ("@[Dr. Laurent]"). */
-const MENTION = /@\[([^\]\n]+)\]|@(\p{Lu}[\p{L}\p{M}'’-]*(?:[ \t]+\p{Lu}[\p{L}\p{M}'’-]*)*)/gu;
+/** "@" and then capitalised words ("@Camille Arnaud"), or any name in brackets ("@[Dr. Laurent]"). An "@" inside a word (an address) is not one. */
+const MENTION = /(?<![\p{L}\p{M}\p{N}_])@\[([^\]\n]+)\]|(?<![\p{L}\p{M}\p{N}_])@(\p{Lu}[\p{L}\p{M}'’-]*(?:[ \t]+\p{Lu}[\p{L}\p{M}'’-]*)*)/gu;
 
 const sameName = (a: string, b: string): boolean => caseFolded(a) === caseFolded(b);
 

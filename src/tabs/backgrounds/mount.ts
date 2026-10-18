@@ -28,6 +28,7 @@ import { drawHavens, havenLabel } from './drawHavens';
 import { countsOf, drawIndex } from './drawIndex';
 import { drawPointed, pointedLabel } from './drawMeritsFlaws';
 import { drawOther, otherLabel } from './drawOther';
+import { forgetHintsOf } from './hints';
 
 /** What the player is told when an Other trait's rating is put right. */
 const RATING_MESSAGE = 'Rating kept between 0 and 10.';
@@ -75,6 +76,7 @@ export function mount(ctx: TabContext): MountedTab {
   function remove(family: Family, index: number): void {
     const label = labelOf(family, index);
     let removal: Removal | undefined;
+    forgetHintsOf(hints, family);
     ctx.apply((character) => {
       const result = removeEntry(character, family, index);
       removal = result?.removal;
@@ -83,6 +85,7 @@ export function mount(ctx: TabContext): MountedTab {
     if (removal === undefined) return;
     const taken = removal;
     undo.hold(label, () => {
+      forgetHintsOf(hints, family);
       const restored = ctx.apply((character) => restoreEntry(character, taken));
       // A blanked row filled in since is not overwritten: the entry went to the end of the list.
       const placed = (restored[family] as unknown[])[taken.index] === taken.entry ? taken.index : restored[family].length - 1;

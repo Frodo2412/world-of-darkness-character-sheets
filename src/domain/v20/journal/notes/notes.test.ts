@@ -190,6 +190,8 @@ describe('mentionedNames', () => {
     ['@Camille and @camille', ['Camille']],
     ['@lowercase is not a name', []],
     ['mail me at a@b.example', []],
+    ['mail bob@Example.com', []],
+    ['(@Lucien) and "@Mara"', ['Lucien', 'Mara']],
     ['@[]', []],
     ['@Éloïse Voss', ['Éloïse Voss']],
     ["@D'Arcy Smith-Jones", ["D'Arcy Smith-Jones"]],

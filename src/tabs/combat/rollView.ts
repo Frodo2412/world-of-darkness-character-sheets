@@ -2,7 +2,7 @@
 // the rulebook data and the player's modifiers, and none of it is stored.
 
 import type { V20Character } from '../../domain/v20/character';
-import { attackPool, baseDifficulty, calledShotOf, type AttackModifiers, type AttackPool } from '../../domain/v20/combat/attack';
+import { attackPool, baseDifficulty, calledShotOf, clampDifficulty, type AttackModifiers, type AttackPool } from '../../domain/v20/combat/attack';
 import { damagePool, type DamagePool } from '../../domain/v20/combat/damage';
 import { MANOEUVRES, type Manoeuvre } from '../../domain/v20/combat/data/manoeuvres';
 import { manoeuvreAvailability, type Availability } from '../../domain/v20/combat/requirements';
@@ -95,3 +95,12 @@ export function difficultyBase(state: RollState): number {
 }
 
 export { damageText };
+
+/**
+ * The modifier that makes the difficulty shown the one wanted. It is measured from the base, not from what is
+ * shown, and the wanted figure is held to the rulebook's range first, so a difficulty already pinned at the
+ * ceiling or floor leaves nothing hidden for the other button to undo.
+ */
+export function difficultyModifierFor(state: RollState, wanted: number): number {
+  return clampDifficulty(wanted) - difficultyBase(state);
+}

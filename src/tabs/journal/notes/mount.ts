@@ -287,8 +287,6 @@ export function mount(ctx: TabContext, root: HTMLElement): MountedTab {
     if (event.target === titleField || event.target === bodyField) flush();
   });
 
-  window.addEventListener('pagehide', () => flush());
-
   preview.addEventListener('change', (event) => {
     const box = event.target as HTMLInputElement;
     const line = Number(box.dataset.line);
@@ -357,6 +355,9 @@ export function mount(ctx: TabContext, root: HTMLElement): MountedTab {
     input.value = '';
     if (id !== undefined) commit((journal) => addMention(journal, id, name, ctx.stamp));
   });
+
+  // Last, so a mount that throws before here leaves no listener behind for a retry to stack on.
+  window.addEventListener('pagehide', () => flush());
 
   return {
     render(character: V20Character, _mode: SheetMode) {

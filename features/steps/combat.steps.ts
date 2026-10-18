@@ -165,6 +165,17 @@ When(/^the player searches "([^"]+)" on the Combat tab$/, async ({ page }, query
   await searchBox(page).fill(query);
 });
 
+When('the player leaves the Combat tab and returns without a reload', async ({ page, memory }) => {
+  await showTab(page, 'Character sheet');
+  await showCombat(page, memory.saved[0].id);
+});
+
+Then('the search is empty, with no clear button and no count on the Combat tab', async ({ page }) => {
+  await expect(searchBox(page)).toHaveValue('');
+  await expect(combatPanel(page).locator('[data-search-clear]')).toBeHidden();
+  await expect(combatPanel(page).locator('[data-search-count]')).toHaveText('');
+});
+
 When('the player clears the search and chooses "Ranged combat" on the Combat tab', async ({ page }) => {
   await searchBox(page).fill('');
   await combatPanel(page).getByRole('button', { name: 'Ranged combat', exact: true }).click();

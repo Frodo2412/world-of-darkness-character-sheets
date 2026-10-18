@@ -12,7 +12,7 @@ import { setPressed, wireSegmentedPress } from '../../scripts/dossier/segmented'
 import type { MountedTab, TabContext } from '../../scripts/tabs/context';
 import { buildPickers, drawRoll } from './drawRoll';
 import { drawManoeuvres, drawMeleeWeapons, drawRangedWeapons } from './drawTables';
-import { manoeuvreOf, OPENING_ROLL, rollView, type RollState } from './rollView';
+import { difficultyModifierFor, manoeuvreOf, OPENING_ROLL, rollView, type RollState } from './rollView';
 import { chooseFilter, chooseTab, OPENING_VIEW, shownSections, type SectionFilter } from './section';
 
 const CONCEAL_NOTE =
@@ -141,7 +141,7 @@ export function mount(ctx: TabContext): MountedTab {
     } else if (field === 'difficulty') {
       const shown = rollView(ctx.current(), state).difficultyShown;
       const wanted = relative ? shown + value : Number.isNaN(value) ? shown : Math.trunc(value);
-      state = { ...state, difficulty: state.difficulty + (wanted - shown) };
+      state = { ...state, difficulty: difficultyModifierFor(state, wanted) };
       if (wanted !== shown || input !== undefined) {
         const now = rollView(ctx.current(), state).difficultyShown;
         if (input !== undefined) input.value = String(now);
@@ -217,9 +217,7 @@ export function mount(ctx: TabContext): MountedTab {
       // The modifiers, the target, the range and the choices are page state: back to nothing on leaving.
       state = { ...OPENING_ROLL };
       view = OPENING_VIEW;
-      query = '';
-      const input = find<HTMLInputElement>('[data-search-input]');
-      input.value = '';
+      search.clear();
       showExtraHint(undefined);
     },
   };

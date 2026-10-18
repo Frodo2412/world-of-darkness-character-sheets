@@ -67,6 +67,8 @@ export interface PowerView {
 }
 
 export interface DisciplineView {
+  /** Tells this view from every other in its list: the name, and "Name (2)" for a second row of the same Discipline. */
+  key: string;
   name: string;
   rating: number;
   /** The dots shown: five, or ten when the rating is above five. */
@@ -134,8 +136,9 @@ function powerView(character: V20Character, discipline: string, power: Power, le
   return view;
 }
 
-function disciplineViewOf(character: V20Character, name: string, rating: number, entry: DisciplineEntry | undefined): DisciplineView {
+function disciplineViewOf(character: V20Character, key: string, name: string, rating: number, entry: DisciplineEntry | undefined): DisciplineView {
   const view: DisciplineView = {
+    key,
     name,
     rating,
     dots: rating > DOTS ? MOST_DOTS : DOTS,
@@ -153,12 +156,17 @@ function disciplineViewOf(character: V20Character, name: string, rating: number,
  */
 export function disciplineView(character: V20Character): DisciplineViews {
   const readings: DisciplineReading[] = disciplineReadings(character);
-  const owned = readings.map((reading) =>
-    disciplineViewOf(character, reading.name, reading.rating, reading.rating > 0 ? disciplineEntry(reading.name) : undefined),
-  );
+  const seen = new Map<string, number>();
+  const owned = readings.map((reading) => {
+    const same = reading.name.trim().toLowerCase();
+    const nth = (seen.get(same) ?? 0) + 1;
+    seen.set(same, nth);
+    const key = nth === 1 ? reading.name : `${reading.name} (${nth})`;
+    return disciplineViewOf(character, key, reading.name, reading.rating, reading.rating > 0 ? disciplineEntry(reading.name) : undefined);
+  });
   const all = DISCIPLINE_CATALOGUE.map((entry) => {
     const held = readings.find((reading) => reading.rating > 0 && disciplineEntry(reading.name) === entry);
-    return disciplineViewOf(character, entry.name, held?.rating ?? 0, entry);
+    return disciplineViewOf(character, entry.name, entry.name, held?.rating ?? 0, entry);
   });
   return { owned, all };
 }

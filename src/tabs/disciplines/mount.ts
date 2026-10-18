@@ -45,15 +45,6 @@ export function mount(ctx: TabContext): MountedTab {
     state.query = query;
     redraw();
   });
-  // The "⌘ K" in the search box: the key puts the player in it while this tab is the one shown.
-  const searchInput = find<HTMLInputElement>('[data-search-input]');
-  const onShortcut = (event: KeyboardEvent): void => {
-    if (event.key.toLowerCase() !== 'k' || !(event.metaKey || event.ctrlKey) || root.hidden || root.offsetParent === null) return;
-    event.preventDefault();
-    searchInput.focus();
-    searchInput.select();
-  };
-  document.addEventListener('keydown', onShortcut);
   wireSegmentedPress(segmented, (value) => {
     state.shown = value as Shown;
     redraw();
@@ -94,7 +85,7 @@ export function mount(ctx: TabContext): MountedTab {
   );
 
   const powerOf = (key: string): PowerView | undefined => {
-    for (const view of views) for (const power of view.powers) if (powerKey(view.name, power) === key) return power;
+    for (const view of views) for (const power of view.powers) if (powerKey(view.key, power) === key) return power;
     return undefined;
   };
 
@@ -128,18 +119,28 @@ export function mount(ctx: TabContext): MountedTab {
     noMatch.hidden = nothingOwned || filtered.length > 0;
     split.hidden = nothingOwned || filtered.length === 0;
 
-    const signature = JSON.stringify([state.shown, shown?.name, filtered]);
+    const signature = JSON.stringify([state.shown, shown?.key, filtered]);
     if (signature === drawn || shown === undefined) return;
     drawn = signature;
-    drawList(list, filtered, shown.name);
+    drawList(list, filtered, shown.key);
     drawDetailHead(detail, shown);
-    if (!introduced.has(shown.name)) {
-      introduced.add(shown.name);
+    if (!introduced.has(shown.key)) {
+      introduced.add(shown.key);
       const first = shown.powers.find((power) => power.state === 'known');
-      if (first !== undefined) open.add(powerKey(shown.name, first));
+      if (first !== undefined) open.add(powerKey(shown.key, first));
     }
     drawPowers(powerList, shown, (key) => open.has(key));
   }
+
+  // The "⌘ K" in the search box: the key puts the player in it while this tab is the one shown. Registered last,
+  // so a mount that throws before here leaves no listener behind for a retry to stack on.
+  const searchInput = find<HTMLInputElement>('[data-search-input]');
+  document.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() !== 'k' || !(event.metaKey || event.ctrlKey) || root.hidden || root.offsetParent === null) return;
+    event.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+  });
 
   return {
     render() {

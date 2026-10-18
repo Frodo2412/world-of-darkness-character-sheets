@@ -16,6 +16,16 @@ const owned = (character: V20Character, name: string): DisciplineView => {
 };
 
 describe('disciplineView owned list', () => {
+  test('gives two rows of the same Discipline their own keys, so neither hides the other', () => {
+    const character = withDisciplines({ name: 'Auspex', rating: 2 }, { name: 'Presence', rating: 1 }, { name: 'Auspex', rating: 4 });
+
+    const views = disciplineView(character).owned;
+
+    expect(views.map((view) => view.key)).toEqual(['Auspex', 'Presence', 'Auspex (2)']);
+    expect(new Set(views.map((view) => view.key)).size).toBe(3);
+    expect(disciplineView(character).all.map((view) => view.key)).toEqual(disciplineView(character).all.map((view) => view.name));
+  });
+
   test('lists the named Disciplines in the order stored, with rating and levels unlocked', () => {
     const character = withDisciplines({ name: 'Presence', rating: 3 }, { name: 'Auspex', rating: 2 }, { name: 'Celerity', rating: 1 });
 

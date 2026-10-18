@@ -17,5 +17,5 @@ export function filterDisciplines(views: readonly DisciplineView[], query: strin
 
 /** The Discipline shown in detail: the chosen one if it survived the search, else the first that did. */
 export function selectedDiscipline(views: readonly DisciplineView[], chosen: string | undefined): DisciplineView | undefined {
-  return views.find((view) => view.name === chosen) ?? views[0];
+  return views.find((view) => view.key === chosen) ?? views[0];
 }

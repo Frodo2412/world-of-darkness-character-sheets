@@ -9,8 +9,8 @@ function listItem(view: DisciplineView, current: boolean): HTMLElement {
   const item = el('li', 'discipline-library-item');
   const button = el('button', 'discipline-item');
   button.type = 'button';
-  button.dataset.value = view.name;
-  button.dataset.focusKey = view.name;
+  button.dataset.value = view.key;
+  button.dataset.focusKey = view.key;
   if (current) button.setAttribute('aria-current', 'true');
   // The mark that shows the chosen Discipline in text as well as in its border.
   const mark = el('span', 'discipline-item-mark', '▸');
@@ -24,7 +24,7 @@ function listItem(view: DisciplineView, current: boolean): HTMLElement {
 
 /** Draws the left list, one card for each Discipline, the shown one marked. */
 export function drawList(list: HTMLElement, views: readonly DisciplineView[], shown: string | undefined): void {
-  replaceKeepingFocus(list, views.map((view) => listItem(view, view.name === shown)));
+  replaceKeepingFocus(list, views.map((view) => listItem(view, view.key === shown)));
 }
 
 /** Draws the chosen Discipline's heading, rating and note; the powers are drawn by `drawPowers`. */

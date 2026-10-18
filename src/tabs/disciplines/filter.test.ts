@@ -61,12 +61,19 @@ describe('filterDisciplines', () => {
 
 describe('selectedDiscipline', () => {
   test('is the chosen Discipline while it is in the list', () => {
-    expect(selectedDiscipline(owned, 'Auspex')?.name).toBe('Auspex');
+    expect(selectedDiscipline(owned, 'Auspex')?.key).toBe('Auspex');
   });
 
   test('is the first in the list when the chosen one is not there, or none was chosen', () => {
     expect(selectedDiscipline(owned, 'Dominate')?.name).toBe('Presence');
     expect(selectedDiscipline(owned, undefined)?.name).toBe('Presence');
+  });
+
+  test('tells two rows of the same Discipline apart by key', () => {
+    const twice = disciplineView(characterWith({ name: 'Auspex', rating: 2 }, { name: 'Auspex', rating: 4 })).owned;
+
+    expect(selectedDiscipline(twice, 'Auspex (2)')?.rating).toBe(4);
+    expect(selectedDiscipline(twice, 'Auspex')?.rating).toBe(2);
   });
 
   test('is nothing for an empty list', () => {

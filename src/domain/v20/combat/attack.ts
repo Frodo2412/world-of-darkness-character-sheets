@@ -39,7 +39,7 @@ export const calledShotOf = (key: CalledShot['key'] | undefined): CalledShot | u
 
 export const rangeBandOf = (key: RangeBand['key'] | undefined): RangeBand | undefined => RANGE_BANDS.find((band) => band.key === key);
 
-const clamp = (value: number): number => Math.min(MOST_DIFFICULTY, Math.max(LEAST_DIFFICULTY, value));
+export const clampDifficulty = (value: number): number => Math.min(MOST_DIFFICULTY, Math.max(LEAST_DIFFICULTY, value));
 
 /** The difficulty before the player's own modifier: the range band's for a ranged attack, else the ordinary one. */
 export function baseDifficulty(manoeuvre: Manoeuvre, weapon: Weapon | undefined, modifiers: Pick<AttackModifiers, 'range' | 'target'>): number {
@@ -56,7 +56,7 @@ export function attackPool(character: V20Character, manoeuvre: Manoeuvre, weapon
     ...pool,
     dice,
     accuracy: manoeuvre.accuracy === 'special' ? 'Special' : `+${manoeuvre.accuracy}`,
-    difficulty: clamp(baseDifficulty(manoeuvre, weapon, modifiers) + modifiers.difficulty),
-    manoeuvreDifficulty: clamp(baseDifficulty(manoeuvre, weapon, rangeOnly)),
+    difficulty: clampDifficulty(baseDifficulty(manoeuvre, weapon, modifiers) + modifiers.difficulty),
+    manoeuvreDifficulty: clampDifficulty(baseDifficulty(manoeuvre, weapon, rangeOnly)),
   };
 }

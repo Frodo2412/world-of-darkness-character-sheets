@@ -66,13 +66,17 @@ export function applyPending(character: V20Character, pending: Pending, stamp: S
 }
 
 /**
- * Puts back what `applyPending` did: each rating returns to what it was and exactly the records written are
- * removed. A rating the player has changed since is left as they set it.
+ * Puts back what `applyPending` did: each rating returns to what it was and the record written for it is
+ * removed. A rating the player has changed since is left as they set it, and its record stays, so the
+ * experience spent still matches the sheet.
  */
 export function undoApply(character: V20Character, applied: Applied): V20Character {
   let next = character;
-  for (const item of applied.items) {
-    if (subjectRating(next, item.subject) === item.to) next = setSubjectRating(next, item.subject, item.from);
-  }
-  return { ...next, journal: removeSpendings(next.journal, applied.spendingIds) };
+  const restored: string[] = [];
+  applied.items.forEach((item, at) => {
+    if (subjectRating(next, item.subject) !== item.to) return;
+    next = setSubjectRating(next, item.subject, item.from);
+    restored.push(applied.spendingIds[at]);
+  });
+  return { ...next, journal: removeSpendings(next.journal, restored) };
 }

@@ -91,6 +91,6 @@ function powerItem(discipline: string, power: PowerView, open: boolean): HTMLEle
 export function drawPowers(list: HTMLElement, view: DisciplineView, isOpen: (key: string) => boolean): void {
   replaceKeepingFocus(
     list,
-    view.powers.map((power) => powerItem(view.name, power, isOpen(powerKey(view.name, power)))),
+    view.powers.map((power) => powerItem(view.key, power, isOpen(powerKey(view.key, power)))),
   );
 }

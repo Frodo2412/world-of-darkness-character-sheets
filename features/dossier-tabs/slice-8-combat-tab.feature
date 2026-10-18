@@ -77,6 +77,13 @@ Feature: Combat tab
     When the player clears the search and chooses "Ranged combat" on the Combat tab
     Then only the Ranged section is shown and the Ranged sub-tab is selected on the Combat tab
 
+  Scenario: Leaving the tab forgets the search, and its clear button and count with it
+    Given a saved character
+    When the Combat tab is opened
+    And the player searches "stake" on the Combat tab
+    And the player leaves the Combat tab and returns without a reload
+    Then the search is empty, with no clear button and no count on the Combat tab
+
   Scenario: An incapacitated character has no pools
     Given a character who is Incapacitated
     When the Combat tab is opened
