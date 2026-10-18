@@ -1,0 +1,110 @@
+---
+import SessionPrompt from '../../../components/dossier/SessionPrompt.astro';
+import { costReference } from '../../../domain/v20/experience/awards/view';
+import './experience.css';
+
+// The Experience section: four figures, the Award XP form, the award log and spending record, and the
+// cost reference. `mount.ts` beside this file fills it from the character.
+const cards = [
+	{ key: 'earned', label: 'Total earned' },
+	{ key: 'spent', label: 'Total spent' },
+	{ key: 'available', label: 'Available' },
+	{ key: 'thisSession', label: 'This session' },
+];
+const logs = [
+	{ key: 'awards', title: 'Award log', empty: 'No experience awarded yet.' },
+	{ key: 'spendings', title: 'Spending record', empty: 'No experience spent yet.' },
+];
+---
+
+<div class="journal-xp-heading">
+	<div class="journal-xp-intro">
+		<h2 class="journal-section-title" id="journal-experience-title" tabindex="-1">Experience</h2>
+		<p class="journal-lead">Points earned, spent and remaining across all sessions.</p>
+	</div>
+	<button type="button" class="journal-button" data-award-toggle aria-expanded="false" aria-controls="journal-award-panel">
+		<span class="journal-icon journal-icon-pencil" aria-hidden="true"></span>
+		Award XP
+	</button>
+</div>
+<div class="journal-award" id="journal-award-panel" data-award-panel hidden>
+	<form class="journal-award-form" data-award-form novalidate>
+		<h3 class="dossier-card-title">Award experience</h3>
+		<p class="journal-explanation" data-award-where></p>
+		<div class="journal-award-fields">
+			<div class="journal-field">
+				<label class="journal-label" for="journal-award-amount">XP amount</label>
+				<input
+					class="journal-input"
+					id="journal-award-amount"
+					type="text"
+					inputmode="numeric"
+					autocomplete="off"
+					aria-describedby="journal-award-hint"
+					data-award-amount
+				/>
+				<p class="journal-award-hint" id="journal-award-hint" data-award-hint hidden></p>
+			</div>
+			<div class="journal-field">
+				<label class="journal-label" for="journal-award-note">Note</label>
+				<input class="journal-input" id="journal-award-note" type="text" autocomplete="off" data-award-note />
+			</div>
+		</div>
+		<div class="journal-award-actions">
+			<button type="submit" class="journal-primary">Record award</button>
+			<button type="button" class="journal-chip-button" data-award-cancel>Cancel</button>
+		</div>
+	</form>
+</div>
+<div class="journal-award-prompt" data-award-prompt hidden>
+	<SessionPrompt id="journal-experience-prompt" />
+</div>
+<ul class="journal-xp-cards" aria-label="Experience totals">
+	{
+		cards.map((card) => (
+			<li class={`journal-xp-card journal-xp-card-${card.key}`} data-card={card.key}>
+				<span class="journal-xp-label">{card.label}</span>
+				<span class="journal-xp-value" data-value />
+				<span class="journal-xp-caption" data-caption />
+			</li>
+		))
+	}
+</ul>
+<div class="journal-xp-columns">
+	{
+		logs.map((log) => (
+			<section class="journal-xp-column" aria-labelledby={`journal-${log.key}-title`} data-log={log.key}>
+				<div class="journal-xp-subheading">
+					<h3 class="journal-xp-subtitle" id={`journal-${log.key}-title`}>{log.title}</h3>
+					<span class="journal-count" data-count />
+				</div>
+				<div class="journal-xp-list-card">
+					<p class="journal-none journal-xp-none" data-none hidden>{log.empty}</p>
+					<ul class="dossier-list journal-xp-list" aria-labelledby={`journal-${log.key}-title`} data-list />
+					<div class="journal-xp-footer" data-footer hidden>
+						<span data-footer-text />
+						<button type="button" class="journal-chip-button" data-show-all={log.key} aria-expanded="false">Show all</button>
+					</div>
+				</div>
+			</section>
+		))
+	}
+	<section class="journal-xp-reference" aria-labelledby="journal-costs-title">
+		<h3 class="journal-overline" id="journal-costs-title">Quick reference · XP costs (V20)</h3>
+		<dl class="journal-xp-costs">
+			{
+				costReference().map((row) => (
+					<div class="journal-xp-cost">
+						<dt>{row.label}</dt>
+						<dd>{row.rule}</dd>
+					</div>
+				))
+			}
+		</dl>
+	</section>
+</div>
+<section class="journal-xp-earlier" aria-labelledby="journal-xp-earlier-title" data-earlier-experience hidden>
+	<h3 class="journal-xp-subtitle" id="journal-xp-earlier-title">Earlier experience note</h3>
+	<p class="journal-none">Written before the Journal existed. Shown as it was saved; it cannot be edited here.</p>
+	<p class="journal-earlier-text" data-earlier-text></p>
+</section>

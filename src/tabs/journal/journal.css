@@ -1,0 +1,457 @@
+/* The Journal tab, as the Figma frame "Journal" draws it: the heading with the session and "New note",
+   the sub-navigation, then Notes, Experience and Character Record one under another. Text is held to
+   the shared 12px minimum, so the frame's 9-11px captions are drawn at 12px. The session list is not in
+   the frame (it shows one session); it is drawn as a card in the frame's own style. */
+
+.journal {
+	padding-block-start: var(--space-4);
+	padding-block-end: 2rem;
+	gap: var(--space-3);
+}
+
+.journal-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-3);
+}
+
+.journal-intro {
+	display: grid;
+	gap: 5px;
+}
+
+.journal .dossier-title {
+	font-size: 2rem;
+}
+
+.journal-lead {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.journal-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2) var(--space-3);
+}
+
+.journal-where {
+	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+	min-inline-size: 0;
+	overflow-wrap: anywhere;
+}
+
+.journal-where:empty {
+	display: none;
+}
+
+/* The one filled button: the frame's "New note". Its edge is its fill, so the border is drawn clear. */
+button.journal-primary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-2);
+	min-block-size: 2.25rem;
+	padding: 0 var(--space-3);
+	font-size: var(--text-body);
+	font-weight: 600;
+	color: var(--color-text-strong);
+	background: var(--color-accent);
+	border: var(--stroke) solid transparent;
+	border-radius: var(--radius-button);
+}
+
+button.journal-primary:hover:not(:disabled) {
+	border-color: var(--color-text-strong);
+}
+
+.journal-subnav-bar {
+	border-block-end: var(--stroke) solid var(--color-line);
+}
+
+.journal-subnav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0 var(--space-4);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.journal-subnav a {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: 2.25rem;
+	font-size: var(--text-body);
+	color: var(--color-muted);
+	text-decoration: none;
+	border-block-end: 2px solid transparent;
+	margin-block-end: -1px;
+}
+
+.journal-subnav a:hover {
+	color: var(--color-text);
+}
+
+.journal-subnav a[aria-current='true'] {
+	font-weight: 600;
+	color: var(--color-text-strong);
+	border-block-end-color: var(--color-focus);
+}
+
+.journal-empty {
+	text-align: start;
+}
+
+.journal-empty-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
+.journal-sessions {
+	display: grid;
+	gap: var(--space-3);
+	padding: var(--space-3);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.journal-card-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+}
+
+.journal-count {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.journal-sessions-body {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+	align-items: start;
+}
+
+@media (min-width: 60rem) {
+	.journal-sessions-body {
+		grid-template-columns: minmax(0, 1fr) minmax(18rem, 26rem);
+	}
+}
+
+.journal-sessions-list {
+	display: grid;
+	gap: var(--space-2);
+	justify-items: start;
+}
+
+.journal-session-list {
+	inline-size: 100%;
+	gap: 0;
+	background: var(--color-row);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.journal-session {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1) var(--space-2);
+	min-block-size: 2.5rem;
+	padding: var(--space-1) var(--space-card);
+}
+
+.journal-session + .journal-session {
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+.journal-session-name {
+	font-size: var(--text-body);
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+/* The current session says so in words; the tint only agrees. */
+.journal-session-mark {
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	line-height: var(--leading-compact);
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+	border-radius: var(--radius-badge);
+}
+
+.journal-session-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-1) var(--space-2);
+	margin-inline-start: auto;
+}
+
+.journal-session.is-renaming {
+	flex-wrap: nowrap;
+}
+
+.journal-session.is-renaming .journal-input {
+	flex: 1 1 auto;
+}
+
+button.journal-link {
+	min-block-size: var(--control-compact);
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
+}
+
+.journal-none {
+	margin: 0;
+	font-size: var(--text-body);
+	color: var(--color-muted);
+}
+
+.journal-start {
+	display: grid;
+	gap: var(--space-2);
+}
+
+.journal-label {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+/* The sheet's own label rule (a flex row as tall as a control) is for its fields; this one sits over its input. */
+.sheet .journal-label {
+	display: block;
+	min-block-size: 0;
+	white-space: normal;
+}
+
+.journal-start-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
+input[type].journal-input {
+	flex: 1 1 12rem;
+	min-block-size: 2.25rem;
+	padding: 0 var(--space-2);
+	font-size: var(--text-body);
+	color: var(--color-text);
+	background: var(--color-row);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
+}
+
+.journal-explanation,
+.journal-change {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	/* It names sessions, whose titles are the player's and may be one long word. */
+	overflow-wrap: anywhere;
+}
+
+.journal-change {
+	color: var(--color-text);
+}
+
+.journal-section {
+	display: grid;
+	gap: var(--space-3);
+	padding-block-start: var(--space-4);
+	border-block-start: var(--stroke) solid var(--color-line);
+	scroll-margin-block-start: var(--space-3);
+}
+
+.journal-section-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h1);
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+/* The icons the frame draws in the Journal, kept as the SVG files from Figma. */
+.journal-icon {
+	display: inline-block;
+	flex: none;
+	inline-size: 14px;
+	block-size: 14px;
+	background: center / contain no-repeat;
+}
+
+.journal-icon-pencil {
+	background-image: url('../../assets/icons/pencil-line.svg');
+}
+
+.journal-icon-notebook {
+	background-image: url('../../assets/icons/notebook.svg');
+}
+
+.journal-icon-pin {
+	background-image: url('../../assets/icons/pin.svg');
+}
+
+.journal-icon-file-pen {
+	background-image: url('../../assets/icons/file-pen-line.svg');
+}
+
+.journal-icon-bold {
+	background-image: url('../../assets/icons/bold.svg');
+}
+
+.journal-icon-italic {
+	background-image: url('../../assets/icons/italic.svg');
+}
+
+.journal-icon-list {
+	background-image: url('../../assets/icons/list.svg');
+}
+
+.journal-icon-list-checks {
+	background-image: url('../../assets/icons/list-checks.svg');
+}
+
+.journal-icon-link {
+	background-image: url('../../assets/icons/link.svg');
+}
+
+.journal-icon-quote {
+	background-image: url('../../assets/icons/quote.svg');
+}
+
+/* The frame's outlined button: "Add note", "Save note", "Award XP". */
+button.journal-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-2);
+	min-block-size: 2.25rem;
+	padding: 0 var(--space-row) 0 14px;
+	font-size: var(--text-body);
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
+}
+
+button.journal-button:hover:not(:disabled) {
+	border-color: var(--color-focus);
+}
+
+/* A small caption over a list: "SESSIONS", "MENTIONED". */
+.journal-overline {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-body);
+	font-size: var(--text-small);
+	font-weight: 400;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.journal-divider {
+	inline-size: 100%;
+	block-size: 1px;
+	margin: 0;
+	border: 0;
+	background: var(--color-line);
+}
+
+/* A short word in a box: a tag, a category, a mentioned name. */
+.journal-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.journal-chip {
+	max-inline-size: 100%;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	padding: 0 var(--space-2);
+	min-block-size: 1.5rem;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	background: var(--color-control);
+	border-radius: var(--radius-badge);
+	overflow-wrap: anywhere;
+}
+
+button.journal-chip-remove {
+	min-block-size: 1.5rem;
+	min-inline-size: 1.5rem;
+	padding: 0;
+	font-size: var(--text-body);
+	line-height: 1;
+	color: var(--color-text);
+	background: transparent;
+	border: 0;
+}
+
+button.journal-chip-button {
+	min-block-size: 1.75rem;
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.journal-inline-form {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.journal-inline-form .journal-input {
+	flex: 0 1 9rem;
+	min-block-size: 1.75rem;
+}
+
+textarea.journal-input {
+	inline-size: 100%;
+	padding: var(--space-2);
+	font: inherit;
+	font-size: var(--text-body);
+	line-height: 1.5;
+	color: var(--color-text);
+	background: var(--color-row);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
+	resize: vertical;
+}
+
+.journal-footnote {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}

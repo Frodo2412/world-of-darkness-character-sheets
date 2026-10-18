@@ -1,0 +1,52 @@
+---
+import SearchField from '../../components/dossier/SearchField.astro';
+import SegmentedControl from '../../components/dossier/SegmentedControl.astro';
+import '../../styles/dossier.css';
+import './disciplines.css';
+
+// Static markup only; `mount.ts` fills the list and the detail from the character.
+const views = [
+	{ value: 'owned', label: 'Owned' },
+	{ value: 'all', label: 'All disciplines' },
+];
+---
+
+<div class="dossier-panel disciplines">
+	<div class="disciplines-heading">
+		<h2 class="dossier-title" data-panel-heading>Disciplines</h2>
+		<p class="disciplines-edit-hint">Edit Discipline ratings on the <a href="/" data-open-sheet>Character sheet</a>.</p>
+	</div>
+	<div class="disciplines-tools">
+		<SearchField id="disciplines-search" label="Search disciplines or powers" placeholder="Search disciplines or powers…" shortcut="⌘ K" />
+		<SegmentedControl label="Disciplines shown" options={views} pressed="owned" />
+	</div>
+	<div class="dossier-empty disciplines-none" data-none hidden>
+		<p class="dossier-empty-message">This character has no Disciplines recorded.</p>
+		<div class="dossier-empty-action">
+			<button type="button" data-show-all>Browse all disciplines</button>
+		</div>
+	</div>
+	<p class="dossier-empty dossier-empty-message disciplines-no-match" data-no-match hidden>No Disciplines or powers match the search.</p>
+	<div class="disciplines-body" data-split>
+		<div class="disciplines-library">
+			<p class="disciplines-library-label" data-library-label>Disciplines</p>
+			<ul class="disciplines-list" aria-label="Disciplines" data-discipline-list></ul>
+			<hr class="disciplines-divider" />
+			<p class="disciplines-library-note">Reference library: V20 core rulebook. Power level is separate from your Discipline rating.</p>
+		</div>
+		<section class="disciplines-detail" aria-labelledby="discipline-detail-title" data-discipline-detail>
+			<div class="disciplines-detail-head">
+				<div class="disciplines-intro">
+					<h3 class="disciplines-detail-name" id="discipline-detail-title" data-detail-name></h3>
+					<p class="disciplines-detail-note" data-detail-note hidden></p>
+				</div>
+				<div class="disciplines-rating">
+					<span class="disciplines-rating-value" data-detail-rating></span>
+					<span class="disciplines-rating-dots" data-detail-dots></span>
+				</div>
+			</div>
+			<ul class="disciplines-powers" aria-label="Powers" data-power-list></ul>
+			<p class="disciplines-footnote">Brief table references, not full rules. See the page given for each power for exceptions and the complete system.</p>
+		</section>
+	</div>
+</div>

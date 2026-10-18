@@ -1,0 +1,737 @@
+/* The Level up tab, as the Figma frame "Level up" draws it: the four XP figures, the traits to raise in
+   cards on the left, the Upgrade review, the record it would write and the cost table on the right.
+   Text is held to the shared 12px minimum, so the frame's 9-11px captions are drawn at 12px. A cost, a
+   shortfall and a pending choice are all in words as well as colour. */
+
+.levelup {
+	padding-block-start: var(--space-4);
+	padding-block-end: 5rem;
+	gap: var(--space-3);
+}
+
+.levelup-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-3);
+}
+
+.levelup-intro {
+	display: grid;
+	gap: 5px;
+}
+
+.levelup .dossier-title {
+	font-size: 2rem;
+}
+
+.levelup-lead {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.levelup-heading-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-3);
+}
+
+.levelup-chip {
+	color: var(--color-accent-text);
+	border-color: var(--color-accent);
+	background: var(--color-selected);
+}
+
+button.levelup-back,
+button.levelup-secondary {
+	min-block-size: 2.25rem;
+	padding: 0 var(--space-3);
+	font-size: var(--text-body);
+	font-weight: 600;
+	color: var(--color-text-strong);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
+}
+
+.levelup-notice,
+.levelup-dropped {
+	margin: 0;
+	padding: var(--space-row) var(--space-3);
+	font-size: var(--text-body);
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-focus);
+	border-radius: var(--radius-card);
+}
+
+.levelup-dropped {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.levelup-dropped p {
+	margin: 0;
+}
+
+.levelup-notice a {
+	color: var(--color-accent-text);
+}
+
+.levelup-prompt {
+	max-inline-size: 40rem;
+}
+
+/* The four figures */
+
+.levelup-cards {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+@media (min-width: 36rem) {
+	.levelup-cards {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 64rem) {
+	.levelup-cards {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+.levelup-card-figure {
+	display: grid;
+	gap: var(--space-2);
+	align-content: space-between;
+	min-block-size: 7rem;
+	padding: var(--space-3);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.levelup-figure-available {
+	background: var(--color-selected);
+	border-color: var(--color-accent);
+}
+
+.levelup-figure-label {
+	font-size: var(--text-small);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.levelup-figure-available .levelup-figure-label {
+	color: var(--color-accent-text);
+}
+
+.levelup-figure-value {
+	font-family: var(--font-display);
+	font-size: var(--text-display);
+	line-height: 1;
+	color: var(--color-text-strong);
+}
+
+.levelup-figure-caption {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+/* The workspace */
+
+.levelup-workspace {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-4);
+	align-items: start;
+}
+
+@media (min-width: 64rem) {
+	.levelup-workspace {
+		grid-template-columns: minmax(0, 1fr) 25rem;
+	}
+}
+
+.levelup-main,
+.levelup-side {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+	align-content: start;
+	min-inline-size: 0;
+}
+
+.levelup-section-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
+.levelup-section-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h1);
+	font-weight: 400;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.levelup-scope {
+	color: var(--color-muted);
+}
+
+.levelup-tools {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2) var(--space-3);
+}
+
+.levelup-tools > .dossier-search {
+	flex: 1 1 18rem;
+}
+
+.levelup-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-block-size: 1.75rem;
+	font-size: var(--text-body);
+	color: var(--color-text);
+}
+
+.levelup-toggle input {
+	inline-size: 1rem;
+	block-size: 1rem;
+	margin: 0;
+	accent-color: var(--color-accent);
+}
+
+.levelup-status {
+	margin: 0;
+	font-size: var(--text-body);
+	color: var(--color-focus);
+}
+
+.levelup-help {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.levelup-groups {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-4);
+}
+
+.levelup-group {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-row);
+}
+
+.levelup-group-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+}
+
+.levelup-group-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-body);
+	font-size: var(--text-small);
+	font-weight: 400;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.levelup-group-hint {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.levelup-trait-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+	gap: var(--space-3);
+	align-items: start;
+}
+
+.levelup-trait-card {
+	min-inline-size: 0;
+	padding: var(--space-card);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.levelup-trait-summary {
+	display: grid;
+	gap: 2px;
+	padding: var(--space-1) var(--space-1) var(--space-row);
+	cursor: pointer;
+}
+
+.levelup-trait-title {
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h2);
+	font-weight: 400;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.levelup-trait-rule {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.levelup-rows {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-1);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.levelup-row {
+	display: grid;
+	gap: 6px;
+	padding: var(--space-2) var(--space-row);
+	background: var(--color-row);
+	border-radius: var(--radius-row);
+	border-inline-start: 3px solid transparent;
+}
+
+.levelup-row-top {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.levelup-row-name {
+	flex: 1 1 auto;
+	min-inline-size: 0;
+	font-size: var(--text-body);
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+.levelup-row-change {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	white-space: nowrap;
+}
+
+.levelup-row-cost {
+	min-inline-size: 3.5ch;
+	font-size: var(--text-body);
+	font-weight: 600;
+	text-align: end;
+	color: var(--color-text-strong);
+	white-space: nowrap;
+}
+
+button.levelup-step {
+	display: inline-grid;
+	place-items: center;
+	flex: none;
+	min-block-size: 1.75rem;
+	min-inline-size: 1.75rem;
+	padding: 0;
+	font-size: var(--text-body);
+	line-height: 1;
+	color: var(--color-text-strong);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+button.levelup-step:disabled {
+	color: var(--color-muted);
+	background: var(--color-row);
+}
+
+.levelup-row-bottom {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-2);
+}
+
+.levelup-row-note {
+	margin-inline-start: auto;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	text-align: end;
+}
+
+.levelup-dots {
+	display: inline-flex;
+	gap: 4px;
+}
+
+.levelup-dot {
+	inline-size: 0.5rem;
+	block-size: 0.5rem;
+	border: 1px solid var(--color-border-control);
+	border-radius: 50%;
+	background: transparent;
+}
+
+.levelup-dot.is-filled {
+	color: var(--color-text);
+	background: currentColor;
+	border-color: currentColor;
+}
+
+/* The pending dot is outlined in the accent, and the row says "Pending" in words. */
+.levelup-dot.is-pending {
+	border-color: var(--color-accent-text);
+}
+
+.levelup-row[data-state='pending'] {
+	background: var(--color-selected);
+	border-inline-start-color: var(--color-accent);
+}
+
+.levelup-row[data-state='pending'] .levelup-row-name,
+.levelup-row[data-state='pending'] .levelup-row-cost,
+.levelup-row[data-state='pending'] .levelup-row-note {
+	color: var(--color-accent-text);
+}
+
+.levelup-row[data-state='unavailable'] .levelup-row-name {
+	color: var(--color-muted);
+}
+
+.levelup-beyond {
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-3);
+	font-size: var(--text-body);
+	color: var(--color-muted);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.levelup-beyond p {
+	margin: 0;
+}
+
+.levelup-beyond-note {
+	color: var(--color-focus);
+}
+
+.levelup-card-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h1);
+	font-weight: 400;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+/* The side: review, record preview and cost table */
+
+.levelup-review,
+.levelup-preview,
+.levelup-costs {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-row);
+	padding: var(--space-3);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.levelup-review-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
+.levelup-pending-badge {
+	color: var(--color-accent-text);
+	border-color: var(--color-accent);
+}
+
+.levelup-review-lead,
+.levelup-fine,
+.levelup-recorded,
+.levelup-destination,
+.levelup-costs-lead {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-muted);
+}
+
+.levelup-destination,
+.levelup-costs-lead {
+	color: var(--color-focus);
+}
+
+.levelup-applied {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1);
+	margin: 0;
+	padding: var(--space-row);
+	font-size: var(--text-body);
+	color: var(--color-text-strong);
+	background: var(--color-selected);
+	border: var(--stroke) solid var(--color-accent);
+	border-radius: var(--radius-badge);
+}
+
+button.levelup-undo {
+	min-block-size: 1.75rem;
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	color: var(--color-text-strong);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.levelup-lines {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-row);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.levelup-line {
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-row) var(--space-3);
+	background: var(--color-row);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.levelup-line-head {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.levelup-line-name {
+	flex: 1 1 auto;
+	min-inline-size: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.levelup-line-cost {
+	font-size: var(--text-body);
+	font-weight: 600;
+	color: var(--color-accent-text);
+}
+
+.levelup-line-change {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+	font-size: var(--text-body);
+	color: var(--color-text);
+}
+
+.levelup-line-rule,
+.levelup-line-running {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.levelup-line-running {
+	color: var(--color-focus);
+}
+
+.levelup-summary,
+.levelup-preview-totals {
+	display: grid;
+	gap: var(--space-2);
+	margin: 0;
+	padding-block: var(--space-row);
+	border-block: var(--stroke) solid var(--color-line);
+}
+
+.levelup-pair {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	font-size: var(--text-body);
+}
+
+.levelup-pair dt {
+	color: var(--color-muted);
+}
+
+.levelup-pair dd {
+	margin: 0;
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.levelup-pair.is-emphasis {
+	padding: var(--space-row) var(--space-3);
+	background: var(--color-selected);
+	border-radius: var(--radius-badge);
+}
+
+.levelup-pair.is-emphasis dd {
+	font-family: var(--font-display);
+	font-size: var(--text-h2);
+	font-weight: 400;
+	color: var(--color-accent-text);
+}
+
+button.levelup-confirm {
+	min-block-size: 2.5rem;
+	padding: 0 var(--space-3);
+	font-size: var(--text-body);
+	font-weight: 600;
+	color: var(--color-text-strong);
+	background: var(--color-accent);
+	border: var(--stroke) solid transparent;
+	border-radius: var(--radius-button);
+}
+
+button.levelup-confirm:disabled {
+	color: var(--color-muted);
+	background: var(--color-control);
+	border-color: var(--color-border-control);
+}
+
+.levelup-reason {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.levelup-review-actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--space-2);
+}
+
+.levelup-preview-lines {
+	display: grid;
+	gap: var(--space-row);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.levelup-preview-head {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	font-size: var(--text-body);
+	color: var(--color-text);
+}
+
+.levelup-preview-cost {
+	font-weight: 600;
+}
+
+.levelup-preview-rule {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.levelup-cost-list {
+	display: grid;
+	gap: var(--space-row);
+	margin: 0;
+	padding-block-start: var(--space-row);
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+.levelup-cost-row {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	font-size: var(--text-body);
+}
+
+.levelup-cost-row dt {
+	color: var(--color-muted);
+}
+
+.levelup-cost-row dd {
+	margin: 0;
+	color: var(--color-text);
+}
+
+/* Where the review is below the list, a bar that stays in view says how much is chosen and leads to it. */
+.levelup-bar {
+	position: fixed;
+	inset-inline: var(--space-3);
+	inset-block-end: var(--space-3);
+	z-index: 5;
+	display: block;
+	padding: var(--space-row) var(--space-3);
+	font-size: var(--text-body);
+	font-weight: 600;
+	text-align: center;
+	color: var(--color-text-strong);
+	background: var(--color-accent);
+	border-radius: var(--radius-button);
+	text-decoration: none;
+}
+
+@media (min-width: 64rem) {
+	.levelup-bar {
+		display: none;
+	}
+}

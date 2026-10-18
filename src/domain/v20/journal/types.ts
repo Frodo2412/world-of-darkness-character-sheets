@@ -20,6 +20,8 @@ export interface Note {
   body: string;
   createdAt: number;
   editedAt: number;
+  /** Names the player added by hand, beside those the body's @-mentions give. Absent on a note that has none. */
+  mentions?: string[];
 }
 
 export interface Award {

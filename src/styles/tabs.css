@@ -3,7 +3,7 @@
 
 .tab-bar {
 	display: flex;
-	gap: var(--space-4);
+	gap: 28px;
 	padding-inline: var(--page-gutter);
 	overflow-x: auto;
 	border-block-end: var(--stroke) solid var(--color-line);
@@ -13,9 +13,9 @@
 	flex: none;
 	display: inline-flex;
 	align-items: center;
-	min-block-size: var(--touch-target);
+	min-block-size: 3rem;
 	/* The edge is there from the start so choosing a tab does not move the text. */
-	border-block-end: 3px solid transparent;
+	border-block-end: 2px solid transparent;
 	font-size: var(--text-body);
 	font-weight: 400;
 	color: var(--color-muted);
@@ -29,6 +29,7 @@
 
 /* The selected tab is set apart by weight and an underline as well as by colour, so it reads without colour. */
 .tab-link[aria-selected='true'] {
+	background: var(--color-surface);
 	border-block-end-color: var(--color-focus);
 	font-weight: 600;
 	color: var(--color-text-strong);
@@ -45,7 +46,12 @@
 .app-bar-label {
 	margin: 0;
 	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
 	color: var(--color-muted);
+	/* A long chronicle or session title wraps inside the bar instead of widening the page. */
+	min-inline-size: 0;
+	overflow-wrap: anywhere;
 }
 
 .app-bar-label:empty {

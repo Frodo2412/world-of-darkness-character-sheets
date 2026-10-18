@@ -1,0 +1,96 @@
+---
+import ReadOnlyHint from '../../components/dossier/ReadOnlyHint.astro';
+import UndoNotice from '../../components/dossier/UndoNotice.astro';
+import '../../styles/dossier.css';
+import './backgrounds.css';
+
+// Static markup only; `mount.ts` fills each list from the character. In edit mode each list also offers
+// its Add control, and each entry its fields and Remove control.
+---
+
+<div class="dossier-panel backgrounds">
+	<div class="backgrounds-heading">
+		<h2 class="dossier-title" data-panel-heading>Backgrounds</h2>
+		<p class="backgrounds-lead" data-lead>Connections, places and the qualities that shape this character's unlife.</p>
+	</div>
+	<div class="backgrounds-index-row">
+		<ul class="backgrounds-index" aria-label="Sections" data-index>
+			<li data-index-item="backgrounds"></li>
+			<li data-index-item="havens"></li>
+			<li data-index-item="merits"></li>
+			<li data-index-item="flaws"></li>
+			<li data-index-item="otherTraits"></li>
+		</ul>
+		<ReadOnlyHint />
+	</div>
+	<div class="backgrounds-undo" data-sheet-mode-only="edit">
+		<UndoNotice />
+	</div>
+	<div class="backgrounds-workspace">
+		<div class="backgrounds-main">
+			<section class="backgrounds-section" aria-labelledby="backgrounds-heading-backgrounds">
+				<div class="backgrounds-section-heading">
+					<h3 class="backgrounds-section-title" id="backgrounds-heading-backgrounds">Expanded backgrounds</h3>
+					<span class="backgrounds-count" data-count="backgrounds"></span>
+				</div>
+				<ul class="backgrounds-grid" aria-label="Expanded backgrounds" data-list="backgrounds"></ul>
+				<div class="dossier-empty" data-empty="backgrounds" hidden>
+					<p class="dossier-empty-message">No backgrounds recorded yet.</p>
+				</div>
+				<button type="button" class="backgrounds-add" data-add="backgrounds" data-sheet-mode-only="edit">Add background</button>
+			</section>
+			<section class="backgrounds-section" aria-labelledby="backgrounds-heading-havens">
+				<div class="backgrounds-section-heading">
+					<h3 class="backgrounds-section-title" id="backgrounds-heading-havens">Havens</h3>
+					<span class="backgrounds-count" data-count="havens"></span>
+				</div>
+				<ul class="backgrounds-grid" aria-label="Havens" data-list="havens"></ul>
+				<div class="dossier-empty" data-empty="havens" hidden>
+					<p class="dossier-empty-message">No havens recorded yet.</p>
+				</div>
+				<button type="button" class="backgrounds-add" data-add="havens" data-sheet-mode-only="edit">Add haven</button>
+			</section>
+		</div>
+		<div class="backgrounds-side">
+			<section class="backgrounds-section" aria-labelledby="backgrounds-heading-merits">
+				<div class="backgrounds-section-heading">
+					<h3 class="backgrounds-section-title" id="backgrounds-heading-merits">Merits</h3>
+					<span class="backgrounds-count" data-count="merits"></span>
+				</div>
+				<ul class="backgrounds-trait-list" aria-label="Merits" data-list="merits"></ul>
+				<div class="dossier-empty" data-empty="merits" hidden>
+					<p class="dossier-empty-message">No merits recorded yet.</p>
+				</div>
+				<button type="button" class="backgrounds-add" data-add="merits" data-sheet-mode-only="edit">Add merit</button>
+			</section>
+			<section class="backgrounds-section" aria-labelledby="backgrounds-heading-flaws">
+				<div class="backgrounds-section-heading">
+					<h3 class="backgrounds-section-title" id="backgrounds-heading-flaws">Flaws</h3>
+					<span class="backgrounds-count" data-count="flaws"></span>
+				</div>
+				<ul class="backgrounds-trait-list" aria-label="Flaws" data-list="flaws"></ul>
+				<div class="dossier-empty" data-empty="flaws" hidden>
+					<p class="dossier-empty-message">No flaws recorded yet.</p>
+				</div>
+				<button type="button" class="backgrounds-add" data-add="flaws" data-sheet-mode-only="edit">Add flaw</button>
+			</section>
+			<section class="backgrounds-section" aria-labelledby="backgrounds-heading-other">
+				<div class="backgrounds-section-heading">
+					<h3 class="backgrounds-section-title" id="backgrounds-heading-other">Other Traits</h3>
+					<span class="backgrounds-count" data-count="otherTraits"></span>
+				</div>
+				<ul class="backgrounds-trait-list" aria-label="Other Traits" data-list="otherTraits"></ul>
+				<div class="dossier-empty" data-empty="otherTraits" hidden>
+					<p class="dossier-empty-message">No other traits recorded yet.</p>
+				</div>
+				<button type="button" class="backgrounds-add" data-add="otherTraits" data-sheet-mode-only="edit">Add other trait</button>
+			</section>
+			<aside class="backgrounds-guidance">
+				<p class="backgrounds-guidance-title">Character notes, not rule effects</p>
+				<p class="backgrounds-guidance-text">
+					Entries and point values here are the player's notes. Confirm them with your Storyteller; consult V20 for full Merit and Flaw rules.
+				</p>
+			</aside>
+		</div>
+	</div>
+</div>

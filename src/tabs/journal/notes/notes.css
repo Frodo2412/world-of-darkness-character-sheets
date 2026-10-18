@@ -1,0 +1,642 @@
+/* The Notes section of the Journal, as the Figma frame draws it: the quick-note bar, then the sidebar,
+   the list of notes and the editor. Text is held to the shared 12px minimum, so the frame's 10-11px
+   captions are drawn at 12px. */
+
+.journal-quick {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-row) var(--space-card);
+	padding: var(--space-row) var(--space-3);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.journal-quick-label {
+	font-size: var(--text-small);
+	font-weight: 600;
+	color: var(--color-text);
+}
+
+/* The sheet's own label rule (a flex row as tall as a control) is for its fields; this one sits beside its input. */
+.sheet .journal-quick-label {
+	display: inline;
+	min-block-size: 0;
+	white-space: nowrap;
+}
+
+input.journal-quick-input {
+	flex: 1 1 14rem;
+	min-inline-size: 0;
+	min-block-size: 2rem;
+	padding: 0 var(--space-2);
+	font: inherit;
+	font-size: var(--text-small);
+	color: var(--color-text);
+	background: transparent;
+	border: 0;
+	border-block-end: var(--stroke) solid var(--color-border-control);
+	border-radius: 0;
+}
+
+input.journal-quick-input::placeholder {
+	color: var(--color-muted);
+}
+
+.journal-quick-where {
+	min-inline-size: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.journal-workspace {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-3);
+	align-items: start;
+}
+
+@media (min-width: 64rem) {
+	.journal-workspace {
+		grid-template-columns: 13.5rem minmax(0, 23.5rem) minmax(0, 1fr);
+		gap: var(--space-3);
+	}
+}
+
+/* The sidebar */
+
+.journal-sidebar {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 20px;
+	padding: var(--space-card);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.journal-sidebar,
+.journal-sidebar-group {
+	min-inline-size: 0;
+}
+
+.journal-sidebar-group {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 5px;
+	align-content: start;
+}
+
+.journal-scopes {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 3px;
+}
+
+.journal-scope {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0 var(--space-2);
+	inline-size: 100%;
+	min-block-size: 2.125rem;
+	padding: 0 var(--space-row);
+	font-size: var(--text-small);
+	text-align: start;
+	color: var(--color-muted);
+	background: var(--color-surface);
+	border: 0;
+	border-inline-start: 2px solid transparent;
+	border-radius: 3px;
+}
+
+.journal-scope:hover {
+	color: var(--color-text);
+}
+
+.journal-scope-name {
+	flex: 1 1 0;
+	min-inline-size: 0;
+	overflow-wrap: anywhere;
+}
+
+.journal-scope-count {
+	font-size: var(--text-small);
+}
+
+/* The chosen list is marked by its fill, its edge and its weight, and the page says "current" in words for the session. */
+.journal-scope[aria-current='true'] {
+	font-weight: 600;
+	color: var(--color-text-strong);
+	background: var(--color-selected);
+	border-inline-start-color: var(--color-accent);
+}
+
+.journal-scope[aria-current='true'] .journal-scope-count {
+	color: var(--color-accent-text);
+}
+
+.journal-scope-note {
+	flex: 0 0 100%;
+	padding-block-end: var(--space-1);
+	font-size: var(--text-small);
+	font-weight: 400;
+	color: var(--color-accent-text);
+}
+
+.journal-tag-scopes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.journal-tag-scope {
+	max-inline-size: 100%;
+	min-block-size: 1.5rem;
+	text-align: start;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	color: var(--color-muted);
+	background: var(--color-control);
+	border: 0;
+	border-radius: var(--radius-badge);
+}
+
+.journal-tag-scope[aria-current='true'] {
+	font-weight: 600;
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+}
+
+.journal-sidebar-note {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: 1.6;
+	color: var(--color-muted);
+}
+
+/* The list */
+
+.journal-note-column {
+	display: grid;
+	gap: var(--space-row);
+	align-content: start;
+}
+
+.journal-list-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-2);
+}
+
+.journal-list-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: 1.5rem;
+	font-weight: 400;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+.journal-list-count,
+.journal-list-sorting {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.journal-list-sorting {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
+.journal-note-list {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 10px;
+}
+
+.journal-note {
+	position: relative;
+	list-style: none;
+}
+
+.journal-note-open {
+	display: grid;
+	gap: 9px;
+	inline-size: 100%;
+	padding: var(--space-3) 2.75rem var(--space-3) var(--space-3);
+	text-align: start;
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: 6px;
+}
+
+.journal-note-open:hover {
+	border-color: var(--color-focus);
+}
+
+.journal-note-open[aria-current='true'] {
+	background: var(--color-selected);
+	border-color: var(--color-accent);
+	border-inline-start-width: 3px;
+}
+
+.journal-note-title {
+	font-family: var(--font-display);
+	font-size: 1.3125rem;
+	line-height: 1.15;
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+.journal-note-excerpt {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.journal-note-meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.journal-note-category {
+	padding: 0 var(--space-2);
+	line-height: 1.5rem;
+	background: var(--color-control);
+	border-radius: var(--radius-badge);
+}
+
+.journal-note-open[aria-current='true'] .journal-note-category {
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+}
+
+button.journal-note-pin {
+	position: absolute;
+	inset-block-start: var(--space-row);
+	inset-inline-end: var(--space-row);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-block-size: 1.75rem;
+	min-inline-size: 1.75rem;
+	padding: 0;
+	background: transparent;
+	border: 0;
+	border-radius: var(--radius-badge);
+}
+
+button.journal-note-pin[aria-pressed='true'] .journal-icon-pin,
+button.journal-pin-button[aria-pressed='true'] .journal-icon-pin {
+	background-image: url('../../../assets/icons/pin-filled.svg');
+}
+
+/* The editor */
+
+.journal-editor {
+	container-type: inline-size;
+	min-inline-size: 0;
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+	overflow: hidden;
+}
+
+.journal-editor-empty {
+	display: grid;
+	place-items: center;
+	min-block-size: 14rem;
+	margin: 0;
+	padding: var(--space-4);
+	font-size: var(--text-body);
+	color: var(--color-muted);
+	text-align: center;
+}
+
+.journal-editor-prompt,
+.journal-earlier {
+	padding: var(--space-4) 1.75rem;
+}
+
+.journal-earlier {
+	display: grid;
+	gap: var(--space-2);
+}
+
+.journal-earlier-title {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.journal-earlier-text {
+	margin: 0;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	font-size: var(--text-body);
+	line-height: 1.7;
+	color: var(--color-text);
+}
+
+.journal-editor-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	padding: var(--space-row) 1.25rem;
+	border-block-end: var(--stroke) solid var(--color-line);
+}
+
+.journal-editor-context {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	font-size: var(--text-small);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+	overflow-wrap: anywhere;
+}
+
+.journal-editor-pin {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.journal-pinned-text {
+	font-size: var(--text-small);
+	color: var(--color-accent-text);
+}
+
+button.journal-pin-button {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	min-block-size: 1.75rem;
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.journal-editor-identity {
+	display: grid;
+	gap: 13px;
+	padding: var(--space-4) 1.75rem 1.125rem;
+}
+
+/* The sheet's own text-input rule is as specific as a class and an element, so the title's is one class more. */
+.journal-editor-identity input.journal-note-title-input {
+	inline-size: 100%;
+	padding: 0 0 var(--space-1);
+	font-family: var(--font-display);
+	font-size: 2rem;
+	line-height: 1.1;
+	color: var(--color-text-strong);
+	background: transparent;
+	border: 0;
+	border-block-end: var(--stroke) solid var(--color-border-control);
+	border-radius: 0;
+}
+
+.journal-editor-identity input.journal-note-title-input::placeholder {
+	color: var(--color-muted);
+}
+
+.journal-editor-organisation {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+select.journal-select {
+	min-block-size: 1.75rem;
+	padding: 0 var(--space-2);
+	font: inherit;
+	font-size: var(--text-small);
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.journal-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1);
+	padding: var(--space-row) 1.75rem;
+	background: var(--color-page);
+	border-block: var(--stroke) solid var(--color-line);
+}
+
+button.journal-tool {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-block-size: 2rem;
+	min-inline-size: 2rem;
+	padding: 0;
+	font-size: var(--text-small);
+	font-weight: 600;
+	color: var(--color-muted);
+	background: transparent;
+	border: var(--stroke) solid transparent;
+	border-radius: var(--radius-badge);
+}
+
+button.journal-tool:hover {
+	color: var(--color-text);
+	background: var(--color-control);
+}
+
+.journal-link-form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2);
+	padding: var(--space-row) 1.75rem;
+	background: var(--color-page);
+	border-block-end: var(--stroke) solid var(--color-line);
+}
+
+.journal-link-form .journal-input {
+	flex: 1 1 14rem;
+	min-block-size: 1.75rem;
+}
+
+.journal-body {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+}
+
+@container (min-width: 44rem) {
+	.journal-body {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+
+	.journal-body-preview {
+		border-inline-start: var(--stroke) solid var(--color-line);
+	}
+}
+
+.journal-body-edit,
+.journal-body-preview {
+	display: grid;
+	gap: var(--space-2);
+	align-content: start;
+	min-inline-size: 0;
+	padding: var(--space-4) 1.75rem;
+}
+
+.journal-body-preview {
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+@container (min-width: 44rem) {
+	.journal-body-preview {
+		border-block-start: 0;
+	}
+}
+
+textarea.journal-textarea {
+	inline-size: 100%;
+	min-block-size: 14rem;
+	padding: var(--space-row);
+	font: inherit;
+	font-size: var(--text-body);
+	line-height: 1.6;
+	color: var(--color-text);
+	background: var(--color-page);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+	resize: vertical;
+}
+
+.journal-preview {
+	min-block-size: 14rem;
+	font-size: var(--text-body);
+	line-height: 1.8;
+	color: var(--color-text);
+	overflow-wrap: anywhere;
+}
+
+.journal-preview[data-empty]::before {
+	content: 'Nothing written yet.';
+	color: var(--color-muted);
+}
+
+.journal-preview p {
+	margin: 0 0 var(--space-3);
+}
+
+.journal-preview ul,
+.journal-preview ol {
+	margin: 0 0 var(--space-3);
+	padding-inline-start: 1.25rem;
+}
+
+.journal-preview blockquote {
+	margin: 0 0 var(--space-3);
+	padding: var(--space-row) var(--space-3);
+	font-family: var(--font-display);
+	font-size: 1.3125rem;
+	font-style: italic;
+	line-height: 1.3;
+	color: var(--color-focus);
+	background: var(--color-page);
+	border-inline-start: 2px solid var(--color-focus);
+}
+
+.journal-preview a {
+	color: var(--color-accent-text);
+}
+
+.journal-preview .note-checklist {
+	padding: 0;
+	list-style: none;
+}
+
+.journal-preview .note-checklist label {
+	display: flex;
+	align-items: center;
+	gap: var(--space-row);
+	min-block-size: 1.5rem;
+	cursor: pointer;
+}
+
+.journal-preview .note-checklist input {
+	flex: none;
+	inline-size: 1rem;
+	block-size: 1rem;
+	margin: 0;
+	accent-color: var(--color-accent);
+}
+
+.journal-mentions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-row);
+	padding: 0.875rem 1.75rem;
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+.journal-save {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-3);
+	padding: 0.875rem 1.25rem;
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+.journal-save-status {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.journal-save-status::before {
+	content: '';
+	flex: none;
+	inline-size: 5px;
+	block-size: 5px;
+	border-radius: 50%;
+	background: currentColor;
+}

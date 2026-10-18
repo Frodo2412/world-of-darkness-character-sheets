@@ -1,0 +1,46 @@
+---
+// The sidebar's lists are drawn by `drawNotes.ts`; All notes, Pinned and Earlier notes are fixed.
+const library = [
+	{ scope: 'all', label: 'All notes', icon: 'notebook' },
+	{ scope: 'pinned', label: 'Pinned', icon: 'pin' },
+];
+---
+
+<aside class="journal-sidebar" aria-label="Organise notes" data-sidebar>
+	<ul class="dossier-list journal-scopes" aria-label="Library">
+		{
+			library.map((item) => (
+				<li>
+					<button type="button" class="journal-scope" data-scope={item.scope}>
+						<span class={`journal-icon journal-icon-${item.icon}`} aria-hidden="true"></span>
+						<span class="journal-scope-name">{item.label}</span>
+						<span class="journal-scope-count" data-scope-count></span>
+					</button>
+				</li>
+			))
+		}
+		<li data-earlier-item hidden>
+			<button type="button" class="journal-scope" data-earlier>
+				<span class="journal-icon journal-icon-notebook" aria-hidden="true"></span>
+				<span class="journal-scope-name">Earlier notes</span>
+			</button>
+		</li>
+	</ul>
+	<div class="journal-sidebar-group">
+		<h3 class="journal-overline" id="journal-sessions-scopes">Sessions</h3>
+		<ul class="dossier-list journal-scopes" aria-labelledby="journal-sessions-scopes" data-session-scopes></ul>
+		<p class="journal-sidebar-note" data-no-sessions>No sessions yet.</p>
+	</div>
+	<hr class="journal-divider" />
+	<div class="journal-sidebar-group">
+		<h3 class="journal-overline" id="journal-category-scopes">Categories</h3>
+		<ul class="dossier-list journal-scopes" aria-labelledby="journal-category-scopes" data-category-scopes></ul>
+	</div>
+	<hr class="journal-divider" />
+	<div class="journal-sidebar-group">
+		<h3 class="journal-overline" id="journal-tag-scopes">Tags</h3>
+		<ul class="journal-tag-scopes" aria-labelledby="journal-tag-scopes" data-tag-scopes></ul>
+		<p class="journal-sidebar-note" data-no-tags>No tags yet.</p>
+	</div>
+	<p class="journal-sidebar-note">Notes belong to a session. Use categories and tags to find them again.</p>
+</aside>

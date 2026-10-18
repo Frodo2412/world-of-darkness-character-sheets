@@ -1,0 +1,129 @@
+---
+import SearchField from '../../components/dossier/SearchField.astro';
+import SessionPrompt from '../../components/dossier/SessionPrompt.astro';
+import { costTable } from '../../domain/v20/levelup/view';
+import '../../styles/dossier.css';
+import './levelup.css';
+
+// Static markup only; `mount.ts` fills the figures, the cards of traits, the review and the notices from
+// the character and the choices made so far.
+const cards = [
+	{ key: 'earned', label: 'Total earned' },
+	{ key: 'spent', label: 'Total spent' },
+	{ key: 'available', label: 'Available XP' },
+	{ key: 'thisSession', label: 'This session' },
+];
+---
+
+<div class="dossier-panel levelup">
+	<div class="levelup-heading">
+		<div class="levelup-intro">
+			<h2 class="dossier-title" data-panel-heading>Level up</h2>
+			<p class="levelup-lead">Shape the next chapter. Select advancements, review their cost, then apply them to your character.</p>
+		</div>
+		<div class="levelup-heading-actions">
+			<span class="dossier-badge levelup-chip" data-chip hidden></span>
+			<button type="button" class="levelup-back" data-back>Back to character sheet</button>
+		</div>
+	</div>
+	<div class="levelup-prompt" data-prompt hidden>
+		<SessionPrompt id="levelup-prompt" />
+	</div>
+	<p class="levelup-notice" data-no-xp hidden>
+		No XP available. Award experience in <a href="/" data-open-journal>Journal → Experience</a> to spend it here.
+	</p>
+	<div class="levelup-dropped" data-dropped hidden></div>
+	<ul class="levelup-cards" aria-label="Experience">
+		{
+			cards.map((card) => (
+				<li class={`levelup-card-figure levelup-figure-${card.key}`} data-figure={card.key}>
+					<span class="levelup-figure-label">{card.label}</span>
+					<span class="levelup-figure-value" data-value />
+					<span class="levelup-figure-caption" data-caption />
+				</li>
+			))
+		}
+	</ul>
+	<div class="levelup-workspace">
+		<div class="levelup-main">
+			<div class="levelup-section-heading">
+				<h3 class="levelup-section-title">Choose advancements</h3>
+				<span class="dossier-badge levelup-scope">All categories · V20</span>
+			</div>
+			<div class="levelup-tools">
+				<SearchField id="levelup-search" label="Search attributes, abilities or disciplines" placeholder="Search attributes, abilities or disciplines…" />
+				<label class="levelup-toggle">
+					<input type="checkbox" data-affordable />
+					Show only affordable
+				</label>
+			</div>
+			<p class="levelup-status" data-status></p>
+			<p class="levelup-help">
+				Remove a pending choice to free its cost. Filled dots are current ratings; the outlined dot is a pending one.
+			</p>
+			<p class="dossier-empty dossier-empty-message" data-no-match hidden>No advancements match.</p>
+			<div class="levelup-groups" data-groups></div>
+			<section class="levelup-beyond" aria-labelledby="levelup-beyond-title">
+				<h3 class="levelup-card-title" id="levelup-beyond-title">Beyond the standard costs</h3>
+				<p>
+					Existing out-of-clan Discipline: current rating × 7 XP. New Disciplines and special paths require Storyteller confirmation before a
+					cost can be set.
+				</p>
+				<p>
+					Backgrounds have no standard XP formula here. Agree on any change with your Storyteller; they are not included in this review.
+				</p>
+				<p class="levelup-beyond-note" data-willpower-note></p>
+			</section>
+		</div>
+		<aside class="levelup-side">
+			<section class="levelup-review" id="levelup-review" aria-labelledby="levelup-review-title">
+				<div class="levelup-review-heading">
+					<h3 class="levelup-card-title" id="levelup-review-title" tabindex="-1">Upgrade review</h3>
+					<span class="dossier-badge levelup-pending-badge">Pending</span>
+				</div>
+				<p class="levelup-applied" data-applied tabindex="-1" hidden>
+					<span data-applied-text></span>
+					<button type="button" class="levelup-undo" data-undo>Undo</button>
+				</p>
+				<p class="levelup-review-lead" data-review-lead></p>
+				<ul class="levelup-lines" aria-labelledby="levelup-review-title" data-lines></ul>
+				<dl class="levelup-summary" data-summary></dl>
+				<p class="levelup-recorded">Confirmed changes are automatically recorded in Journal → Experience.</p>
+				<button type="button" class="levelup-confirm" data-confirm aria-describedby="levelup-confirm-reason">Confirm &amp; apply</button>
+				<p class="levelup-reason" id="levelup-confirm-reason" data-confirm-reason></p>
+				<div class="levelup-review-actions">
+					<button type="button" class="levelup-secondary" data-clear>Clear selections</button>
+					<button type="button" class="levelup-secondary" data-cancel>Cancel</button>
+				</div>
+				<p class="levelup-fine">Cancel discards this review. No XP is spent or journal entry saved.</p>
+				<p class="levelup-fine" data-unsaved>Pending selections are not saved.</p>
+			</section>
+			<section class="levelup-preview" aria-labelledby="levelup-preview-title">
+				<div class="levelup-review-heading">
+					<h3 class="levelup-card-title" id="levelup-preview-title">Journal record</h3>
+					<span class="dossier-badge">Preview</span>
+				</div>
+				<p class="levelup-destination" data-destination></p>
+				<p class="levelup-fine">This record will be created only after confirmation.</p>
+				<ul class="levelup-preview-lines" aria-labelledby="levelup-preview-title" data-preview-lines></ul>
+				<dl class="levelup-preview-totals" data-preview-totals></dl>
+				<p class="levelup-fine" data-preview-ledger></p>
+			</section>
+			<section class="levelup-costs" aria-labelledby="levelup-costs-title">
+				<h3 class="levelup-card-title" id="levelup-costs-title">Experience costs</h3>
+				<p class="levelup-costs-lead">V20 · always use the current rating, not the new one.</p>
+				<dl class="levelup-cost-list">
+					{
+						costTable().map((row) => (
+							<div class="levelup-cost-row">
+								<dt>{row.label}</dt>
+								<dd>{row.rule}</dd>
+							</div>
+						))
+					}
+				</dl>
+			</section>
+		</aside>
+	</div>
+	<a class="levelup-bar" href="#levelup-review" data-bar hidden></a>
+</div>

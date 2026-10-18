@@ -1,0 +1,26 @@
+---
+import './notes.css';
+import Editor from './Editor.astro';
+import NoteList from './NoteList.astro';
+import Sidebar from './Sidebar.astro';
+
+// The Notes section: the quick-note bar, then the sidebar, the list and the editor. `mount.ts` beside
+// this file fills the lists and the editor from the character.
+---
+
+<h2 class="visually-hidden" id="journal-notes-title" tabindex="-1">Notes</h2>
+<form class="journal-quick" data-quick>
+	<span class="journal-icon journal-icon-pencil" aria-hidden="true"></span>
+	<label class="journal-quick-label" for="journal-quick-input">Quick note</label>
+	<input class="journal-quick-input" id="journal-quick-input" type="text" autocomplete="off" placeholder="Jot down a name, a promise, a clue…" data-quick-input />
+	<span class="journal-quick-where" data-quick-where></span>
+	<button type="submit" class="journal-button">
+		<span class="journal-icon journal-icon-pencil" aria-hidden="true"></span>
+		Add note
+	</button>
+</form>
+<div class="journal-workspace">
+	<Sidebar />
+	<NoteList />
+	<Editor />
+</div>

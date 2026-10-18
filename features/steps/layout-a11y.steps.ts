@@ -34,11 +34,14 @@ const SAVED = [
   { name: 'Fatima al-Faqadi of the Web of Knives', clan: 'Assamite', player: 'Benedict' },
 ];
 
-/** The controls the page is presenting; a closed dialog or an unused page state has none. */
+/**
+ * The controls the page is presenting; a closed dialog or an unused page state has none. The tabs of the
+ * tab bar are not among them: the bar scrolls on a narrow screen, and its own scenarios check its tabs.
+ */
 const controls = (page: Page): Locator =>
   page
     .locator('main')
-    .locator('a, button, input, textarea, [role="slider"]')
+    .locator('a:not([role="tab"]), button, input, textarea, [role="slider"]')
     .filter({ visible: true });
 
 Given(

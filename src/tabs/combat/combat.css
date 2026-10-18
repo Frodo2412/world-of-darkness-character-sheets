@@ -1,0 +1,580 @@
+/* The Combat tab, as the Figma frames "Combat" and "Combat — Ranged" draw it: the manoeuvre and weapon
+   tables on the left, the Weapon roll panel and the reminders on the right. Text is held to the shared
+   12px minimum, so the frame's 9-11px captions are drawn at 12px. Pools are shown, never rolled. */
+
+.combat {
+	padding-block-start: var(--space-4);
+	padding-block-end: 2rem;
+	gap: var(--space-3);
+}
+
+.combat-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-3);
+}
+
+.combat-intro {
+	display: grid;
+	gap: 5px;
+}
+
+.combat .dossier-title {
+	font-size: 2rem;
+}
+
+.combat-lead {
+	margin: 0;
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.combat-pages {
+	color: var(--color-muted);
+	background: var(--color-control);
+	border-color: var(--color-control);
+}
+
+.combat-tools {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-3);
+}
+
+.combat-tools > .dossier-search {
+	flex: 1 1 16rem;
+}
+
+.combat-banner {
+	margin: 0;
+	padding: var(--space-row) var(--space-3);
+	font-size: var(--text-small);
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
+}
+
+.combat-body {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-4);
+	align-items: start;
+}
+
+@media (min-width: 75rem) {
+	.combat-body {
+		grid-template-columns: minmax(0, 1fr) 30rem;
+	}
+}
+
+.combat-tables,
+.combat-side,
+.combat-section,
+.combat-group {
+	display: grid;
+	/* A track that may shrink, so a wide table scrolls inside its card instead of widening the page. */
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-row);
+	align-content: start;
+	min-inline-size: 0;
+}
+
+.combat-tables {
+	gap: var(--space-3);
+}
+
+.combat-section {
+	gap: var(--space-4);
+}
+
+.combat-side {
+	gap: var(--space-4);
+}
+
+/* Melee / Ranged: tabs in the frame, buttons that say which is pressed. */
+.combat-subtabs .dossier-segmented {
+	padding: 0;
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+}
+
+.combat-subtabs .dossier-segment {
+	color: var(--color-muted);
+	background: transparent;
+	border: 0;
+	border-block-end: 2px solid transparent;
+	border-radius: var(--radius-segment);
+}
+
+.combat-subtabs .dossier-segment[aria-pressed='true'] {
+	font-weight: 600;
+	color: var(--color-text-strong);
+	background: var(--color-control);
+	border-block-end-color: var(--color-focus);
+}
+
+.combat-section-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+}
+
+.combat-section-title {
+	margin: 0;
+	padding: 0;
+	font-family: var(--font-display);
+	font-size: 1.75rem;
+	letter-spacing: normal;
+	text-transform: none;
+	color: var(--color-text-strong);
+}
+
+.combat-pages-text {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+/* The tables sit in a card; a table wider than it scrolls inside it. */
+[data-table] .dossier-table-scroll {
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+[data-table] .dossier-table {
+	min-inline-size: 34rem;
+}
+
+[data-table] .dossier-table thead th {
+	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+[data-table] .dossier-table th,
+[data-table] .dossier-table td {
+	padding: var(--space-row) var(--space-3);
+	vertical-align: middle;
+	border-block-end: 0;
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+[data-table] .dossier-table thead th {
+	border-block-start: 0;
+	border-block-end: var(--stroke) solid var(--color-line);
+}
+
+.combat-row.is-chosen {
+	background: var(--color-selected);
+}
+
+.combat-name-cell {
+	font-weight: 400;
+}
+
+.combat-name-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1) var(--space-2);
+}
+
+.combat-name {
+	font-size: var(--text-body);
+	color: var(--color-text-strong);
+}
+
+.combat-detail,
+.combat-formula-small {
+	display: block;
+	margin-block-start: var(--space-1);
+	font-size: var(--text-small);
+	line-height: 1.4;
+	font-weight: 400;
+	color: var(--color-muted);
+}
+
+.combat-tag {
+	color: var(--color-muted);
+	background: var(--color-control);
+	border-color: var(--color-control);
+}
+
+.combat-tag[data-tag='Unavailable'],
+.combat-tag[data-tag='Prerequisite'],
+.combat-tag[data-tag='Selected'] {
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+	border-color: var(--color-selected);
+}
+
+.combat-pool-cell {
+	min-inline-size: 11rem;
+}
+
+.combat-dice {
+	display: block;
+	font-size: var(--text-body);
+	color: var(--color-text);
+}
+
+.combat-row.is-chosen .combat-dice {
+	color: var(--color-accent-text);
+}
+
+.combat-damage-text,
+.combat-type-cell,
+.combat-conceal-cell {
+	color: var(--color-text);
+}
+
+/* The short figures of a row stay on one line; the name and the pool may wrap. */
+[data-table] .dossier-table td:not(.combat-pool-cell) {
+	white-space: nowrap;
+}
+
+.combat-conceal-cell abbr {
+	text-decoration: none;
+	cursor: help;
+}
+
+.combat-type-icon {
+	display: inline-block;
+	inline-size: 12px;
+	block-size: 12px;
+	margin-inline-end: 6px;
+	vertical-align: middle;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.combat-type-bashing {
+	background-image: url('../../assets/icons/bashing.svg');
+}
+
+.combat-type-lethal {
+	background-image: url('../../assets/icons/lethal.svg');
+}
+
+.combat-use {
+	min-block-size: var(--control-compact);
+	padding-block: var(--space-1);
+	font-size: var(--text-small);
+	white-space: nowrap;
+}
+
+.combat-footnote {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-muted);
+}
+
+.combat-bar {
+	margin: 0;
+	padding: var(--space-2) var(--space-row);
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-muted);
+	background: var(--color-row);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
+}
+
+/* The Weapon roll panel. */
+.combat-roll,
+.combat-roll-card,
+.combat-reminders,
+.combat-reminders-card {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.combat-roll {
+	display: grid;
+	gap: var(--space-row);
+	min-inline-size: 0;
+}
+
+.combat-roll-card {
+	display: grid;
+	gap: var(--space-row);
+	padding: 20px;
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.combat-roll-chip {
+	justify-self: start;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-accent-text);
+	background: var(--color-selected);
+	border-color: var(--color-selected);
+}
+
+.combat-roll-lead,
+.combat-note,
+.combat-reason,
+.combat-hint,
+.combat-source,
+.combat-disclaimer {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-muted);
+}
+
+.combat-reason,
+.combat-hint {
+	color: var(--color-accent-text);
+}
+
+.combat-field {
+	display: grid;
+	gap: var(--space-1);
+	min-inline-size: 0;
+}
+
+.combat-pair {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+	gap: var(--space-row);
+}
+
+/* The sheet's own label rule (a flex row as tall as a control) is for its fields; these sit over theirs. */
+.sheet .combat-label {
+	display: block;
+	min-block-size: 0;
+	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	white-space: normal;
+	color: var(--color-muted);
+}
+
+.sheet .combat-select {
+	inline-size: 100%;
+	min-inline-size: 0;
+	min-block-size: 2.25rem;
+	padding: var(--space-1) var(--space-row);
+	font: inherit;
+	font-size: var(--text-body);
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.combat-rule {
+	inline-size: 100%;
+	block-size: 0;
+	margin: var(--space-1) 0;
+	border: 0;
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+.combat-stage {
+	display: grid;
+	gap: var(--space-row);
+}
+
+.combat-stage-heading {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
+.combat-stage-title {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: 1.75rem;
+	font-weight: 600;
+	line-height: var(--leading-tight);
+	color: var(--color-text-strong);
+}
+
+.combat-stage-chip {
+	padding: 2px var(--space-2);
+	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+	background: var(--color-control);
+	border-radius: var(--radius-badge);
+}
+
+.combat-formula {
+	margin: 0;
+	font-size: var(--text-body);
+	color: var(--color-text);
+}
+
+.combat-stats {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--space-2);
+	margin: 0;
+}
+
+.combat-stat {
+	display: grid;
+	gap: var(--space-1);
+	padding: var(--space-row) var(--space-3);
+	background: var(--color-control);
+	border-radius: var(--radius-badge);
+}
+
+.combat-stat dt {
+	font-size: var(--text-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-muted);
+}
+
+.combat-stat dd {
+	margin: 0;
+	font-size: 1.5rem;
+	line-height: 1.2;
+	color: var(--color-text-strong);
+}
+
+.combat-stepper {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
+.combat-stepper-controls {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.combat-step {
+	inline-size: 1.75rem;
+	min-inline-size: 1.75rem;
+	min-block-size: 1.75rem;
+	padding: 0;
+	font-size: var(--text-body);
+	font-weight: 600;
+}
+
+.sheet .combat-number {
+	inline-size: 3.25rem;
+	min-block-size: 1.75rem;
+	padding: 0 var(--space-1);
+	font: inherit;
+	font-size: var(--text-body);
+	text-align: center;
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+	appearance: textfield;
+}
+
+.sheet .combat-number::-webkit-inner-spin-button,
+.sheet .combat-number::-webkit-outer-spin-button {
+	appearance: none;
+	margin: 0;
+}
+
+.combat-pools-only {
+	margin: 0;
+	padding: var(--space-row) var(--space-3);
+	font-size: var(--text-small);
+	text-align: center;
+	color: var(--color-text);
+	background: var(--color-row);
+	border: var(--stroke) dashed var(--color-border-control);
+	border-radius: var(--radius-badge);
+}
+
+.combat-result {
+	display: grid;
+	gap: var(--space-1);
+	padding: var(--space-row) var(--space-3);
+	background: var(--color-control);
+	border-radius: var(--radius-badge);
+}
+
+.combat-result p {
+	margin: 0;
+}
+
+.combat-result-formula,
+.combat-result-type {
+	font-size: var(--text-small);
+	color: var(--color-muted);
+}
+
+.combat-result-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+}
+
+.combat-result-dice {
+	font-size: 1.75rem;
+	line-height: 1.2;
+	color: var(--color-text-strong);
+}
+
+.combat-source {
+	padding-block-start: var(--space-row);
+	border-block-start: var(--stroke) solid var(--color-line);
+}
+
+/* Combat reminders. */
+.combat-reminders {
+	display: grid;
+	gap: var(--space-row);
+}
+
+.combat-reminders-card {
+	display: grid;
+	gap: var(--space-3);
+	padding: var(--space-3);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+}
+
+.combat-reminder {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.combat-reminder-title {
+	margin: 0;
+	font-size: var(--text-small);
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.combat-reminder-page {
+	font-weight: 400;
+	color: var(--color-muted);
+}
+
+.combat-reminder-text {
+	margin: 0;
+	font-size: var(--text-small);
+	line-height: 1.5;
+	color: var(--color-muted);
+}
