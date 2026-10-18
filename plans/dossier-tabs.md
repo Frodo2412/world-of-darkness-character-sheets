@@ -1617,11 +1617,11 @@ Each step carries a rating that controls review depth during `/build`:
 
 Per PR (A, B, C):
 
-- [ ] All tests pass (`npm run test`)
-- [ ] End-to-end scenarios pass (`npm run test:e2e`)
-- [ ] Type check passes (`npm run typecheck`)
-- [ ] Linter passes (`npm run lint`)
-- [ ] Build passes (`npm run build`)
+- [x] All tests pass (`npm run test`)
+- [x] End-to-end scenarios pass (`npm run test:e2e`)
+- [x] Type check passes (`npm run typecheck`)
+- [x] Linter passes (`npm run lint`)
+- [x] Build passes (`npm run build`)
 - [ ] `/code-review` passes
 - [ ] PR A: tried against a browser profile holding real saved characters before merging; rulebook-data review checklist (Slices 4 and 5) completed page by page against the book
 - [ ] PR B and C: Figma side-by-side at 1512px for each tab in the PR attached
