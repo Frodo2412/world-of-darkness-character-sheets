@@ -11,13 +11,19 @@ export type ClanClass = 'in-clan' | 'out-of-clan' | 'caitiff';
 
 const sameWords = (a: string, b: string): boolean => caseFolded(a).replace(/\s+/g, ' ') === caseFolded(b).replace(/\s+/g, ' ');
 
+/** The one of the thirteen clans the character's clan text names, however it is cased or spaced; none for Caitiff, a blank or anything else. */
+export function clanOf(character: V20Character): (typeof CLANS)[number] | undefined {
+  const clan = CLANS.find((entry) => sameWords(entry.name, character.header.clan));
+  return clan === undefined || clan.disciplines.length === 0 ? undefined : clan;
+}
+
 /**
  * What the clan text makes a Discipline: in-clan or out-of-clan for one of the thirteen clans (matched
  * whatever the case and spacing), and Caitiff cost for Caitiff, a blank clan or any text that is not a clan.
  */
 export function clanClass(character: V20Character, discipline: string): ClanClass {
-  const clan = CLANS.find((entry) => sameWords(entry.name, character.header.clan));
-  if (clan === undefined || clan.disciplines.length === 0) return 'caitiff';
+  const clan = clanOf(character);
+  if (clan === undefined) return 'caitiff';
   return clan.disciplines.some((own) => sameWords(own, discipline)) ? 'in-clan' : 'out-of-clan';
 }
 

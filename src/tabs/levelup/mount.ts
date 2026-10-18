@@ -2,7 +2,7 @@ import type { V20Character } from '../../domain/v20/character';
 import { experienceTotals } from '../../domain/v20/experience/ledger';
 import { sessionChange } from '../../domain/v20/journal/sessionView';
 import { startSession } from '../../domain/v20/journal/sessions';
-import { applyPending, undoApply, type Applied } from '../../domain/v20/levelup/apply';
+import { applyFailureText, applyPending, undoApply, undoneCount, type Applied } from '../../domain/v20/levelup/apply';
 import { addPending, clearPending, pendingTotal, removePending, reprice, type Pending } from '../../domain/v20/levelup/pending';
 import type { Subject } from '../../domain/v20/levelup/subjects';
 import { filterGroups, levelUpView, rowCount } from '../../domain/v20/levelup/view';
@@ -117,7 +117,12 @@ export function mount(ctx: TabContext): MountedTab {
 
   function confirm(): void {
     const result = applyPending(ctx.current(), pending, ctx.stamp);
-    if (!result.ok) return;
+    if (!result.ok) {
+      // Redrawn first: a choice that no longer fits is dropped, with its note, before the reason is given.
+      draw(ctx.current());
+      ctx.announce(applyFailureText(result.reason));
+      return;
+    }
     // The state is settled before the write, because the write redraws: pending choices would be priced against ratings they just raised.
     pending = clearPending();
     applied = result.applied;
@@ -132,7 +137,7 @@ export function mount(ctx: TabContext): MountedTab {
     if (before === undefined) return;
     applied = undefined;
     const after = ctx.apply((character) => undoApply(character, before));
-    ctx.announce(`Undid ${countLabel(before.items.length, 'advancement', 'advancements')}. Available ${experienceTotals(after.journal).available}.`);
+    ctx.announce(`Undid ${countLabel(undoneCount(before, after.journal), 'advancement', 'advancements')}. Available ${experienceTotals(after.journal).available}.`);
     find('#levelup-review-title').focus();
   }
 

@@ -45,6 +45,15 @@ describe('damagePool', () => {
   });
 });
 
+describe('damagePool with extra successes that are not a number', () => {
+  test.each([Number.NaN, Number.POSITIVE_INFINITY])('%s adds nothing and never gives NaN or infinite dice', (extra) => {
+    const pool = damagePool(blankCharacter('abc'), { flat: 2 }, extra);
+
+    expect(pool.dice).toBe(2);
+    expect(pool.formula).toContain('extra successes 0');
+  });
+});
+
 describe('clampExtraSuccesses', () => {
   test('leaves a whole number of 0 or more alone', () => {
     expect(clampExtraSuccesses(0)).toEqual({ extra: 0, corrected: false });
@@ -55,6 +64,11 @@ describe('clampExtraSuccesses', () => {
     expect(clampExtraSuccesses(-2)).toEqual({ extra: 0, corrected: true });
     expect(clampExtraSuccesses(2.5)).toEqual({ extra: 2, corrected: true });
     expect(clampExtraSuccesses(Number.NaN)).toEqual({ extra: 0, corrected: true });
+  });
+
+  test('does not let a number that is not finite through', () => {
+    expect(clampExtraSuccesses(Number.POSITIVE_INFINITY)).toEqual({ extra: 0, corrected: true });
+    expect(clampExtraSuccesses(Number.NEGATIVE_INFINITY)).toEqual({ extra: 0, corrected: true });
   });
 
   test('has the stated message', () => {

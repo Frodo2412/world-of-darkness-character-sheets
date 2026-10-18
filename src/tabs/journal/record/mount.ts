@@ -52,6 +52,7 @@ export function mount(ctx: TabContext, root: HTMLElement): MountedTab {
     // Rating notes belong to places; the list has shifted under them.
     hints.clear();
     undo.hold(name, () => {
+      hints.clear();
       updateRecord((record) => restoreEntry(record, taken));
       focusEntry(key, taken.index);
     });

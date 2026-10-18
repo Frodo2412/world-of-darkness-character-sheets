@@ -11,7 +11,7 @@ export const EXTRA_SUCCESSES_MESSAGE = 'Extra successes kept at 0 or more.';
 
 /** Extra successes are a whole number of 0 or more: anything else becomes the nearest that is, and says so. */
 export function clampExtraSuccesses(value: number): { extra: number; corrected: boolean } {
-  const extra = Number.isNaN(value) ? 0 : Math.max(0, Math.trunc(value));
+  const extra = Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
   return { extra, corrected: extra !== value };
 }
 
@@ -40,7 +40,7 @@ export function damagePool(character: V20Character, damage: Damage, extraSuccess
     base = damage.flat ?? 0;
     parts.push(`Weapon ${base}`);
   }
-  const extra = Math.max(0, Math.trunc(extraSuccesses));
+  const { extra } = clampExtraSuccesses(extraSuccesses);
   parts.push(`+ extra successes ${extra}`);
   if (target !== undefined && target.damage > 0) parts.push(`+ target ${target.damage}`);
   return {

@@ -41,6 +41,12 @@ describe('toggleWrap', () => {
 });
 
 describe('toggleLines', () => {
+  test('with the caret in an empty first line it works on that line, not the one after it', () => {
+    const result = toggleLines({ text: '\nsecond', start: 0, end: 0 }, 'bullets');
+
+    expect(result.text).toBe('- \nsecond');
+  });
+
   test('makes the line a bullet and back', () => {
     const bullet = toggleLines(range('one [two] three'), 'bullets');
     expect(bullet.text).toBe('- one two three');

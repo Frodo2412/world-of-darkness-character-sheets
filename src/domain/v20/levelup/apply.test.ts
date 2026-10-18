@@ -3,7 +3,7 @@ import { blankCharacter, type V20Character } from '../character';
 import { awardXp, experienceTotals } from '../experience/ledger';
 import { startSession } from '../journal/sessions';
 import { counterStamp } from '../journal/testing/stamp';
-import { applyPending, undoApply } from './apply';
+import { applyFailureText, applyPending, undoApply, undoneCount } from './apply';
 import { addPending, type Pending } from './pending';
 
 function setup(xp = 10, withSession = true): { character: V20Character; stamp: ReturnType<typeof counterStamp> } {
@@ -165,5 +165,25 @@ describe('undoApply', () => {
     expect(undone.abilities.melee).toBe(0);
     expect(undone.journal.xp.spendings.map((spending) => spending.label)).toEqual(['Stealth 3']);
     expect(experienceTotals(undone.journal).spent).toBe(4);
+  });
+});
+
+describe('undoneCount', () => {
+  test('counts the advancements undone, not the ones left in place because the player changed them', () => {
+    const { character, stamp } = setup(10);
+    const result = applyPending(character, choose(character, 10, 'abilities.stealth', 'abilities.melee'), stamp);
+    if (!result.ok) throw new Error(result.reason);
+    const edited = { ...result.character, abilities: { ...result.character.abilities, stealth: 4 } };
+
+    const undone = undoApply(edited, result.applied);
+
+    expect(undoneCount(result.applied, undone.journal)).toBe(1);
+    expect(undoneCount(result.applied, undoApply(result.character, result.applied).journal)).toBe(2);
+  });
+});
+
+describe('applyFailureText', () => {
+  test.each(['no-session', 'nothing-pending', 'stale', 'too-expensive'] as const)('says something for %s', (reason) => {
+    expect(applyFailureText(reason).length).toBeGreaterThan(10);
   });
 });

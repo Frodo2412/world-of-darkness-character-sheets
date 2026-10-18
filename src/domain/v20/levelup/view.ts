@@ -3,7 +3,6 @@
 // Computed on every draw, never stored.
 
 import type { V20Character } from '../character';
-import { CLANS } from '../creation/rules';
 import { costRule, XP_COSTS } from '../experience/costs';
 import { experienceTotals } from '../experience/ledger';
 import { currentSession } from '../journal/sessions';
@@ -12,7 +11,7 @@ import { matchesQuery } from '../search';
 import { ABILITY_GROUPS, ATTRIBUTE_GROUPS, VIRTUES } from '../traits';
 import { figure } from '../experience/awards/validate';
 import { availability } from './availability';
-import { advancementCost } from './costs';
+import { advancementCost, clanOf } from './costs';
 import { pendingTotals, type Pending } from './pending';
 import { subjectLabel, subjectMaximum, subjectRating, type Subject } from './subjects';
 
@@ -151,9 +150,9 @@ const ruleOf = (key: Parameters<typeof costRule>[0]): string => `${costRule(key)
 
 /** The Disciplines card's rule: what the clan makes each Discipline cost. */
 function disciplineRule(character: V20Character): string {
-  const clan = CLANS.find((entry) => entry.name.toLowerCase() === character.header.clan.trim().replace(/\s+/g, ' ').toLowerCase());
+  const clan = clanOf(character);
   const times = (key: Parameters<typeof costRule>[0]): string => costRule(key).rule.replace('Current rating', 'current');
-  if (clan === undefined || clan.disciplines.length === 0) {
+  if (clan === undefined) {
     const named = character.header.clan.trim() === '' ? 'No clan' : character.header.clan.trim();
     return `${named} · Caitiff cost: ${times('caitiffDiscipline')} XP`;
   }

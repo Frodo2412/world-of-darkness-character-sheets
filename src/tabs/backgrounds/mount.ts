@@ -156,6 +156,8 @@ export function mount(ctx: TabContext): MountedTab {
     if (field === 'rating') {
       if (value.trim() === '') return (character) => setOtherTrait(character, index, { rating: undefined });
       const rating = Number(value);
+      // A half-typed or out-of-range number waits for the commit, which puts it right and says so.
+      if (!commit && !(Number.isInteger(rating) && rating >= 0 && rating <= 10)) return undefined;
       if (commit && !(rating >= 0 && rating <= 10 && Number.isInteger(rating))) {
         const kept = Number.isNaN(rating) ? 0 : Math.min(10, Math.max(0, Math.trunc(rating)));
         (target as HTMLInputElement).value = String(kept);

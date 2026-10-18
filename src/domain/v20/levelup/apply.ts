@@ -3,6 +3,7 @@
 
 import type { V20Character } from '../character';
 import { experienceTotals, recordSpending, removeSpendings } from '../experience/ledger';
+import type { Journal } from '../journal/types';
 import { currentSession } from '../journal/sessions';
 import type { Stamp } from '../journal/stamp';
 import { reprice, type Pending, type PendingItem } from './pending';
@@ -79,4 +80,24 @@ export function undoApply(character: V20Character, applied: Applied): V20Charact
     restored.push(applied.spendingIds[at]);
   });
   return { ...next, journal: removeSpendings(next.journal, restored) };
+}
+
+/** What the player is told when the review cannot be applied. */
+export function applyFailureText(reason: Extract<ApplyResult, { ok: false }>['reason']): string {
+  switch (reason) {
+    case 'no-session':
+      return 'Start a session before applying the review.';
+    case 'nothing-pending':
+      return 'Select an advancement to review first.';
+    case 'stale':
+      return 'The sheet changed since the review was made. Check the review and confirm again.';
+    case 'too-expensive':
+      return 'Not enough XP for this review. Remove an advancement and confirm again.';
+  }
+}
+
+/** How many of the advancements were taken back: those whose spending record the ledger no longer holds. */
+export function undoneCount(applied: Applied, journal: Journal): number {
+  const kept = new Set(journal.xp.spendings.map((spending) => spending.id));
+  return applied.spendingIds.filter((id) => !kept.has(id)).length;
 }

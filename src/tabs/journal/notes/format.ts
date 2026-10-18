@@ -58,7 +58,8 @@ const markerFor = (kind: ListKind, place: number): string =>
  * that marker off when every non-empty line already has it. A line with another marker is changed to this one.
  */
 export function toggleLines({ text, start, end }: TextRange, kind: ListKind): TextRange {
-  const from = text.lastIndexOf('\n', start - 1) + 1;
+  // lastIndexOf reads a negative position as 0, so a caret at the very start must not look back at all.
+  const from = start === 0 ? 0 : text.lastIndexOf('\n', start - 1) + 1;
   // A selection that ends at the start of a line does not touch that line.
   const stop = end > start && text[end - 1] === '\n' ? end - 1 : end;
   const nextBreak = text.indexOf('\n', stop);
