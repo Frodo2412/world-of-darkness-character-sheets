@@ -2,7 +2,7 @@
 // points are unspent, then the two-store finish and the sheet.
 
 import type { V20Build } from '../../domain/v20/creation/build';
-import { outstanding, unspentFreebies } from '../../domain/v20/creation/progress';
+import { finishReport } from '../../domain/v20/creation/progress';
 import type { BuildStore } from '../../storage/buildStore';
 import type { CharacterStore } from '../../storage/characterStore';
 import { finishBuild } from '../../storage/finishBuild';
@@ -46,6 +46,11 @@ export function wireFinish(
       case 'build-missing':
         showView('not-found');
         return;
+      case 'not-finishable':
+        showStatus('This build still has items outstanding, so it was not finished. Your build has been kept.');
+        button.disabled = false;
+        button.focus();
+        return;
       case 'save-failed':
         showStatus('The character could not be saved. This browser refused to store it. Your build has been kept.');
         button.disabled = false;
@@ -56,13 +61,12 @@ export function wireFinish(
 
   button.addEventListener('click', () => {
     const build = current();
-    const left = outstanding(build).length;
-    if (left > 0) {
+    const { blocked, refusal, unspentFreebies: unspent } = finishReport(build);
+    if (blocked) {
       // Disabled but explained: nothing happens except the reason, said politely.
-      showRefusal(root, button, `${left} ${left === 1 ? 'item' : 'items'} left before this character can be finished.`);
+      showRefusal(root, button, refusal);
       return;
     }
-    const unspent = unspentFreebies(build);
     if (unspent === 0) {
       finish();
       return;

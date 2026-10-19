@@ -19,8 +19,11 @@ import {
   activateFinish,
   buildWith,
   builderAddress,
+  finishButton,
   finishDialog,
+  finishOpenBuild,
   openPlayedFrom,
+  outstandingItems,
   openSavedBuild,
   openStep,
   rateTrait,
@@ -52,9 +55,6 @@ import {
 } from './support/sheet';
 import { storedKeys } from './support/storage';
 
-const finishButton = (page: Page) => page.getByRole('button', { name: 'Finish', exact: true });
-const outstandingItems = (page: Page) => page.locator('[data-outstanding-list] li');
-
 /** One creation dot taken off a complete Brujah build, by the allotment that loses it. */
 const ONE_SHORT: Record<string, Step> = {
   Mental: creation('attribute:wits', 1),
@@ -72,13 +72,6 @@ async function rememberAndOpen(page: Page, memory: { build?: import('../../src/d
 async function change(page: Page, memory: { build?: import('../../src/domain/v20/creation/build').V20Build }, ...steps: Step[]) {
   memory.build = play(memory.build!, ...steps);
   await openSavedBuild(page, memory.build);
-}
-
-async function finish(page: Page, accept: boolean): Promise<void> {
-  await activateFinish(page);
-  if (accept && (await finishDialog(page).isVisible())) {
-    await finishDialog(page).getByRole('button', { name: /^Finish with/ }).click();
-  }
 }
 
 // Given
@@ -155,13 +148,13 @@ Given('the build has a starting blood pool of {int}', async ({ page, memory }, v
 
 Given('a player who has just finished a build', async ({ page, memory }) => {
   await rememberAndOpen(page, memory, leaveFreebies(0));
-  await finish(page, true);
+  await finishOpenBuild(page);
   await expect(page).toHaveURL(SHEET_ADDRESS);
 });
 
 Given('a character finished from a 13th generation build', async ({ page, memory }) => {
   await rememberAndOpen(page, memory, leaveFreebies(0));
-  await finish(page, true);
+  await finishOpenBuild(page);
   await expect(page).toHaveURL(SHEET_ADDRESS);
 });
 
@@ -205,7 +198,7 @@ When('they use {string}', async ({ page }, name: string) => {
 });
 
 When('they finish the build', async ({ page }) => {
-  await finish(page, true);
+  await finishOpenBuild(page);
 });
 
 When('they try to finish the build', async ({ page }) => {
@@ -239,7 +232,7 @@ When('they continue the lingering build and finish it', async ({ page }) => {
   await openRoster(page);
   await buildEntries(page).getByRole('link', { name: /^Continue/ }).click();
   await expect(page).toHaveURL(BUILDER_ADDRESS);
-  await finish(page, true);
+  await finishOpenBuild(page);
 });
 
 When('they raise Strength to {int} on the sheet', async ({ page }, value: number) => {

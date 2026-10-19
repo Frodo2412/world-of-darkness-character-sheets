@@ -175,7 +175,7 @@ Then(
   /^they are told, beside Generation, that the effective generation is now (\d+th) with a blood pool maximum of (\d+)$/,
   async ({ page }, generation: string, pool: string) => {
     await expect((await groupBox(page, 'Backgrounds')).locator('[data-notice]')).toHaveText(
-      `The effective generation is now ${generation}, with a blood pool maximum of ${pool}.`,
+      `The effective generation is now ${generation}, with a Blood Pool maximum of ${pool}.`,
     );
   },
 );

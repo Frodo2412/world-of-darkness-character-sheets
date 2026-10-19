@@ -28,6 +28,11 @@ export async function storedText(page: Page, key: string): Promise<string | null
   return page.evaluate((k) => window.localStorage.getItem(k), key);
 }
 
+/** Writes `text` under `key` as it would have been stored earlier, for states the app's own writers never produce. */
+export async function writeRecord(page: Page, key: string, text: string): Promise<void> {
+  await page.evaluate(([k, value]) => window.localStorage.setItem(k, value), [key, text]);
+}
+
 /** Makes every write to storage fail the way a full or blocked storage does. */
 export async function refuseWrites(page: Page): Promise<void> {
   await page.evaluate(() => {

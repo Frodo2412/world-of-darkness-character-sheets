@@ -169,8 +169,6 @@ function wireDisciplines(root: HTMLElement, { commit }: Wiring): void {
   });
 }
 
-const plural = (count: number, one: string): string => `${count} ${count === 1 ? one : `${one}s`}`;
-
 const stepTitle = (step: string): string => BUILD_STEPS.find((entry) => entry.step === step)?.title ?? step;
 
 const slug = (text: string): string => text.replace(/[^a-zA-Z0-9]/g, '-');
@@ -258,13 +256,14 @@ function renderOutstanding(root: HTMLElement, report: BuildReport): void {
     );
     list.hidden = outstanding.length === 0;
   }
-  const blocked = outstanding.length > 0;
+}
+
+/** Finish stays focusable but does nothing while anything is outstanding, and says why. */
+function renderFinishGate(root: HTMLElement, { finish }: BuildReport): void {
   for (const button of root.querySelectorAll<HTMLButtonElement>('[data-finish]')) {
-    button.setAttribute('aria-disabled', String(blocked));
+    button.setAttribute('aria-disabled', String(finish.blocked));
   }
-  for (const reason of root.querySelectorAll<HTMLElement>('[data-finish-reason]')) {
-    showReadout(reason, blocked ? `Finish character · ${plural(outstanding.length, 'item')} left` : '');
-  }
+  for (const reason of root.querySelectorAll<HTMLElement>('[data-finish-reason]')) showReadout(reason, finish.reason);
 }
 
 function renderFreebies(root: HTMLElement, report: BuildReport): void {
@@ -280,9 +279,8 @@ function renderFreebies(root: HTMLElement, report: BuildReport): void {
 /** The Blood Pool field's own words: its range, whether it is recorded, and that it is required until then. */
 function renderBloodPool(root: HTMLElement, report: BuildReport): void {
   const unrecorded = report.bloodPool === null;
-  const { bloodPoolMax, effectiveGeneration } = report.settings;
   for (const hint of root.querySelectorAll<HTMLElement>('[data-blood-pool-hint]')) {
-    showReadout(hint, `0 to ${bloodPoolMax} at ${ordinal(effectiveGeneration)} generation`);
+    showReadout(hint, report.bloodPoolHint);
   }
   for (const state of root.querySelectorAll<HTMLElement>('[data-blood-pool-state]')) {
     showReadout(state, unrecorded ? 'Not recorded' : '');
@@ -352,6 +350,7 @@ export function renderControls(root: HTMLElement, report: BuildReport): void {
   renderFreebies(root, report);
   renderBloodPool(root, report);
   renderOutstanding(root, report);
+  renderFinishGate(root, report);
   for (const control of root.querySelectorAll<RatingControl>('[data-build-trait]')) {
     renderRating(control, report);
   }

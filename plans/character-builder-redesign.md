@@ -239,7 +239,7 @@ Feature: Starting Blood Pool is recorded by the player
 
   Scenario: A new build has no Blood Pool recorded
     When I open Finishing touches
-    Then the Blood Pool reads "Not recorded"
+    Then the Blood Pool field reads "Not recorded"
     And it is tagged "Required"
     And the hint reads "0 to 10 at 13th generation"
 
@@ -251,7 +251,7 @@ Feature: Starting Blood Pool is recorded by the player
   Scenario: Zero is a recorded value that survives a reload
     When I record a starting Blood Pool of 0
     And I reload the builder
-    Then the Blood Pool reads 0 and is not tagged "Required"
+    Then the Blood Pool field reads 0 and is not tagged "Required"
 
   Scenario Outline: An invalid Blood Pool is refused and the entry is kept beside the message
     When I record a starting Blood Pool of "<entry>"
@@ -272,7 +272,7 @@ Feature: Starting Blood Pool is recorded by the player
   Scenario: Clearing the field returns to Not recorded
     Given I have recorded a starting Blood Pool of 10
     When I clear the Blood Pool field
-    Then the Blood Pool reads "Not recorded" and is tagged "Required"
+    Then the Blood Pool field reads "Not recorded" and is tagged "Required"
 
   Scenario Outline: The range follows the effective generation
     Given a build at base <base> generation with <dots> dots of the Generation Background
@@ -291,27 +291,27 @@ Feature: Starting Blood Pool is recorded by the player
     And Finish is aria-disabled, still focusable, and explains "Finish character · 1 item left"
     And activating Finish does nothing
     When I record a starting Blood Pool of 10
-    Then the outstanding list is empty and Finish is enabled (an unspent-freebie confirmation may still appear)
+    Then the outstanding list is empty and Finish is enabled
 
   Scenario: A build saved before this change reads Blood Pool 0 as Not recorded
     Given a build saved before this change with a Blood Pool of 0
     When I open it in the builder
-    Then the Blood Pool reads "Not recorded"
+    Then the Blood Pool field reads "Not recorded"
 
   Scenario: A build saved before this change keeps a non-zero Blood Pool
     Given a build saved before this change with a Blood Pool of 7
     When I open it in the builder
-    Then the Blood Pool reads 7
+    Then the Blood Pool field reads 7
 
   Scenario: Recording 0 on a pre-change build survives a reload
     Given a build saved before this change with a Blood Pool of 0
     When I open it in the builder and record a starting Blood Pool of 0
     And I reload the builder
-    Then the Blood Pool reads 0 and is not tagged "Required"
+    Then the Blood Pool field reads 0 and is not tagged "Required"
 
   Scenario Outline: Whitespace around a Blood Pool entry
     When I record a starting Blood Pool of "<entry>"
-    Then the Blood Pool reads "<result>"
+    Then the Blood Pool field reads "<result>"
 
     Examples:
       | entry  | result       |
@@ -333,7 +333,7 @@ Feature: Starting Blood Pool is recorded by the player
   Scenario: A recorded zero reaches the sheet as zero
     Given a finishable build with a recorded Blood Pool of 0
     When I finish the build
-    Then the character's sheet shows a blood pool of 0, not blank
+    Then the character's sheet shows a blood pool of 0
 
   Scenario: A refusal is perceivable without colour
     When I record a starting Blood Pool of 11
@@ -341,9 +341,9 @@ Feature: Starting Blood Pool is recorded by the player
     And the refusal is stated in text
 
   Scenario: The recorded Blood Pool reaches the finished character
-    Given a finishable build with a recorded Blood Pool of 10
+    Given a finishable build with a recorded Blood Pool of 9
     When I finish the build
-    Then the character's sheet shows a blood pool of 10
+    Then the character's sheet shows a blood pool of 9
 ```
 
 **Steps:**

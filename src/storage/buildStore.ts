@@ -1,5 +1,6 @@
 import { blankBuild, type DisciplineEntry, type V20Build } from '../domain/v20/creation/build';
-import { CLAN_NAMES, CONCEPT_KINDS, EXTRA_FREEBIES_RANGE, GENERATION_TABLE, RANKS } from '../domain/v20/creation/rules';
+import { isClanName, isConceptKind } from '../domain/v20/creation/ratings';
+import { EXTRA_FREEBIES_RANGE, GENERATION_TABLE, RANKS } from '../domain/v20/creation/rules';
 import { generateId, hasShapeOf, storedIds, type StoragePort } from './storagePort';
 
 /** A stored record that is not a build this version can read. It is never rewritten. */
@@ -61,7 +62,8 @@ function upgradedLegacyRecord(raw: Fields & { concept: Fields }): Fields {
   return {
     ...raw,
     bloodPool: raw.bloodPool === 0 ? null : raw.bloodPool,
-    concept: { ...raw.concept, conceptKind: '', drive: '' },
+    // Only what the old shape lacked is defaulted: a `drive` it somehow has is kept.
+    concept: { conceptKind: '', drive: '', ...raw.concept },
   };
 }
 
@@ -73,14 +75,14 @@ function isV20Build(value: unknown, id: string): value is V20Build {
   if (!hasShapeOf(fixed, template) || !isDisciplineList(disciplines)) return false;
   const build = value as V20Build;
   return (
-    (build.concept.conceptKind === '' || (CONCEPT_KINDS as readonly string[]).includes(build.concept.conceptKind)) &&
+    (build.concept.conceptKind === '' || isConceptKind(build.concept.conceptKind)) &&
     build.id === id &&
     build.system === 'v20' &&
     build.kind === 'build' &&
     build.schemaVersion === 1 &&
     GENERATION_TABLE.some((row) => row.generation === build.settings.baseGeneration) &&
     isWholeInRange(build.settings.extraFreebies, EXTRA_FREEBIES_RANGE.min, EXTRA_FREEBIES_RANGE.max) &&
-    (build.clan === '' || (CLAN_NAMES as readonly string[]).includes(build.clan)) &&
+    (build.clan === '' || isClanName(build.clan)) &&
     Object.values(build.ranks).every((rank) => rank === '' || (RANKS as readonly string[]).includes(rank)) &&
     Object.values(build.traits).every((dots) => isDotCount(dots.creation) && isDotCount(dots.freebie)) &&
     (build.bloodPool === null || isDotCount(build.bloodPool))
@@ -96,7 +98,8 @@ function isV20Build(value: unknown, id: string): value is V20Build {
  * so a recorded 0 stays 0.
  */
 function readStoredBuild(raw: unknown, id: string): V20Build | undefined {
-  const value = isLegacyRecord(raw) ? upgradedLegacyRecord(raw) : raw;
+  // A legacy Blood Pool was always a number, so anything else is damage and the record stays unreadable.
+  const value = isLegacyRecord(raw) && typeof raw.bloodPool === 'number' ? upgradedLegacyRecord(raw) : raw;
   return isV20Build(value, id) ? value : undefined;
 }
 

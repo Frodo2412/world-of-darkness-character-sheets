@@ -13,6 +13,7 @@ import type {
   V20Build,
 } from './build';
 import { freebieCost, freebiesRemaining } from './freebies';
+import { plural } from './wording';
 import { GENERATION_REF, bloodPoolRangeMessage, effectiveGeneration, limits, maximumFor, ordinal } from './limits';
 import {
   catalogueDiscipline,
@@ -26,6 +27,8 @@ import {
   freebieFloor,
   isCaitiff,
   isClanDiscipline,
+  isClanName,
+  isConceptKind,
   isLocked,
   keyOf,
   kindOf,
@@ -36,8 +39,6 @@ import {
 import { applied, commit, refuse, type UpdateResult } from './result';
 import {
   CLAN_FIXED_TRAITS,
-  CLAN_NAMES,
-  CONCEPT_KINDS,
   EXTRA_FREEBIES_RANGE,
   FIXED_MAXIMUMS,
   FLAT_ALLOTMENTS,
@@ -68,9 +69,6 @@ function wholeNumber(text: string, range: Range): number | undefined {
 
 const stepTitle = (step: string): string =>
   BUILD_STEPS.find((entry) => entry.step === step)?.title ?? step;
-
-const plural = (count: number, one: string, many = `${one}s`): string =>
-  `${count} ${count === 1 ? one : many}`;
 
 function joined(names: readonly string[]): string {
   if (names.length <= 1) return names.join('');
@@ -125,7 +123,7 @@ export function setConceptText(build: V20Build, field: ConceptField, text: strin
 
 /** A sample concept by name, or '' for none. */
 export function setConceptKind(build: V20Build, kind: string): UpdateResult {
-  if (kind !== '' && !(CONCEPT_KINDS as readonly string[]).includes(kind)) {
+  if (kind !== '' && !isConceptKind(kind)) {
     return refuse(build, `${kind} is not one of the sample concepts the builder offers.`);
   }
   return commit(build, { ...build, concept: { ...build.concept, conceptKind: kind } }, []);
@@ -193,7 +191,7 @@ function changeClan(build: V20Build, clan: ClanName): ClanChange {
 
 /** What choosing `clan` would remove, as sentences for the player to confirm. Empty if nothing. */
 export function clanChangeEffects(build: V20Build, clan: string): string[] {
-  if (!(CLAN_NAMES as readonly string[]).includes(clan) || clan === build.clan) return [];
+  if (!isClanName(clan) || clan === build.clan) return [];
   return changeClan(build, clan as ClanName).pending;
 }
 
@@ -205,7 +203,7 @@ export function setClan(build: V20Build, clan: string): UpdateResult {
   if (clan === '') {
     return refuse(build, 'A chosen clan cannot be cleared. Choose another clan instead.');
   }
-  if (!(CLAN_NAMES as readonly string[]).includes(clan)) {
+  if (!isClanName(clan)) {
     return refuse(build, `${clan} is not one of the clans the builder offers.`);
   }
   if (clan === build.clan) return applied(build);
@@ -290,7 +288,7 @@ function heldCapRefusal(build: V20Build, ref: BuildTraitRef, target: number): st
 function generationNotice(before: V20Build, after: V20Build): string[] {
   if (effectiveGeneration(before) === effectiveGeneration(after)) return [];
   return [
-    `The effective generation is now ${ordinal(effectiveGeneration(after))}, with a blood pool maximum of ${limits(after).bloodPoolMax}.`,
+    `The effective generation is now ${ordinal(effectiveGeneration(after))}, with a Blood Pool maximum of ${limits(after).bloodPoolMax}.`,
   ];
 }
 

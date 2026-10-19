@@ -4,21 +4,29 @@
 import { expect } from '@playwright/test';
 import { bloodPool, completeBuild, creation, generation } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When } from './fixtures';
-import { buildWith, openPlayed, openPlayedFrom, openStep, startBuild } from './support/builder';
 import {
-  bloodPoolField,
-  expectBloodPoolReads,
+  buildWith,
   expectFinishDoesNothing,
   expectFinishExplains,
-  expectRefused,
-  expectTagged,
+  finishButton,
   finishOpenBuild,
+  openPlayed,
+  openPlayedFrom,
+  openStep,
   openStored,
   outstandingItems,
+  reloadBuilder,
+  startBuild,
+  storeRawBuild,
+} from './support/builder';
+import {
+  bloodPoolField,
+  bloodPoolMessage,
+  expectBloodPoolReads,
+  expectRefused,
+  expectTagged,
   preChangeRecord,
   recordBloodPool,
-  reloadBuilder,
-  storeRecord,
   unrecordedBloodPool,
 } from './support/bloodpool';
 import { violationsOnPage } from './support/accessibility';
@@ -51,20 +59,20 @@ Given('a clan is chosen and every creation dot is placed', async ({ page, memory
 
 Given('a build saved before this change with a Blood Pool of {int}', async ({ page, memory }, value: number) => {
   memory.build = buildWith();
-  await storeRecord(page, memory.build.id, preChangeRecord(memory.build, value));
+  await storeRawBuild(page, memory.build.id, preChangeRecord(memory.build, value));
 });
 
 Given(
   'a build saved before this change with a Blood Pool of {int} and everything else placed',
   async ({ page, memory }, value: number) => {
     memory.build = { ...completeBuild('Brujah'), id: buildWith().id };
-    await storeRecord(page, memory.build.id, preChangeRecord(memory.build, value));
+    await storeRawBuild(page, memory.build.id, preChangeRecord(memory.build, value));
   },
 );
 
 Given('a stored new-shape build whose Blood Pool is {string}', async ({ page, memory }, entry: string) => {
   memory.build = buildWith();
-  await storeRecord(page, memory.build.id, { ...memory.build, bloodPool: entry });
+  await storeRawBuild(page, memory.build.id, { ...memory.build, bloodPool: entry });
   memory.stored = await storedRecords(page);
 });
 
@@ -78,11 +86,7 @@ When('I open Finishing touches', async ({ page }) => {
   await openStep(page, 'Finishing touches');
 });
 
-When('they record a starting Blood Pool of {int}', async ({ page }, value: number) => {
-  await recordBloodPool(page, String(value));
-});
-
-When('I record a starting Blood Pool of {int}', async ({ page }, value: number) => {
+When('I/they record a starting Blood Pool of {int}', async ({ page }, value: number) => {
   await recordBloodPool(page, String(value));
 });
 
@@ -123,16 +127,20 @@ When('I finish the build', async ({ page }) => {
 
 // Then
 
-Then('the Blood Pool reads {int}', async ({ page }, value: number) => {
+Then('the Blood Pool field reads {string}', async ({ page }, reading: string) => {
+  await expectBloodPoolReads(page, reading);
+});
+
+Then('the Blood Pool field reads {int}', async ({ page }, value: number) => {
   await expectBloodPoolReads(page, String(value));
 });
 
-Then('the Blood Pool reads {int} and is not tagged {string}', async ({ page }, value: number, tag: string) => {
+Then('the Blood Pool field reads {int} and is not tagged {string}', async ({ page }, value: number, tag: string) => {
   await expectBloodPoolReads(page, String(value));
   await expectTagged(page, tag, false);
 });
 
-Then('the Blood Pool reads {string} and is tagged {string}', async ({ page }, reading: string, tag: string) => {
+Then('the Blood Pool field reads {string} and is tagged {string}', async ({ page }, reading: string, tag: string) => {
   await expectBloodPoolReads(page, reading);
   await expectTagged(page, tag, true);
 });
@@ -197,10 +205,10 @@ Then('activating Finish does nothing', async ({ page }) => {
 });
 
 Then(
-  /^the outstanding list is empty and Finish is enabled \(an unspent-freebie confirmation may still appear\)$/,
+  'the outstanding list is empty and Finish is enabled',
   async ({ page }) => {
     await expect(outstandingItems(page)).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Finish', exact: true })).toHaveAttribute('aria-disabled', 'false');
+    await expect(finishButton(page)).toHaveAttribute('aria-disabled', 'false');
     await expect(page.locator('[data-finish-reason]')).toHaveText('');
   },
 );
@@ -210,15 +218,10 @@ Then("the character's sheet shows a blood pool of {int}", async ({ page }, value
   await expect(bloodTotal(page)).toHaveText(new RegExp(`^${value} / `));
 });
 
-Then("the character's sheet shows a blood pool of {int}, not blank", async ({ page }, value: number) => {
-  await expect(page).toHaveURL(SHEET_ADDRESS);
-  await expect(bloodTotal(page)).toHaveText(new RegExp(`^${value} / `));
-});
-
 Then('axe reports no violations with the refusal shown', async ({ page }) => {
   expect(await violationsOnPage(page)).toEqual([]);
 });
 
 Then('the refusal is stated in text', async ({ page }) => {
-  await expect(page.locator('#blood-pool-notice')).toContainText(rangeMessage(10));
+  await expect(bloodPoolMessage(page)).toContainText(rangeMessage(10));
 });

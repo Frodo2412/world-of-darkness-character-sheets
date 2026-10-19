@@ -4,8 +4,9 @@ import { play, type Step } from '../../../src/domain/v20/creation/testing/play';
 import { createBuildStore } from '../../../src/storage/buildStore';
 import type { StoragePort } from '../../../src/storage/storagePort';
 import { ABILITY_GROUPS, ATTRIBUTE_GROUPS } from '../../../src/domain/v20/traits';
-import { watchAnnouncements } from './announcements';
 import { createAction, openRoster } from './pages';
+import { ANNOUNCEMENT_WINDOW_MS, waitOnPageClock, watchAnnouncements } from './announcements';
+import { storedKeys, writeRecord } from './storage';
 
 export const BUILD_KEY_PREFIX = 'wod-sheets:build:';
 
@@ -74,6 +75,65 @@ export async function activateFinish(page: Page): Promise<void> {
 
 export const finishDialog = (page: Page): Locator =>
   page.getByRole('dialog', { name: 'Finish with unspent freebie points?' });
+
+export const finishButton = (page: Page): Locator => page.getByRole('button', { name: 'Finish', exact: true });
+
+export const outstandingItems = (page: Page): Locator => page.locator('[data-outstanding-list] li');
+
+/** Finishes the build open on Finishing touches, accepting the unspent-freebie question when `accept` and it is asked. */
+export async function finishOpenBuild(page: Page, accept = true): Promise<void> {
+  await activateFinish(page);
+  if (accept && (await finishDialog(page).isVisible())) {
+    await finishDialog(page).getByRole('button', { name: /^Finish with/ }).click();
+  }
+}
+
+/** Finish while something is outstanding: reachable by keyboard, and explaining itself in text. */
+export async function expectFinishExplains(page: Page, reason: string): Promise<void> {
+  await openStep(page, 'Finishing touches');
+  const finish = finishButton(page);
+  await expect(finish).toHaveAttribute('aria-disabled', 'true');
+  // aria-disabled, not the disabled attribute, so keyboard users can still reach it.
+  expect(await finish.evaluate((button: HTMLButtonElement) => button.disabled)).toBe(false);
+  await finish.focus();
+  await expect(finish).toBeFocused();
+  await expect(page.getByText(reason, { exact: true })).toBeVisible();
+  await expect(finish).toHaveAccessibleDescription(new RegExp(reason));
+}
+
+/** Activates Finish from the keyboard while it is unavailable and checks that only the reason is said. */
+export async function expectFinishDoesNothing(page: Page): Promise<void> {
+  const finish = finishButton(page);
+  const address = page.url();
+  const stored = await storedKeys(page, BUILD_KEY_PREFIX);
+  await finish.focus();
+  await finish.press('Enter');
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  await expect(finishDialog(page)).toBeHidden();
+  expect(page.url()).toBe(address);
+  expect(await storedKeys(page, BUILD_KEY_PREFIX)).toEqual(stored);
+  await expect(finish).toBeFocused();
+  await expect(page.locator('[data-finish-notice]')).toContainText('left before this character can be finished');
+}
+
+/** Opens a build already in storage, without saving anything first; one that cannot be read is opened too. */
+export async function openStored(page: Page, id: string): Promise<void> {
+  await page.goto(builderAddress(id));
+  await expect(page.getByRole('heading', { name: /^Build (a character|could not be read)$/ })).toBeVisible();
+  await watchAnnouncements(page);
+}
+
+export async function reloadBuilder(page: Page): Promise<void> {
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await watchAnnouncements(page);
+}
+
+/** Writes a build record exactly as given, for states the app's own store would not write. */
+export async function storeRawBuild(page: Page, id: string, record: unknown): Promise<void> {
+  await page.goto('/');
+  await writeRecord(page, BUILD_KEY_PREFIX + id, JSON.stringify(record));
+}
 
 /** Saves the builds, then opens the first in the builder. */
 export async function openSavedBuild(page: Page, build: V20Build): Promise<void> {

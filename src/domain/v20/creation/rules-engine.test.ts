@@ -328,7 +328,7 @@ describe('Generation', () => {
   test('dots improve the effective generation and say so', () => {
     const build = play(fresh(), generation(11));
     const result = setRating(build, 'background:Generation', 2, 'creation');
-    expect(result).toMatchObject({ status: 'applied', notices: ['The effective generation is now 9th, with a blood pool maximum of 14.'] });
+    expect(result).toMatchObject({ status: 'applied', notices: ['The effective generation is now 9th, with a Blood Pool maximum of 14.'] });
     expect(effectiveGeneration(result.build)).toBe(9);
     expect(limits(result.build).bloodPerTurn).toBe(2);
   });
@@ -524,12 +524,16 @@ describe('blood pool', () => {
     );
   });
 
-  test('the range follows the effective generation', () => {
-    const improved = play(fresh(), creation('background:Generation', 1));
-    expect(refused(setBloodPool(improved, '12'), improved).reason).toBe(
-      'The Blood Pool must be a whole number from 0 to 11.',
+  test.each([
+    [4, 0, 50],
+    [6, 2, 50],
+    [13, 1, 11],
+  ])('from base generation %ith with %i Generation dots it runs from 0 to %i', (base, dots, max) => {
+    const build = play(fresh(), generation(base), creation('background:Generation', dots));
+    expect(appliedBuild(setBloodPool(build, String(max))).bloodPool).toBe(max);
+    expect(refused(setBloodPool(build, String(max + 1)), build).reason).toBe(
+      `The Blood Pool must be a whole number from 0 to ${max}.`,
     );
-    expect(appliedBuild(setBloodPool(improved, '11')).bloodPool).toBe(11);
   });
 
   test.each(['-1', '2.5', '1e1', '10.0', '+5', 'ten', '11', '99999999999999999999'])('refuses %j and keeps the build', (text) => {
@@ -557,14 +561,14 @@ describe('blood pool', () => {
   test('a generation change that would put it out of range is refused', () => {
     const build = appliedBuild(setBloodPool(play(fresh(), generation(8)), '15'));
     expect(refused(setBaseGeneration(build, 13), build)).toMatchObject({
-      reason: 'Lower the starting blood pool to 10 first.',
+      reason: 'Lower the starting Blood Pool to 10 first.',
       step: 'finishing',
     });
   });
 
   test('a stored pool above its maximum is a violation and can be cleared or lowered', () => {
     const build = { ...fresh(), bloodPool: 12 };
-    expect(violations(build)).toEqual([{ message: 'Lower the starting blood pool to 10 first.', step: 'finishing' }]);
+    expect(violations(build)).toEqual([{ message: 'Lower the starting Blood Pool to 10 first.', step: 'finishing' }]);
     expect(appliedBuild(setBloodPool(build, '')).bloodPool).toBeNull();
     expect(appliedBuild(setBloodPool(build, '10')).bloodPool).toBe(10);
   });
@@ -610,7 +614,7 @@ describe('outstanding', () => {
 
   test('a stored Blood Pool above its maximum is listed to lower', () => {
     const build = { ...completeBrujah(), bloodPool: 12 };
-    expect(outstanding(build)).toEqual([{ step: 'finishing', message: 'Lower the starting blood pool to 10 first.' }]);
+    expect(outstanding(build)).toEqual([{ step: 'finishing', message: 'Lower the starting Blood Pool to 10 first.' }]);
   });
 
   test.each(['Brujah', 'Nosferatu', 'Caitiff', 'Ventrue', 'Tremere'])('a complete %s build has nothing outstanding', (name) => {

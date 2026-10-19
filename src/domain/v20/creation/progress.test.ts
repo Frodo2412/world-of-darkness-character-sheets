@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
+import { completeBuild, creation, generation, play } from './testing/play';
 import { BACKGROUNDS } from './rules';
-import { conceptReport, report, settingsReport, stepStatuses } from './progress';
+import { bloodPoolHint, conceptReport, finishReport, report, settingsReport, stepStatuses } from './progress';
 import { setBaseGeneration, setClan, setConceptText, setExtraFreebies } from './updates';
 
 function played(generation: number, extra: string) {
@@ -52,6 +53,52 @@ describe('report', () => {
       concept: conceptReport(build),
       steps: stepStatuses(build),
     });
+  });
+});
+
+describe('bloodPoolHint', () => {
+  test.each([
+    [13, 0, '0 to 10 at 13th generation'],
+    [13, 1, '0 to 11 at 12th generation'],
+    [6, 2, '0 to 50 at 4th generation'],
+  ])('from base %ith with %i Generation dots it reads %j', (base, dots, expected) => {
+    const build = play(blankBuild('abc'), generation(base), creation('background:Generation', dots));
+    expect(bloodPoolHint(build)).toBe(expected);
+    expect(report(build).bloodPoolHint).toBe(expected);
+  });
+});
+
+describe('finishReport', () => {
+  test('a complete build is not blocked and says nothing', () => {
+    expect(finishReport(completeBuild('Brujah'))).toEqual({
+      blocked: false,
+      itemsLeft: 0,
+      unspentFreebies: 15,
+      reason: '',
+      refusal: '0 items left before this character can be finished.',
+    });
+  });
+
+  test('one item left reads in the singular', () => {
+    const build = { ...completeBuild('Brujah'), bloodPool: null };
+    expect(finishReport(build)).toMatchObject({
+      blocked: true,
+      itemsLeft: 1,
+      reason: 'Finish character · 1 item left',
+      refusal: '1 item left before this character can be finished.',
+    });
+  });
+
+  test('several items left read in the plural, as the outstanding list counts them', () => {
+    const build = blankBuild('abc');
+    const { itemsLeft, reason } = finishReport(build);
+    expect(itemsLeft).toBe(report(build).outstanding.length);
+    expect(reason).toBe(`Finish character · ${itemsLeft} items left`);
+  });
+
+  test('report carries it', () => {
+    const build = blankBuild('abc');
+    expect(report(build).finish).toEqual(finishReport(build));
   });
 });
 

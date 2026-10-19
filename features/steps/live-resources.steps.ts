@@ -4,7 +4,6 @@ import type { V20Character } from '../../src/domain/v20/character';
 import type { HealthLevelKey } from '../../src/domain/v20/traits';
 import { Given, Then, When } from './fixtures';
 import { announcements, watchAnnouncements } from './support/announcements';
-import { expectBloodPoolReads, onBuilder } from './support/bloodpool';
 import { openRoster, openSheetOf, rosterEntries, sheetAddress, sheetField } from './support/pages';
 import { rating, setRating } from './support/ratings';
 import { characterArranged, characterWith, givenSaved, saveCharacters } from './support/seed';
@@ -190,11 +189,6 @@ When(
 // Blood Pool
 
 Then('the Blood Pool reads {string}', async ({ page }, reading: string) => {
-  // The builder's Blood Pool field and the sheet's Blood Pool card are both said to "read" something.
-  if (onBuilder(page)) {
-    await expectBloodPoolReads(page, reading);
-    return;
-  }
   await expect(bloodTotal(page)).toHaveText(reading);
 });
 

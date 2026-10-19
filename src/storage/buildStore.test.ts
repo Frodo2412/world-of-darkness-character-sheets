@@ -138,16 +138,18 @@ describe('buildStore', () => {
     expect(store.load('a')).toEqual({ status: 'found', build: withPool });
   });
 
-  test('a recorded Blood Pool, including 0, survives a round trip; an unrecorded one stays null', () => {
+  test.each([
+    ['0', 0],
+    ['7', 7],
+    ['', null],
+  ])('a Blood Pool entered as %j survives a round trip as %j', (text, expected) => {
     const store = createBuildStore(fakeStorage(), sequentialIds('a'));
     store.create();
-    const blank = blankBuild('a');
-    for (const text of ['0', '7', '']) {
-      const build = appliedBuild(setBloodPool(blank, text));
-      expect(store.save(build)).toEqual({ status: 'saved' });
-      expect(store.load('a')).toEqual({ status: 'found', build });
-    }
-    expect(store.load('a')).toMatchObject({ build: { bloodPool: null } });
+    const build = appliedBuild(setBloodPool(blankBuild('a'), text));
+
+    expect(store.save(build)).toEqual({ status: 'saved' });
+    expect(store.load('a')).toEqual({ status: 'found', build });
+    expect(build.bloodPool).toBe(expected);
   });
 
   test('a sample concept and a drive round-trip through storage', () => {
@@ -176,11 +178,21 @@ describe('buildStore', () => {
   test('a legacy record keeps its concept text and gains an empty sample concept and drive', () => {
     const concept = { ...blankBuild('a').concept, name: 'Lucita' };
     const { conceptKind: _kind, drive: _drive, ...legacyConcept } = concept;
-    const storage = fakeStorage({ [buildKeyFor('a')]: legacyRecord({ concept: legacyConcept }) });
+    const storage = fakeStorage({ [buildKeyFor('a')]: legacyRecord({ concept: legacyConcept, bloodPool: 0 }) });
 
     expect(createBuildStore(storage).load('a')).toEqual({
       status: 'found',
       build: { ...blankBuild('a'), concept: { ...concept, conceptKind: '', drive: '' } },
+    });
+  });
+
+  test('a record with a drive but no sample concept keeps its drive', () => {
+    const { conceptKind: _kind, ...concept } = { ...blankBuild('a').concept, drive: 'Find the truth' };
+    const storage = fakeStorage({ [buildKeyFor('a')]: JSON.stringify({ ...blankBuild('a'), concept, bloodPool: 0 }) });
+
+    expect(createBuildStore(storage).load('a')).toMatchObject({
+      status: 'found',
+      build: { concept: { conceptKind: '', drive: 'Find the truth' } },
     });
   });
 
@@ -198,7 +210,7 @@ describe('buildStore', () => {
     expect(loaded.build.bloodPool).toBe(11);
     expect(outstanding(loaded.build)).toContainEqual({
       step: 'finishing',
-      message: 'Lower the starting blood pool to 10 first.',
+      message: 'Lower the starting Blood Pool to 10 first.',
     });
   });
 
@@ -235,6 +247,9 @@ describe('buildStore', () => {
     ['a textual blood pool', record({ bloodPool: 'ten' })],
     ['a missing blood pool', JSON.stringify({ ...blankBuild('a'), bloodPool: undefined })],
     ['a negative blood pool in a record saved before this change', legacyRecord({ bloodPool: -1 })],
+    ['a fractional blood pool in a record saved before this change', legacyRecord({ bloodPool: 2.5 })],
+    ['a textual blood pool in a record saved before this change', legacyRecord({ bloodPool: 'ten' })],
+    ['a null blood pool in a record saved before this change', legacyRecord({ bloodPool: null })],
     ['a sample concept outside the fourteen', record(withConcept({ conceptKind: 'Vampire' }))],
     ['a sample concept that is not text', record(withConcept({ conceptKind: 5 }))],
     ['a drive that is not text', record(withConcept({ drive: 5 }))],

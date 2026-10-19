@@ -41,7 +41,10 @@ function heldBackgrounds(build: V20Build): { name: string; rating: number }[] {
   );
 }
 
+/** A character from a finished build. A build with no recorded Blood Pool is not finished, so it has no character. */
 export function toCharacter(build: V20Build): V20Character {
+  if (build.bloodPool === null) throw new Error('A build with no recorded Blood Pool cannot become a character.');
+  const { bloodPool } = build;
   const { bloodPerTurn } = limits(build);
   const willpower = rating(build, 'willpower');
   const changes: Change[] = [
@@ -57,8 +60,7 @@ export function toCharacter(build: V20Build): V20Character {
     (character) => setTrait(character, 'humanity.rating', rating(build, 'humanity')),
     (character) => setTrait(character, 'willpower.permanent', willpower),
     (character) => setTrait(character, 'willpower.temporary', willpower),
-    // An unrecorded pool blocks finishing, so null only reaches here from a caller that skipped that check.
-    (character) => setTrait(character, 'bloodPool.current', build.bloodPool ?? 0),
+    (character) => setTrait(character, 'bloodPool.current', bloodPool),
     (character) => setText(character, 'bloodPool.perTurn', String(bloodPerTurn)),
   ];
   return changes.reduce((character, change) => change(character), blankCharacter(build.id));

@@ -4,7 +4,7 @@
 import { allotmentStates, type AllotmentState } from './allotments';
 import { FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
 import { freebieBudget, freebiesRemaining, freebiesSpent } from './freebies';
-import { effectiveGeneration, limits, maximumFor, violations } from './limits';
+import { effectiveGeneration, limits, maximumFor, ordinal, violations } from './limits';
 import {
   clanDisciplines,
   creationRating,
@@ -17,6 +17,7 @@ import {
   traitLabel,
 } from './ratings';
 import { BUILD_STEPS, FREEBIE_COSTS, RANKED_ALLOTMENTS, type BuildStep, type Rank } from './rules';
+import { plural } from './wording';
 
 export { BUILD_STEPS, type BuildStep } from './rules';
 
@@ -79,6 +80,18 @@ export interface FreebieReport {
   sections: Record<FreebieSection, { cost: number; dots: number }>;
 }
 
+/** Whether the build can be finished now, and what the Finish control says about it. */
+export interface FinishReport {
+  /** Something is outstanding, so Finish does nothing yet. */
+  blocked: boolean;
+  itemsLeft: number;
+  unspentFreebies: number;
+  /** "Finish character · 2 items left" while blocked, '' otherwise. */
+  reason: string;
+  /** What activating a blocked Finish says: "2 items left before this character can be finished." */
+  refusal: string;
+}
+
 export interface BuildReport {
   settings: SettingsReport;
   concept: ConceptReport;
@@ -97,13 +110,13 @@ export interface BuildReport {
   };
   freebies: FreebieReport;
   bloodPool: number | null;
+  /** The range shown beside the Blood Pool field: "0 to 10 at 13th generation". */
+  bloodPoolHint: string;
   outstanding: OutstandingItem[];
+  finish: FinishReport;
   /** A short text status per step, '' when there is nothing to say. */
   steps: Record<BuildStep, string>;
 }
-
-const plural = (count: number, one: string, many = `${one}s`): string =>
-  `${count} ${count === 1 ? one : many}`;
 
 export function settingsReport(build: V20Build): SettingsReport {
   const { maxTrait, bloodPoolMax, bloodPerTurn } = limits(build);
@@ -283,6 +296,23 @@ export function stepStatuses(build: V20Build): Record<BuildStep, string> {
   };
 }
 
+/** The range shown beside the Blood Pool field, which follows the effective generation. */
+export function bloodPoolHint(build: V20Build): string {
+  return `0 to ${limits(build).bloodPoolMax} at ${ordinal(effectiveGeneration(build))} generation`;
+}
+
+export function finishReport(build: V20Build): FinishReport {
+  const itemsLeft = outstanding(build).length;
+  const left = `${plural(itemsLeft, 'item')} left`;
+  return {
+    blocked: itemsLeft > 0,
+    itemsLeft,
+    unspentFreebies: unspentFreebies(build),
+    reason: itemsLeft > 0 ? `Finish character · ${left}` : '',
+    refusal: `${left} before this character can be finished.`,
+  };
+}
+
 export function report(build: V20Build): BuildReport {
   const disciplines = disciplineRows(build);
   const refs: BuildTraitRef[] = [...FIXED_TRAIT_REFS, ...disciplines.freebieRows];
@@ -295,7 +325,9 @@ export function report(build: V20Build): BuildReport {
     disciplines,
     freebies: freebieReport(build),
     bloodPool: build.bloodPool,
+    bloodPoolHint: bloodPoolHint(build),
     outstanding: outstanding(build),
+    finish: finishReport(build),
     steps: stepStatuses(build),
   };
 }

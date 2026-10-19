@@ -44,6 +44,15 @@ describe('finishBuild', () => {
     expect(items.has(buildKeyFor(build.id))).toBe(false);
   });
 
+  test('saves nothing and removes nothing while something is outstanding', () => {
+    const { build, items, builds, characters } = arrange();
+    const unrecorded = { ...build, bloodPool: null };
+
+    expect(finishBuild(builds, characters, unrecorded)).toBe('not-finishable');
+    expect(items.has(buildKeyFor(build.id))).toBe(true);
+    expect(characters.load(build.id)).toEqual({ status: 'not-found' });
+  });
+
   test('keeps the build when the character cannot be saved', () => {
     const { build, items, builds, characters } = arrange({ set: (key) => key === keyFor('abc') });
     expect(finishBuild(builds, characters, build)).toBe('save-failed');

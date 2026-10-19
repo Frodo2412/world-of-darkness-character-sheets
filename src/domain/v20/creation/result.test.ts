@@ -42,9 +42,10 @@ describe('commit', () => {
 describe('creation module layers', () => {
   // Each file may import only the creation files named here. Files not yet written
   // are listed so later slices keep to the layering without editing this test.
-  const BELOW_UPDATES = ['rules', 'build', 'ratings', 'allotments', 'freebies', 'limits', 'result'];
+  const BELOW_UPDATES = ['rules', 'build', 'ratings', 'allotments', 'freebies', 'limits', 'result', 'wording'];
   const ALLOWED: Record<string, string[]> = {
     rules: [],
+    wording: [],
     build: ['rules'],
     ratings: ['rules', 'build'],
     allotments: ['rules', 'build', 'ratings'],

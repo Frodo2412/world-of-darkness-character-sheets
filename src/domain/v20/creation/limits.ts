@@ -114,7 +114,7 @@ export function violations(build: V20Build): Violation[] {
 
   const { bloodPoolMax } = limits(build);
   if (build.bloodPool !== null && build.bloodPool > bloodPoolMax) {
-    found.push({ message: `Lower the starting blood pool to ${bloodPoolMax} first.`, step: 'finishing' });
+    found.push({ message: `Lower the starting Blood Pool to ${bloodPoolMax} first.`, step: 'finishing' });
   }
 
   const spent = freebiesSpent(build);

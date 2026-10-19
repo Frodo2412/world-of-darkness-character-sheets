@@ -52,12 +52,8 @@ describe('toCharacter', () => {
     expect(rating(build, 'humanity')).toBe(7);
   });
 
-  test('a recorded Blood Pool of 0 reaches the sheet as 0', () => {
-    expect(toCharacter(play(completeBuild('Brujah'), bloodPool(0))).bloodPool.current).toBe(0);
-  });
-
-  test('an unrecorded Blood Pool is written as 0 rather than failing', () => {
-    expect(toCharacter({ ...completeBuild('Brujah'), bloodPool: null }).bloodPool.current).toBe(0);
+  test('a build with no recorded Blood Pool has no character', () => {
+    expect(() => toCharacter({ ...completeBuild('Brujah'), bloodPool: null })).toThrow('no recorded Blood Pool');
   });
 
   test('writes held Disciplines in clan order and Backgrounds in catalogue order, the rest blank', () => {
