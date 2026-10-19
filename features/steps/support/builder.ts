@@ -142,7 +142,7 @@ export async function expectFinishDoesNothing(page: Page): Promise<void> {
   expect(page.url()).toBe(address);
   expect(await storedKeys(page, BUILD_KEY_PREFIX)).toEqual(stored);
   await expect(finish).toBeFocused();
-  await expect(page.locator('[data-finish-notice]')).toContainText('left before this character can be finished');
+  await expect(page.locator('[data-finish-notice]')).toContainText('resolve the outstanding items first');
 }
 
 /** Opens a build already in storage, without saving anything first; one that cannot be read is opened too. */

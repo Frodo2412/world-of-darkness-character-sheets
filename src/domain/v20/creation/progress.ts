@@ -88,7 +88,7 @@ export interface FinishReport {
   unspentFreebies: number;
   /** The Finish control's label: "Finish character · 2 items left" while blocked, "Finish character" otherwise. */
   label: string;
-  /** What activating a blocked Finish says: "2 items left before this character can be finished." */
+  /** What activating a blocked Finish says. The label already says how many items are left, so this does not. */
   refusalMessage: string;
 }
 
@@ -299,6 +299,8 @@ export function bloodPoolHint(build: V20Build): string {
   return `0 to ${limits(build).bloodPoolMax} at ${ordinal(effectiveGeneration(build))} generation`;
 }
 
+const FINISH_REFUSAL = 'This build is not finished: resolve the outstanding items first.';
+
 /** Whether the build can be finished: nothing is outstanding. The one test the page and the storage both make. */
 export const isFinishable = (build: V20Build, items: OutstandingItem[] = outstanding(build)): boolean =>
   items.length === 0;
@@ -311,7 +313,7 @@ export function finishReport(build: V20Build, items: OutstandingItem[] = outstan
     itemsLeft: items.length,
     unspentFreebies: unspentFreebies(build),
     label: blocked ? `Finish character · ${left}` : 'Finish character',
-    refusalMessage: `${left} before this character can be finished.`,
+    refusalMessage: FINISH_REFUSAL,
   };
 }
 

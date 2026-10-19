@@ -60,7 +60,7 @@ Feature: Finishing a build
   Scenario: Every try at a blocked Finish says why
     Given a complete build with no Blood Pool recorded
     When they try to finish the build twice
-    Then the reason "1 item left before this character can be finished." has been announced twice
+    Then the reason "This build is not finished: resolve the outstanding items first." has been announced twice
 
   Scenario: Every step offers a way to review and finish
     Given a player on the "Attributes" step of a new build

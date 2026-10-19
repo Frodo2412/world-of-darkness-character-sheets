@@ -87,7 +87,7 @@ function hasValidChoices(build: V20Build): boolean {
   );
 }
 
-/** The Blood Pool is null or a count; whether it is within the generation's maximum is the rules' to say. */
+/** Each trait's creation and freebie dots are counts, and the Blood Pool is null or a count; whether the Blood Pool is within the generation's maximum is the rules' to say. */
 function hasValidTraits(build: V20Build): boolean {
   return (
     Object.values(build.traits).every((dots) => isDotCount(dots.creation) && isDotCount(dots.freebie)) &&

@@ -74,7 +74,12 @@ function write(slot: HTMLElement, text: string, step?: BuildStep, sayAgain = fal
   // An identical message already shown is left alone, so it is not announced again.
   if (slot.dataset.message === key) {
     if (!sayAgain) return;
-    slot.replaceChildren();
+    // Cleared now and written on the next frame: the same text written over itself in one task is not announced.
+    clear(slot);
+    requestAnimationFrame(() => {
+      if (slot.dataset.message === undefined) write(slot, text, step);
+    });
+    return;
   }
   slot.dataset.message = key;
   slot.replaceChildren(text, ...(step ? [' ', stepLink(step)] : []));

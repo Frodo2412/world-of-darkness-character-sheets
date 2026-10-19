@@ -11,7 +11,7 @@ import {
 } from '../../src/domain/v20/creation/testing/play';
 import type { ConceptField } from '../../src/domain/v20/creation/build';
 import { createCharacterStore } from '../../src/storage/characterStore';
-import { announcements } from './support/announcements';
+import { watchWrites, writtenTexts } from './support/announcements';
 import { bloodPoolField, bloodPoolMessage, recordBloodPool, unrecordedBloodPool } from './support/bloodpool';
 import { buyDots, leaveFreebies } from './builder-seeding.steps';
 import { Given, Then, When } from './fixtures';
@@ -217,6 +217,9 @@ When('they try to finish the build', async ({ page }) => {
 });
 
 When('they try to finish the build twice', async ({ page }) => {
+  await openStep(page, 'Finishing touches');
+  // Counts what the notice is given after having been empty, which is what makes a live region speak.
+  await watchWrites(page, '[data-finish-notice]');
   await activateFinish(page);
   await expect(page.locator('[data-finish-notice]')).not.toBeEmpty();
   await activateFinish(page);
@@ -287,7 +290,7 @@ Then('the Blood Pool field shows its stored value, not marked invalid', async ({
 });
 
 Then('the reason {string} has been announced twice', async ({ page }, message: string) => {
-  expect((await announcements(page)).filter((said) => said === message)).toHaveLength(2);
+  await expect.poll(async () => (await writtenTexts(page)).filter((said) => said === message)).toHaveLength(2);
 });
 
 Then('the build cannot be finished', async ({ page }) => {

@@ -75,7 +75,7 @@ describe('finishReport', () => {
       itemsLeft: 0,
       unspentFreebies: 15,
       label: 'Finish character',
-      refusalMessage: '0 items left before this character can be finished.',
+      refusalMessage: 'This build is not finished: resolve the outstanding items first.',
     });
   });
 
@@ -85,7 +85,7 @@ describe('finishReport', () => {
       blocked: true,
       itemsLeft: 1,
       label: 'Finish character · 1 item left',
-      refusalMessage: '1 item left before this character can be finished.',
+      refusalMessage: 'This build is not finished: resolve the outstanding items first.',
     });
   });
 
