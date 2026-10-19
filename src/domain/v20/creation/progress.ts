@@ -2,7 +2,7 @@
 // the page never compares numbers against budgets or maximums itself.
 
 import { allotmentStates, type AllotmentState } from './allotments';
-import { FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
+import { CONCEPT_FIELDS, FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
 import { freebieBudget, freebiesRemaining, freebiesSpent } from './freebies';
 import { effectiveGeneration, limits, maximumFor, ordinal, violations } from './limits';
 import {
@@ -86,10 +86,10 @@ export interface FinishReport {
   blocked: boolean;
   itemsLeft: number;
   unspentFreebies: number;
-  /** "Finish character · 2 items left" while blocked, '' otherwise. */
-  reason: string;
+  /** The Finish control's label: "Finish character · 2 items left" while blocked, "Finish character" otherwise. */
+  label: string;
   /** What activating a blocked Finish says: "2 items left before this character can be finished." */
-  refusal: string;
+  refusalMessage: string;
 }
 
 export interface BuildReport {
@@ -133,7 +133,7 @@ export function settingsReport(build: V20Build): SettingsReport {
 
 export function conceptReport(build: V20Build): ConceptReport {
   // The sample concept and drive are not sheet header fields, so the readout leaves them out.
-  const { conceptKind: _kind, drive: _drive, ...fields } = build.concept;
+  const fields = Object.fromEntries(CONCEPT_FIELDS.map((field) => [field, build.concept[field]])) as Record<ConceptField, string>;
   return { fields, clan: build.clan };
 }
 
@@ -274,9 +274,8 @@ export function outstanding(build: V20Build): OutstandingItem[] {
 export const unspentFreebies = (build: V20Build): number => Math.max(0, freebiesRemaining(build));
 
 /** The step navigation's word on each step, from the same reads as the outstanding list. */
-export function stepStatuses(build: V20Build): Record<BuildStep, string> {
+export function stepStatuses(build: V20Build, items: OutstandingItem[] = outstanding(build)): Record<BuildStep, string> {
   const states = allotmentStates(build);
-  const items = outstanding(build);
   const statusOf = (step: BuildStep): string => {
     const own = states.filter((state) => state.step === step);
     if (own.some((state) => state.remaining < 0)) return 'overspent';
@@ -300,19 +299,24 @@ export function bloodPoolHint(build: V20Build): string {
   return `0 to ${limits(build).bloodPoolMax} at ${ordinal(effectiveGeneration(build))} generation`;
 }
 
-export function finishReport(build: V20Build): FinishReport {
-  const itemsLeft = outstanding(build).length;
-  const left = `${plural(itemsLeft, 'item')} left`;
+/** Whether the build can be finished: nothing is outstanding. The one test the page and the storage both make. */
+export const isFinishable = (build: V20Build, items: OutstandingItem[] = outstanding(build)): boolean =>
+  items.length === 0;
+
+export function finishReport(build: V20Build, items: OutstandingItem[] = outstanding(build)): FinishReport {
+  const blocked = !isFinishable(build, items);
+  const left = `${plural(items.length, 'item')} left`;
   return {
-    blocked: itemsLeft > 0,
-    itemsLeft,
+    blocked,
+    itemsLeft: items.length,
     unspentFreebies: unspentFreebies(build),
-    reason: itemsLeft > 0 ? `Finish character · ${left}` : '',
-    refusal: `${left} before this character can be finished.`,
+    label: blocked ? `Finish character · ${left}` : 'Finish character',
+    refusalMessage: `${left} before this character can be finished.`,
   };
 }
 
 export function report(build: V20Build): BuildReport {
+  const items = outstanding(build);
   const disciplines = disciplineRows(build);
   const refs: BuildTraitRef[] = [...FIXED_TRAIT_REFS, ...disciplines.freebieRows];
   return {
@@ -325,8 +329,8 @@ export function report(build: V20Build): BuildReport {
     freebies: freebieReport(build),
     bloodPool: build.bloodPool,
     bloodPoolHint: bloodPoolHint(build),
-    outstanding: outstanding(build),
-    finish: finishReport(build),
-    steps: stepStatuses(build),
+    outstanding: items,
+    finish: finishReport(build, items),
+    steps: stepStatuses(build, items),
   };
 }

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vitest';
 import { blankBuild, type V20Build } from '../domain/v20/creation/build';
 import {
   setBaseGeneration,
@@ -206,7 +206,7 @@ describe('buildStore', () => {
     const storage = fakeStorage({ [buildKeyFor('a')]: record({ bloodPool: 11 }) });
     const loaded = createBuildStore(storage).load('a');
 
-    if (loaded.status !== 'found') throw new Error('not found');
+    assert(loaded.status === 'found');
     expect(loaded.build.bloodPool).toBe(11);
     expect(outstanding(loaded.build)).toContainEqual({
       step: 'finishing',

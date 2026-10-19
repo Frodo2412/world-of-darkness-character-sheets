@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
 import { completeBuild, creation, generation, play } from './testing/play';
 import { BACKGROUNDS, BUILD_STEPS } from './rules';
-import { bloodPoolHint, conceptReport, finishReport, report, settingsReport, stepStatuses } from './progress';
+import { bloodPoolHint, conceptReport, finishReport, isFinishable, report, settingsReport, stepStatuses } from './progress';
 import { setBaseGeneration, setClan, setConceptText, setExtraFreebies } from './updates';
 
 function played(generation: number, extra: string) {
@@ -74,8 +74,8 @@ describe('finishReport', () => {
       blocked: false,
       itemsLeft: 0,
       unspentFreebies: 15,
-      reason: '',
-      refusal: '0 items left before this character can be finished.',
+      label: 'Finish character',
+      refusalMessage: '0 items left before this character can be finished.',
     });
   });
 
@@ -84,16 +84,23 @@ describe('finishReport', () => {
     expect(finishReport(build)).toMatchObject({
       blocked: true,
       itemsLeft: 1,
-      reason: 'Finish character · 1 item left',
-      refusal: '1 item left before this character can be finished.',
+      label: 'Finish character · 1 item left',
+      refusalMessage: '1 item left before this character can be finished.',
     });
   });
 
-  test('several items left read in the plural, as the outstanding list counts them', () => {
-    const build = blankBuild('abc');
-    const { itemsLeft, reason } = finishReport(build);
-    expect(itemsLeft).toBe(report(build).outstanding.length);
-    expect(reason).toBe(`Finish character · ${itemsLeft} items left`);
+  test('several items left read in the plural', () => {
+    // A new build owes a clan, both rank sets, three allotments and the Blood Pool.
+    expect(finishReport(blankBuild('abc'))).toMatchObject({
+      blocked: true,
+      itemsLeft: 7,
+      label: 'Finish character · 7 items left',
+    });
+  });
+
+  test('a build is finishable exactly when nothing is outstanding', () => {
+    expect(isFinishable(completeBuild('Brujah'))).toBe(true);
+    expect(isFinishable({ ...completeBuild('Brujah'), bloodPool: null })).toBe(false);
   });
 
   test('report carries it', () => {
@@ -114,7 +121,7 @@ describe('conceptReport', () => {
 });
 
 describe('stepStatuses', () => {
-  test('says a word for exactly the builder steps', () => {
+  test('has a status entry for exactly the builder steps', () => {
     expect(Object.keys(stepStatuses(blankBuild('abc')))).toEqual(BUILD_STEPS.map((entry) => entry.step));
   });
 

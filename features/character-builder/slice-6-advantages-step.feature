@@ -100,7 +100,7 @@ Feature: Advantages step
   Scenario: Generation dots improve the effective generation
     Given a build with base generation "11th"
     When they raise the Generation background to 2
-    Then they are told, beside Generation, that the effective generation is now 9th with a blood pool maximum of 14
+    Then they are told, beside Generation, that the effective generation is now 9th with a Blood Pool maximum of 14
     And the Creation settings show the effective generation "9th" beside the base generation "11th"
     And the blood points per turn are 2
 

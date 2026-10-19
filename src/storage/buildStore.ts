@@ -67,6 +67,34 @@ function upgradedLegacyRecord(raw: Fields & { concept: Fields }): Fields {
   };
 }
 
+function hasValidIdentity(build: V20Build, id: string): boolean {
+  return build.id === id && build.system === 'v20' && build.kind === 'build' && build.schemaVersion === 1;
+}
+
+function hasValidSettings(build: V20Build): boolean {
+  return (
+    GENERATION_TABLE.some((row) => row.generation === build.settings.baseGeneration) &&
+    isWholeInRange(build.settings.extraFreebies, EXTRA_FREEBIES_RANGE.min, EXTRA_FREEBIES_RANGE.max)
+  );
+}
+
+/** The choices the player makes: sample concept, clan and ranks. */
+function hasValidChoices(build: V20Build): boolean {
+  return (
+    (build.concept.conceptKind === '' || isConceptKind(build.concept.conceptKind)) &&
+    (build.clan === '' || isClanName(build.clan)) &&
+    Object.values(build.ranks).every((rank) => rank === '' || (RANKS as readonly string[]).includes(rank))
+  );
+}
+
+/** The Blood Pool is null or a count; whether it is within the generation's maximum is the rules' to say. */
+function hasValidTraits(build: V20Build): boolean {
+  return (
+    Object.values(build.traits).every((dots) => isDotCount(dots.creation) && isDotCount(dots.freebie)) &&
+    (build.bloodPool === null || isDotCount(build.bloodPool))
+  );
+}
+
 function isV20Build(value: unknown, id: string): value is V20Build {
   if (typeof value !== 'object' || value === null) return false;
   // Neither has a fixed shape: the list is checked entry by entry, the Blood Pool is null or a count.
@@ -74,19 +102,7 @@ function isV20Build(value: unknown, id: string): value is V20Build {
   const { disciplines: _disciplines, bloodPool: _blank, ...template } = blankBuild(id);
   if (!hasShapeOf(fixed, template) || !isDisciplineList(disciplines)) return false;
   const build = value as V20Build;
-  return (
-    (build.concept.conceptKind === '' || isConceptKind(build.concept.conceptKind)) &&
-    build.id === id &&
-    build.system === 'v20' &&
-    build.kind === 'build' &&
-    build.schemaVersion === 1 &&
-    GENERATION_TABLE.some((row) => row.generation === build.settings.baseGeneration) &&
-    isWholeInRange(build.settings.extraFreebies, EXTRA_FREEBIES_RANGE.min, EXTRA_FREEBIES_RANGE.max) &&
-    (build.clan === '' || isClanName(build.clan)) &&
-    Object.values(build.ranks).every((rank) => rank === '' || (RANKS as readonly string[]).includes(rank)) &&
-    Object.values(build.traits).every((dots) => isDotCount(dots.creation) && isDotCount(dots.freebie)) &&
-    (build.bloodPool === null || isDotCount(build.bloodPool))
-  );
+  return hasValidIdentity(build, id) && hasValidSettings(build) && hasValidChoices(build) && hasValidTraits(build);
 }
 
 /**

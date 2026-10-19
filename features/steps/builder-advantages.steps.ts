@@ -177,7 +177,7 @@ Then('the choices are exactly', async ({ page }, table: import('playwright-bdd')
 });
 
 Then(
-  /^they are told, beside Generation, that the effective generation is now (\d+th) with a blood pool maximum of (\d+)$/,
+  /^they are told, beside Generation, that the effective generation is now (\d+th) with a Blood Pool maximum of (\d+)$/,
   async ({ page }, generation: string, pool: string) => {
     await expect((await groupBox(page, 'Backgrounds')).locator('[data-notice]')).toHaveText(
       `The effective generation is now ${generation}, with a Blood Pool maximum of ${pool}.`,

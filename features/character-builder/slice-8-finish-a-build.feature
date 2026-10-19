@@ -51,6 +51,17 @@ Feature: Finishing a build
     Then nothing is outstanding
     And the build can be finished
 
+  Scenario: Trying to finish gives back the field an earlier refusal left
+    Given a complete build with no Blood Pool recorded
+    And an entry of "99" has been refused for the Blood Pool
+    When they try to finish the build
+    Then the Blood Pool field shows its stored value, not marked invalid
+
+  Scenario: Every try at a blocked Finish says why
+    Given a complete build with no Blood Pool recorded
+    When they try to finish the build twice
+    Then the reason "1 item left before this character can be finished." has been announced twice
+
   Scenario: Every step offers a way to review and finish
     Given a player on the "Attributes" step of a new build
     When they use "Review and finish"

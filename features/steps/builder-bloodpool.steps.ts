@@ -30,6 +30,7 @@ import {
   unrecordedBloodPool,
 } from './support/bloodpool';
 import { violationsOnPage } from './support/accessibility';
+import { escaped } from './support/text';
 import { SHEET_ADDRESS } from './support/pages';
 import { bloodTotal } from './support/sheet';
 import { currentStored, storedRecords } from './support/storage';
@@ -155,7 +156,7 @@ Then('the Blood Pool is no longer tagged {string}', async ({ page }, tag: string
 
 Then('the hint reads {string}', async ({ page }, hint: string) => {
   await expect(page.getByText(hint, { exact: true })).toBeVisible();
-  await expect(bloodPoolField(page)).toHaveAccessibleDescription(new RegExp(hint));
+  await expect(bloodPoolField(page)).toHaveAccessibleDescription(new RegExp(escaped(hint)));
 });
 
 Then('after reloading the builder it still reads {int}', async ({ page }, value: number) => {
@@ -209,7 +210,7 @@ Then(
   async ({ page }) => {
     await expect(outstandingItems(page)).toHaveCount(0);
     await expect(finishButton(page)).toHaveAttribute('aria-disabled', 'false');
-    await expect(page.locator('[data-finish-reason]')).toHaveText('');
+    await expect(finishButton(page)).toHaveText('Finish character');
   },
 );
 

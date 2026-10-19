@@ -52,6 +52,10 @@ describe('toCharacter', () => {
     expect(rating(build, 'humanity')).toBe(7);
   });
 
+  test('a recorded Blood Pool of 0 reaches the sheet as 0', () => {
+    expect(toCharacter(play(completeBuild('Brujah'), bloodPool(0))).bloodPool.current).toBe(0);
+  });
+
   test('a build with no recorded Blood Pool has no character', () => {
     expect(() => toCharacter({ ...completeBuild('Brujah'), bloodPool: null })).toThrow('no recorded Blood Pool');
   });

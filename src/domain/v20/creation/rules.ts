@@ -99,6 +99,8 @@ export const CONCEPT_KINDS = [
   'Worker',
 ] as const;
 
+export type ConceptKind = (typeof CONCEPT_KINDS)[number];
+
 /** The builder's steps in order, with the title each is shown under. The creation settings are a dialog, not a step. */
 export const BUILD_STEPS = [
   { step: 'concept', title: 'Concept' },

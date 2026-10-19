@@ -15,6 +15,7 @@ import {
   VIRTUE_ALLOTMENT,
   type BuildStep,
   type ClanName,
+  type ConceptKind,
   type TraitKind,
 } from './rules';
 
@@ -71,7 +72,7 @@ export function findDiscipline(build: V20Build, name: string): DisciplineEntry |
 export const isClanName = (name: string): name is ClanName => (CLAN_NAMES as readonly string[]).includes(name);
 
 /** Whether `name` is one of the sample concepts the builder offers. */
-export const isConceptKind = (name: string): boolean => (CONCEPT_KINDS as readonly string[]).includes(name);
+export const isConceptKind = (name: string): name is ConceptKind => (CONCEPT_KINDS as readonly string[]).includes(name);
 
 export const isCaitiff = (build: V20Build): boolean => build.clan === 'Caitiff';
 

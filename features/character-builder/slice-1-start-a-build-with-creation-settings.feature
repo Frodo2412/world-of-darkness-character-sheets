@@ -61,7 +61,7 @@ Feature: Starting a build with creation settings
 
   Scenario: A later refusal in the dialog gives back the field an earlier refusal left
     Given a build at 6th generation with 2 dots of the Generation Background
-    And the Creation settings dialog is open
+    And extra freebie points read 20 and the Creation settings dialog is open
     When I enter "lots" as extra freebie points
     And I choose 4th generation
     Then I am told to lower the Generation Background first

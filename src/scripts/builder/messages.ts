@@ -69,10 +69,13 @@ function stepLink(step: BuildStep): HTMLAnchorElement {
   return link;
 }
 
-function write(slot: HTMLElement, text: string, step?: BuildStep): void {
+function write(slot: HTMLElement, text: string, step?: BuildStep, sayAgain = false): void {
   const key = `${text}|${step ?? ''}`;
   // An identical message already shown is left alone, so it is not announced again.
-  if (slot.dataset.message === key) return;
+  if (slot.dataset.message === key) {
+    if (!sayAgain) return;
+    slot.replaceChildren();
+  }
   slot.dataset.message = key;
   slot.replaceChildren(text, ...(step ? [' ', stepLink(step)] : []));
 }
@@ -81,7 +84,7 @@ function write(slot: HTMLElement, text: string, step?: BuildStep): void {
  * Takes the invalid mark off the typed entries a cleared region explained, so the redraw gives them
  * back the stored value rather than leaving a refused entry with nothing said about it.
  */
-function release(root: HTMLElement, slot: HTMLElement): void {
+function clearInvalidMarks(root: HTMLElement, slot: HTMLElement): void {
   if (!slot.id) return;
   for (const control of root.querySelectorAll(`[aria-invalid][aria-describedby~="${slot.id}"]`)) {
     control.removeAttribute('aria-invalid');
@@ -95,16 +98,23 @@ function clear(slot: HTMLElement): void {
 }
 
 /** Channel 2: one refusal at a time, beside the control that was refused. */
-export function showRefusal(root: HTMLElement, control: HTMLElement, reason: string, step?: BuildStep): void {
+export function showRefusal(
+  root: HTMLElement,
+  control: HTMLElement,
+  reason: string,
+  step?: BuildStep,
+  /** Say it again even if it is already shown, as when the player tries the same blocked action twice. */
+  sayAgain = false,
+): void {
   const slot = noticeSlotFor(control);
   for (const other of root.querySelectorAll<HTMLElement>('[data-notice]')) {
     if (other === slot) continue;
     clear(other);
-    release(root, other);
+    clearInvalidMarks(root, other);
   }
   // Only a typed entry can hold a value the build does not; it stays visible, marked invalid.
   if (control instanceof HTMLInputElement) control.setAttribute('aria-invalid', 'true');
-  if (slot) write(slot, reason, step);
+  if (slot) write(slot, reason, step, sayAgain);
 }
 
 /** Channel 2: what an applied change also did, beside the control that made it. */

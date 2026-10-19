@@ -4,6 +4,7 @@ import type { Step } from '../../../src/domain/v20/creation/testing/play';
 import { setBloodPool } from '../../../src/domain/v20/creation/updates';
 import { announcements } from './announcements';
 import { openStep } from './builder';
+import { escaped } from './text';
 
 export const bloodPoolField = (page: Page): Locator =>
   page.getByRole('textbox', { name: 'Starting Blood Pool', exact: true });
@@ -57,7 +58,7 @@ export function preChangeRecord(build: V20Build, bloodPool: number): Record<stri
 
 export async function expectRefused(page: Page, message: string): Promise<void> {
   await expect(bloodPoolField(page)).toHaveAttribute('aria-invalid', 'true');
-  await expect(bloodPoolField(page)).toHaveAccessibleDescription(new RegExp(message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  await expect(bloodPoolField(page)).toHaveAccessibleDescription(new RegExp(escaped(message)));
   await expect(bloodPoolMessage(page)).toHaveText(message);
   expect(await announcements(page)).toContain(message);
 }

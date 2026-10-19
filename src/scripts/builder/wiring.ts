@@ -7,6 +7,7 @@ import type { BuildTraitRef, ConceptField, V20Build } from '../../domain/v20/cre
 import { BUILD_STEPS, type BuildReport } from '../../domain/v20/creation/progress';
 import type { UpdateResult } from '../../domain/v20/creation/result';
 import { ordinal } from '../../domain/v20/creation/limits';
+import { plural } from '../../domain/v20/creation/wording';
 import {
   addDiscipline,
   clanChangeEffects,
@@ -36,16 +37,16 @@ export interface Wiring {
 }
 
 /** The fields whose entry is judged when it is finished: the settings and the starting Blood Pool. */
-type Entry = 'baseGeneration' | 'extraFreebies' | 'bloodPool';
+type EntryField = 'baseGeneration' | 'extraFreebies' | 'bloodPool';
 
-const ENTRY_UPDATES: Record<Entry, (build: V20Build, entry: string) => UpdateResult> = {
-  baseGeneration: (build, entry) => setBaseGeneration(build, Number(entry)),
+const ENTRY_UPDATES: Record<EntryField, (build: V20Build, text: string) => UpdateResult> = {
+  baseGeneration: (build, text) => setBaseGeneration(build, Number(text)),
   extraFreebies: setExtraFreebies,
   bloodPool: setBloodPool,
 };
 
 /** What an entry's field shows for the build as it is; an unrecorded Blood Pool is an empty field. */
-const ENTRY_TEXT: Record<Entry, (report: BuildReport) => string> = {
+const ENTRY_TEXT: Record<EntryField, (report: BuildReport) => string> = {
   baseGeneration: (report) => String(report.settings.baseGeneration),
   extraFreebies: (report) => String(report.settings.extraFreebies),
   bloodPool: (report) => (report.bloodPool === null ? '' : String(report.bloodPool)),
@@ -116,7 +117,7 @@ export function wireControls(root: HTMLElement, wiring: Wiring): void {
   // Typed numbers are judged on `change` (leaving the field or Enter), never per keystroke.
   for (const control of root.querySelectorAll<EntryControl>('[data-entry]')) {
     control.addEventListener('change', () => {
-      const update = ENTRY_UPDATES[control.dataset.entry as Entry];
+      const update = ENTRY_UPDATES[control.dataset.entry as EntryField];
       commit((build) => update(build, control.value), control);
     });
   }
@@ -262,8 +263,8 @@ function renderOutstanding(root: HTMLElement, report: BuildReport): void {
 function renderFinishGate(root: HTMLElement, { finish }: BuildReport): void {
   for (const button of root.querySelectorAll<HTMLButtonElement>('[data-finish]')) {
     button.setAttribute('aria-disabled', String(finish.blocked));
+    showReadout(button, finish.label);
   }
-  for (const reason of root.querySelectorAll<HTMLElement>('[data-finish-reason]')) showReadout(reason, finish.reason);
 }
 
 function renderFreebies(root: HTMLElement, report: BuildReport): void {
@@ -272,7 +273,7 @@ function renderFreebies(root: HTMLElement, report: BuildReport): void {
   }
   for (const count of root.querySelectorAll<HTMLElement>('[data-freebie-dots]')) {
     const { dots } = report.freebies.sections[count.dataset.freebieDots as keyof BuildReport['freebies']['sections']];
-    showReadout(count, `${dots} ${dots === 1 ? 'dot' : 'dots'} bought`);
+    showReadout(count, `${plural(dots, 'dot')} bought`);
   }
 }
 
@@ -318,7 +319,7 @@ export function renderControls(root: HTMLElement, report: BuildReport): void {
   for (const control of root.querySelectorAll<EntryControl>('[data-entry]')) {
     // A refused entry stays as typed until it is corrected or another change applies.
     if (control.getAttribute('aria-invalid') === 'true') continue;
-    const value = ENTRY_TEXT[control.dataset.entry as Entry](report);
+    const value = ENTRY_TEXT[control.dataset.entry as EntryField](report);
     if (control.value !== value) control.value = value;
   }
   for (const readout of root.querySelectorAll<HTMLElement>('[data-readout]')) {

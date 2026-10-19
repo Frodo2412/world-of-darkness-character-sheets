@@ -2,7 +2,7 @@
 // then remove the build. Never overwrites a character, and never removes a
 // build whose character could not be saved.
 
-import { outstanding } from '../domain/v20/creation/progress';
+import { isFinishable } from '../domain/v20/creation/progress';
 import { toCharacter } from '../domain/v20/creation/toCharacter';
 import type { V20Build } from '../domain/v20/creation/build';
 import type { BuildStore } from './buildStore';
@@ -23,7 +23,7 @@ export type FinishResult =
   | 'build-missing';
 
 export function finishBuild(builds: BuildStore, characters: CharacterStore, build: V20Build): FinishResult {
-  if (outstanding(build).length > 0) return 'not-finishable';
+  if (!isFinishable(build)) return 'not-finishable';
   if (characters.load(build.id).status !== 'not-found') {
     builds.delete(build.id);
     return 'already-finished';

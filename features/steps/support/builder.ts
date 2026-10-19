@@ -96,13 +96,15 @@ export function buildWith(values: BuildValues = {}): V20Build {
 /** Opens the Finishing touches step and activates Finish. */
 export async function activateFinish(page: Page): Promise<void> {
   await openStep(page, 'Finishing touches');
-  await page.getByRole('button', { name: 'Finish', exact: true }).click();
+  // Force: a blocked Finish is only aria-disabled, which Playwright would otherwise wait out.
+  await finishButton(page).click({ force: true });
 }
 
 export const finishDialog = (page: Page): Locator =>
   page.getByRole('dialog', { name: 'Finish with unspent freebie points?' });
 
-export const finishButton = (page: Page): Locator => page.getByRole('button', { name: 'Finish', exact: true });
+/** The Finish control, whether its label says what is left or not. */
+export const finishButton = (page: Page): Locator => page.getByRole('button', { name: /^Finish character/ });
 
 export const outstandingItems = (page: Page): Locator => page.locator('[data-outstanding-list] li');
 
@@ -117,14 +119,15 @@ export async function finishOpenBuild(page: Page, accept = true): Promise<void> 
 /** Finish while something is outstanding: reachable by keyboard, and explaining itself in text. */
 export async function expectFinishExplains(page: Page, reason: string): Promise<void> {
   await openStep(page, 'Finishing touches');
-  const finish = finishButton(page);
+  const finish = page.getByRole('button', { name: reason, exact: true });
   await expect(finish).toHaveAttribute('aria-disabled', 'true');
   // aria-disabled, not the disabled attribute, so keyboard users can still reach it.
   expect(await finish.evaluate((button: HTMLButtonElement) => button.disabled)).toBe(false);
   await finish.focus();
   await expect(finish).toBeFocused();
-  await expect(page.getByText(reason, { exact: true })).toBeVisible();
-  await expect(finish).toHaveAccessibleDescription(new RegExp(reason));
+  // The label says it once; no second copy of the text is there for a screen reader to read twice.
+  await expect(page.getByText(reason, { exact: true })).toHaveCount(1);
+  await expect(finish).toBeVisible();
 }
 
 /** Activates Finish from the keyboard while it is unavailable and checks that only the reason is said. */

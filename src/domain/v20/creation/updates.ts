@@ -81,6 +81,10 @@ function withSettings(build: V20Build, change: Partial<BuildSettings>): V20Build
   return { ...build, settings: { ...build.settings, ...change } };
 }
 
+function withConcept(build: V20Build, change: Partial<V20Build['concept']>): V20Build {
+  return { ...build, concept: { ...build.concept, ...change } };
+}
+
 export function setBaseGeneration(build: V20Build, generation: number): UpdateResult {
   if (!GENERATION_TABLE.some((row) => row.generation === generation)) {
     return refuse(
@@ -118,7 +122,7 @@ export function setBloodPool(build: V20Build, text: string): UpdateResult {
 
 /** Any text is kept as entered, including none. */
 export function setConceptText(build: V20Build, field: ConceptField, text: string): UpdateResult {
-  return commit(build, { ...build, concept: { ...build.concept, [field]: text } }, []);
+  return commit(build, withConcept(build, { [field]: text }), []);
 }
 
 /** A sample concept by name, or '' for none. */
@@ -126,12 +130,12 @@ export function setConceptKind(build: V20Build, kind: string): UpdateResult {
   if (kind !== '' && !isConceptKind(kind)) {
     return refuse(build, `${kind} is not one of the sample concepts the builder offers.`);
   }
-  return commit(build, { ...build, concept: { ...build.concept, conceptKind: kind } }, []);
+  return commit(build, withConcept(build, { conceptKind: kind }), []);
 }
 
 /** Any text is kept as entered, including none. */
 export function setDrive(build: V20Build, text: string): UpdateResult {
-  return commit(build, { ...build, concept: { ...build.concept, drive: text } }, []);
+  return commit(build, withConcept(build, { drive: text }), []);
 }
 
 interface ClanChange {

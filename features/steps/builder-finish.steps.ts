@@ -11,6 +11,8 @@ import {
 } from '../../src/domain/v20/creation/testing/play';
 import type { ConceptField } from '../../src/domain/v20/creation/build';
 import { createCharacterStore } from '../../src/storage/characterStore';
+import { announcements } from './support/announcements';
+import { bloodPoolField, bloodPoolMessage, recordBloodPool, unrecordedBloodPool } from './support/bloodpool';
 import { buyDots, leaveFreebies } from './builder-seeding.steps';
 import { Given, Then, When } from './fixtures';
 import {
@@ -181,6 +183,15 @@ Given('the player has since renamed the character {string} on the sheet', async 
   await sheetField(page, 'Name').fill(name);
 });
 
+Given('a complete build with no Blood Pool recorded', async ({ page, memory }) => {
+  await rememberAndOpen(page, memory, unrecordedBloodPool);
+});
+
+Given('an entry of {string} has been refused for the Blood Pool', async ({ page }, entry: string) => {
+  await recordBloodPool(page, entry);
+  await expect(bloodPoolField(page)).toHaveAttribute('aria-invalid', 'true');
+});
+
 // When
 
 When('they follow the outstanding item', async ({ page }) => {
@@ -202,6 +213,12 @@ When('they finish the build', async ({ page }) => {
 });
 
 When('they try to finish the build', async ({ page }) => {
+  await activateFinish(page);
+});
+
+When('they try to finish the build twice', async ({ page }) => {
+  await activateFinish(page);
+  await expect(page.locator('[data-finish-notice]')).not.toBeEmpty();
   await activateFinish(page);
 });
 
@@ -261,6 +278,16 @@ Then(/^the outstanding list shows only "([^"]+)" for the (\w+) step$/, async ({ 
 
 Then('the outstanding list shows an item naming Strength for the Attributes step', async ({ page }) => {
   await expect(outstandingItems(page).filter({ hasText: 'Strength' }).filter({ hasText: '(Attributes)' })).not.toHaveCount(0);
+});
+
+Then('the Blood Pool field shows its stored value, not marked invalid', async ({ page }) => {
+  await expect(bloodPoolField(page)).toHaveValue('');
+  await expect(bloodPoolField(page)).not.toHaveAttribute('aria-invalid', 'true');
+  await expect(bloodPoolMessage(page)).toHaveText('');
+});
+
+Then('the reason {string} has been announced twice', async ({ page }, message: string) => {
+  expect((await announcements(page)).filter((said) => said === message)).toHaveLength(2);
 });
 
 Then('the build cannot be finished', async ({ page }) => {

@@ -15,6 +15,7 @@ import {
   BUILD_VIRTUES,
   RANKED_ALLOTMENTS,
   type BackgroundName,
+  type ConceptKind,
   type Rank,
 } from './rules';
 
@@ -86,7 +87,7 @@ export interface V20Build {
    * The sheet's free-text header fields, plus the sample concept the player
    * started from ('' for none) and what drives the character.
    */
-  concept: Record<ConceptField, string> & { conceptKind: string; drive: string };
+  concept: Record<ConceptField, string> & { conceptKind: ConceptKind | ''; drive: string };
   /** A clan name, or '' until one is chosen. */
   clan: string;
   /** Each ranked group's rank, or '' until it has one. */

@@ -15,6 +15,7 @@ import {
   creationSettingsButton,
   enterExtraFreebies,
   extraFreebies,
+  finishButton,
   finishDialog,
   freebieBar,
   groupNotice,
@@ -320,7 +321,7 @@ const KEYBOARD: Record<string, (page: Page, stops: { control: string; visible: b
 When(/^using only the keyboard they ((?!focus \w+ and press)(?!move the clan choice).+)$/, async ({ page, memory }, action: string) => {
   if (action === 'activate Finish and press Escape') {
     await keyboardOpen(page, 'Finishing touches', memory.focusStops);
-    await tabTo(page, page.getByRole('button', { name: 'Finish', exact: true }), memory.focusStops);
+    await tabTo(page, finishButton(page), memory.focusStops);
     await page.keyboard.press('Enter');
     await expect(finishDialog(page)).toBeVisible();
     await page.keyboard.press('Escape');
