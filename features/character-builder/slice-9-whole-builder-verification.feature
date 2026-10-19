@@ -65,7 +65,7 @@ Feature: The builder as a whole
       | rank Talents primary and raise Brawl to 2            | Brawl is rated 2                         |
       | add the Discipline "Protean" and raise it to 1       | Protean is rated 1                       |
       | buy one dot of Willpower with freebie points         | there are 14 freebie points remaining    |
-      | move from Settings to Advantages with the navigation | the "Advantages" step is shown           |
+      | move from Concept to Advantages with the navigation  | the "Advantages" step is shown           |
 
   Scenario: The finish confirmation works from the keyboard
     Given a complete build with 4 freebie points remaining

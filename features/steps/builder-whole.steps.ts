@@ -10,7 +10,11 @@ import {
   activateFinish,
   builderAddress,
   buildWith,
+  baseGeneration,
+  closeCreationSettings,
+  creationSettingsButton,
   enterExtraFreebies,
+  extraFreebies,
   finishDialog,
   freebieBar,
   groupNotice,
@@ -24,6 +28,7 @@ import {
   requestRating,
   saveBuilds,
   setBaseGeneration,
+  settingsDialog,
   shownStep,
   startBuild,
   stepNav,
@@ -36,7 +41,7 @@ import { seedSteps } from './builder-seeding.steps';
 
 /** Spends what is left: Willpower first, then one point at a time on Backgrounds. */
 async function spendEverything(page: Page): Promise<void> {
-  const left = async () => Number(/^(\d+)/.exec((await (await freebieBar(page)).textContent()) ?? '0')![1]);
+  const left = async () => Number(/^(\d+)/.exec((await freebieBar(page).textContent()) ?? '0')![1]);
   await openStep(page, 'Finishing touches');
   const willpower = await traitRating(page, 'Willpower');
   const current = Number(await willpower.getAttribute('aria-valuenow'));
@@ -49,7 +54,7 @@ async function spendEverything(page: Page): Promise<void> {
     const value = Number(await control.getAttribute('aria-valuenow'));
     await rateTrait(page, name, Math.min(5, value + remaining));
   }
-  await expect(await freebieBar(page)).toHaveText('0 freebie points remaining');
+  await expect(freebieBar(page)).toHaveText('0 freebie points remaining');
 }
 
 async function placeAttributes(page: Page): Promise<void> {
@@ -80,6 +85,7 @@ async function chooseClan(page: Page, clan: string): Promise<void> {
 When('they set the base generation to {string} and the extra freebie points to {int}', async ({ page }, label: string, points: number) => {
   await setBaseGeneration(page, label);
   await enterExtraFreebies(page, String(points));
+  await closeCreationSettings(page);
 });
 
 When('they enter the name {string} and choose the clan {string}', async ({ page }, name: string, clan: string) => {
@@ -106,7 +112,7 @@ When(
 );
 
 When('they spend all 20 freebie points \\(none on Generation)', async ({ page }) => {
-  await expect(await freebieBar(page)).toHaveText('20 freebie points remaining');
+  await expect(freebieBar(page)).toHaveText('20 freebie points remaining');
   await spendEverything(page);
 });
 
@@ -154,7 +160,7 @@ Then('the ranks, the clan and the freebie points remaining are as they left them
   await expect(await rankSelect(page, 'Mental')).toHaveValue('tertiary');
   await openStep(page, 'Concept');
   await expect(page.locator('#builder').getByRole('combobox', { name: 'Clan' }).locator('option:checked')).toHaveText('Gangrel');
-  await expect(await freebieBar(page)).toHaveText('14 freebie points remaining');
+  await expect(freebieBar(page)).toHaveText('14 freebie points remaining');
 });
 
 // States
@@ -168,7 +174,7 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
   'a rejected number entry': async (page) => {
     await openPlayed(page);
     await enterExtraFreebies(page, '1000');
-    await expect(page.getByRole('textbox', { name: 'Extra freebie points' })).toHaveAttribute('aria-invalid', 'true');
+    await expect(extraFreebies(page)).toHaveAttribute('aria-invalid', 'true');
   },
   'the not-saved message': async (page) => {
     await openPlayed(page);
@@ -266,7 +272,10 @@ async function keyboardOpen(page: Page, step: string, stops: { control: string; 
 
 const KEYBOARD: Record<string, (page: Page, stops: { control: string; visible: boolean }[]) => Promise<void>> = {
   'set the base generation to "10th"': async (page, stops) => {
-    await tabTo(page, page.getByRole('combobox', { name: 'Base generation' }), stops);
+    await tabTo(page, creationSettingsButton(page), stops);
+    await page.keyboard.press('Enter');
+    await expect(settingsDialog(page)).toBeVisible();
+    await tabTo(page, baseGeneration(page), stops);
     await page.keyboard.type('10');
   },
   'choose the clan "Brujah"': async (page, stops) => {
@@ -303,7 +312,7 @@ const KEYBOARD: Record<string, (page: Page, stops: { control: string; visible: b
     await tabTo(page, shownStep(page).getByRole('slider', { name: 'Willpower', exact: true }), stops);
     await page.keyboard.press('ArrowRight');
   },
-  'move from Settings to Advantages with the navigation': async (page, stops) => {
+  'move from Concept to Advantages with the navigation': async (page, stops) => {
     await keyboardOpen(page, 'Advantages', stops);
   },
 };

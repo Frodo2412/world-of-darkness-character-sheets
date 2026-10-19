@@ -316,7 +316,7 @@ html {
 	font-weight: 600;
 }
 
-.builder[data-freebie-bar-shown] {
+.builder {
 	--sticky-top: 2.6rem;
 }
 

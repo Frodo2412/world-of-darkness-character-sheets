@@ -99,9 +99,8 @@ export const CONCEPT_KINDS = [
   'Worker',
 ] as const;
 
-/** The builder's steps in order, with the title each is shown under. */
+/** The builder's steps in order, with the title each is shown under. The creation settings are a dialog, not a step. */
 export const BUILD_STEPS = [
-  { step: 'settings', title: 'Settings' },
   { step: 'concept', title: 'Concept' },
   { step: 'attributes', title: 'Attributes' },
   { step: 'abilities', title: 'Abilities' },

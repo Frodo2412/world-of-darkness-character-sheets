@@ -101,7 +101,7 @@ Feature: Advantages step
     Given a build with base generation "11th"
     When they raise the Generation background to 2
     Then they are told, beside Generation, that the effective generation is now 9th with a blood pool maximum of 14
-    And the settings step shows the effective generation "9th" beside the base generation "11th"
+    And the Creation settings show the effective generation "9th" beside the base generation "11th"
     And the blood points per turn are 2
 
   Scenario: Generation dots raise what other traits may reach
@@ -162,6 +162,8 @@ Feature: Advantages step
     When they try to set the base generation to "8th"
     Then they are told to lower Strength to 5 first, with a link to the Attributes step
     And the base generation is "7th"
+    When they follow the link to the Attributes step
+    Then the dialog is closed and the "Attributes" step is shown with keyboard focus on its heading
 
   Scenario: Choosing a more potent base generation is refused when Generation dots would pass 4th
     Given a build with base generation "6th" and the Generation background rated 2

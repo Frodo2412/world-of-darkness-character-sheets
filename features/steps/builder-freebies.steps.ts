@@ -25,7 +25,7 @@ async function onFinishing(page: Page): Promise<void> {
 }
 
 async function rememberFreebies(page: Page, memory: { entered: Map<string, string> }): Promise<void> {
-  memory.entered.set('freebies', (await (await freebieBar(page)).textContent()) ?? '');
+  memory.entered.set('freebies', (await freebieBar(page).textContent()) ?? '');
 }
 
 /** Buys one dot of a trait on Finishing touches; a Discipline not shown yet is bought by name. */
@@ -155,13 +155,13 @@ When('they buy a sixth with freebie points', async ({ page, memory }) => {
 // Then
 
 Then(/^(?:the step shows|there are) (\d+) freebie points? remaining$/, async ({ page }, points: string) => {
-  const bar = await freebieBar(page);
+  const bar = freebieBar(page);
   await expect(bar).toBeVisible();
   await expect(bar).toHaveText(`${points} freebie ${Number(points) === 1 ? 'point' : 'points'} remaining`);
 });
 
 Then(/^the freebie points remaining are unchanged(?: by the refusal)?$/, async ({ page, memory }) => {
-  await expect(await freebieBar(page)).toHaveText(memory.entered.get('freebies')!);
+  await expect(freebieBar(page)).toHaveText(memory.entered.get('freebies')!);
 });
 
 Then(

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
 import { completeBuild, creation, generation, play } from './testing/play';
-import { BACKGROUNDS } from './rules';
+import { BACKGROUNDS, BUILD_STEPS } from './rules';
 import { bloodPoolHint, conceptReport, finishReport, report, settingsReport, stepStatuses } from './progress';
 import { setBaseGeneration, setClan, setConceptText, setExtraFreebies } from './updates';
 
@@ -114,6 +114,10 @@ describe('conceptReport', () => {
 });
 
 describe('stepStatuses', () => {
+  test('says a word for exactly the builder steps', () => {
+    expect(Object.keys(stepStatuses(blankBuild('abc')))).toEqual(BUILD_STEPS.map((entry) => entry.step));
+  });
+
   test('the concept step needs a clan until one is chosen', () => {
     const build = blankBuild('abc');
     expect(stepStatuses(build).concept).toBe('clan needed');

@@ -57,18 +57,18 @@ Feature: Concept step and step navigation
 
     Examples:
       | from              | to                |
-      | Settings          | Finishing touches |
+      | Attributes        | Finishing touches |
       | Finishing touches | Concept           |
       | Concept           | Advantages        |
       | Advantages        | Attributes        |
-      | Attributes        | Abilities         |
-      | Abilities         | Settings          |
+      | Concept           | Abilities         |
+      | Abilities         | Concept           |
 
   Scenario: Next and Previous walk the steps in order
-    Given a player on the "Settings" step of a new build
+    Given a player on the "Concept" step of a new build
     When they use Next
-    Then the "Concept" step is shown
-    And using Previous shows the "Settings" step
+    Then the "Attributes" step is shown
+    And using Previous shows the "Concept" step
 
   Scenario: The step navigation says what a step still needs
     Given a player who has started building a character
@@ -80,10 +80,10 @@ Feature: Concept step and step navigation
     When they reload the builder
     Then the "Concept" step is shown
 
-  Scenario: An unknown step address shows the settings step
+  Scenario: An unknown step address shows the concept step
     Given a player who has started building a character
     When they open the builder with a step address that does not exist
-    Then the "Settings" step is shown
+    Then the "Concept" step is shown
 
   Scenario: The page title names the step and the build
     Given a build named "Lucita"

@@ -39,5 +39,9 @@ const views = {
 
 /** Shows one view and hides the others; `none` leaves only the save status visible. */
 export function showView(view: keyof typeof views | 'none'): void {
+  // A modal dialog left open would keep the page that replaces the builder out of reach.
+  if (view !== 'builder') {
+    for (const dialog of views.builder.querySelectorAll('dialog[open]')) (dialog as HTMLDialogElement).close();
+  }
   for (const [name, element] of Object.entries(views)) element.hidden = name !== view;
 }

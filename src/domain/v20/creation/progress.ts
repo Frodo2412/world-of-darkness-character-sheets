@@ -287,7 +287,6 @@ export function stepStatuses(build: V20Build): Record<BuildStep, string> {
     return '';
   };
   return {
-    settings: '',
     concept: build.clan === '' ? 'clan needed' : '',
     attributes: statusOf('attributes'),
     abilities: statusOf('abilities'),

@@ -27,28 +27,6 @@ export async function startBuild(page: Page): Promise<void> {
   await watchAnnouncements(page);
 }
 
-export const baseGeneration = (page: Page): Locator =>
-  page.getByRole('combobox', { name: 'Base generation', exact: true });
-
-export const extraFreebies = (page: Page): Locator =>
-  page.getByRole('textbox', { name: 'Extra freebie points', exact: true });
-
-/** A read-only value the builder shows, such as "Freebie budget". */
-export const readout = (page: Page, name: string): Locator =>
-  page.getByRole('status', { name, exact: true });
-
-/** Enters text the way a player finishes an entry: typed, then the field is left. */
-export async function enterExtraFreebies(page: Page, text: string): Promise<void> {
-  await openStep(page, 'Settings');
-  const field = extraFreebies(page);
-  await field.fill(text);
-  await field.blur();
-}
-
-export async function setBaseGeneration(page: Page, label: string): Promise<void> {
-  await baseGeneration(page).selectOption({ label });
-}
-
 // The Creation settings dialog
 
 export const creationSettingsButton = (page: Page): Locator =>
@@ -56,14 +34,14 @@ export const creationSettingsButton = (page: Page): Locator =>
 
 export const settingsDialog = (page: Page): Locator => page.getByRole('dialog', { name: 'Creation settings' });
 
-export const dialogBaseGeneration = (page: Page): Locator =>
+export const baseGeneration = (page: Page): Locator =>
   settingsDialog(page).getByRole('combobox', { name: 'Base generation', exact: true });
 
-export const dialogExtraFreebies = (page: Page): Locator =>
+export const extraFreebies = (page: Page): Locator =>
   settingsDialog(page).getByRole('textbox', { name: 'Extra freebie points', exact: true });
 
 /** One of the dialog's live readouts, such as "Freebie pool". */
-export const dialogReadout = (page: Page, name: string): Locator =>
+export const readout = (page: Page, name: string): Locator =>
   settingsDialog(page).getByRole('status', { name, exact: true });
 
 /** Opens Creation settings with its button, unless it is already open. */
@@ -72,11 +50,24 @@ export async function openCreationSettings(page: Page): Promise<void> {
   await expect(settingsDialog(page)).toBeVisible();
 }
 
-/** Enters text the way a player finishes an entry: typed, then the field is left. */
-export async function enterDialogExtraFreebies(page: Page, text: string): Promise<void> {
+/** Closes Creation settings with Done, if it is open: the page behind a modal dialog cannot be used. */
+export async function closeCreationSettings(page: Page): Promise<void> {
+  if (!(await settingsDialog(page).isVisible())) return;
+  await settingsDialog(page).getByRole('button', { name: 'Done', exact: true }).click();
+  await expect(settingsDialog(page)).toBeHidden();
+}
+
+/** Enters text the way a player finishes an entry: typed, then the field is left. The dialog stays open. */
+export async function enterExtraFreebies(page: Page, text: string): Promise<void> {
   await openCreationSettings(page);
-  await dialogExtraFreebies(page).fill(text);
-  await dialogExtraFreebies(page).blur();
+  await extraFreebies(page).fill(text);
+  await extraFreebies(page).blur();
+}
+
+/** Chooses a base generation. The dialog stays open, so a refusal can be read. */
+export async function setBaseGeneration(page: Page, label: string): Promise<void> {
+  await openCreationSettings(page);
+  await baseGeneration(page).selectOption({ label });
 }
 
 /** The build record as the builder last stored it. */
@@ -186,6 +177,7 @@ export const stepHeading = (page: Page, title: string): Locator =>
 
 /** Opens a step from the step navigation, unless it is already shown. */
 export async function openStep(page: Page, title: string): Promise<void> {
+  await closeCreationSettings(page);
   if (!(await stepHeading(page, title).isVisible())) {
     await stepNav(page).getByRole('link', { name: title, exact: true }).click();
   }
@@ -344,9 +336,5 @@ export async function openPlayedFrom(page: Page, start: V20Build, ...steps: Step
   return build;
 }
 
-/** The freebie points remaining bar, shown on every step after Settings. */
-export async function freebieBar(page: Page): Promise<Locator> {
-  const bar = page.locator('[data-freebie-remaining]');
-  if (!(await bar.isVisible())) await openStep(page, 'Finishing touches');
-  return bar;
-}
+/** The freebie points remaining bar, shown on every step. */
+export const freebieBar = (page: Page): Locator => page.locator('[data-freebie-remaining]');

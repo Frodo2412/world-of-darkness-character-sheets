@@ -547,6 +547,7 @@ Feature: Creation settings open in a dialog
 **TEST**: Port every old slice 1 scenario (generation offered 4th–13th, typed numbers judged on commit, rejected entry not saved, generation limits outline, house-settings budgets) into the dialog-based feature **before** deleting the step-based originals; keep the roster-facing ones; add "Settings are no longer a step"; full suites green.
 **REFACTOR**: Remove dead settings-step styles and status text.
 **Files**: `src/domain/v20/creation/rules.ts`, `src/components/builder/Settings.astro`, `src/scripts/builder/steps.ts`, `src/pages/build.astro`, `features/steps/support/builder.ts`, `features/character-builder/slice-1-start-a-build-with-creation-settings.feature`
+**Build note**: widened during `/build` — the old step-based scenarios that named Settings (step navigation, base-generation refusals, whole-builder keyboard row, freebie bar) are retargeted to the dialog in place; the freebie bar is now shown on every step (its sticky offset is unconditional); `showView` closes an open dialog so a modal cannot sit over the "build not found" view.
 **Commit**: `feat(builder): settings are a dialog, not a step`
 
 > **Merge point — PR 1 (Slices 1–2).**
@@ -2176,7 +2177,7 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
 #### Wave 2
 - [ ] Slice 2: Creation settings in a dialog
   - [x] Step 2.1: Settings dialog alongside the step
-  - [ ] Step 2.2: Remove the Settings step
+  - [x] Step 2.2: Remove the Settings step
 
 #### Wave 3
 - [ ] Slice 3: Nine screens and navigation
