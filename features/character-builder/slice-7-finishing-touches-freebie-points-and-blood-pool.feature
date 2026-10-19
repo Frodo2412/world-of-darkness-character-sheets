@@ -230,28 +230,6 @@ Feature: Finishing touches
     When they set the extra freebie points to 25
     Then there are 0 freebie points remaining
 
-  Scenario: The blood pool is entered by the player
-    Given a 13th generation build
-    When they enter 7 as the starting blood pool
-    Then the starting blood pool is 7
-
-  Scenario: The blood pool starts unrecorded
-    Given a player who has started building a character
-    When they open the finishing touches step
-    Then the starting blood pool is not recorded
-
-  Scenario Outline: The blood pool cannot leave the generation's range
-    Given a build with base generation "<generation>"
-    When they enter "<entry>" as the starting blood pool
-    Then they are told, beside the field, that the blood pool must be a whole number from 0 to <max>
-    And the starting blood pool is still not recorded
-
-    Examples:
-      | generation | entry | max |
-      | 13th       | 11    | 10  |
-      | 13th       | -1    | 10  |
-      | 8th        | 16    | 15  |
-
   Scenario: A generation change that would put the blood pool out of range is refused
     Given a build with base generation "8th" and a starting blood pool of 15
     When they try to set the base generation to "13th"

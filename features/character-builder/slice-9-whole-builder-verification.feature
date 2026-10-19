@@ -9,6 +9,7 @@ Feature: The builder as a whole
     And they rank the Ability groups and place all 27 Ability dots
     And they place 3 Discipline dots, 5 Background dots (none on Generation) and 7 Virtue dots
     And they spend all 20 freebie points (none on Generation)
+    And they record a starting Blood Pool of 10
     And they finish the build
     Then the character sheet is shown for "Lucita" of clan "Brujah" and generation "11th"
     And the roster lists one character and no builds in progress
@@ -20,6 +21,7 @@ Feature: The builder as a whole
     And they rank the Ability groups and place all 27 Ability dots
     And they rank the Attribute groups and place all 15 Attribute dots
     And they choose the clan "Ventrue" and place 3 Discipline dots
+    And they record a starting Blood Pool of 10
     And they finish the build and accept the confirmation
     Then the character sheet is shown
     And the roster lists one character and no builds in progress

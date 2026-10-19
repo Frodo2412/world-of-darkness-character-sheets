@@ -86,6 +86,33 @@
 	border-width: 2px;
 }
 
+.field-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.field-line input {
+	inline-size: 6rem;
+}
+
+.field-state {
+	color: var(--color-muted);
+}
+
+.field-tag {
+	border: 1px solid var(--color-border-control);
+	border-radius: 4px;
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	color: var(--color-text);
+}
+
+.field-tag[hidden] {
+	display: none;
+}
+
 .field-hint {
 	margin: 0;
 	color: var(--color-muted);

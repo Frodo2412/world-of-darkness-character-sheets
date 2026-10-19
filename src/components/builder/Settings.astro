@@ -13,7 +13,7 @@ const READOUTS = [
 <div class="builder-fields">
 	<div class="builder-field">
 		<label for="base-generation">Base generation</label>
-		<select id="base-generation" data-setting="baseGeneration" aria-describedby="base-generation-hint base-generation-notice">
+		<select id="base-generation" data-entry="baseGeneration" aria-describedby="base-generation-hint base-generation-notice">
 			{GENERATION_TABLE.map((row) => <option value={row.generation}>{row.generation}th</option>)}
 		</select>
 		<p id="base-generation-hint" class="field-hint">Leave at 13th unless your Storyteller says otherwise.</p>
@@ -26,7 +26,7 @@ const READOUTS = [
 			inputmode="numeric"
 			autocomplete="off"
 			id="extra-freebies"
-			data-setting="extraFreebies"
+			data-entry="extraFreebies"
 			aria-describedby="extra-freebies-hint extra-freebies-notice"
 		/>
 		<p id="extra-freebies-hint" class="field-hint">Leave at 0 unless your Storyteller grants more.</p>

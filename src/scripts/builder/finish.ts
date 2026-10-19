@@ -7,6 +7,7 @@ import type { BuildStore } from '../../storage/buildStore';
 import type { CharacterStore } from '../../storage/characterStore';
 import { finishBuild } from '../../storage/finishBuild';
 import { clearStatus, showStatus } from '../status';
+import { showRefusal } from './messages';
 import { showView } from './pageState';
 
 const sheetUrl = (id: string): string => `/sheet/?id=${encodeURIComponent(id)}`;
@@ -20,7 +21,6 @@ export function wireFinish(
   characters: CharacterStore,
 ): void {
   const button = root.querySelector<HTMLButtonElement>('[data-finish]')!;
-  const list = root.querySelector<HTMLElement>('[data-outstanding]')!;
   const notice = root.querySelector<HTMLElement>('[data-finish-notice]')!;
   const dialog = root.querySelector<HTMLDialogElement>('[data-finish-dialog]')!;
   const message = dialog.querySelector<HTMLElement>('[data-finish-dialog-message]')!;
@@ -56,8 +56,10 @@ export function wireFinish(
 
   button.addEventListener('click', () => {
     const build = current();
-    if (outstanding(build).length > 0) {
-      list.focus();
+    const left = outstanding(build).length;
+    if (left > 0) {
+      // Disabled but explained: nothing happens except the reason, said politely.
+      showRefusal(root, button, `${left} ${left === 1 ? 'item' : 'items'} left before this character can be finished.`);
       return;
     }
     const unspent = unspentFreebies(build);

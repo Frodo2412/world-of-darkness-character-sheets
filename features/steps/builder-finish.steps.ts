@@ -17,7 +17,6 @@ import {
   BUILD_KEY_PREFIX,
   BUILDER_ADDRESS,
   activateFinish,
-  recordBloodPoolIfMissing,
   buildWith,
   builderAddress,
   finishDialog,
@@ -76,7 +75,6 @@ async function change(page: Page, memory: { build?: import('../../src/domain/v20
 }
 
 async function finish(page: Page, accept: boolean): Promise<void> {
-  await recordBloodPoolIfMissing(page);
   await activateFinish(page);
   if (accept && (await finishDialog(page).isVisible())) {
     await finishDialog(page).getByRole('button', { name: /^Finish with/ }).click();
@@ -215,7 +213,6 @@ When('they try to finish the build', async ({ page }) => {
 });
 
 When('they finish the build and accept the confirmation', async ({ page }) => {
-  await recordBloodPoolIfMissing(page);
   await activateFinish(page);
   await finishDialog(page).getByRole('button', { name: /^Finish with/ }).click();
 });

@@ -15,10 +15,9 @@ import {
   traitName,
   traitRating,
 } from './support/builder';
+import { bloodPoolField } from './support/bloodpool';
 
 const KINDS: Record<string, string> = { Disciplines: 'Disciplines', Backgrounds: 'Backgrounds' };
-
-const bloodPoolField = (page: Page) => page.getByRole('textbox', { name: 'Starting blood pool', exact: true });
 
 async function onFinishing(page: Page): Promise<void> {
   await openStep(page, 'Finishing touches');
@@ -153,12 +152,6 @@ When('they buy a sixth with freebie points', async ({ page, memory }) => {
   else await buyOne(page, 'the Background Influence');
 });
 
-When(/^they enter "?(-?[\w.]+)"? as the starting blood pool$/, async ({ page }, entry: string) => {
-  await openStep(page, 'Finishing touches');
-  await bloodPoolField(page).fill(entry);
-  await bloodPoolField(page).blur();
-});
-
 // Then
 
 Then(/^(?:the step shows|there are) (\d+) freebie points? remaining$/, async ({ page }, points: string) => {
@@ -249,33 +242,6 @@ Then('the starting blood pool is {int}', async ({ page }, value: number) => {
   await openStep(page, 'Finishing touches');
   await expect(bloodPoolField(page)).toHaveValue(String(value));
 });
-
-Then('the starting blood pool is not recorded', async ({ page }) => {
-  await openStep(page, 'Finishing touches');
-  await expect(bloodPoolField(page)).toHaveValue('');
-});
-
-Then('the starting blood pool is still not recorded', async ({ page }) => {
-  await expect(bloodPoolField(page)).not.toHaveValue('');
-  await page.reload();
-  await openStep(page, 'Finishing touches');
-  await expect(bloodPoolField(page)).toHaveValue('');
-});
-
-Then('the starting blood pool is still {int}', async ({ page }, value: number) => {
-  await expect(bloodPoolField(page)).not.toHaveValue(String(value));
-  await page.reload();
-  await openStep(page, 'Finishing touches');
-  await expect(bloodPoolField(page)).toHaveValue(String(value));
-});
-
-Then(
-  /^they are told, beside the field, that the blood pool must be a whole number from 0 to (\d+)$/,
-  async ({ page }, max: string) => {
-    await expect(bloodPoolField(page)).toHaveAccessibleDescription(new RegExp(`The Blood Pool must be a whole number from 0 to ${max}\\.`));
-    await expect(bloodPoolField(page)).toHaveAttribute('aria-invalid', 'true');
-  },
-);
 
 Then(
   /^they are told (\d+) freebie points are spent, so at least (\d+) points of purchases must be removed first, with a link to Finishing touches$/,
