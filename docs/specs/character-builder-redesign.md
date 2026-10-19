@@ -132,7 +132,7 @@ phrasing.
   refused, with what to do about it; the builder stays usable (base AC-2, AC-4). A successful
   save is not announced to assistive technology; a failure is announced as an alert. **Save & exit** and **All drafts**
   go to the roster; nothing is lost either way.
-- **RD-5** The Creation settings button opens a modal dialog with base generation
+- **RD-5** **Amends base AC-5** (the settings step becomes a dialog). The Creation settings button opens a modal dialog with base generation
   (4th–13th, default 13th) and extra freebie points (0–999, default 0), live-showing the
   resulting freebie pool and, with Generation dots, the effective generation. Invalid input
   and refused changes (base AC-5, AC-9) are explained inside the dialog, naming what to
@@ -271,8 +271,9 @@ phrasing.
 - **RD-20** Rules and budgets are unchanged (base AC-6–9, 12–22, 25) and enforced in the
   creation rules, not the page. Every refusal the base spec defines still refuses, with
   its message visible on the new screens.
-- **RD-21** A build saved before this change opens, renders, and can be finished; its
-  Blood Pool appears as "Not recorded". New builds round-trip through reload (base AC-2)
+- **RD-21** A build saved before this change opens, renders, and can be finished once its
+  Blood Pool is recorded; a legacy Blood Pool of 0 appears as "Not recorded" and a legacy
+  non-zero value is kept. New builds round-trip through reload (base AC-2)
   including screen, concept kind, drive, and Blood Pool.
 - **RD-22** Existing roster behaviour (Build a character, in-progress list, continue,
   delete with confirmation) and the "New character" blank-sheet flow are unchanged.
