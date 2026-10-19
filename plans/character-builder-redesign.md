@@ -2,7 +2,7 @@
 
 **Created**: 2026-10-19
 **Branch**: `feat/character-builder-redesign` (created at `/build`)
-**Status**: approved
+**Status**: in-progress
 **Gherkin persistence**: features
 **Spec**: `docs/specs/character-builder-redesign.md` (builds on `docs/specs/character-builder.md`, "the base spec"), with the plan-review amendments listed in its "Plan-review amendments" section
 
@@ -2175,7 +2175,7 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
   - [x] Step 1.2: Finishing touches field, hint, tag and Finish gate
 
 #### Wave 2
-- [ ] Slice 2: Creation settings in a dialog
+- [x] Slice 2: Creation settings in a dialog
   - [x] Step 2.1: Settings dialog alongside the step
   - [x] Step 2.2: Remove the Settings step
 
