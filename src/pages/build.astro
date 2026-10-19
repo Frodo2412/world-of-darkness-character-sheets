@@ -6,6 +6,7 @@ import Concept from '../components/builder/Concept.astro';
 import FinishingTouches from '../components/builder/FinishingTouches.astro';
 import FreebieBar from '../components/builder/FreebieBar.astro';
 import Settings from '../components/builder/Settings.astro';
+import SettingsDialog from '../components/builder/SettingsDialog.astro';
 import StepNav from '../components/builder/StepNav.astro';
 import StepPanel from '../components/builder/StepPanel.astro';
 import StatusMessage from '../components/StatusMessage.astro';
@@ -18,7 +19,10 @@ import '../styles/builder.css';
 		<p><a href="/">Back to characters</a></p>
 		<StatusMessage />
 		<div id="builder" class="builder" hidden>
-			<h1>Build a character</h1>
+			<div class="builder-header">
+				<h1>Build a character</h1>
+				<button type="button" data-settings-open>Creation settings</button>
+			</div>
 			<StepNav />
 			<FreebieBar />
 			<StepPanel step="settings"><Settings /></StepPanel>
@@ -27,6 +31,7 @@ import '../styles/builder.css';
 			<StepPanel step="abilities"><Abilities /></StepPanel>
 			<StepPanel step="advantages"><Advantages /></StepPanel>
 			<StepPanel step="finishing"><FinishingTouches /></StepPanel>
+			<SettingsDialog />
 			<dialog id="finish-dialog" aria-labelledby="finish-dialog-title" aria-describedby="finish-dialog-message" data-finish-dialog>
 				<h2 id="finish-dialog-title">Finish with unspent freebie points?</h2>
 				<p id="finish-dialog-message" data-finish-dialog-message></p>

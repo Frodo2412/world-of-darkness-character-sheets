@@ -6,7 +6,7 @@ import type { StoragePort } from '../../../src/storage/storagePort';
 import { ABILITY_GROUPS, ATTRIBUTE_GROUPS } from '../../../src/domain/v20/traits';
 import { createAction, openRoster } from './pages';
 import { ANNOUNCEMENT_WINDOW_MS, waitOnPageClock, watchAnnouncements } from './announcements';
-import { storedKeys, writeRecord } from './storage';
+import { storedKeys, storedText, writeRecord } from './storage';
 
 export const BUILD_KEY_PREFIX = 'wod-sheets:build:';
 
@@ -47,6 +47,41 @@ export async function enterExtraFreebies(page: Page, text: string): Promise<void
 
 export async function setBaseGeneration(page: Page, label: string): Promise<void> {
   await baseGeneration(page).selectOption({ label });
+}
+
+// The Creation settings dialog
+
+export const creationSettingsButton = (page: Page): Locator =>
+  page.getByRole('button', { name: 'Creation settings', exact: true });
+
+export const settingsDialog = (page: Page): Locator => page.getByRole('dialog', { name: 'Creation settings' });
+
+export const dialogBaseGeneration = (page: Page): Locator =>
+  settingsDialog(page).getByRole('combobox', { name: 'Base generation', exact: true });
+
+export const dialogExtraFreebies = (page: Page): Locator =>
+  settingsDialog(page).getByRole('textbox', { name: 'Extra freebie points', exact: true });
+
+/** One of the dialog's live readouts, such as "Freebie pool". */
+export const dialogReadout = (page: Page, name: string): Locator =>
+  settingsDialog(page).getByRole('status', { name, exact: true });
+
+/** Opens Creation settings with its button, unless it is already open. */
+export async function openCreationSettings(page: Page): Promise<void> {
+  if (!(await settingsDialog(page).isVisible())) await creationSettingsButton(page).click();
+  await expect(settingsDialog(page)).toBeVisible();
+}
+
+/** Enters text the way a player finishes an entry: typed, then the field is left. */
+export async function enterDialogExtraFreebies(page: Page, text: string): Promise<void> {
+  await openCreationSettings(page);
+  await dialogExtraFreebies(page).fill(text);
+  await dialogExtraFreebies(page).blur();
+}
+
+/** The build record as the builder last stored it. */
+export async function storedBuild(page: Page): Promise<V20Build> {
+  return JSON.parse((await storedText(page, BUILD_KEY_PREFIX + openBuildId(page)))!) as V20Build;
 }
 
 let nextSeedId = 0;

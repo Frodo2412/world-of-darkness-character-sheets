@@ -537,6 +537,7 @@ Feature: Creation settings open in a dialog
 **TEST**: Scenarios above (step still present, old scenarios green); screen DoD for the dialog (axe at 1512/375 px with and without an error shown, 320 px).
 **REFACTOR**: One dialog helper reused by Slices 11, 13 and the finish confirmation.
 **Files**: `src/components/builder/SettingsDialog.astro`, `src/pages/build.astro`, `src/scripts/builder/parts/dialog.ts`, `src/scripts/builder/wiring.ts`, `src/styles/builder.css`, `features/steps/builder-settings.steps.ts`
+**Build note**: the dialog is wired in `src/scripts/builder.ts` (it needs `render`), not `wiring.ts`; the "Settings are no longer a step" scenario skips itself (conditional `test.skip` in its first step) until Step 2.2 removes the step, so the suite stays green in between.
 **Commit**: `feat(builder): creation settings dialog`
 
 #### Step 2.2: Remove the Settings step
@@ -2174,7 +2175,7 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
 
 #### Wave 2
 - [ ] Slice 2: Creation settings in a dialog
-  - [ ] Step 2.1: Settings dialog alongside the step
+  - [x] Step 2.1: Settings dialog alongside the step
   - [ ] Step 2.2: Remove the Settings step
 
 #### Wave 3
