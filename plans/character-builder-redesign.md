@@ -355,7 +355,7 @@ Feature: Starting Blood Pool is recorded by the player
 **TEST**: Unit tests: every refusal (above range for 13th and 4th, negative, fractional, `1e1`, non-numeric), 0 accepted, blank clears, outstanding present/absent, conversion, store round-trips including **recorded 0 → 0**, legacy 0 → null, legacy 7 → 7, malformed new `bloodPool` (non-integer, negative) / `conceptKind` / `drive` → unreadable, a new-shape Blood Pool above its maximum → opens and `outstanding` lists it, `setConceptKind` / `setDrive` accept and refuse; full unit and e2e suites green.
 **REFACTOR**: The range message lives where `limits.ts` already owns the maximum; delete default-0 assumptions.
 **Files**: `src/domain/v20/creation/build.ts`, `src/domain/v20/creation/rules.ts`, `src/domain/v20/creation/updates.ts`, `src/domain/v20/creation/progress.ts`, `src/domain/v20/creation/limits.ts`, `src/domain/v20/creation/toCharacter.ts`, `src/storage/buildStore.ts`, `src/domain/v20/creation/rules-engine.test.ts`, `src/domain/v20/creation/updates.test.ts`, `src/domain/v20/creation/progress.test.ts`, `src/domain/v20/creation/toCharacter.test.ts`, `src/storage/buildStore.test.ts`, `src/domain/v20/creation/testing/play.ts`, `features/steps/support/builder.ts`, `features/steps/builder-finish.steps.ts`, `features/steps/builder-freebies.steps.ts`, `features/steps/builder-whole.steps.ts`, `features/character-builder/slice-7-finishing-touches-freebie-points-and-blood-pool.feature`, `features/character-builder/slice-8-finish-a-build.feature`
-**Build note**: widened during `/build` — finishable builds come from `completeBuild()` in `testing/play.ts`, and seven old e2e scenarios relied on the default 0, so their minimal retargets ("Not recorded", the new outstanding row, recording a Blood Pool before Finish) land here to keep the suite green; Step 1.2 then adds the new UI treatment.
+**Build note**: `seed.ts` does not seed builds (they come from `completeBuild`/`saveBuilds`); widened during `/build` — finishable builds come from `completeBuild()` in `testing/play.ts`, and seven old e2e scenarios relied on the default 0, so their minimal retargets ("Not recorded", the new outstanding row, recording a Blood Pool before Finish) land here to keep the suite green; Step 1.2 then adds the new UI treatment.
 **Commit**: `feat(builder): record the starting blood pool explicitly`
 
 #### Step 1.2: Finishing touches field, hint, tag and Finish gate
@@ -2168,7 +2168,7 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
 ### Slices (grouped by wave)
 
 #### Wave 1
-- [ ] Slice 1: Blood Pool is recorded; the record shape gains its new fields
+- [x] Slice 1: Blood Pool is recorded; the record shape gains its new fields
   - [x] Step 1.1: Record shape, nullable Blood Pool, store and conversion
   - [x] Step 1.2: Finishing touches field, hint, tag and Finish gate
 
