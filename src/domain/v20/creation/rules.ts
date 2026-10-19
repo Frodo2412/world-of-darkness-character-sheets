@@ -81,6 +81,24 @@ export const ARCHETYPES = [
   'Visionary',
 ] as const;
 
+/** The sample concepts a player may start from; the Concept screen offers these by name. */
+export const CONCEPT_KINDS = [
+  'Criminal',
+  'Drifter',
+  'Entertainer',
+  'Intellectual',
+  'Investigator',
+  'Kid',
+  'Outsider',
+  'Politician',
+  'Professional',
+  'Reporter',
+  'Scenester',
+  'Socialite',
+  'Soldier',
+  'Worker',
+] as const;
+
 /** The builder's steps in order, with the title each is shown under. */
 export const BUILD_STEPS = [
   { step: 'settings', title: 'Settings' },

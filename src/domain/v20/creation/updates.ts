@@ -13,7 +13,7 @@ import type {
   V20Build,
 } from './build';
 import { freebieCost, freebiesRemaining } from './freebies';
-import { GENERATION_REF, effectiveGeneration, limits, maximumFor, ordinal } from './limits';
+import { GENERATION_REF, bloodPoolRangeMessage, effectiveGeneration, limits, maximumFor, ordinal } from './limits';
 import {
   catalogueDiscipline,
   clanDisciplines,
@@ -37,6 +37,7 @@ import { applied, commit, refuse, type UpdateResult } from './result';
 import {
   CLAN_FIXED_TRAITS,
   CLAN_NAMES,
+  CONCEPT_KINDS,
   EXTRA_FREEBIES_RANGE,
   FIXED_MAXIMUMS,
   FLAT_ALLOTMENTS,
@@ -104,13 +105,14 @@ export function setExtraFreebies(build: V20Build, text: string): UpdateResult {
   return commit(build, withSettings(build, { extraFreebies: value }), []);
 }
 
-/** Takes the player's text: a whole number from 0 to the generation's blood pool maximum. */
+/**
+ * Takes the player's text: a whole number from 0 to the generation's Blood Pool
+ * maximum, or a blank entry, which returns the Blood Pool to not recorded.
+ */
 export function setBloodPool(build: V20Build, text: string): UpdateResult {
-  const { bloodPoolMax } = limits(build);
-  const value = wholeNumber(text, { min: 0, max: bloodPoolMax });
-  if (value === undefined) {
-    return refuse(build, `The blood pool must be a whole number from 0 to ${bloodPoolMax}.`);
-  }
+  if (text.trim() === '') return commit(build, { ...build, bloodPool: null }, []);
+  const value = wholeNumber(text, { min: 0, max: limits(build).bloodPoolMax });
+  if (value === undefined) return refuse(build, bloodPoolRangeMessage(build));
   return commit(build, { ...build, bloodPool: value }, []);
 }
 
@@ -119,6 +121,19 @@ export function setBloodPool(build: V20Build, text: string): UpdateResult {
 /** Any text is kept as entered, including none. */
 export function setConceptText(build: V20Build, field: ConceptField, text: string): UpdateResult {
   return commit(build, { ...build, concept: { ...build.concept, [field]: text } }, []);
+}
+
+/** A sample concept by name, or '' for none. */
+export function setConceptKind(build: V20Build, kind: string): UpdateResult {
+  if (kind !== '' && !(CONCEPT_KINDS as readonly string[]).includes(kind)) {
+    return refuse(build, `${kind} is not one of the sample concepts the builder offers.`);
+  }
+  return commit(build, { ...build, concept: { ...build.concept, conceptKind: kind } }, []);
+}
+
+/** Any text is kept as entered, including none. */
+export function setDrive(build: V20Build, text: string): UpdateResult {
+  return commit(build, { ...build, concept: { ...build.concept, drive: text } }, []);
 }
 
 interface ClanChange {

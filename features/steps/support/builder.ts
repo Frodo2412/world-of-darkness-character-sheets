@@ -72,6 +72,15 @@ export async function activateFinish(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Finish', exact: true }).click();
 }
 
+/** Types a starting Blood Pool into Finishing touches unless the build already has one, as a player must before finishing. */
+export async function recordBloodPoolIfMissing(page: Page): Promise<void> {
+  await openStep(page, 'Finishing touches');
+  const field = page.getByRole('textbox', { name: 'Starting blood pool', exact: true });
+  if ((await field.inputValue()) !== '') return;
+  await field.fill('10');
+  await field.blur();
+}
+
 export const finishDialog = (page: Page): Locator =>
   page.getByRole('dialog', { name: 'Finish with unspent freebie points?' });
 

@@ -4,9 +4,12 @@ import {
   setBaseGeneration,
   setClan,
   setBloodPool,
+  setConceptKind,
   setConceptText,
+  setDrive,
   setExtraFreebies,
 } from '../domain/v20/creation/updates';
+import { outstanding } from '../domain/v20/creation/progress';
 import type { UpdateResult } from '../domain/v20/creation/result';
 import {
   addCreationDiscipline,
@@ -63,6 +66,14 @@ function appliedBuild(result: UpdateResult): V20Build {
 
 const record = (fields: Record<string, unknown>): string =>
   JSON.stringify({ ...blankBuild('a'), ...fields });
+
+const withConcept = (fields: Record<string, unknown>) => ({ concept: { ...blankBuild('a').concept, ...fields } });
+
+/** A record as it was stored before the Blood Pool was recorded explicitly: no conceptKind, no drive. */
+function legacyRecord(fields: Record<string, unknown>): string {
+  const { conceptKind: _kind, drive: _drive, ...concept } = blankBuild('a').concept;
+  return JSON.stringify({ ...blankBuild('a'), concept, ...fields });
+}
 
 describe('buildStore', () => {
   test('a new store lists no builds', () => {
@@ -127,6 +138,70 @@ describe('buildStore', () => {
     expect(store.load('a')).toEqual({ status: 'found', build: withPool });
   });
 
+  test('a recorded Blood Pool, including 0, survives a round trip; an unrecorded one stays null', () => {
+    const store = createBuildStore(fakeStorage(), sequentialIds('a'));
+    store.create();
+    const blank = blankBuild('a');
+    for (const text of ['0', '7', '']) {
+      const build = appliedBuild(setBloodPool(blank, text));
+      expect(store.save(build)).toEqual({ status: 'saved' });
+      expect(store.load('a')).toEqual({ status: 'found', build });
+    }
+    expect(store.load('a')).toMatchObject({ build: { bloodPool: null } });
+  });
+
+  test('a sample concept and a drive round-trip through storage', () => {
+    const store = createBuildStore(fakeStorage(), sequentialIds('a'));
+    store.create();
+    const build = appliedBuild(setDrive(appliedBuild(setConceptKind(blankBuild('a'), 'Reporter')), 'Find the truth'));
+
+    expect(store.save(build)).toEqual({ status: 'saved' });
+    expect(store.load('a')).toEqual({ status: 'found', build });
+  });
+
+  test.each([
+    ['0', 0, null],
+    ['7', 7, 7],
+  ])('a build saved before this change with a Blood Pool of %s reads as %j', (_label, stored, expected) => {
+    const storage = fakeStorage({ [buildKeyFor('a')]: legacyRecord({ bloodPool: stored }) });
+    const loaded = createBuildStore(storage).load('a');
+
+    expect(loaded).toEqual({
+      status: 'found',
+      build: { ...blankBuild('a'), bloodPool: expected },
+    });
+    expect(storage.items.get(buildKeyFor('a'))).toBe(legacyRecord({ bloodPool: stored }));
+  });
+
+  test('a legacy record keeps its concept text and gains an empty sample concept and drive', () => {
+    const concept = { ...blankBuild('a').concept, name: 'Lucita' };
+    const { conceptKind: _kind, drive: _drive, ...legacyConcept } = concept;
+    const storage = fakeStorage({ [buildKeyFor('a')]: legacyRecord({ concept: legacyConcept }) });
+
+    expect(createBuildStore(storage).load('a')).toEqual({
+      status: 'found',
+      build: { ...blankBuild('a'), concept: { ...concept, conceptKind: '', drive: '' } },
+    });
+  });
+
+  test('a new record with a recorded Blood Pool of 0 is not mistaken for a legacy one', () => {
+    const storage = fakeStorage({ [buildKeyFor('a')]: record({ bloodPool: 0 }) });
+
+    expect(createBuildStore(storage).load('a')).toMatchObject({ status: 'found', build: { bloodPool: 0 } });
+  });
+
+  test('a new record with a Blood Pool above its maximum opens, and the build lists it to lower', () => {
+    const storage = fakeStorage({ [buildKeyFor('a')]: record({ bloodPool: 11 }) });
+    const loaded = createBuildStore(storage).load('a');
+
+    if (loaded.status !== 'found') throw new Error('not found');
+    expect(loaded.build.bloodPool).toBe(11);
+    expect(outstanding(loaded.build)).toContainEqual({
+      step: 'finishing',
+      message: 'Lower the starting blood pool to 10 first.',
+    });
+  });
+
   test('an unknown id is not found', () => {
     expect(createBuildStore(fakeStorage()).load('missing')).toEqual({ status: 'not-found' });
   });
@@ -156,6 +231,14 @@ describe('buildStore', () => {
     ['a repeated Discipline', record({ disciplines: [{ name: 'Auspex', writeIn: false, creation: 1, freebie: 0 }, { name: 'auspex', writeIn: false, creation: 0, freebie: 1 }] })],
     ['a malformed Discipline entry', record({ disciplines: [{ name: 'Auspex', creation: 1 }] })],
     ['a negative blood pool', record({ bloodPool: -1 })],
+    ['a fractional blood pool', record({ bloodPool: 2.5 })],
+    ['a textual blood pool', record({ bloodPool: 'ten' })],
+    ['a missing blood pool', JSON.stringify({ ...blankBuild('a'), bloodPool: undefined })],
+    ['a negative blood pool in a record saved before this change', legacyRecord({ bloodPool: -1 })],
+    ['a sample concept outside the fourteen', record(withConcept({ conceptKind: 'Vampire' }))],
+    ['a sample concept that is not text', record(withConcept({ conceptKind: 5 }))],
+    ['a drive that is not text', record(withConcept({ drive: 5 }))],
+    ['a drive that is null', record(withConcept({ drive: null }))],
     ['textual extra freebies', record({ settings: { baseGeneration: 13, extraFreebies: '5' } })],
   ])('%s loads as unreadable and is not rewritten', (_label, text) => {
     const storage = fakeStorage({ [buildKeyFor('a')]: text });

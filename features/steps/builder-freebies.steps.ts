@@ -250,6 +250,18 @@ Then('the starting blood pool is {int}', async ({ page }, value: number) => {
   await expect(bloodPoolField(page)).toHaveValue(String(value));
 });
 
+Then('the starting blood pool is not recorded', async ({ page }) => {
+  await openStep(page, 'Finishing touches');
+  await expect(bloodPoolField(page)).toHaveValue('');
+});
+
+Then('the starting blood pool is still not recorded', async ({ page }) => {
+  await expect(bloodPoolField(page)).not.toHaveValue('');
+  await page.reload();
+  await openStep(page, 'Finishing touches');
+  await expect(bloodPoolField(page)).toHaveValue('');
+});
+
 Then('the starting blood pool is still {int}', async ({ page }, value: number) => {
   await expect(bloodPoolField(page)).not.toHaveValue(String(value));
   await page.reload();
@@ -260,7 +272,7 @@ Then('the starting blood pool is still {int}', async ({ page }, value: number) =
 Then(
   /^they are told, beside the field, that the blood pool must be a whole number from 0 to (\d+)$/,
   async ({ page }, max: string) => {
-    await expect(bloodPoolField(page)).toHaveAccessibleDescription(new RegExp(`The blood pool must be a whole number from 0 to ${max}\\.`));
+    await expect(bloodPoolField(page)).toHaveAccessibleDescription(new RegExp(`The Blood Pool must be a whole number from 0 to ${max}\\.`));
     await expect(bloodPoolField(page)).toHaveAttribute('aria-invalid', 'true');
   },
 );

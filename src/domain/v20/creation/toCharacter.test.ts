@@ -19,7 +19,7 @@ function lucita() {
     freebie('willpower', 4),
     bloodPool(6),
   );
-  build.concept = { name: 'Lucita', player: 'Ana', chronicle: 'Madrid by Night', nature: 'Rebel', demeanor: 'Gallant', concept: 'Fallen noble', sire: 'Moncada' };
+  build.concept = { ...build.concept, name: 'Lucita', player: 'Ana', chronicle: 'Madrid by Night', nature: 'Rebel', demeanor: 'Gallant', concept: 'Fallen noble', sire: 'Moncada' };
   return build;
 }
 
@@ -50,6 +50,14 @@ describe('toCharacter', () => {
     expect(character.willpower).toEqual({ permanent: 4, temporary: 4 });
     expect(character.bloodPool).toEqual({ current: 6, perTurn: '2' });
     expect(rating(build, 'humanity')).toBe(7);
+  });
+
+  test('a recorded Blood Pool of 0 reaches the sheet as 0', () => {
+    expect(toCharacter(play(completeBuild('Brujah'), bloodPool(0))).bloodPool.current).toBe(0);
+  });
+
+  test('an unrecorded Blood Pool is written as 0 rather than failing', () => {
+    expect(toCharacter({ ...completeBuild('Brujah'), bloodPool: null }).bloodPool.current).toBe(0);
   });
 
   test('writes held Disciplines in clan order and Backgrounds in catalogue order, the rest blank', () => {

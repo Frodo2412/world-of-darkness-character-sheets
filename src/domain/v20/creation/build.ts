@@ -82,14 +82,19 @@ export interface V20Build {
   kind: 'build';
   schemaVersion: 1;
   settings: BuildSettings;
-  concept: Record<ConceptField, string>;
+  /**
+   * The sheet's free-text header fields, plus the sample concept the player
+   * started from ('' for none) and what drives the character.
+   */
+  concept: Record<ConceptField, string> & { conceptKind: string; drive: string };
   /** A clan name, or '' until one is chosen. */
   clan: string;
   /** Each ranked group's rank, or '' until it has one. */
   ranks: Record<string, Rank | ''>;
   traits: Record<FixedTraitRef, Dots>;
   disciplines: DisciplineEntry[];
-  bloodPool: number;
+  /** The starting Blood Pool the player recorded, or null until they do (0 is a recorded value). */
+  bloodPool: number | null;
 }
 
 const DEFAULT_BASE_GENERATION = 13;
@@ -109,11 +114,11 @@ export function blankBuild(id: string): V20Build {
       baseGeneration: DEFAULT_BASE_GENERATION,
       extraFreebies: DEFAULT_EXTRA_FREEBIES,
     },
-    concept: recordOf(CONCEPT_FIELDS, () => ''),
+    concept: { ...recordOf(CONCEPT_FIELDS, () => ''), conceptKind: '', drive: '' },
     clan: '',
     ranks: recordOf(RANKED_GROUP_KEYS, (): Rank | '' => ''),
     traits: recordOf(FIXED_TRAIT_REFS, (): Dots => ({ creation: 0, freebie: 0 })),
     disciplines: [],
-    bloodPool: 0,
+    bloodPool: null,
   };
 }

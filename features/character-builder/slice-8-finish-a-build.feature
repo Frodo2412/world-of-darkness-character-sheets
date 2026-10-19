@@ -4,13 +4,14 @@ Feature: Finishing a build
     Given a player who has started building a character
     When they open the finishing touches step
     Then the outstanding list shows exactly
-      | item                                   | step       |
-      | Choose a clan                          | Concept    |
-      | Rank the Attribute groups              | Attributes |
-      | Rank the Ability groups                | Abilities  |
-      | Place 3 Discipline dots                | Advantages |
-      | Place 5 Background dots                | Advantages |
-      | Place 7 Virtue dots                    | Advantages |
+      | item                         | step              |
+      | Choose a clan                | Concept           |
+      | Rank the Attribute groups    | Attributes        |
+      | Rank the Ability groups      | Abilities         |
+      | Place 3 Discipline dots      | Advantages        |
+      | Place 5 Background dots      | Advantages        |
+      | Place 7 Virtue dots          | Advantages        |
+      | Record a starting Blood Pool | Finishing touches |
     And the build cannot be finished
 
   Scenario Outline: One unplaced dot blocks finishing

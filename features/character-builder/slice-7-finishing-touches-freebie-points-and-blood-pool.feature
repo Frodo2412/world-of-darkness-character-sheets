@@ -235,16 +235,16 @@ Feature: Finishing touches
     When they enter 7 as the starting blood pool
     Then the starting blood pool is 7
 
-  Scenario: The blood pool starts at 0
+  Scenario: The blood pool starts unrecorded
     Given a player who has started building a character
     When they open the finishing touches step
-    Then the starting blood pool is 0
+    Then the starting blood pool is not recorded
 
   Scenario Outline: The blood pool cannot leave the generation's range
     Given a build with base generation "<generation>"
     When they enter "<entry>" as the starting blood pool
     Then they are told, beside the field, that the blood pool must be a whole number from 0 to <max>
-    And the starting blood pool is still 0
+    And the starting blood pool is still not recorded
 
     Examples:
       | generation | entry | max |

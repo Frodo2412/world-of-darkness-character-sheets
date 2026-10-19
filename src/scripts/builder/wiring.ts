@@ -266,8 +266,9 @@ function renderFreebies(root: HTMLElement, report: BuildReport): void {
     showReadout(count, `${dots} ${dots === 1 ? 'dot' : 'dots'} bought`);
   }
   for (const input of root.querySelectorAll<HTMLInputElement>('[data-blood-pool]')) {
-    if (input.getAttribute('aria-invalid') !== 'true' && input.value !== String(report.bloodPool)) {
-      input.value = String(report.bloodPool);
+    const shown = report.bloodPool === null ? '' : String(report.bloodPool);
+    if (input.getAttribute('aria-invalid') !== 'true' && input.value !== shown) {
+      input.value = shown;
     }
   }
   for (const hint of root.querySelectorAll<HTMLElement>('[data-blood-pool-hint]')) {

@@ -96,7 +96,7 @@ export interface BuildReport {
     freebieRows: BuildTraitRef[];
   };
   freebies: FreebieReport;
-  bloodPool: number;
+  bloodPool: number | null;
   outstanding: OutstandingItem[];
   /** A short text status per step, '' when there is nothing to say. */
   steps: Record<BuildStep, string>;
@@ -119,7 +119,9 @@ export function settingsReport(build: V20Build): SettingsReport {
 }
 
 export function conceptReport(build: V20Build): ConceptReport {
-  return { fields: { ...build.concept }, clan: build.clan };
+  // The sample concept and drive are not sheet header fields, so the readout leaves them out.
+  const { conceptKind: _kind, drive: _drive, ...fields } = build.concept;
+  return { fields, clan: build.clan };
 }
 
 function valueText(build: V20Build, ref: BuildTraitRef, max: number): string {
@@ -246,6 +248,7 @@ export function outstanding(build: V20Build): OutstandingItem[] {
       items.push({ step: state.step, message: `Lower ${state.label} by ${plural(-state.remaining, 'dot')}` });
     }
   }
+  if (build.bloodPool === null) items.push({ step: 'finishing', message: 'Record a starting Blood Pool' });
   for (const violation of violations(build)) {
     items.push({ step: violation.step, message: violation.message });
   }

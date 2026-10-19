@@ -57,7 +57,8 @@ export function toCharacter(build: V20Build): V20Character {
     (character) => setTrait(character, 'humanity.rating', rating(build, 'humanity')),
     (character) => setTrait(character, 'willpower.permanent', willpower),
     (character) => setTrait(character, 'willpower.temporary', willpower),
-    (character) => setTrait(character, 'bloodPool.current', build.bloodPool),
+    // An unrecorded pool blocks finishing, so null only reaches here from a caller that skipped that check.
+    (character) => setTrait(character, 'bloodPool.current', build.bloodPool ?? 0),
     (character) => setText(character, 'bloodPool.perTurn', String(bloodPerTurn)),
   ];
   return changes.reduce((character, change) => change(character), blankCharacter(build.id));
