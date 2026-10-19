@@ -329,9 +329,13 @@ export async function openPlayed(page: Page, ...steps: Step[]): Promise<V20Build
   return openPlayedFrom(page, buildWith(), ...steps);
 }
 
-/** As `openPlayed`, starting from `start` (given a fresh seed id) rather than a blank build. */
+/**
+ * As `openPlayed`, starting from `start` rather than a blank build. A builder already open on a build
+ * (the scenario's background started one) has that build replaced, so a second one is not left behind.
+ */
 export async function openPlayedFrom(page: Page, start: V20Build, ...steps: Step[]): Promise<V20Build> {
-  const build = play({ ...start, id: buildWith().id }, ...steps);
+  const open = BUILDER_ADDRESS.test(page.url()) ? openBuildId(page) : '';
+  const build = play({ ...start, id: open || buildWith().id }, ...steps);
   await openSavedBuild(page, build);
   return build;
 }

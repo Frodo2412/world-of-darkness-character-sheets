@@ -3,7 +3,7 @@
 // Refusals inside it use the dialog's own [data-notice] regions, which are
 // cleared when it closes.
 
-import { clearNotices } from '../messages';
+import { clearDialogAlert, clearNotices, restoreDialogAlert } from '../messages';
 
 /**
  * Wires `dialog` to `opener`. Any `[data-dialog-close]` inside closes it, and so
@@ -13,7 +13,10 @@ import { clearNotices } from '../messages';
 export function wireDialog(dialog: HTMLDialogElement, opener: HTMLElement, onClose: () => void): void {
   let followedLink = false;
 
-  opener.addEventListener('click', () => dialog.showModal());
+  opener.addEventListener('click', () => {
+    dialog.showModal();
+    restoreDialogAlert(dialog);
+  });
 
   dialog.addEventListener('click', (event) => {
     const target = event.target as Element;
@@ -26,10 +29,13 @@ export function wireDialog(dialog: HTMLDialogElement, opener: HTMLElement, onClo
   });
 
   dialog.addEventListener('close', () => {
-    // Moving focus first lets an entry still being typed finish and be judged.
+    // Focus goes first: it leaves a field still being edited, which judges its entry (its `change`
+    // event fires as focus moves). Only then are the dialog's refusals cleared and the fields redrawn,
+    // so an entry judged now is not left refused in a closed dialog.
     if (followedLink) followedLink = false;
     else opener.focus();
     clearNotices(dialog);
+    clearDialogAlert(dialog);
     onClose();
   });
 }

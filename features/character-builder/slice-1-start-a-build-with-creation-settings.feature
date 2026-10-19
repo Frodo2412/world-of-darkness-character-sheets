@@ -2,7 +2,8 @@ Feature: Starting a build with creation settings
 
   # The creation settings moved into a dialog (features/character-builder-redesign/
   # slice-2-creation-settings-in-a-dialog.feature); what stays here is the roster, a build
-  # that is missing or damaged, and a browser that cannot store data.
+  # that is missing or damaged, a browser that cannot store data, and the builder's rule that
+  # only one refusal is shown at a time.
 
   Scenario: Building a character opens the builder without creating a character
     Given a player with no saved characters
@@ -48,6 +49,24 @@ Feature: Starting a build with creation settings
     And the base generation is "10th"
     And they can still set the extra freebie points to 5
 
+  Scenario: A refused save during a settings change is announced inside the dialog
+    Given a player who has started building a character
+    And the Creation settings dialog is open
+    And the browser has started refusing to store data
+    When I choose "10th" as the base generation
+    Then the dialog has its own alert saying changes are not being saved
+    Given the browser accepts stored data again
+    When I choose "9th" as the base generation
+    Then the dialog has no alert
+
+  Scenario: A later refusal in the dialog gives back the field an earlier refusal left
+    Given a build at 6th generation with 2 dots of the Generation Background
+    And the Creation settings dialog is open
+    When I enter "lots" as extra freebie points
+    And I choose 4th generation
+    Then I am told to lower the Generation Background first
+    And the extra freebie points field reads 20 and is not marked invalid
+
   Scenario: The not-saved message stays until a save works
     Given a player whose last change could not be saved
     When their entry "1000" as the extra freebie points is rejected
@@ -61,7 +80,7 @@ Feature: Starting a build with creation settings
     And reloading the builder shows the base generation "9th"
 
   Scenario: A build deleted in another tab is not saved again
-    Given a player with the builder open on a build
+    Given a player who has started building a character
     And the same build has been removed in another tab
     When they set the base generation to "10th"
     Then they see a "build not found" message with a link to the roster

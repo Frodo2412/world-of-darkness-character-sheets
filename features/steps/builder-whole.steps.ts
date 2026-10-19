@@ -180,7 +180,7 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await openPlayed(page);
     await refuseWrites(page);
     await setBaseGeneration(page, '10th');
-    await expect(page.getByRole('alert')).toBeVisible();
+    await expect(page.locator('#status-message')).toBeVisible();
   },
   'the clan-change confirmation': async (page) => {
     await openPlayed(page, ...seedSteps(undefined, undefined, 'Brujah', 'Celerity rated 2 and Potence rated 1'));

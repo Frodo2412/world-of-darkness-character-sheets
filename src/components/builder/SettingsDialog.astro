@@ -18,6 +18,8 @@ const READOUTS = [
 		<h2 id="settings-dialog-title">Creation settings</h2>
 		<button type="button" data-dialog-close>Close</button>
 	</div>
+	<!-- The page's own alert is out of reach behind a modal dialog, so a failed save is also said here. -->
+	<p class="status-message" role="alert" hidden data-dialog-alert></p>
 	<p class="field-hint">Changes apply immediately.</p>
 	<div class="builder-fields">
 		<div class="builder-field">

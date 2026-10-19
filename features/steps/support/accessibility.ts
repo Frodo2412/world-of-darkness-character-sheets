@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { doneButton, enterEditMode, isEditing } from './sheet';
 import { showTab } from './tabs';
 
@@ -47,6 +47,27 @@ export async function controlNames(scope: Page | Locator): Promise<string[]> {
     INTERACTIVE_ROLES.map((role) => accessibleNames(scope.getByRole(role))),
   );
   return named.flat();
+}
+
+const CONTROL_ROLES = 'textbox|searchbox|combobox|slider|button|link|checkbox|radio|spinbutton|tab';
+const CONTROL_LINE = new RegExp(`^\\s*- (?:${CONTROL_ROLES})\\b`);
+const CONTROL_NAME = new RegExp(`^\\s*- (${CONTROL_ROLES}) "([^"]+)"`);
+
+/**
+ * Every control within `scope` has a non-empty accessible name, and no two controls of one role share
+ * one. Read from the accessibility tree as assistive technology receives it, one node per line.
+ */
+export async function expectUniqueControlNames(scope: Locator): Promise<void> {
+  const tree = await scope.ariaSnapshot();
+  const lines = tree.split('\n').filter((line) => CONTROL_LINE.test(line));
+  const named = lines.map((line) => CONTROL_NAME.exec(line));
+
+  expect(lines.length).toBeGreaterThan(0);
+  expect(lines.filter((_, index) => !named[index]?.[2].trim())).toEqual([]);
+  // A role is announced with its name, so the "Concept" step link and the
+  // "Concept" text field are told apart; two links of one name are not.
+  const identities = named.map((match) => `${match![1]} "${match![2]}"`);
+  expect(identities.filter((identity, index) => identities.indexOf(identity) !== index)).toEqual([]);
 }
 
 /** The rules a page must keep: WCAG 2.1 level A and AA. */

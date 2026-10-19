@@ -3,9 +3,11 @@
 // browser that refuses to save, the roster's build action).
 
 import { expect, type Page } from '@playwright/test';
+import { GENERATION_TABLE, STANDARD_FREEBIE_BUDGET } from '../../src/domain/v20/creation/rules';
 import { creation, extra, freebie, generation } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When, memoryFor } from './fixtures';
-import { violationsOnPage } from './support/accessibility';
+import { announcements } from './support/announcements';
+import { expectUniqueControlNames, violationsOnPage } from './support/accessibility';
 import {
   BUILD_KEY_PREFIX,
   baseGeneration,
@@ -40,18 +42,16 @@ import {
   withholdStorage,
 } from './support/storage';
 
+// The page's own alert; while the settings dialog is open it has an alert of its own as well.
 const notSaved = (page: Page) =>
-  page.getByRole('alert').filter({ hasText: 'Changes are not being saved' });
+  page.locator('#status-message').filter({ hasText: 'Changes are not being saved' });
 
 // Given
 
-Given('a player who has started building a character', async ({ page }) => {
-  await startBuild(page);
-});
+// One way of starting a build, said as each feature words it.
+const startedBuild = async ({ page }: { page: Page }): Promise<void> => startBuild(page);
 
-Given('a player with the builder open on a build', async ({ page }) => {
-  await startBuild(page);
-});
+Given('a player who has started building a character', startedBuild);
 
 Given('a saved build whose data has been damaged', async ({ page, memory }) => {
   memory.damaged = await saveDamagedBuild(page);
@@ -244,23 +244,58 @@ interface DialogMemory {
   trait: string;
   /** What was last typed as extra freebie points. */
   entered: string;
+  /** The extra freebie points stored before the last entry. */
+  extraBefore: number;
+  /** The base generation the scenario last chose. */
+  chosen?: number;
 }
 
 const dialogMemory = (world: Parameters<typeof memoryFor>[0]): DialogMemory =>
-  memoryFor<DialogMemory>(world, 'settings-dialog', () => ({ poolBefore: '', asked: '', trait: '', entered: '' }));
+  memoryFor<DialogMemory>(world, 'settings-dialog', () => ({ poolBefore: '', asked: '', trait: '', entered: '', extraBefore: 0 }));
 
 /** The dialog's own status region that holds the refusal for the extra freebie points field. */
 const extraFreebiesNotice = (page: Page) => settingsDialog(page).locator('#settings-extra-freebies-notice');
 
-/** Any refusal the dialog shows: its status regions, which are the only places it writes one. */
+/** The dialog's status regions, however many it has. */
 const dialogRefusals = (page: Page) => settingsDialog(page).locator('[data-notice]');
+
+/** Those that hold a refusal right now. */
+const shownRefusals = (page: Page) => dialogRefusals(page).filter({ hasText: /\S/ });
+
+const expectNoRefusals = (page: Page) => expect(shownRefusals(page)).toHaveCount(0);
+
+/** The freebie pool as the dialog reads it, once it has been drawn. */
+async function poolReading(page: Page): Promise<string> {
+  await expect(readout(page, 'Freebie pool')).not.toHaveText('');
+  return (await readout(page, 'Freebie pool').textContent())!;
+}
 
 async function enterExtraFreebiesWithMemory(page: Page, memory: DialogMemory, entry: string): Promise<void> {
   await openCreationSettings(page);
-  memory.poolBefore = (await readout(page, 'Freebie pool').textContent()) ?? '';
+  memory.poolBefore = await poolReading(page);
+  memory.extraBefore = (await storedBuild(page)).settings.extraFreebies;
   memory.entered = entry;
   await enterExtraFreebies(page, entry);
 }
+
+/** The generation table's row for the generation the scenario chose, which fixes the limits the dialog shows. */
+function chosenRow(memory: DialogMemory) {
+  const row = GENERATION_TABLE.find((entry) => entry.generation === memory.chosen);
+  if (!row) throw new Error('No generation was chosen in this scenario.');
+  return row;
+}
+
+/** Everything the dialog offers for the base generation: 4th through 13th, in order. */
+const EVERY_GENERATION = GENERATION_TABLE.map((row) => `${row.generation}th`).sort(
+  (a, b) => parseInt(a, 10) - parseInt(b, 10),
+);
+
+const expectEveryGenerationOffered = async (page: Page): Promise<void> => {
+  expect(await baseGeneration(page).getByRole('option').allTextContents()).toEqual(EVERY_GENERATION);
+};
+
+/** A stored value that is not zero, so a refused entry has something to leave unchanged. */
+const NONZERO_EXTRA = 20;
 
 async function chooseGeneration(page: Page, label: string): Promise<void> {
   await openCreationSettings(page);
@@ -281,21 +316,28 @@ async function expectDialogRefusal(page: Page, message: RegExp): Promise<void> {
   await expect(dialogRefusals(page).filter({ hasText: message })).toBeVisible();
 }
 
-/** Whether the field and the page agree that the stored extra freebie points are `value`. */
+/** The dialog's pool and the stored build agree that the extra freebie points are `value`. */
 async function expectStoredExtraFreebies(page: Page, value: number): Promise<void> {
-  const wasOpen = await settingsDialog(page).isVisible();
   await openCreationSettings(page);
-  await expect(readout(page, 'Freebie pool')).toHaveText(String(15 + value));
-  // A refusal leaves the typed text beside its message; closed and reopened, the field reads the build.
-  if (!wasOpen) await expect(extraFreebies(page)).toHaveValue(String(value));
+  await expect(readout(page, 'Freebie pool')).toHaveText(String(STANDARD_FREEBIE_BUDGET + value));
   expect((await storedBuild(page)).settings.extraFreebies).toBe(value);
+}
+
+/** The field, even in a dialog that is closed, reads the stored value: a refused entry was dropped. */
+async function expectFieldDroppedRefusedEntry(page: Page, value: number): Promise<void> {
+  await expect(page.locator('#settings-extra-freebies')).toHaveValue(String(value));
+  await expect(page.locator('#settings-extra-freebies')).not.toHaveAttribute('aria-invalid', 'true');
+}
+
+/** Opens the dialog with `value` stored as the extra freebie points. */
+async function openWithExtraFreebies(page: Page, value: number): Promise<void> {
+  await enterExtraFreebies(page, String(value));
+  await expect(readout(page, 'Freebie pool')).toHaveText(String(STANDARD_FREEBIE_BUDGET + value));
 }
 
 // Given
 
-Given('I have just started a build', async ({ page }) => {
-  await startBuild(page);
-});
+Given('I have just started a build', startedBuild);
 
 Given('the Creation settings dialog is open', async ({ page }) => {
   await openCreationSettings(page);
@@ -316,18 +358,12 @@ Given(/^a build at (\d+)th generation with a trait at (\d+)$/, async ({ page, me
 
 Given(
   'the Creation settings dialog is open and extra freebie points read {int}',
-  async ({ page }, value: number) => {
-    await enterExtraFreebies(page, String(value));
-    await expect(readout(page, 'Freebie pool')).toHaveText(String(15 + value));
-  },
+  async ({ page }, value: number) => openWithExtraFreebies(page, value),
 );
 
 Given(
   'extra freebie points read {int} and the Creation settings dialog is open',
-  async ({ page }, value: number) => {
-    await enterExtraFreebies(page, String(value));
-    await expect(readout(page, 'Freebie pool')).toHaveText(String(15 + value));
-  },
+  async ({ page }, value: number) => openWithExtraFreebies(page, value),
 );
 
 // When
@@ -339,6 +375,7 @@ When('I open Creation settings', async ({ page }) => {
 When(
   'I choose {int}th generation and {int} extra freebie points',
   async ({ page, memory }, generation: number, points: number) => {
+    dialogMemory({ memory }).chosen = generation;
     await chooseGeneration(page, `${generation}th`);
     await enterExtraFreebiesWithMemory(page, dialogMemory({ memory }), String(points));
   },
@@ -363,6 +400,7 @@ When('I choose {string} as the base generation', async ({ page, memory }, label:
 });
 
 When('I choose {string} and {string} extra freebie points', async ({ page, memory }, label: string, points: string) => {
+  dialogMemory({ memory }).chosen = parseInt(label, 10);
   await chooseGeneration(page, label);
   await enterExtraFreebiesWithMemory(page, dialogMemory({ memory }), points);
 });
@@ -372,6 +410,9 @@ When('I choose Done', async ({ page }) => {
 });
 
 When('I enter {string} as extra freebie points', async ({ page, memory }, entry: string) => {
+  await openCreationSettings(page);
+  // Start from a stored value that is not zero, so an entry that changes nothing or resets to zero shows.
+  if ((await storedBuild(page)).settings.extraFreebies === 0) await openWithExtraFreebies(page, NONZERO_EXTRA);
   await enterExtraFreebiesWithMemory(page, dialogMemory({ memory }), entry);
 });
 
@@ -380,15 +421,18 @@ When('I enter {int} as extra freebie points', async ({ page, memory }, value: nu
 });
 
 When('I enter {string} as extra freebie points and press Escape', async ({ page, memory }, entry: string) => {
-  await enterExtraFreebiesWithMemory(page, dialogMemory({ memory }), entry);
+  const remembered = dialogMemory({ memory });
+  await enterExtraFreebiesWithMemory(page, remembered, entry);
   await page.keyboard.press('Escape');
+  await expect(settingsDialog(page)).toBeHidden();
+  await expectFieldDroppedRefusedEntry(page, remembered.extraBefore);
 });
 
 When(
   'I type {string} and then {string} without leaving the field',
   async ({ page, memory }, first: string, second: string) => {
     await openCreationSettings(page);
-    dialogMemory({ memory }).poolBefore = (await readout(page, 'Freebie pool').textContent()) ?? '';
+    dialogMemory({ memory }).poolBefore = await poolReading(page);
     const field = extraFreebies(page);
     await field.selectText();
     await field.pressSequentially(first);
@@ -433,11 +477,12 @@ Then('base generation is still {int}th', async ({ page }, generation: number) =>
 
 Then('the base generation reads {int}th', async ({ page }, generation: number) => {
   await expect(baseGeneration(page).locator('option:checked')).toHaveText(`${generation}th`);
+  await expectEveryGenerationOffered(page);
 });
 
 Then('it is not offered', async ({ page, memory }) => {
-  const offered = await baseGeneration(page).getByRole('option').allTextContents();
-  expect(offered).not.toContain(dialogMemory({ memory }).asked);
+  await expectEveryGenerationOffered(page);
+  expect(EVERY_GENERATION).not.toContain(dialogMemory({ memory }).asked);
 });
 
 Then('the freebie pool reads {int}', async ({ page }, pool: number) => {
@@ -446,11 +491,16 @@ Then('the freebie pool reads {int}', async ({ page }, pool: number) => {
 });
 
 Then('the freebie pool is unchanged', async ({ page, memory }) => {
-  await expect(readout(page, 'Freebie pool')).toHaveText(dialogMemory({ memory }).poolBefore);
+  const remembered = dialogMemory({ memory });
+  await expect(readout(page, 'Freebie pool')).toHaveText(remembered.poolBefore);
+  // The refused entry was not stored either.
+  expect((await storedBuild(page)).settings.extraFreebies).toBe(remembered.extraBefore);
 });
 
-Then('the dialog shows a freebie pool of {int}', async ({ page }, pool: number) => {
+Then('the dialog shows a freebie pool of {int}', async ({ page, memory }, pool: number) => {
   await expect(readout(page, 'Freebie pool')).toHaveText(String(pool));
+  // The generation chosen alongside it fixes the rate at which blood is spent.
+  await expect(readout(page, 'Blood points per turn')).toHaveText(String(chosenRow(dialogMemory({ memory })).bloodPerTurn));
 });
 
 Then('the effective generation reads {int}th', async ({ page }, generation: number) => {
@@ -490,22 +540,30 @@ Then('after reloading the builder extra freebie points read {int}', async ({ pag
 
 Then('no refusal is shown while typing', async ({ page, memory }) => {
   await expect(extraFreebies(page)).not.toHaveAttribute('aria-invalid', 'true');
-  await expect(dialogRefusals(page)).toHaveText(['', '']);
+  await expectNoRefusals(page);
   // Nothing was applied by a half-typed entry either.
   await expect(readout(page, 'Freebie pool')).toHaveText(dialogMemory({ memory }).poolBefore);
 });
 
-Then('the message is gone', async ({ page }) => {
-  await expect(dialogRefusals(page)).toHaveText(['', '']);
+Then('the message is gone', async ({ page, memory }) => {
+  await expectNoRefusals(page);
   await expect(extraFreebies(page)).not.toHaveAttribute('aria-invalid', 'true');
+  // The corrected entry took effect: the pool follows it.
+  await expect(readout(page, 'Freebie pool')).toHaveText(
+    String(STANDARD_FREEBIE_BUDGET + Number(dialogMemory({ memory }).entered)),
+  );
 });
 
 Then(
   'the maximum trait rating reads {int}, the blood pool maximum {int} and the freebie pool {int}',
-  async ({ page }, trait: number, pool: number, freebies: number) => {
+  async ({ page, memory }, trait: number, pool: number, freebies: number) => {
     await expect(readout(page, 'Maximum trait rating')).toHaveText(String(trait));
     await expect(readout(page, 'Blood pool maximum')).toHaveText(String(pool));
     await expect(readout(page, 'Freebie pool')).toHaveText(String(freebies));
+    // The table of generations is the source of every limit the dialog shows.
+    const row = chosenRow(dialogMemory({ memory }));
+    expect([row.maxTrait, row.bloodPoolMax]).toEqual([trait, pool]);
+    await expect(readout(page, 'Blood points per turn')).toHaveText(String(row.bloodPerTurn));
   },
 );
 
@@ -538,6 +596,7 @@ Then('it has a labelled title and a close button named {string}', async ({ page 
   const dialog = settingsDialog(page);
   await expect(dialog.getByRole('heading', { name: 'Creation settings', level: 2 })).toBeVisible();
   await expect(dialog.getByRole('button', { name, exact: true })).toBeVisible();
+  await expectUniqueControlNames(dialog);
 });
 
 Then('axe reports no violations at 1512 px and 375 px, also with a refusal shown', async ({ page, memory }) => {
@@ -547,7 +606,7 @@ Then('axe reports no violations at 1512 px and 375 px, also with a refusal shown
     await expectExtraFreebiesRefused(page, dialogMemory({ memory }));
     expect(await violationsOnPage(page), `refusal shown at ${width} px`).toEqual([]);
     await enterExtraFreebies(page, '0');
-    await expect(dialogRefusals(page)).toHaveText(['', '']);
+    await expectNoRefusals(page);
     expect(await violationsOnPage(page), `no refusal at ${width} px`).toEqual([]);
   }
 });
@@ -580,4 +639,20 @@ When(
 Then('the dialog is closed and the {string} step is shown with keyboard focus on its heading', async ({ page }, step: string) => {
   await expect(settingsDialog(page)).toBeHidden();
   await expect(stepHeading(page, step)).toBeFocused();
+});
+
+Then('the dialog has its own alert saying changes are not being saved', async ({ page }) => {
+  // The page's own alert is inert behind a modal dialog, so the dialog must say it itself.
+  const alert = settingsDialog(page).getByRole('alert');
+  await expect(alert).toContainText('Changes are not being saved');
+  expect(await announcements(page)).toContainEqual(await alert.innerText());
+});
+
+Then('the dialog has no alert', async ({ page }) => {
+  await expect(settingsDialog(page).getByRole('alert')).toHaveCount(0);
+});
+
+Then('the extra freebie points field reads {int} and is not marked invalid', async ({ page }, value: number) => {
+  await expect(extraFreebies(page)).toHaveValue(String(value));
+  await expect(extraFreebies(page)).not.toHaveAttribute('aria-invalid', 'true');
 });
