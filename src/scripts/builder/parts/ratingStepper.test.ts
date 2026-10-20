@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TraitReport } from '../../../domain/v20/creation/progress';
-import { stepperView, type RowOverride } from './ratingStepper';
+import { stepperFor, stepperView, type RowOverride } from './ratingStepper';
 
 const trait = (overrides: Partial<TraitReport> = {}): TraitReport => ({
   ref: 'attribute:strength',
@@ -154,5 +154,30 @@ describe('stepperView with a screen\'s row', () => {
       lowerReason: 'Fixed for Nosferatu',
       lowerShown: false,
     });
+  });
+});
+
+describe('stepperFor', () => {
+  /** A scope holding steppers for `refs`, as far as the lookup touches them. */
+  const holding = (...refs: string[]) => {
+    const steppers = refs.map((ref) => ({ dataset: { buildTrait: ref } }));
+    return { steppers, scope: { querySelectorAll: () => steppers } as unknown as ParentNode };
+  };
+
+  it('finds the stepper of a trait', () => {
+    const { steppers, scope } = holding('discipline:Auspex', 'discipline:Celerity');
+    expect(stepperFor(scope, 'discipline:Celerity')).toBe(steppers[1]);
+  });
+
+  it.each([`discipline:Say "Hi"`, 'discipline:Back\\slash', `discipline:It's`, 'discipline:a]b', 'discipline:"\\"'])(
+    'finds a written-in Discipline named %s, which no selector could be built from',
+    (ref) => {
+      const { steppers, scope } = holding('discipline:Auspex', ref);
+      expect(stepperFor(scope, ref)).toBe(steppers[1]);
+    },
+  );
+
+  it('finds nothing for a trait with no stepper', () => {
+    expect(stepperFor(holding('discipline:Auspex').scope, 'discipline:Celerity')).toBeUndefined();
   });
 });

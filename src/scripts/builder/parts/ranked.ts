@@ -1,19 +1,20 @@
 // The ranked rows of the creation screens. Two things live here:
 //  - the Attributes and Abilities screens (`createRankedScreen`): each group's pool, callout and rows, drawn from
 //    `rankedView`, with the one status region per group that says what a press changed;
-//  - the Discipline rows of a step: the clan's three, then any others, drawn from the report. A Caitiff on
-//    Advantages, and anyone buying with freebie points, can add one from the catalogue or by name.
+//  - the Discipline rows of Finishing touches (bought with freebie points), drawn from the report. The rows of the
+//    Advantages screen are its own (screens/advantages.ts); the row shell and the row sync are shared.
 
 import type { BuildTraitRef, V20Build } from '../../../domain/v20/creation/build';
 import { rankedView, type RankedGroupView, type RankedKey } from '../../../domain/v20/creation/poolViews';
 import { report, type BuildReport } from '../../../domain/v20/creation/progress';
-import { addDiscipline, removeDiscipline, type DotSource } from '../../../domain/v20/creation/updates';
+import { addDiscipline, type DotSource } from '../../../domain/v20/creation/updates';
+import type { UpdateResult } from '../../../domain/v20/creation/result';
 import { traitLabelId } from '../labelId';
 import { showReadout } from '../messages';
 import type { ScreenModule } from '../screens';
 import type { Wiring } from '../wiring';
 import { drawCallout, drawPool, part, statusAfter, type Press } from './pool';
-import { createStepperHost, renderStepper } from './ratingStepper';
+import { createStepperHost, renderStepper, stepperFor } from './ratingStepper';
 
 /** Keeps the summary's lines as given, rewriting the list only when its words change. */
 function drawLines(list: HTMLElement, lines: string[]): void {
@@ -47,7 +48,7 @@ export function createRankedScreen(key: RankedKey): Pick<ScreenModule, 'wire' | 
 
     drawCallout(group, view.callout);
     for (const row of view.rows) {
-      const stepper = group.querySelector<HTMLElement>(`[data-build-trait="${row.ref}"]`)!;
+      const stepper = stepperFor(group, row.ref)!;
       renderStepper(stepper, current.traits[row.ref], current.settings, current.concept.clan, row);
     }
   }
@@ -76,34 +77,32 @@ export function createRankedScreen(key: RankedKey): Pick<ScreenModule, 'wire' | 
   };
 }
 
-// The Discipline rows of a step
+// The Discipline rows
 
-/** Wires the add field and the Remove buttons of the Discipline rows made for `mode`. */
-export function wireDisciplineRows(root: HTMLElement, { commit }: Wiring, mode: DotSource): void {
-  for (const button of root.querySelectorAll<HTMLButtonElement>(`[data-add-discipline][data-mode="${mode}"]`)) {
-    const input = button.parentElement!.querySelector<HTMLInputElement>('input')!;
-    const add = () => {
-      const name = input.value;
-      if (commit((build) => addDiscipline(build, name, mode), input) === 'applied') input.value = '';
-    };
-    button.addEventListener('click', add);
-    input.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') add();
-    });
-  }
-  for (const rows of root.querySelectorAll<HTMLElement>(`[data-discipline-rows][data-mode="${mode}"]`)) {
-    // Delegated to the rows' container, so rows drawn later need no wiring.
-    rows.addEventListener('click', (event) => {
-      const button = (event.target as Element).closest<HTMLButtonElement>('[data-remove-discipline]');
-      if (!button) return;
-      // The button goes with its row, so a refusal is shown on the rows' first control. Where focus goes
-      // when the row leaves is decided once, by syncRows.
-      commit((build) => removeDiscipline(build, button.dataset.removeDiscipline!), button);
-    });
+/**
+ * Wires a Discipline's add field: its button, and Enter in the field, apply `add` to the name typed. The field
+ * empties once the name is added; a refusal leaves it as typed.
+ */
+export function wireAddField(button: HTMLButtonElement, add: (name: string, input: HTMLInputElement) => UpdateResult['status']): void {
+  const input = button.parentElement!.querySelector<HTMLInputElement>('input')!;
+  const submit = () => {
+    if (add(input.value, input) === 'applied') input.value = '';
+  };
+  button.addEventListener('click', submit);
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') submit();
+  });
+}
+
+/** Wires the field that buys a Discipline by name on Finishing touches. */
+export function wireFreebieDisciplines(root: HTMLElement, { commit }: Wiring): void {
+  for (const button of root.querySelectorAll<HTMLButtonElement>('[data-add-discipline][data-mode="freebie"]')) {
+    wireAddField(button, (name, input) => commit((build) => addDiscipline(build, name, 'freebie'), input));
   }
 }
 
-function disciplineRow(container: HTMLElement, ref: BuildTraitRef, label: string, removable: boolean): HTMLElement {
+/** A Discipline's row: its name, its stepper and `extra`, the control that ends it. Kept as long as its `key` stays. */
+export function disciplineRow(container: HTMLElement, ref: BuildTraitRef, label: string, key: string, extra?: HTMLElement): HTMLElement {
   const { mode, stepId, noticeId } = container.dataset;
   const labelId = traitLabelId(stepId!, ref);
   const name = document.createElement('span');
@@ -115,22 +114,18 @@ function disciplineRow(container: HTMLElement, ref: BuildTraitRef, label: string
   const actions = document.createElement('span');
   actions.className = 'advantages-row-actions';
   actions.append(rating);
-  if (removable) {
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.textContent = 'Remove';
-    remove.setAttribute('aria-label', `Remove ${label}`);
-    remove.setAttribute('aria-describedby', noticeId!);
-    remove.dataset.removeDiscipline = label;
-    actions.append(remove);
-  }
+  if (extra) actions.append(extra);
 
   const row = document.createElement('div');
   row.className = 'rating-row';
-  row.dataset.row = `${ref}|${removable}`;
+  row.dataset.row = key;
   row.append(name, actions);
   return row;
 }
+
+/** The rows of `container` by their key. */
+export const rowsByKey = (container: HTMLElement): Map<string, HTMLElement> =>
+  new Map([...container.querySelectorAll<HTMLElement>(':scope > [data-row]')].map((row) => [row.dataset.row!, row]));
 
 /**
  * Where focus goes when the row that held it leaves: the row that now sits in its place (else the one before),
@@ -163,19 +158,13 @@ export function syncRows(container: HTMLElement, rows: HTMLElement[]): void {
   else if (focused instanceof HTMLElement && container.contains(focused) && document.activeElement !== focused) focused.focus();
 }
 
-/** Keeps each container's rows for `mode` in report order, reusing rows that are still there. */
-export function renderDisciplineRows(root: HTMLElement, report: BuildReport, mode: DotSource): void {
-  const { disciplines } = report;
-  for (const container of root.querySelectorAll<HTMLElement>(`[data-discipline-rows][data-mode="${mode}"]`)) {
-    const creation = mode === 'creation';
-    const refs = creation ? disciplines.creationRows : disciplines.freebieRows;
-    const removable = creation && disciplines.choosesOwn;
-    const existing = new Map(
-      [...container.querySelectorAll<HTMLElement>(':scope > [data-row]')].map((row) => [row.dataset.row!, row]),
+/** Keeps the bought Disciplines of Finishing touches in report order, reusing rows that are still there. */
+export function renderFreebieDisciplineRows(root: HTMLElement, report: BuildReport): void {
+  for (const container of root.querySelectorAll<HTMLElement>('[data-discipline-rows][data-mode="freebie"]')) {
+    const existing = rowsByKey(container);
+    syncRows(
+      container,
+      report.disciplines.freebieRows.map((ref) => existing.get(ref) ?? disciplineRow(container, ref, report.traits[ref].label, ref)),
     );
-    const rows = refs.map(
-      (ref) => existing.get(`${ref}|${removable}`) ?? disciplineRow(container, ref, report.traits[ref].label, removable),
-    );
-    syncRows(container, rows);
   }
 }

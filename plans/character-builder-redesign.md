@@ -1636,7 +1636,7 @@ Feature: The Advantages screen
   Scenario: Virtues
     Then each Virtue shows at least one dot and the pool reads "7 remaining"
     When 6 of the 7 Virtue dots are placed
-    Then the Virtues callout says 1 dot is still to place
+    Then the Virtues callout says 6 of 7 additional Virtue dots are placed and 1 remains
     And a line says Humanity and Willpower are derived from the Virtues
 
   Scenario: Spending beyond the pools is not possible here
@@ -1659,7 +1659,7 @@ Feature: The Advantages screen
     When 6 of the 7 Virtue dots are placed
     And I search the Backgrounds for "re"
     And I choose the Resources chip again
-    Then the Virtues callout says 1 dot is still to place
+    Then the Virtues callout says 6 of 7 additional Virtue dots are placed and 1 remains
     And axe reports no violations at 1512 px and 375 px
     And every control has a unique accessible name
     And the page does not scroll horizontally at 375 px
@@ -2427,6 +2427,18 @@ Run at each merge point:
   (5) Result counts on the Clan and Nature & Demeanor searches are announced after a 400 ms
   pause, not at every keystroke (design rule 10); the shortcut hint is hidden while the
   search holds text so it never covers the browser's clear button.
+- **Slice 9 build-time amendments** (RD-12): (1) A Background chip chosen at 0 dots is UI-only:
+  the record holds dots, so it cannot say "chosen at 0" without a shape change (RD-21 stays
+  as approved); such a chip lives in the screen and is gone after a reload, and a scenario
+  states it. (2) The pool meter and callout copy follows the Attributes and Abilities
+  screens (one `Pool` and `parts/pool.ts` serve all of them), so the three cards read the
+  same as the ranked groups. (3) The Virtues callout therefore reads "6 of 7 additional
+  Virtue dots are placed and 1 remains", and the Gherkin says so (the first draft's "1 dot
+  is still to place" was reworded to match). (4) Six chosen counts held and picked chips,
+  but the build's own cap counts dots only, so freebie points could buy a dot on a seventh
+  Background while six empty chips were chosen. When the build gains a held Background the
+  screen drops the picked-empty chips that no longer fit, the earliest chosen kept, so held
+  plus picked never exceeds six (`reconcilePicked`); no change to the record.
 - **Old e2e features are hand-maintained** from Slice 1 (old plan marked superseded);
   re-running the old plan's export would overwrite them. Each slice replaces, not adds.
 - **Empty picked Background rows are page state**, dropped on reload (a scenario states

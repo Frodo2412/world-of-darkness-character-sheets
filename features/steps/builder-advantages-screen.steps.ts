@@ -337,9 +337,9 @@ Then('each Virtue shows at least one dot and the pool reads {string}', async ({ 
   await expect(await cardPool(page, 'Virtues')).toContainText(pool);
 });
 
-Then('the Virtues callout says 1 dot is still to place', async ({ page }) => {
+Then(/^the Virtues callout says (\d+ of \d+ additional Virtue dots are placed and \d+ remains?)$/, async ({ page }, text: string) => {
   const callout = (await groupBox(page, 'Virtues')).locator('[data-callout]:not([hidden])');
-  await expect(callout).toContainText('6 of 7 additional Virtue dots are placed and 1 remains');
+  await expect(callout).toContainText(text);
 });
 
 Then('a line says Humanity and Willpower are derived from the Virtues', async ({ page }) => {

@@ -97,7 +97,7 @@ Feature: The Advantages screen
   Scenario: Virtues
     Then each Virtue shows at least one dot and the pool reads "7 remaining"
     When 6 of the 7 Virtue dots are placed
-    Then the Virtues callout says 1 dot is still to place
+    Then the Virtues callout says 6 of 7 additional Virtue dots are placed and 1 remains
     And a line says Humanity and Willpower are derived from the Virtues
 
   Scenario: Spending beyond the pools is not possible here
@@ -120,7 +120,7 @@ Feature: The Advantages screen
     When 6 of the 7 Virtue dots are placed
     And I search the Backgrounds for "re"
     And I choose the Resources chip again
-    Then the Virtues callout says 1 dot is still to place
+    Then the Virtues callout says 6 of 7 additional Virtue dots are placed and 1 remains
     And axe reports no violations at 1512 px and 375 px
     And every control has a unique accessible name
     And the page does not scroll horizontally at 375 px

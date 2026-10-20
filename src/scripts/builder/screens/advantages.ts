@@ -11,21 +11,23 @@ import '../../../styles/builder/ranked.css';
 import {
   advantagesView,
   pressBackground,
-  selectedBackgrounds,
+  reconcilePicked,
   type AdvantagesView,
   type BackgroundRow,
   type BackgroundsView,
+  type DisciplineRow,
   type DisciplinesView,
   type VirtuesView,
 } from '../../../domain/v20/creation/advantageViews';
 import { report, type BuildReport } from '../../../domain/v20/creation/progress';
+import { addDiscipline, removeDiscipline } from '../../../domain/v20/creation/updates';
 import type { V20Build } from '../../../domain/v20/creation/build';
 import type { BackgroundName } from '../../../domain/v20/creation/rules';
 import { traitLabelId } from '../labelId';
 import { clearNotices, showReadout, showRefusal } from '../messages';
 import { drawCallout, drawPool, part, statusAfter, type Press } from '../parts/pool';
-import { renderDisciplineRows, syncRows, wireDisciplineRows } from '../parts/ranked';
-import { createStepperHost, renderStepper } from '../parts/ratingStepper';
+import { disciplineRow, rowsByKey, syncRows, wireAddField } from '../parts/ranked';
+import { createStepperHost, renderStepper, stepperFor } from '../parts/ratingStepper';
 import { findSearch, wireSearchField } from '../parts/search';
 import type { Wiring } from '../wiring';
 import type { ScreenModule } from './index';
@@ -63,18 +65,43 @@ function drawLine(element: HTMLElement, text: string | null): void {
   element.hidden = text === null || text === '';
 }
 
+/** A Remove button for the row of `label`; its caller says what it removes. */
+function removeButton(label: string, noticeId: string): HTMLButtonElement {
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.textContent = 'Remove';
+  remove.setAttribute('aria-label', `Remove ${label}`);
+  remove.setAttribute('aria-describedby', noticeId);
+  return remove;
+}
+
+/** A Discipline's row; a Caitiff's own rows end in a Remove button, a clan's three do not. */
+function disciplineRowElement(container: HTMLElement, row: DisciplineRow): HTMLElement {
+  let remove: HTMLButtonElement | undefined;
+  if (row.removable) {
+    remove = removeButton(row.label, container.dataset.noticeId!);
+    remove.dataset.removeDiscipline = row.label;
+  }
+  // Keyed by its removability too: a clan change can turn a clan's row into a Caitiff's of the same name.
+  return disciplineRow(container, row.ref, row.label, `${row.ref}|${row.removable}`, remove);
+}
+
 function drawDisciplines(root: HTMLElement, view: DisciplinesView, current: BuildReport): void {
   const card = cardOf(root, 'disciplines');
   showReadout(part(card, 'adv-line'), view.line);
   drawCardPool(card, 'disciplines', view.pool);
   drawLine(part(card, 'needs-clan-text'), view.gate?.text ?? null);
   part(card, 'needs-clan').hidden = view.gate === null;
-  for (const add of card.querySelectorAll<HTMLElement>('[data-discipline-add][data-mode="creation"]')) add.hidden = !view.canAdd;
-  // The rows are drawn from the report (shared with Finishing touches); this screen judges their plus and minus.
-  renderDisciplineRows(root, current, 'creation');
+  part(card, 'discipline-add').hidden = !view.canAdd;
+  // The rows are kept in the order of the view, and the ones that stay are never rebuilt.
+  const container = part<HTMLElement>(card, 'discipline-rows');
+  const existing = rowsByKey(container);
+  syncRows(
+    container,
+    view.rows.map((row) => existing.get(`${row.ref}|${row.removable}`) ?? disciplineRowElement(container, row)),
+  );
   for (const row of view.rows) {
-    const stepper = card.querySelector<HTMLElement>(`[data-build-trait="${row.ref}"]`)!;
-    renderStepper(stepper, current.traits[row.ref], current.settings, current.concept.clan, row);
+    renderStepper(stepperFor(card, row.ref)!, current.traits[row.ref], current.settings, current.concept.clan, row);
   }
 }
 
@@ -87,11 +114,7 @@ function backgroundRowElement(row: BackgroundRow): HTMLElement {
 
   const stepper = createStepperHost({ trait: row.ref, mode: 'creation', labelId, noticeId: BACKGROUNDS_NOTICE });
 
-  const remove = document.createElement('button');
-  remove.type = 'button';
-  remove.textContent = 'Remove';
-  remove.setAttribute('aria-label', `Remove ${row.name}`);
-  remove.setAttribute('aria-describedby', BACKGROUNDS_NOTICE);
+  const remove = removeButton(row.label, BACKGROUNDS_NOTICE);
   remove.dataset.bgRemove = row.name;
 
   const actions = document.createElement('span');
@@ -128,7 +151,7 @@ function drawBackgrounds(root: HTMLElement, view: BackgroundsView, current: Buil
   }
 
   const container = part<HTMLElement>(card, 'bg-rows');
-  const existing = new Map([...container.querySelectorAll<HTMLElement>(':scope > [data-row]')].map((row) => [row.dataset.row!, row]));
+  const existing = rowsByKey(container);
   syncRows(
     container,
     view.rows.map((row) => existing.get(row.name) ?? backgroundRowElement(row)),
@@ -147,7 +170,7 @@ function drawVirtues(root: HTMLElement, view: VirtuesView, current: BuildReport)
   drawCardPool(card, 'virtues', view.pool);
   drawCallout(card, view.callout);
   for (const row of view.rows) {
-    renderStepper(card.querySelector<HTMLElement>(`[data-build-trait="${row.ref}"]`)!, current.traits[row.ref], current.settings, current.concept.clan, row);
+    renderStepper(stepperFor(card, row.ref)!, current.traits[row.ref], current.settings, current.concept.clan, row);
   }
 }
 
@@ -155,6 +178,20 @@ function drawVirtues(root: HTMLElement, view: VirtuesView, current: BuildReport)
 function focusChip(root: HTMLElement, name: string): void {
   const chip = chipFor(root, name);
   (chip && !chip.hidden ? chip : part<HTMLElement>(root, 'bg-search')).focus();
+}
+
+/** The field that adds a Discipline by name or from the catalogue, and the Remove button of each row a Caitiff added. */
+function wireDisciplines(root: HTMLElement, { commit }: Wiring): void {
+  const card = cardOf(root, 'disciplines');
+  wireAddField(part(card, 'add-discipline'), (name, input) => commit((build) => addDiscipline(build, name, 'creation'), input));
+  // Delegated to the rows' container, so rows drawn later need no wiring.
+  part(card, 'discipline-rows').addEventListener('click', (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('[data-remove-discipline]');
+    if (!button) return;
+    // The button goes with its row, so a refusal is shown on the rows' first control. Where focus goes when
+    // the row leaves is decided once, by syncRows.
+    commit((build) => removeDiscipline(build, button.dataset.removeDiscipline!), button);
+  });
 }
 
 /** A chip press chooses or clears a Background on this screen, or says why it cannot. */
@@ -210,8 +247,9 @@ function wirePresses(root: HTMLElement): void {
 
 /** Draws the whole screen. A chip, a Remove press and the search change only this screen, so they draw it alone. */
 function drawScreen(build: V20Build, root: HTMLElement): void {
-  // Whatever the build holds a dot on stays chosen, so a row lowered to 0 is still there to be raised again.
-  for (const name of selectedBackgrounds(build, state.picked)) state.picked.add(name);
+  // Whatever the build holds a dot on stays chosen, so a row lowered to 0 is still there to be raised again;
+  // chips chosen at 0 dots give way when a dot bought elsewhere takes their place among the six.
+  state.picked = reconcilePicked(build, state.picked);
   const view: AdvantagesView = advantagesView(build, state.picked, state.query);
   const current = report(build);
   showReadout(part(root, 'adv-intro'), view.intro);
@@ -223,7 +261,7 @@ function drawScreen(build: V20Build, root: HTMLElement): void {
 export default {
   id: 'advantages',
   wire(root, wiring) {
-    wireDisciplineRows(root, wiring, 'creation');
+    wireDisciplines(root, wiring);
     wirePresses(root);
     wireChips(root, wiring);
     wireRemove(root, wiring);

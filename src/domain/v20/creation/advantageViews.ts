@@ -127,6 +127,18 @@ export const selectedBackgrounds = (build: V20Build, picked: ReadonlySet<Backgro
   BACKGROUNDS.filter((name) => picked.has(name) || rating(build, backgroundRef(name)) > 0);
 
 /**
+ * The chips the screen keeps chosen: the Backgrounds the build holds a dot on, and the chips picked at 0 dots
+ * that still fit within six, the earliest chosen first. The build's own cap counts dots only, so a dot bought
+ * on one more Background (with freebie points) must not leave more than six chosen on this screen.
+ */
+export function reconcilePicked(build: V20Build, picked: ReadonlySet<BackgroundName>): Set<BackgroundName> {
+  const held = BACKGROUNDS.filter((name) => rating(build, backgroundRef(name)) > 0);
+  const empty = [...picked].filter((name) => !held.includes(name)).slice(0, Math.max(0, MAX_HELD - held.length));
+  const keep = new Set<BackgroundName>([...held, ...empty]);
+  return new Set([...picked, ...held].filter((name) => keep.has(name)));
+}
+
+/**
  * The most Generation dots creation can place: the Background's own top, and no more than brings the effective
  * generation to the best there is. A stored build already past it keeps what it holds.
  */
@@ -184,8 +196,8 @@ export function pressBackground(build: V20Build, picked: ReadonlySet<BackgroundN
   if (rating(build, backgroundRef(name)) === 0) return { kind: 'clear' };
   // Freebie dots come off on Finishing touches; creation dots where they were placed.
   return dotsOf(build, backgroundRef(name)).freebie > 0
-    ? { kind: 'refuse', reason: `Remove the freebie dots of ${name} on Finishing touches first.`, step: 'finishing' }
-    : { kind: 'refuse', reason: `Lower ${name} to 0 first.` };
+    ? { kind: 'refuse', reason: `Remove the freebie dots of ${backgroundLabel(name)} on Finishing touches first.`, step: 'finishing' }
+    : { kind: 'refuse', reason: `Lower ${backgroundLabel(name)} to 0 first.` };
 }
 
 // Virtues

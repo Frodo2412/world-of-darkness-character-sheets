@@ -13,9 +13,9 @@ import {
 } from './support/builder';
 import { addDiscipline, backgroundChips, disciplineNames } from './support/advantages';
 import { clanNotice, clanPanel, clanRadio, expectClanChosen, focusedClan, openClanScreen } from './support/clan';
-import { expectRated, expectRemaining, groupBox, rateTrait, traitRating } from './support/ranked';
+import { expectRated, expectRemaining, groupBox, traitRating } from './support/ranked';
 
-const PLURAL: Record<string, string> = { Discipline: 'Disciplines', Background: 'Backgrounds', Virtue: 'Virtues' };
+const PLURAL: Record<string, string> = { Discipline: 'Disciplines', Virtue: 'Virtues' };
 
 /** The visible notice that holds `text`, wherever the refused control was. */
 const noticeWith = (page: Page, text: string | RegExp) =>
@@ -34,11 +34,6 @@ Given('a player on the advantages step', async ({ page }) => {
 
 // When
 
-When(/^they add (?:the|a write-in) Discipline "([^"]+)" and raise it to (\d+)$/, async ({ page }, name: string, value: string) => {
-  await addDiscipline(page, name);
-  await rateTrait(page, name, Number(value));
-});
-
 When(/^they try to add a write-in Discipline "([^"]*)"$/, async ({ page }, name: string) => {
   await addDiscipline(page, name);
 });
@@ -46,15 +41,6 @@ When(/^they try to add a write-in Discipline "([^"]*)"$/, async ({ page }, name:
 When('they look at the Background choices', async ({ page }) => {
   await openStep(page, 'Advantages');
 });
-
-When(
-  /^they raise (\w[\w-]*) to (\d+), ([\w-]+) to (\d+) and (\w[\w-]*) to (\d+)$/,
-  async ({ page }, a: string, ra: string, b: string, rb: string, c: string, rc: string) => {
-    await rateTrait(page, a, Number(ra));
-    await rateTrait(page, b, Number(rb));
-    await rateTrait(page, c, Number(rc));
-  },
-);
 
 When('they try to set the base generation to {string}', async ({ page }, label: string) => {
   await setBaseGeneration(page, label);
@@ -85,12 +71,12 @@ Then('the Disciplines are still only {string}', async ({ page }, name: string) =
   expect(await disciplineNames(page)).toEqual([name]);
 });
 
-Then(/^there (?:are|is) (\d+) (Discipline|Background|Virtue) dots? remaining$/, async ({ page }, count: string, noun: string) => {
-  await expectRemaining(page, PLURAL[noun], Number(count));
+Then(/^there (?:are|is) (\d+) Discipline dots? remaining$/, async ({ page }, count: string) => {
+  await expectRemaining(page, 'Disciplines', Number(count));
 });
 
 Then(
-  /^they are told there are no (Discipline|Background|Virtue) dots remaining and more can be bought with freebie points on Finishing touches$/,
+  /^they are told there are no (Discipline|Virtue) dots remaining and more can be bought with freebie points on Finishing touches$/,
   async ({ page }, noun: string) => {
     const notice = (await groupBox(page, PLURAL[noun])).locator('[data-notice]');
     await expect(notice).toContainText(`There are no ${noun} dots remaining. More can be bought with freebie points on Finishing touches.`);

@@ -93,6 +93,13 @@ export function createStepperHost({ trait, mode, labelId, noticeId }: StepperHos
   return host;
 }
 
+/**
+ * The stepper of `ref` in `scope`. Found by comparing the attribute, not by a selector built from it: a Caitiff's
+ * written-in Discipline may be named with quotes or a backslash, which would make the selector throw.
+ */
+export const stepperFor = (scope: ParentNode, ref: string): HTMLElement | undefined =>
+  [...scope.querySelectorAll<HTMLElement>('[data-build-trait]')].find((stepper) => stepper.dataset.buildTrait === ref);
+
 function stepButton(step: -1 | 1, label: string): HTMLButtonElement {
   const button = document.createElement('button');
   button.type = 'button';

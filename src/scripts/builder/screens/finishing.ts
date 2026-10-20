@@ -3,7 +3,7 @@ import '../../../styles/builder/finishing.css';
 import { bloodPoolHint, report } from '../../../domain/v20/creation/progress';
 import { showReadout } from '../messages';
 import { renderFreebies } from '../parts/freebies';
-import { renderDisciplineRows, wireDisciplineRows } from '../parts/ranked';
+import { renderFreebieDisciplineRows, wireFreebieDisciplines } from '../parts/ranked';
 import type { ScreenModule } from './index';
 
 /** The Blood Pool field's own words: its range, whether it is recorded, and that it is required until then. */
@@ -22,10 +22,10 @@ function renderBloodPool(root: HTMLElement, bloodPool: number | null, hint: stri
 export default {
   id: 'finishing',
   wire(root, wiring) {
-    wireDisciplineRows(root, wiring, 'freebie');
+    wireFreebieDisciplines(root, wiring);
   },
   render(build, root) {
-    renderDisciplineRows(root, report(build), 'freebie');
+    renderFreebieDisciplineRows(root, report(build));
     renderFreebies(root, build);
     renderBloodPool(root, build.bloodPool, bloodPoolHint(build));
   },

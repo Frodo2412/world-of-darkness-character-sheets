@@ -8,6 +8,7 @@ import {
   backgroundsView,
   disciplinesView,
   pressBackground,
+  reconcilePicked,
   selectedBackgrounds,
   virtuesView,
   type BackgroundsView,
@@ -211,6 +212,53 @@ describe('pressing a chosen chip', () => {
 
   test('is refused at the six as well as at 0 dots only for an unchosen chip', () => {
     expect(pressBackground(fiveHeld(), picks('Fame'), 'Fame')).toEqual({ kind: 'clear' });
+  });
+
+  test('names a Sabbat Background as the row and the chip show it', () => {
+    const creationDots = play(fresh(), creation('background:Rituals', 1));
+    expect(pressBackground(creationDots, NONE, 'Rituals')).toEqual({ kind: 'refuse', reason: 'Lower Rituals (Sabbat) to 0 first.' });
+    const freebieDots = play(fresh(), freebie('background:Black Hand Membership', 1));
+    expect(pressBackground(freebieDots, NONE, 'Black Hand Membership')).toEqual({
+      kind: 'refuse',
+      reason: 'Remove the freebie dots of Black Hand Membership (Sabbat) on Finishing touches first.',
+      step: 'finishing',
+    });
+  });
+});
+
+describe('the chips the screen keeps chosen', () => {
+  const all = (names: ReadonlySet<BackgroundName>) => [...names];
+
+  test('adds a Background the build holds a dot on', () => {
+    const build = play(fresh(), creation('background:Contacts', 2));
+    expect(all(reconcilePicked(build, picks('Resources')))).toEqual(['Resources', 'Contacts']);
+  });
+
+  test('keeps every chip chosen at 0 dots while held and chosen stay within six', () => {
+    const build = fiveHeld();
+    expect(all(reconcilePicked(build, picks('Allies')))).toEqual(['Allies', 'Contacts', 'Herd', 'Mentor', 'Resources']);
+    expect(all(reconcilePicked(fresh(), picks('Fame', 'Status', 'Domain', 'Herd', 'Mentor', 'Allies')))).toHaveLength(6);
+  });
+
+  test('drops the empty chips that no longer fit once the build holds a dot on one more, earliest chosen kept', () => {
+    // Six chips chosen at 0 dots, then a freebie dot is bought on a seventh Background.
+    const chosen = picks('Allies', 'Contacts', 'Domain', 'Fame', 'Herd', 'Mentor');
+    const build = play(fresh(), freebie('background:Status', 1));
+    const kept = reconcilePicked(build, chosen);
+    expect(all(kept)).toEqual(['Allies', 'Contacts', 'Domain', 'Fame', 'Herd', 'Status']);
+    expect(backgrounds(build, kept).selected).toBe('Selected · 6/6');
+  });
+
+  test('never drops a Background the build holds a dot on', () => {
+    const build = play(fiveHeld(), freebie('background:Status', 1));
+    const kept = reconcilePicked(build, picks('Domain', 'Fame', 'Allies'));
+    expect(all(kept).sort()).toEqual(['Allies', 'Contacts', 'Herd', 'Mentor', 'Resources', 'Status']);
+  });
+
+  test('leaves a stored build holding more than six as it is', () => {
+    const six = play(fiveHeld(), freebie('background:Status', 1));
+    const build: V20Build = { ...six, traits: { ...six.traits, 'background:Fame': { ...six.traits['background:Fame'], freebie: 1 } } };
+    expect(all(reconcilePicked(build, picks('Domain')))).toHaveLength(7);
   });
 });
 

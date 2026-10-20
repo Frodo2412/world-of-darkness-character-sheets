@@ -12,12 +12,6 @@ Feature: Advantages step
     Then they are told there are no Discipline dots remaining and more can be bought with freebie points on Finishing touches
     And Potence is rated 0
 
-  Scenario: A Caitiff may take any Discipline
-    Given a build of clan "Caitiff"
-    When they add the Discipline "Protean" and raise it to 2
-    And they add a write-in Discipline "Flight" and raise it to 1
-    Then there are 0 Discipline dots remaining
-
   Scenario Outline: A write-in Discipline needs a usable name
     Given a build of clan "Caitiff" with the Discipline "Protean"
     When they try to add a write-in Discipline "<name>"
@@ -73,18 +67,6 @@ Feature: Advantages step
     Then the choices are exactly
       | Allies | Alternate Identity | Black Hand Membership | Contacts | Domain | Fame | Generation | Herd | Influence | Mentor | Resources | Retainers | Rituals | Status |
 
-  Scenario: Five Background dots are available
-    Given a player on the advantages step
-    When they raise Resources to 3
-    And they raise Herd to 2
-    Then there are 0 Background dots remaining
-
-  Scenario: A sixth Background dot is refused
-    Given a build with Resources rated 3 and Herd rated 2
-    When they try to raise Fame to 1
-    Then they are told there are no Background dots remaining and more can be bought with freebie points on Finishing touches
-    And Fame is rated 0
-
   Scenario: Generation dots improve the effective generation
     Given a build with base generation "11th"
     When they raise the Generation background to 2
@@ -103,11 +85,6 @@ Feature: Advantages step
     When they try to raise the Generation background to 1
     Then they are told the effective generation cannot be better than 4th
     And the Generation background is rated 0
-
-  Scenario: Seven Virtue dots are available
-    Given a player on the advantages step
-    When they raise Conscience to 4, Self-Control to 3 and Courage to 3
-    Then there are 0 Virtue dots remaining
 
   Scenario: A Virtue offers five dots, whatever the generation
     Given a 4th generation build
