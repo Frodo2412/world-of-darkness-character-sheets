@@ -356,7 +356,7 @@ function setCreationRating(build: V20Build, ref: BuildTraitRef, target: number):
   }
   if (kindOf(ref) === 'discipline') {
     if (build.clan === '') {
-      return refuse(build, 'Choose a clan on the Concept step before placing Discipline dots.', 'concept');
+      return refuse(build, 'Choose a clan on the Clan step before placing Discipline dots.', 'clan');
     }
     if (isCaitiff(build) ? !knownDiscipline(build, ref) : !isClanDiscipline(build, keyOf(ref))) {
       return refuse(build, `${label} is not a ${build.clan} Discipline. ${MORE_WITH_FREEBIES}`, 'finishing');
@@ -466,7 +466,7 @@ export function addDiscipline(build: V20Build, name: string, source: DotSource):
   };
   if (source === 'creation') {
     if (build.clan === '') {
-      return refuse(build, 'Choose a clan on the Concept step before placing Discipline dots.', 'concept');
+      return refuse(build, 'Choose a clan on the Clan step before placing Discipline dots.', 'clan');
     }
     if (!isCaitiff(build)) {
       return refuse(build, `Only Caitiff choose their own Disciplines. ${MORE_WITH_FREEBIES}`, 'finishing');

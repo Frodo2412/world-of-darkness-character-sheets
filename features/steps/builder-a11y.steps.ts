@@ -6,7 +6,8 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 import { Then, When } from './fixtures';
 import { expectUniqueControlNames } from './support/accessibility';
-import { openFreebieSections, openStep, shownStep, stepNav } from './support/builder';
+import { openStep, shownStep, stepNav } from './support/builder';
+import { openFreebieSections } from './support/ranked';
 import { openRoster } from './support/pages';
 import { putRosterInState } from './support/library-states';
 

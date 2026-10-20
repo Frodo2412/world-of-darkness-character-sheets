@@ -1,0 +1,30 @@
+---
+// Nature and Demeanor suggest Archetypes but accept any text. Filled by the same free-text wiring as the
+// concept fields (`data-concept`), which looks for them wherever they are on the page.
+import { ARCHETYPES } from '../../domain/v20/creation/rules';
+import { HEADER_FIELDS } from '../../domain/v20/traits';
+
+const fields = HEADER_FIELDS.filter((field) => field.key === 'nature' || field.key === 'demeanor');
+---
+
+<div class="builder-fields">
+	{
+		fields.map((field) => (
+			<div class="builder-field">
+				<label for={`concept-${field.key}`}>{field.label}</label>
+				<input
+					type="text"
+					id={`concept-${field.key}`}
+					data-concept={field.key}
+					autocomplete="off"
+					list="archetypes"
+					aria-describedby="archetype-hint"
+				/>
+			</div>
+		))
+	}
+	<p id="archetype-hint" class="field-hint">For Nature and Demeanor, pick a suggested Archetype or write your own.</p>
+	<datalist id="archetypes">
+		{ARCHETYPES.map((archetype) => <option value={archetype} />)}
+	</datalist>
+</div>

@@ -2,19 +2,16 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { buyDiscipline, creation, extra, fresh, generation, rank } from '../../src/domain/v20/creation/testing/play';
 import { buyDots, leaveFreebies, refFor, seedSteps } from './builder-seeding.steps';
 import { Given, Then, When } from './fixtures';
+import { freebieBar, openPlayedFrom, openStep, shownStep } from './support/builder';
 import {
   expectRated,
-  freebieBar,
   groupBox,
   groupReadout,
   openFreebieSections,
-  openPlayedFrom,
-  openStep,
   requestRating,
-  shownStep,
   traitName,
   traitRating,
-} from './support/builder';
+} from './support/ranked';
 import { bloodPoolField } from './support/bloodpool';
 
 const KINDS: Record<string, string> = { Disciplines: 'Disciplines', Backgrounds: 'Backgrounds' };

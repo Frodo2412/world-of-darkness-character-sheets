@@ -59,7 +59,7 @@ function renderFooter(root: HTMLElement, build: V20Build, screen: ScreenId): voi
   } else {
     delete goTo.dataset.stepGo;
   }
-  root.querySelector<HTMLElement>('[data-review]')!.hidden = screen === 'finishing';
+  root.querySelector<HTMLElement>('[data-review]')!.hidden = screen === 'review';
 }
 
 export function renderNavigation(root: HTMLElement, build: V20Build, screen: ScreenId): void {

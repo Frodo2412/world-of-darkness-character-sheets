@@ -3,43 +3,25 @@ import { BACKGROUNDS } from '../../src/domain/v20/creation/rules';
 import { Given, Then, When } from './fixtures';
 import {
   baseGeneration,
-  expectRated,
-  groupBox,
-  groupReadout,
   openCreationSettings,
   openPlayed,
   openStep,
-  rateTrait,
   readout,
   setBaseGeneration,
   settingsDialog,
   shownStep,
-  traitRating,
 } from './support/builder';
+import { addDiscipline, disciplineNames } from './support/advantages';
+import { CLAN_SELECT_ID, clanNotice, clanPanel, clanSelect, openClanScreen } from './support/clan';
+import { expectRated, groupBox, groupReadout, rateTrait, traitRating } from './support/ranked';
 import { seedSteps } from './builder-seeding.steps';
 import { addCreationDiscipline, creation } from '../../src/domain/v20/creation/testing/play';
 
 const PLURAL: Record<string, string> = { Discipline: 'Disciplines', Background: 'Backgrounds', Virtue: 'Virtues' };
 
-const clanSelect = (page: Page) => page.locator('#builder').getByRole('combobox', { name: 'Clan', exact: true });
-
 /** The visible notice that holds `text`, wherever the refused control was. */
 const noticeWith = (page: Page, text: string | RegExp) =>
   shownStep(page).locator('[data-notice]').or(settingsDialog(page).locator('[data-notice]')).filter({ hasText: text });
-
-async function disciplineNames(page: Page): Promise<string[]> {
-  const group = await groupBox(page, 'Disciplines');
-  return group.getByRole('slider').evaluateAll((sliders) =>
-    sliders.map((slider) => document.getElementById(slider.getAttribute('aria-labelledby')!)!.textContent ?? ''),
-  );
-}
-
-async function addDiscipline(page: Page, name: string): Promise<void> {
-  await openStep(page, 'Advantages');
-  const group = await groupBox(page, 'Disciplines');
-  await group.getByLabel('Discipline to add', { exact: true }).fill(name);
-  await group.getByRole('button', { name: 'Add Discipline' }).click();
-}
 
 // Given
 
@@ -100,7 +82,7 @@ When('they try to set the base generation to {string}', async ({ page }, label: 
 When(
   /^using only the keyboard they move the clan choice past "([^"]+)" and "([^"]+)" and back to "([^"]+)"$/,
   async ({ page, memory }, first: string, second: string, back: string) => {
-    await openStep(page, 'Concept');
+    await openClanScreen(page);
     const select = clanSelect(page);
     await select.focus();
     const options = await select.locator('option').allTextContents();
@@ -114,10 +96,10 @@ When(
 
 // Then
 
-Then('they are told to choose a clan on the Concept step before placing Discipline dots', async ({ page }) => {
+Then('they are told to choose a clan on the Clan step before placing Discipline dots', async ({ page }) => {
   const group = await groupBox(page, 'Disciplines');
-  await expect(group).toContainText('Choose a clan on the Concept step before placing Discipline dots.');
-  await expect(group.getByRole('link', { name: 'Go to Concept' })).toBeVisible();
+  await expect(group).toContainText('Choose a clan on the Clan step before placing Discipline dots.');
+  await expect(group.getByRole('link', { name: 'Go to Clan' })).toBeVisible();
 });
 
 Then('no Discipline dots can be placed', async ({ page }) => {
@@ -153,18 +135,18 @@ Then(/^they are told (a Discipline needs a name|the build already has \w+)$/, as
 
 Then(/^the clan is "([^"]+)" with (\w+) rated (\d+) and (\w+) rated (\d+)$/, async ({ page }, name: string, a: string, ra: string, b: string, rb: string) => {
   await expect(clanSelect(page).locator('option:checked')).toHaveText(name);
-  await expect(page.locator('[data-clan-change]')).toBeHidden();
+  await expect(clanPanel(page)).toBeHidden();
   await expectRated(await traitRating(page, a), Number(ra));
   await expectRated(await traitRating(page, b), Number(rb));
 });
 
 Then('keyboard focus never left the clan choice', async ({ memory }) => {
-  expect(memory.entered.get('focus')).toBe('concept-clan');
+  expect(memory.entered.get('focus')).toBe(CLAN_SELECT_ID);
 });
 
 Then('no clan-change notice is shown', async ({ page }) => {
-  await openStep(page, 'Concept');
-  await expect(page.locator('#concept-clan-notice')).toHaveText('');
+  await openClanScreen(page);
+  await expect(clanNotice(page)).toHaveText('');
 });
 
 Then('the choices are exactly', async ({ page }, table: import('playwright-bdd').DataTable) => {

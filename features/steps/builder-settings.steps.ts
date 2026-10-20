@@ -16,15 +16,12 @@ import {
   closeCreationSettings,
   creationSettingsButton,
   enterExtraFreebies,
-  expectRated,
   extraFreebies,
-  groupNotice,
   openBuildId,
   openCreationSettings,
   openPlayed,
   readout,
   reloadBuilder,
-  requestRating,
   setBaseGeneration,
   settingsDialog,
   startBuild,
@@ -32,8 +29,8 @@ import {
   stepLink,
   stepNav,
   storedBuild,
-  traitRating,
 } from './support/builder';
+import { expectRated, groupNotice, requestRating, traitRating } from './support/ranked';
 import { buildEntries, characterEntries, createAction, horizontalOverflow, openRoster, rosterList } from './support/pages';
 import { saveDamagedBuild } from './support/seed';
 import {

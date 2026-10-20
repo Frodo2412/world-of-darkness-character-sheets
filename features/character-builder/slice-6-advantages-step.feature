@@ -3,7 +3,7 @@ Feature: Advantages step
   Scenario: Disciplines wait for a clan
     Given a build with no clan chosen
     When they open the advantages step
-    Then they are told to choose a clan on the Concept step before placing Discipline dots
+    Then they are told to choose a clan on the Clan step before placing Discipline dots
     And no Discipline dots can be placed
 
   Scenario: A clan offers exactly its three Disciplines

@@ -6,7 +6,8 @@ import type { ScreenModule } from './index';
 export default {
   id: 'concept',
   wire(root, { commit }) {
-    // Free text is kept as it is typed, as on the sheet.
+    // Free text is kept as it is typed, as on the sheet. Every `[data-concept]` field is handled here,
+    // those of the Nature & Demeanor screen too: they are the same header fields of the build.
     for (const input of root.querySelectorAll<HTMLInputElement>('[data-concept]')) {
       input.addEventListener('input', () => {
         const field = input.dataset.concept as ConceptField;

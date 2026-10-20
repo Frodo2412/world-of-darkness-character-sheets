@@ -18,15 +18,9 @@ import {
   finishButton,
   finishDialog,
   freebieBar,
-  groupNotice,
   openPlayed,
   openPlayedFrom,
   openStep,
-  placeDots,
-  rankGroup,
-  rankSelect,
-  rateTrait,
-  requestRating,
   saveBuilds,
   setBaseGeneration,
   settingsDialog,
@@ -34,8 +28,9 @@ import {
   startBuild,
   screenTitle,
   stepLink,
-  traitRating,
 } from './support/builder';
+import { chooseClan, clanNotice, clanPanel, clanSelect, openClanScreen } from './support/clan';
+import { groupNotice, placeDots, rankGroup, rankSelect, rateTrait, requestRating, traitRating } from './support/ranked';
 import { buildEntries, openRoster } from './support/pages';
 import { identityName, identitySummary } from './support/sheet';
 import { overwriteRecord, refuseWrites } from './support/storage';
@@ -75,11 +70,6 @@ async function placeAbilities(page: Page): Promise<void> {
   await placeDots(page, 'Talents', 13, 3);
   await placeDots(page, 'Skills', 9, 3);
   await placeDots(page, 'Knowledges', 5, 3);
-}
-
-async function chooseClan(page: Page, clan: string): Promise<void> {
-  await openStep(page, 'Concept');
-  await page.locator('#builder').getByRole('combobox', { name: 'Clan', exact: true }).selectOption({ label: clan });
 }
 
 // Journeys
@@ -160,8 +150,8 @@ Then('the ranks, the clan and the freebie points remaining are as they left them
   await expect(await rankSelect(page, 'Physical')).toHaveValue('primary');
   await expect(await rankSelect(page, 'Social')).toHaveValue('secondary');
   await expect(await rankSelect(page, 'Mental')).toHaveValue('tertiary');
-  await openStep(page, 'Concept');
-  await expect(page.locator('#builder').getByRole('combobox', { name: 'Clan' }).locator('option:checked')).toHaveText('Gangrel');
+  await openClanScreen(page);
+  await expect(clanSelect(page).locator('option:checked')).toHaveText('Gangrel');
   await expect(freebieBar(page)).toHaveText('14 freebie points remaining');
 });
 
@@ -187,17 +177,17 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
   'the clan-change confirmation': async (page) => {
     await openPlayed(page, ...seedSteps(undefined, undefined, 'Brujah', 'Celerity rated 2 and Potence rated 1'));
     await chooseClan(page, 'Toreador');
-    await expect(page.locator('[data-clan-change]')).toBeVisible();
+    await expect(clanPanel(page)).toBeVisible();
   },
   'a clan-change notice': async (page) => {
     await openPlayed(page, ...seedSteps(undefined, undefined, 'Brujah', 'Celerity rated 2 and Potence rated 1'));
     await chooseClan(page, 'Toreador');
     await page.getByRole('button', { name: 'Switch to Toreador' }).click();
-    await expect(page.locator('#concept-clan-notice')).not.toHaveText('');
+    await expect(clanNotice(page)).not.toHaveText('');
   },
   'the outstanding list with items': async (page) => {
     await openPlayed(page);
-    await openStep(page, 'Finishing touches');
+    await openStep(page, 'Review & resolve');
   },
   'the unspent-freebies confirmation': async (page) => {
     await openPlayedFrom(page, completeBuild('Brujah'));
@@ -281,8 +271,8 @@ const KEYBOARD: Record<string, (page: Page, stops: { control: string; visible: b
     await page.keyboard.type('10');
   },
   'choose the clan "Brujah"': async (page, stops) => {
-    await keyboardOpen(page, 'Concept', stops);
-    await tabTo(page, page.locator('#builder').getByRole('combobox', { name: 'Clan', exact: true }), stops);
+    await keyboardOpen(page, 'Clan', stops);
+    await tabTo(page, clanSelect(page), stops);
     await page.keyboard.type('Bru');
   },
   'rank Physical primary and raise Strength to 3': async (page, stops) => {
@@ -321,7 +311,7 @@ const KEYBOARD: Record<string, (page: Page, stops: { control: string; visible: b
 
 When(/^using only the keyboard they ((?!focus \w+ and press)(?!move the clan choice).+)$/, async ({ page, memory }, action: string) => {
   if (action === 'activate Finish and press Escape') {
-    await keyboardOpen(page, 'Finishing touches', memory.focusStops);
+    await keyboardOpen(page, 'Review & resolve', memory.focusStops);
     await tabTo(page, finishButton(page), memory.focusStops);
     await page.keyboard.press('Enter');
     await expect(finishDialog(page)).toBeVisible();

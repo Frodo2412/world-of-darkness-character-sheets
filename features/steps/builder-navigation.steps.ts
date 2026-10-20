@@ -13,21 +13,20 @@ import {
 } from '../../src/domain/v20/creation/testing/play';
 import { PHASES, SCREENS } from '../../src/domain/v20/creation/rules';
 import { Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
-import { expectUniqueControlNames } from './support/accessibility';
 import {
   buildWith,
   openPlayed,
   openPlayedFrom,
   openStep,
-  rateTrait,
   screenTitle,
   settingsDialog,
+  startBuild,
   stepHeading,
   stepLink,
   stepNav,
 } from './support/builder';
+import { rateTrait } from './support/ranked';
 import { expectOnRoster } from './support/pages';
-import { expectNoSidewaysScrollAt, expectNoViolationsAt, expectOneH1 } from './support/standards';
 import { escaped } from './support/text';
 
 /** What the "I choose it" step chooses: the control an earlier step in the scenario pointed at. */
@@ -300,10 +299,6 @@ Then('no reason text is shown', async ({ page }) => {
   await expect(goToButton(page)).toBeHidden();
 });
 
-Then(saying('focus is on the ', ' heading'), async ({ page }, title: string) => {
-  await expect(stepHeading(page, title)).toBeFocused();
-});
-
 Then(saying('the page title names ', ''), async ({ page }, title: string) => {
   await expect(page).toHaveTitle(new RegExp(`^${escaped(screenTitle(title))} – `));
 });
@@ -327,22 +322,16 @@ Then('it says it is available after Finish', async ({ page }) => {
   await expect(screenItem(page, 'Character sheet')).toContainText('Available after Finish');
 });
 
-// The shell's screen standards (features/character-builder/builder-shell-standards.feature)
+// Old-vocabulary steps that name a screen as a step in quotes (the finish and whole-builder features)
 
-Then('the shell has no WCAG 2.1 AA violations at {int} pixels wide', async ({ page }, width: number) => {
-  await expectNoViolationsAt(page, width);
+Given('a player on the {string} step of a new build', async ({ page }, title: string) => {
+  await startBuild(page);
+  await openStep(page, title);
 });
 
-Then('the shell does not scroll horizontally at {int} pixels wide', async ({ page }, width: number) => {
-  await expectNoSidewaysScrollAt(page, width);
-});
-
-Then('the shell has exactly one level 1 heading', async ({ page }) => {
-  await expectOneH1(page);
-});
-
-Then('every shell control has a unique accessible name', async ({ page }) => {
-  await expectUniqueControlNames(page.locator('main'));
+Then('the {string} step is shown', async ({ page }, title: string) => {
+  await expect(stepHeading(page, title)).toBeVisible();
+  await expect(page.locator('#builder [data-step]:visible')).toHaveCount(1);
 });
 
 // Navigation edges (features/character-builder/builder-navigation-edges.feature)

@@ -1,0 +1,22 @@
+---
+// The Clan screen: the clan select and, beside it, the question a switch that would remove dots asks.
+import { CLAN_NAMES } from '../../domain/v20/creation/rules';
+---
+
+<div class="builder-fields">
+	<div class="builder-field">
+		<label for="clan-choice">Clan</label>
+		<select id="clan-choice" data-clan aria-describedby="clan-choice-notice clan-change-text">
+			<option value="">Choose a clan</option>
+			{CLAN_NAMES.map((clan) => <option value={clan}>{clan}</option>)}
+		</select>
+		<p id="clan-choice-notice" class="field-notice" role="status" data-notice></p>
+		<div class="clan-change" data-clan-change hidden>
+			<div id="clan-change-text" role="status" data-clan-change-text></div>
+			<div class="clan-change-actions">
+				<button type="button" data-clan-switch></button>
+				<button type="button" data-clan-keep></button>
+			</div>
+		</div>
+	</div>
+</div>

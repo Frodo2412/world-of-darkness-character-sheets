@@ -1,29 +1,24 @@
-import { expect, type Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { ATTRIBUTE_GROUPS } from '../../src/domain/v20/traits';
 import { attributesRanked, creation, rank } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When } from './fixtures';
+import { openPlayed, openStep, shownStep, startBuild } from './support/builder';
+import { chooseClan, clanNotice, clanPanel, clanSelect } from './support/clan';
 import {
-  builderField,
   expectRated,
   groupNotice,
   groupReadout,
-  openPlayed,
-  openStep,
   placeDots,
   rankGroup,
   rankSelect,
   rateTrait,
-  shownStep,
-  startBuild,
   traitRating,
-} from './support/builder';
+} from './support/ranked';
 import { escaped } from './support/text';
 
 const RANK = '(primary|secondary|tertiary)';
 
 const EXHAUSTED = 'More can be bought with freebie points on Finishing touches.';
-
-const clanPanel = (page: Page) => page.locator('[data-clan-change]');
 
 // Given
 
@@ -114,8 +109,7 @@ Given('a build with ranked Attribute groups, an overspent group and a refusal sh
 // When
 
 When(/^they choose the clan "([^"]+)" and confirm$/, async ({ page }, name: string) => {
-  await openStep(page, 'Concept');
-  await builderField(page, 'Clan').selectOption({ label: name });
+  await chooseClan(page, name);
   await clanPanel(page).getByRole('button', { name: `Switch to ${name}` }).click();
 });
 
@@ -202,14 +196,14 @@ Then(
   async ({ page }, name: string, trait: string, rating: string) => {
     await clanPanel(page).getByRole('button', { name: `Keep ${name}` }).click();
     await expect(clanPanel(page)).toBeHidden();
-    await expect(builderField(page, 'Clan').locator('option:checked')).toHaveText(name);
-    await expect(builderField(page, 'Clan')).toBeFocused();
+    await expect(clanSelect(page).locator('option:checked')).toHaveText(name);
+    await expect(clanSelect(page)).toBeFocused();
     await expectRated(await traitRating(page, trait), Number(rating));
   },
 );
 
 Then(/^they are told (?:that )?(Appearance was set to 0.*|the .+ dots? (?:was|were) removed.*)$/, async ({ page }, what: string) => {
-  await expect(page.locator('#concept-clan-notice')).toContainText(new RegExp(escaped(what), 'i'));
+  await expect(clanNotice(page)).toContainText(new RegExp(escaped(what), 'i'));
 });
 
 Then('no confirmation was asked', async ({ page }) => {

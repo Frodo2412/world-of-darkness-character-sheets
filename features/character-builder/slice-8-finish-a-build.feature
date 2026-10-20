@@ -1,11 +1,17 @@
 Feature: Finishing a build
 
+  Scenario: Finish is on Review & resolve, which ends in it rather than in Continue
+    Given a player who has started building a character
+    When they open the review and resolve step
+    Then Finish is offered and Continue is not
+    And Finishing touches has no Finish button
+
   Scenario: A new build lists everything outstanding
     Given a player who has started building a character
-    When they open the finishing touches step
+    When they open the review and resolve step
     Then the outstanding list shows exactly
       | item                         | step              |
-      | Choose a clan                | Character concept |
+      | Choose a clan                | Clan              |
       | Rank the Attribute groups    | Attributes        |
       | Rank the Ability groups      | Abilities         |
       | Place 3 Discipline dots      | Advantages        |
@@ -16,7 +22,7 @@ Feature: Finishing a build
 
   Scenario Outline: One unplaced dot blocks finishing
     Given a complete build except for one <allotment> dot
-    When they open the finishing touches step
+    When they open the review and resolve step
     Then the outstanding list shows only "Place 1 <allotment> dot" for the <step> step
     And the build cannot be finished
 
@@ -30,13 +36,13 @@ Feature: Finishing a build
 
   Scenario: An overspent group blocks finishing
     Given a complete build whose Physical group is overspent by 2 dots
-    When they open the finishing touches step
+    When they open the review and resolve step
     Then the outstanding list shows only "Lower Physical traits by 2 dots" for the Attributes step
     And the build cannot be finished
 
   Scenario: A stored build that breaks a rule shows it as outstanding
     Given a stored 13th generation build whose Strength is rated 6
-    When they open the finishing touches step
+    When they open the review and resolve step
     Then the outstanding list shows an item naming Strength for the Attributes step
     And the build cannot be finished
 
@@ -47,7 +53,7 @@ Feature: Finishing a build
 
   Scenario: The outstanding list keeps itself up to date
     Given a complete build except for one Virtue dot
-    When they place the last Virtue dot and return to the finishing touches step
+    When they place the last Virtue dot and return to the review and resolve step
     Then nothing is outstanding
     And the build can be finished
 
@@ -65,11 +71,11 @@ Feature: Finishing a build
   Scenario: Every step offers a way to review and finish
     Given a player on the "Attributes" step of a new build
     When they use "Review and finish"
-    Then the "Finishing touches" step is shown with keyboard focus on the outstanding list
+    Then the "Review & resolve" step is shown with keyboard focus on the outstanding list
 
   Scenario: Outstanding items come before the unspent-freebie question
     Given a build with one Virtue dot unplaced and 4 freebie points remaining
-    When they open the finishing touches step
+    When they open the review and resolve step
     Then the build cannot be finished
     And no confirmation is asked
 
@@ -168,7 +174,7 @@ Feature: Finishing a build
 
   Scenario: The review and finish panel is accessible and fits a phone
     Given a complete build with 4 freebie points remaining
-    When the finishing touches step is checked
+    When the "Review & resolve" step is checked
     Then no WCAG 2.1 AA violations are reported
     And every control has a unique, non-empty accessible name
     And at 375 pixels wide the page does not scroll horizontally

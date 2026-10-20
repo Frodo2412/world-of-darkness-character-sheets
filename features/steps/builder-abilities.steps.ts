@@ -2,7 +2,8 @@ import { expect } from '@playwright/test';
 import { abilitiesRanked, creation } from '../../src/domain/v20/creation/testing/play';
 import { ABILITY_GROUPS } from '../../src/domain/v20/traits';
 import { Given, Then } from './fixtures';
-import { expectRated, groupBox, groupNotice, openPlayed, openStep, startBuild, traitRating } from './support/builder';
+import { openPlayed, openStep, startBuild } from './support/builder';
+import { expectRated, groupBox, groupNotice, traitRating } from './support/ranked';
 
 Given('a player on the abilities step', async ({ page }) => {
   await startBuild(page);

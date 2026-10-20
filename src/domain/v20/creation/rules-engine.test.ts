@@ -193,8 +193,8 @@ describe('Disciplines', () => {
   test('wait for a clan', () => {
     const build = fresh();
     expect(refused(setRating(build, 'discipline:Celerity', 1, 'creation'), build)).toMatchObject({
-      reason: 'Choose a clan on the Concept step before placing Discipline dots.',
-      step: 'concept',
+      reason: 'Choose a clan on the Clan step before placing Discipline dots.',
+      step: 'clan',
     });
   });
 
@@ -594,7 +594,7 @@ describe('violations of a stored build', () => {
 describe('outstanding', () => {
   test('a new build lists everything, in step order', () => {
     expect(outstanding(fresh())).toEqual([
-      { step: 'concept', message: 'Choose a clan' },
+      { step: 'clan', message: 'Choose a clan' },
       { step: 'attributes', message: 'Rank the Attribute groups' },
       { step: 'abilities', message: 'Rank the Ability groups' },
       { step: 'advantages', message: 'Place 3 Discipline dots' },

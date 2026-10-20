@@ -1,6 +1,6 @@
 // The standards every builder screen is held to: no WCAG 2.1 AA violations at a desktop and a phone
 // width, exactly one h1, no sideways scroll at 375 px and 320 px. Plain checks, no step text: the
-// generic screen-standards steps are written over these once, and the shell's scenarios use them now.
+// generic screen-standards steps (builder-standards.steps.ts) are written over these once.
 
 import { expect, type Page } from '@playwright/test';
 import { violationsOnPage } from './accessibility';

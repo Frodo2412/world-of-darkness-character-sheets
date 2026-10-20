@@ -193,7 +193,7 @@ Then('the stored record is unchanged', async ({ page, memory }) => {
 });
 
 Then('the outstanding list includes {string}', async ({ page }, item: string) => {
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   await expect(outstandingItems(page).filter({ hasText: item })).toHaveCount(1);
 });
 
@@ -208,6 +208,7 @@ Then('activating Finish does nothing', async ({ page }) => {
 Then(
   'the outstanding list is empty and Finish is enabled',
   async ({ page }) => {
+    await openStep(page, 'Review & resolve');
     await expect(outstandingItems(page)).toHaveCount(0);
     await expect(finishButton(page)).toHaveAttribute('aria-disabled', 'false');
     await expect(finishButton(page)).toHaveText('Finish character');

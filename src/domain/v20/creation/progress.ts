@@ -232,7 +232,7 @@ const stepIndex = (step: BuildStep): number => SCREENS.findIndex((entry) => entr
 /** What still stands between the build and a finished character, in step order. */
 export function outstanding(build: V20Build): OutstandingItem[] {
   const items: OutstandingItem[] = [];
-  if (build.clan === '') items.push({ step: 'concept', message: 'Choose a clan' });
+  if (build.clan === '') items.push({ step: 'clan', message: 'Choose a clan' });
 
   const states = allotmentStates(build);
   for (const allotment of RANKED_ALLOTMENTS) {

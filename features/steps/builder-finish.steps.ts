@@ -28,10 +28,10 @@ import {
   outstandingItems,
   openSavedBuild,
   openStep,
-  rateTrait,
   saveBuilds,
   stepHeading,
 } from './support/builder';
+import { rateTrait } from './support/ranked';
 import {
   SHEET_ADDRESS,
   buildEntries,
@@ -193,14 +193,18 @@ Given('an entry of {string} has been refused for the Blood Pool', async ({ page 
 
 // When
 
+When('they open the review and resolve step', async ({ page }) => {
+  await openStep(page, 'Review & resolve');
+});
+
 When('they follow the outstanding item', async ({ page }) => {
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   await outstandingItems(page).getByRole('link').click();
 });
 
-When('they place the last Virtue dot and return to the finishing touches step', async ({ page }) => {
+When('they place the last Virtue dot and return to the review and resolve step', async ({ page }) => {
   await rateTrait(page, 'Courage', 3);
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
 });
 
 When('they use {string}', async ({ page }, name: string) => {
@@ -216,7 +220,7 @@ When('they try to finish the build', async ({ page }) => {
 });
 
 When('they try to finish the build twice', async ({ page }) => {
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   // Counts what the notice is given after having been empty, which is what makes a live region speak.
   await watchWrites(page, '[data-finish-notice]');
   await activateFinish(page);
@@ -235,7 +239,7 @@ When('they try to finish the build and choose {string}', async ({ page }, choice
 });
 
 When('they activate Finish twice in quick succession', async ({ page }) => {
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   await finishButton(page).evaluate((button: HTMLButtonElement) => {
     button.click();
     button.click();
@@ -262,7 +266,7 @@ When('they raise Strength to {int} on the sheet', async ({ page }, value: number
 // Then
 
 Then('the outstanding list shows exactly', async ({ page }, table: DataTable) => {
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   const rows = await outstandingItems(page).evaluateAll((items) =>
     items.map((item) => ({
       item: item.querySelector('a')!.textContent!,
@@ -283,6 +287,7 @@ Then('the outstanding list shows an item naming Strength for the Attributes step
 });
 
 Then('the Blood Pool field shows its stored value, not marked invalid', async ({ page }) => {
+  await openStep(page, 'Finishing touches');
   await expect(bloodPoolField(page)).toHaveValue('');
   await expect(bloodPoolField(page)).not.toHaveAttribute('aria-invalid', 'true');
   await expect(bloodPoolMessage(page)).toHaveText('');
@@ -292,8 +297,18 @@ Then('the reason {string} has been announced twice', async ({ page }, message: s
   await expect.poll(async () => (await writtenTexts(page)).filter((said) => said === message)).toHaveLength(2);
 });
 
-Then('the build cannot be finished', async ({ page }) => {
+Then('Finish is offered and Continue is not', async ({ page }) => {
+  await expect(finishButton(page)).toBeVisible();
+  await expect(page.locator('#builder [data-screen-nav] [data-continue]')).toBeHidden();
+});
+
+Then('Finishing touches has no Finish button', async ({ page }) => {
   await openStep(page, 'Finishing touches');
+  await expect(finishButton(page)).toHaveCount(0);
+});
+
+Then('the build cannot be finished', async ({ page }) => {
+  await openStep(page, 'Review & resolve');
   await expect(finishButton(page)).toHaveAttribute('aria-disabled', 'true');
 });
 

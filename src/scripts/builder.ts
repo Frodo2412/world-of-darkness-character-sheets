@@ -64,12 +64,12 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
     render,
   );
 
-  // "Review and finish" on every step opens Finishing touches at the outstanding list.
+  // "Review and finish" on every screen opens Review & resolve at the outstanding list.
   root.addEventListener('click', (event) => {
     const link = (event.target as Element).closest('[data-review]');
     if (!link) return;
     event.preventDefault();
-    router.open('finishing', root.querySelector<HTMLElement>('[data-outstanding]')!);
+    router.open('review', root.querySelector<HTMLElement>('[data-outstanding]')!);
   });
   render();
 

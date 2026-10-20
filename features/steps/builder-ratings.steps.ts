@@ -3,23 +3,22 @@
 
 import { expect } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
+import { openStep } from './support/builder';
 import {
   expectRated,
   groupNotice,
   groupReadout,
-  openStep,
   rankGroup,
   rankSelect,
   rateTrait,
   requestRating,
   traitName,
   traitRating,
-} from './support/builder';
+} from './support/ranked';
 import { SHEET_ADDRESS } from './support/pages';
 import { expectRating, rating } from './support/ratings';
 
 const STEP_TITLES: Record<string, string> = {
-  concept: 'Concept',
   attributes: 'Attributes',
   abilities: 'Abilities',
   advantages: 'Advantages',
