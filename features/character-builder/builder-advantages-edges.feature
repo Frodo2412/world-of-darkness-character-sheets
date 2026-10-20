@@ -15,6 +15,12 @@ Feature: The Advantages screen keeps drawing whatever is typed, and keeps to six
     When I reload the builder
     Then that Discipline is listed
 
+  Scenario: Disciplines written in with names that differ only in punctuation each keep their own name and description
+    Given a Caitiff build on the Advantages screen
+    When I write in the Disciplines "Dark Arts" and "Dark-Arts"
+    Then the Disciplines are listed as "Dark Arts" and "Dark-Arts"
+    And each of those Disciplines has a rating row named for it and described by its own reasons
+
   Scenario: A Sabbat Background is named in its refusal as its chip names it
     Given Rituals holds 2 dots
     When I choose the Rituals chip again

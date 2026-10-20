@@ -8,9 +8,11 @@ import {
   clanCards,
   clanDetail,
   clanListView,
+  creationRuleNote,
+  fixedTraitRule,
   keepLabel,
 } from './clanCards';
-import { CLANS, CLAN_NAMES } from './rules';
+import { CLANS, CLAN_FIXED_TRAITS, CLAN_NAMES } from './rules';
 
 const words = (line: string): string[] => line.split(/\s+/).filter(Boolean);
 const names = (cards: readonly { name: string }[]): string[] => cards.map((card) => card.name);
@@ -97,6 +99,16 @@ describe('the clan detail', () => {
     for (const { name } of CLAN_CARDS) expect(clanDetail(name)?.note).toBe(CREATION_RULE_NOTE);
   });
 
+  test('says the copy it always has for the current rules data', () => {
+    expect(clanDetail('Nosferatu')?.rule).toBe('Appearance is fixed at 0.');
+    expect(CREATION_RULE_NOTE).toBe("Only Nosferatu's Appearance rule changes creation arithmetic.");
+  });
+
+  test('gives a rule to exactly the clans the rules fix a trait for', () => {
+    const ruled = CLAN_NAMES.filter((name) => clanDetail(name)?.rule !== undefined);
+    expect(ruled).toEqual(CLAN_NAMES.filter((name) => Object.keys(CLAN_FIXED_TRAITS[name] ?? {}).length > 0));
+  });
+
   test('carries the clan and its line', () => {
     expect(clanDetail('Gangrel')).toMatchObject({ name: 'Gangrel', line: CLAN_CARDS.find((card) => card.name === 'Gangrel')!.line });
   });
@@ -120,5 +132,23 @@ describe('the description of the clan list', () => {
   test('says how the keys move and choose, and names no person', () => {
     expect(CLAN_LIST_HELP).toBe('Arrow keys move between clans; Space or Enter chooses.');
     expect(PRONOUN.test(CLAN_LIST_HELP)).toBe(false);
+  });
+});
+
+describe('the creation rules derived from the fixed traits', () => {
+  test('a clan\'s rule names each trait it fixes and the rating', () => {
+    expect(fixedTraitRule({ 'attribute:appearance': 0 })).toBe('Appearance is fixed at 0.');
+    expect(fixedTraitRule({ 'attribute:appearance': 0, 'ability:alertness': 2 })).toBe('Appearance is fixed at 0 and Alertness is fixed at 2.');
+  });
+
+  test('the note names every clan that fixes a trait, and the traits', () => {
+    expect(creationRuleNote({ Nosferatu: { 'attribute:appearance': 0 } })).toBe("Only Nosferatu's Appearance rule changes creation arithmetic.");
+    expect(creationRuleNote({ Nosferatu: { 'attribute:appearance': 0 }, Brujah: { 'ability:alertness': 2 } })).toBe(
+      "Only Nosferatu's Appearance rule and Brujah's Alertness rule change creation arithmetic.",
+    );
+  });
+
+  test('a clan with nothing fixed is left out', () => {
+    expect(creationRuleNote({ Nosferatu: { 'attribute:appearance': 0 }, Brujah: {} })).toBe("Only Nosferatu's Appearance rule changes creation arithmetic.");
   });
 });

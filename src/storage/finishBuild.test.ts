@@ -75,6 +75,20 @@ describe('finishBuild', () => {
     expect(items.has(buildKeyFor(build.id))).toBe(false);
   });
 
+  test('reports a build finished in another tab as finished, even though this tab still holds it unfinishable', () => {
+    const { build, items, builds, characters } = arrange();
+    const staleCopy = { ...build, bloodPool: null };
+    characters.save(toCharacter(build));
+    expect(finishBuild(builds, characters, staleCopy)).toBe('already-finished');
+    expect(items.has(buildKeyFor(build.id))).toBe(false);
+  });
+
+  test('reports a build deleted in another tab as missing, even though this tab still holds it unfinishable', () => {
+    const { build, builds, characters } = arrange();
+    builds.delete(build.id);
+    expect(finishBuild(builds, characters, { ...build, bloodPool: null })).toBe('build-missing');
+  });
+
   test('does nothing for a build no longer stored', () => {
     const { build, builds, characters } = arrange();
     builds.delete(build.id);

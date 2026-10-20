@@ -3,8 +3,8 @@
 // written for this builder.
 
 import { matchByName } from './catalogue';
-import { clanDisciplinesOf } from './ratings';
-import { CLAN_NAMES, type ClanName } from './rules';
+import { clanDisciplinesOf, traitLabel } from './ratings';
+import { CLAN_FIXED_TRAITS, CLAN_NAMES, type ClanName } from './rules';
 
 export interface ClanCard {
   name: ClanName;
@@ -39,8 +39,29 @@ export const clanCards = (query: string): ClanCard[] => matchByName(CLAN_CARDS, 
 /** What the detail says in place of Caitiff's Disciplines, which are not fixed. */
 export const ANY_DISCIPLINE = 'Any Discipline';
 
-/** Said in the detail of every chosen clan: only one clan's rule touches the creation numbers. */
-export const CREATION_RULE_NOTE = "Only Nosferatu's Appearance rule changes creation arithmetic.";
+// The fixed traits are keyed by trait ref; the type comes from `traitLabel`, as the layer map keeps this file off `build`.
+type TraitRef = Parameters<typeof traitLabel>[0];
+
+type FixedTraits = Readonly<Partial<Record<ClanName, Readonly<Record<string, number>>>>>;
+
+const labelsOf = (traits: Readonly<Record<string, number>>): string[] => Object.keys(traits).map((ref) => traitLabel(ref as TraitRef));
+
+const joinAnd = (parts: readonly string[]): string => (parts.length < 2 ? parts.join('') : `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`);
+
+/** What a clan's fixed traits say in its detail: "Appearance is fixed at 0." */
+export const fixedTraitRule = (traits: Readonly<Record<string, number>>): string =>
+  `${joinAnd(Object.entries(traits).map(([ref, rating]) => `${traitLabel(ref as TraitRef)} is fixed at ${rating}`))}.`;
+
+/** The note every clan's detail carries: only the clans that fix a trait touch the creation numbers. */
+export function creationRuleNote(fixed: FixedTraits): string {
+  const rules = Object.entries(fixed)
+    .filter(([, traits]) => Object.keys(traits).length > 0)
+    .map(([clan, traits]) => `${clan}'s ${joinAnd(labelsOf(traits))} rule`);
+  return `Only ${joinAnd(rules)} ${rules.length === 1 ? 'changes' : 'change'} creation arithmetic.`;
+}
+
+/** Said in the detail of every chosen clan. */
+export const CREATION_RULE_NOTE = creationRuleNote(CLAN_FIXED_TRAITS);
 
 /** Said beside the list, for a player who is unsure: Caitiff is a choice, not an empty answer. */
 export const CAITIFF_NOTE = {
@@ -69,11 +90,12 @@ export function clanDetail(name: string): ClanDetail | undefined {
   const card = CLAN_CARDS.find((entry) => entry.name === name);
   if (card === undefined) return undefined;
   const disciplines = clanDisciplinesOf(name);
+  const fixed = CLAN_FIXED_TRAITS[card.name];
   return {
     name: card.name,
     line: card.line,
     disciplines: disciplines.length === 0 ? 'any' : disciplines,
-    ...(name === 'Nosferatu' ? { rule: 'Appearance is fixed at 0.' } : {}),
+    ...(fixed === undefined || Object.keys(fixed).length === 0 ? {} : { rule: fixedTraitRule(fixed) }),
     note: CREATION_RULE_NOTE,
   };
 }

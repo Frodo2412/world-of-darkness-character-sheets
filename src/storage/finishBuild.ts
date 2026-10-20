@@ -23,12 +23,12 @@ export type FinishResult =
   | 'build-missing';
 
 export function finishBuild(builds: BuildStore, characters: CharacterStore, build: V20Build): FinishResult {
-  if (!isFinishable(build)) return 'not-finishable';
   if (characters.load(build.id).status !== 'not-found') {
     builds.delete(build.id);
     return 'already-finished';
   }
   if (builds.load(build.id).status === 'not-found') return 'build-missing';
+  if (!isFinishable(build)) return 'not-finishable';
   if (characters.save(toCharacter(build)).status === 'failed') return 'save-failed';
   return builds.delete(build.id).status === 'deleted' ? 'finished' : 'finished-build-kept';
 }
