@@ -7,7 +7,7 @@ import { CAITIFF_NOTE, CLAN_CARDS } from '../../src/domain/v20/creation/clanCard
 import { isLocked, rating } from '../../src/domain/v20/creation/ratings';
 import { CLAN_NAMES } from '../../src/domain/v20/creation/rules';
 import { clan as inClan, creation, rank } from '../../src/domain/v20/creation/testing/play';
-import { announcements } from './support/announcements';
+import { ANNOUNCEMENT_WINDOW_MS, announcements, waitOnPageClock, watchWrites, writtenTexts } from './support/announcements';
 import { Given, Then, When } from './fixtures';
 import { openPlayed, reloadBuilder, startBuild, storedBuild } from './support/builder';
 import {
@@ -23,6 +23,7 @@ import {
   clanRadio,
   clanResults,
   clanSearch,
+  clanSearchHint,
   clanSelectedCount,
   expectClanChosen,
   focusedClan,
@@ -254,6 +255,31 @@ Then('focus is in the clan search field', async ({ page }) => {
 
 Then('the clan search hint reads {string}', async ({ page }, hint: string) => {
   await expect(page.locator('[data-clan-search-hint]')).toHaveText(hint);
+});
+
+Then('the clan search hint is hidden', async ({ page }) => {
+  await expect(clanSearchHint(page)).toBeHidden();
+});
+
+Then('the clan search hint is shown', async ({ page }) => {
+  await expect(clanSearchHint(page)).toBeVisible();
+});
+
+When('I empty the clan search', async ({ page }) => {
+  await openClanScreen(page);
+  await clanSearch(page).fill('');
+});
+
+When('I type {string} into the clan search one key at a time', async ({ page }, text: string) => {
+  await openClanScreen(page);
+  await watchWrites(page, '[data-clan-results]');
+  await clanSearch(page).pressSequentially(text);
+});
+
+Then('the clan result count {string} is announced once', async ({ page }, text: string) => {
+  // Said after the pause, and only once however many keys were pressed.
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  expect(await writtenTexts(page)).toEqual([text]);
 });
 
 // The edges: the question after the build changes, the keys the browser owns, the detail's outline

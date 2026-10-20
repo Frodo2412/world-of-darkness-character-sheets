@@ -2,7 +2,8 @@ Feature: The Nature & Demeanor screen keeps to the browser's habits and to the b
 
   The slice scenarios hold what the Nature & Demeanor screen does; the cases here are the ones the page and
   the browser share: focus staying where the player left it, a search that outlives a role switch, a notice
-  that goes when it stops being true, and the search shortcut where it must be left alone.
+  that goes when it stops being true and stays gone, a search that is announced once typing settles, and the
+  search shortcut where it must be left alone.
 
   Scenario: Pressing a name keeps focus on it
     Given I am on the Nature & Demeanor screen of a new build
@@ -29,6 +30,32 @@ Feature: The Nature & Demeanor screen keeps to the browser's habits and to the b
     Then the assignment "Visionary assigned as Nature." is announced
     When I empty my own archetype with Nature active
     Then the assignment notice is empty
+
+  Scenario: The assignment notice does not come back when typing makes the field match again
+    Given I am on the Nature & Demeanor screen of a new build
+    When I assign Visionary as Nature
+    And I empty my own archetype with Nature active
+    And I enter "Visionary" as my own archetype
+    Then the assignment notice is empty
+
+  Scenario: The own archetype field is named for the active role
+    Given I am on the Nature & Demeanor screen of a new build
+    Then my own archetype field is labelled "Your own Nature"
+    When I switch to Demeanor
+    Then my own archetype field is labelled "Your own Demeanor"
+
+  Scenario: The search is announced once typing settles
+    Given I am on the Nature & Demeanor screen of a new build
+    When I type "vis" into the archetype search one key at a time
+    Then the archetype result count "1 archetype listed" is announced once
+
+  Scenario: The search hint steps aside while the search holds text
+    Given I am on the Nature & Demeanor screen of a new build
+    Then the archetype search hint is shown
+    When I search the archetypes for "vis"
+    Then the archetype search hint is hidden
+    When I empty the archetype search
+    Then the archetype search hint is shown
 
   Scenario: The arrow keys switch the role
     Given I am on the Nature & Demeanor screen of a new build

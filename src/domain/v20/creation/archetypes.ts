@@ -1,7 +1,7 @@
 // What the Nature & Demeanor screen shows: the Archetype names a search keeps, which role each name is
 // assigned to, and the cards and words around them. The names are the rules' (ARCHETYPES); the words here
-// are original. Assigning is `setConceptText` on the active role: choosing a name sets it, and a role is
-// cleared by emptying its text.
+// are original. Assigning is `setConceptText` on the active role: choosing a name sets it, choosing the name
+// the role holds clears it, and emptying the role's text clears it too.
 
 import type { V20Build } from './build';
 import { matchByName } from './catalogue';
@@ -27,7 +27,7 @@ export const ARCHETYPE_ROLES: readonly RoleInfo[] = [
 
 export const roleInfo = (role: ArchetypeRole): RoleInfo => ARCHETYPE_ROLES.find((info) => info.role === role)!;
 
-/** Said as the description of the switch and the list: how the keys work. */
+/** Said as the description of the role switch: how the keys work. The arrow keys do nothing on the list. */
 export const ARCHETYPE_KEYS_HELP = 'Arrow keys switch role; Tab moves between archetypes; Space or Enter assigns.';
 
 /** Said beside the field for a player's own Archetype: it fills the active role. */
@@ -98,5 +98,45 @@ export interface RoleCard {
 export const roleCards = (concept: Temperament): RoleCard[] =>
   ARCHETYPE_ROLES.map(({ role, title }) => ({ role, title, value: concept[role].trim() || NOT_CHOSEN }));
 
+/** The label of the field for a player's own Archetype, which holds the text of the active role. */
+export const ownArchetypeLabel = (role: ArchetypeRole): string => `Your own ${roleInfo(role).title}`;
+
 /** What is said when a name is assigned to a role. */
 export const assignedNotice = (name: string, role: ArchetypeRole): string => `${name} assigned as ${roleInfo(role).title}.`;
+
+/** What is said when a name is cleared from a role. */
+export const clearedNotice = (name: string, role: ArchetypeRole): string => `${name} cleared as ${roleInfo(role).title}.`;
+
+/** What a press did, said until the build stops being as the press left it. */
+export interface ArchetypeNotice {
+  kind: 'assigned' | 'cleared';
+  name: string;
+  role: ArchetypeRole;
+}
+
+export interface Press {
+  /** The text the role is to hold: the name, or blank to clear it. */
+  text: string;
+  notice: ArchetypeNotice;
+}
+
+/** A press on `name` for `role`: a name the role holds is cleared, any other is set. */
+export function pressOutcome(concept: Temperament, role: ArchetypeRole, name: string): Press {
+  const clears = isArchetype(concept[role], name);
+  return { text: clears ? '' : name, notice: { kind: clears ? 'cleared' : 'assigned', name, role } };
+}
+
+export const noticeText = (notice: ArchetypeNotice | null): string =>
+  notice === null ? '' : (notice.kind === 'assigned' ? assignedNotice : clearedNotice)(notice.name, notice.role);
+
+/**
+ * The notice, or null once the build no longer holds what it says: an assignment while the role holds the
+ * name, a clearing while the role is blank. Once null it stays null, so the words do not return when later
+ * text happens to match again.
+ */
+export function settleNotice(notice: ArchetypeNotice | null, concept: Temperament): ArchetypeNotice | null {
+  if (notice === null) return null;
+  const text = concept[notice.role];
+  const holds = notice.kind === 'assigned' ? isArchetype(text, notice.name) : text.trim() === '';
+  return holds ? notice : null;
+}

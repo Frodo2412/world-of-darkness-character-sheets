@@ -1,17 +1,23 @@
 // The Nature & Demeanor screen. A press on an Archetype assigns it to the active role, which a radio switch
-// sets; the player's own Archetype is written into the same role. The buttons, the search field and the
-// switch are updated in place and never rebuilt, so focus stays where it is.
+// sets, and a press on the Archetype the role already holds clears the role; the player's own Archetype is
+// written into the same role. The buttons, the search field and the switch are updated in place and never
+// rebuilt, so focus stays where it is.
 
 import '../../../styles/builder/natureDemeanor.css';
 import {
   archetypeListView,
-  assignedNotice,
+  noticeText,
+  ownArchetypeLabel,
+  pressOutcome,
   roleCards,
+  settleNotice,
+  type ArchetypeNotice,
   type ArchetypeRole,
 } from '../../../domain/v20/creation/archetypes';
 import type { V20Build } from '../../../domain/v20/creation/build';
 import { setConceptText } from '../../../domain/v20/creation/updates';
-import { isMacPlatform, shortcutHint, wireSearchShortcut } from '../parts/search';
+import { isMacPlatform, wireSearchHint, wireSearchShortcut } from '../parts/search';
+import { createSettledStatus } from '../parts/settledStatus';
 import type { Wiring } from '../wiring';
 import type { ScreenModule } from './index';
 
@@ -21,8 +27,10 @@ const state = {
   role: 'nature' as ArchetypeRole,
   /** The search as typed. */
   query: '',
-  /** The last assignment made by a press, said until the build no longer holds it. */
-  assigned: null as { name: string; role: ArchetypeRole } | null,
+  /** What the last press did, said until the build is no longer as the press left it. */
+  notice: null as ArchetypeNotice | null,
+  /** Says the result count once the player has paused; set when the screen is wired. */
+  sayResults: (_text: string): void => {},
 };
 
 /** Writes only a changed text, so a live region says only what is new. */
@@ -31,13 +39,6 @@ function say(element: HTMLElement, text: string): void {
 }
 
 const part = <T extends HTMLElement>(root: HTMLElement, name: string): T => root.querySelector<T>(`[data-nd-${name}]`)!;
-
-/** The assignment notice, while the build still holds what it says. */
-function assignedText(build: V20Build): string {
-  const { assigned } = state;
-  if (assigned === null || build.concept[assigned.role].trim() !== assigned.name) return '';
-  return assignedNotice(assigned.name, assigned.role);
-}
 
 /** Writes the cards, the switch, the own-name field, the buttons and the counts from the build and the screen's state. */
 function draw(build: V20Build, root: HTMLElement): void {
@@ -52,7 +53,10 @@ function draw(build: V20Build, root: HTMLElement): void {
   const own = part<HTMLInputElement>(root, 'own');
   const text = build.concept[state.role];
   if (own.value !== text) own.value = text;
-  say(part(root, 'assigned'), assignedText(build));
+  say(part(root, 'own-label'), ownArchetypeLabel(state.role));
+  // Once the build stops being as the press left it the notice is gone for good, even if the text matches again.
+  state.notice = settleNotice(state.notice, build.concept);
+  say(part(root, 'assigned'), noticeText(state.notice));
 
   const view = archetypeListView(state.query, build.concept, state.role);
   const entries = new Map(view.entries.map((entry) => [entry.name, entry]));
@@ -65,7 +69,7 @@ function draw(build: V20Build, root: HTMLElement): void {
     button.querySelector<HTMLElement>('[data-archetype-state]')!.hidden = !entry?.pressed;
   }
   say(part(root, 'heading'), view.heading);
-  say(part(root, 'results'), view.results);
+  state.sayResults(view.results);
 }
 
 function wireAssigning(root: HTMLElement, { commit, current }: Wiring): void {
@@ -75,14 +79,17 @@ function wireAssigning(root: HTMLElement, { commit, current }: Wiring): void {
     if (!button) return;
     const name = button.dataset.archetype!;
     const role = state.role;
-    // Choosing a name sets it for the role; choosing it again leaves it set.
-    state.assigned = { name, role };
-    commit((build) => setConceptText(build, role, name), button);
+    // Choosing a name sets it for the role; choosing the name the role holds clears the role.
+    const { text, notice } = pressOutcome(current().concept, role, name);
+    state.notice = notice;
+    commit((build) => setConceptText(build, role, text), button);
   });
 
   const own = part<HTMLInputElement>(root, 'own');
   own.addEventListener('input', () => {
     const role = state.role;
+    // Typing is not a press: what the press said is no longer news.
+    state.notice = null;
     commit((build) => setConceptText(build, role, own.value), own);
   });
 
@@ -97,11 +104,9 @@ function wireAssigning(root: HTMLElement, { commit, current }: Wiring): void {
 
 function wireSearch(root: HTMLElement, { current }: Wiring): void {
   const search = part<HTMLInputElement>(root, 'search');
-  const hint = part(root, 'search-hint');
   const mac = isMacPlatform();
-  hint.textContent = shortcutHint(mac);
-  hint.hidden = false;
-  search.setAttribute('aria-keyshortcuts', mac ? 'Meta+K' : 'Control+K');
+  wireSearchHint(search, part(root, 'search-hint'), mac);
+  state.sayResults = createSettledStatus(part(root, 'results'));
   state.query = search.value;
   search.addEventListener('input', () => {
     state.query = search.value;

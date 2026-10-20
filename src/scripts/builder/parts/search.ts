@@ -7,6 +7,20 @@ export const isMacPlatform = (platform: string = navigator.platform): boolean =>
 export const shortcutHint = (mac: boolean): string => (mac ? '⌘K' : 'Ctrl K');
 
 /**
+ * Names the shortcut on the field and beside it. The hint sits where the browser draws the field's clear
+ * button, so it is hidden while the field holds text.
+ */
+export function wireSearchHint(search: HTMLInputElement, hint: HTMLElement, mac: boolean = isMacPlatform()): void {
+  hint.textContent = shortcutHint(mac);
+  search.setAttribute('aria-keyshortcuts', mac ? 'Meta+K' : 'Control+K');
+  const show = (): void => {
+    hint.hidden = search.value !== '';
+  };
+  show();
+  search.addEventListener('input', show);
+}
+
+/**
  * Whether a key press is the shortcut: ⌘+K on macOS, Ctrl+K elsewhere, never the other platform's modifier,
  * and never with Shift or Alt held, which are other shortcuts the browser may own.
  */

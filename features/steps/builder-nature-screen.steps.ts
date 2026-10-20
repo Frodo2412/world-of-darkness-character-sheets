@@ -6,7 +6,7 @@ import { expect } from '@playwright/test';
 import { ARCHETYPE_KEYS_HELP } from '../../src/domain/v20/creation/archetypes';
 import { ARCHETYPES } from '../../src/domain/v20/creation/rules';
 import { Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
-import { announcements } from './support/announcements';
+import { ANNOUNCEMENT_WINDOW_MS, announcements, waitOnPageClock, watchWrites, writtenTexts } from './support/announcements';
 import { buildWith, openPlayedFrom, reloadBuilder, startBuild } from './support/builder';
 import {
   archetypeButton,
@@ -15,6 +15,7 @@ import {
   archetypeMarks,
   archetypeResults,
   archetypeSearch,
+  archetypeSearchHint,
   assignArchetype,
   assignmentNotice,
   cardValues,
@@ -216,16 +217,28 @@ Then('no archetype shows a description line', async ({ page }) => {
 });
 
 Then(
-  'the role switch and the archetype list are described as arrow keys switch role, Tab moves between archetypes, Space or Enter assigns',
+  'the role switch is described as arrow keys switch role, Tab moves between archetypes, Space or Enter assigns',
   async ({ page }) => {
     expect(ARCHETYPE_KEYS_HELP).toBe('Arrow keys switch role; Tab moves between archetypes; Space or Enter assigns.');
     await expect(roleSwitch(page)).toHaveAccessibleDescription(ARCHETYPE_KEYS_HELP);
-    await expect(archetypeList(page)).toHaveAccessibleDescription(ARCHETYPE_KEYS_HELP);
   },
 );
 
+Then('the archetype list is not described by that line', async ({ page }) => {
+  // The arrow keys do nothing on the list, so the line that names them is not its description.
+  await expect(archetypeList(page)).toHaveAccessibleDescription('');
+});
+
 Then('focus is in the archetype search field', async ({ page }) => {
   await expect(archetypeSearch(page)).toBeFocused();
+});
+
+Then('the archetype search hint is hidden', async ({ page }) => {
+  await expect(archetypeSearchHint(page)).toBeHidden();
+});
+
+Then('the archetype search hint is shown', async ({ page }) => {
+  await expect(archetypeSearchHint(page)).toBeVisible();
 });
 
 Then('the archetype search hint reads {string}', async ({ page }, hint: string) => {
@@ -252,6 +265,27 @@ When(new RegExp(`^I focus the ${ROLE} option and press (\\w+)$`), async ({ page 
 
 Then('the archetype search still reads {string}', async ({ page }, text: string) => {
   await expect(archetypeSearch(page)).toHaveValue(text);
+});
+
+When('I type {string} into the archetype search one key at a time', async ({ page }, text: string) => {
+  await openNatureScreen(page);
+  await watchWrites(page, '[data-nd-results]');
+  await archetypeSearch(page).pressSequentially(text);
+});
+
+When('I empty the archetype search', async ({ page }) => {
+  await openNatureScreen(page);
+  await archetypeSearch(page).fill('');
+});
+
+Then('the archetype result count {string} is announced once', async ({ page }, text: string) => {
+  // Said after the pause, and only once however many keys were pressed.
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  expect(await writtenTexts(page)).toEqual([text]);
+});
+
+Then('my own archetype field is labelled {string}', async ({ page }, label: string) => {
+  await expect(ownArchetype(page)).toHaveAccessibleName(label);
 });
 
 Then('the assignment notice is empty', async ({ page }) => {

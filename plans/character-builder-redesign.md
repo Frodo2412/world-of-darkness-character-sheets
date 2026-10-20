@@ -1172,10 +1172,12 @@ Feature: The Nature & Demeanor screen
     When I assign Visionary as Nature
     Then the assignment "Visionary assigned as Nature." is announced
 
-  Scenario: Choosing the assigned archetype again keeps it
+  Scenario: Choosing the assigned archetype again clears that role
     Given Visionary is assigned as Nature
     When I choose Visionary again with Nature active
-    Then the Nature card reads Visionary
+    Then the Nature card reads "Not chosen"
+    And Visionary has no mark
+    And the assignment "Visionary cleared as Nature." is announced
 
   Scenario: Emptying my own archetype clears that role
     Given Visionary is assigned as Nature
@@ -1207,8 +1209,9 @@ Feature: The Nature & Demeanor screen
   Scenario: No archetype description is shown
     Then no archetype shows a description line
 
-  Scenario: The keys are named beside the controls
-    Then the role switch and the archetype list are described as arrow keys switch role, Tab moves between archetypes, Space or Enter assigns
+  Scenario: The keys are named beside the role switch
+    Then the role switch is described as arrow keys switch role, Tab moves between archetypes, Space or Enter assigns
+    And the archetype list is not described by that line
 
   Scenario Outline: The search shortcut on each platform
     Given the platform is "<platform>"
@@ -1246,8 +1249,8 @@ Feature: The Nature & Demeanor screen
 #### Step 7.1: Archetype search and marks
 
 **Complexity**: standard
-**IMPLEMENT**: `archetypes.ts` — `matchArchetypes(query)` over `matchByName` and the catalogue with N/D marks for a build; assignment uses `setConceptText` directly (no wrapper); choosing the already-assigned name for the active role keeps it, and a role is cleared by emptying the player's own-archetype field (see Risks & Open Questions: RD-8).
-**TEST**: Unit tests: matching (case, partial, none), marks for one, both and neither role, assigning twice keeps the name, own names, blank clears.
+**IMPLEMENT**: `archetypes.ts` — `matchArchetypes(query)` over `matchByName` and the catalogue with N/D marks for a build; assignment uses `setConceptText` directly (no wrapper); choosing the already-assigned name for the active role clears it (the button is an `aria-pressed` toggle), and a role is also cleared by emptying the player's own-archetype field (see Risks & Open Questions: RD-8).
+**TEST**: Unit tests: matching (case, partial, none), marks for one, both and neither role, pressing the held name clears the role, own names, blank clears.
 **REFACTOR**: `ARCHETYPES` stays in `rules.ts`.
 **Files**: `src/domain/v20/creation/archetypes.ts`, `src/domain/v20/creation/archetypes.test.ts`
 **Commit**: `feat(builder): archetype search and marks`
@@ -2226,14 +2229,21 @@ Run at each merge point:
   next-step copy; history via `pushState`; RD-27 drops "Chronicle notes" and adds 320 px;
   RD-19 adds the headline. These were not in the spec you approved — confirm at the gate.
 - **Slice 7 build-time amendments** (RD-8): (1) The spec says choosing a name "assigns it to
-  the active role" and says nothing of clearing, so choosing the assigned name again is
-  idempotent (it keeps the name) rather than toggling it off as the first plan draft said;
-  the Gherkin scenario now reads "Choosing the assigned archetype again keeps it". A role is
-  cleared by emptying the player's own-archetype field, which shows the active role's text
-  (base AC-10 free text; a new scenario covers it). (2) Added scenarios: N/D marks, "Assign
-  as ..." labels, Selected state, assignment announcement, result-count announcement, the
-  Ctrl/⌘+K hint and 320 px / focus-to-heading standards. (3) Step texts made screen-specific
-  ("only the archetype X is listed", "the Nature / Demeanor readout reads ...").
+  the active role" and says nothing of clearing. The archetype buttons are `aria-pressed`
+  toggles, so pressing the name the active role holds clears that role (as the first plan
+  draft said; a build-time idempotent reading was reversed at review); the Gherkin scenario
+  reads "Choosing the assigned archetype again clears that role", and the status notice says
+  "<Name> cleared as Nature.". A role is also cleared by emptying the player's own-archetype
+  field, which shows the active role's text and is labelled for it ("Your own Nature" /
+  "Your own Demeanor"; base AC-10 free text; a scenario covers it). (2) Added scenarios: N/D
+  marks, "Assign as ..." labels, Selected state, assignment announcement, result-count
+  announcement, the Ctrl/⌘+K hint and 320 px / focus-to-heading standards. (3) Step texts
+  made screen-specific ("only the archetype X is listed", "the Nature / Demeanor readout
+  reads ..."). (4) The keys line ("Arrow keys switch role; ...") describes the role switch
+  only: the arrow keys do nothing on the archetype list, which carries no such description.
+  (5) Result counts on the Clan and Nature & Demeanor searches are announced after a 400 ms
+  pause, not at every keystroke (design rule 10); the shortcut hint is hidden while the
+  search holds text so it never covers the browser's clear button.
 - **Old e2e features are hand-maintained** from Slice 1 (old plan marked superseded);
   re-running the old plan's export would overwrite them. Each slice replaces, not adds.
 - **Empty picked Background rows are page state**, dropped on reload (a scenario states

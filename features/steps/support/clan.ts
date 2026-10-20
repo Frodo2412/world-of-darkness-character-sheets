@@ -16,6 +16,9 @@ export const listedClans = (page: Page): Locator => clanList(page).getByRole('ra
 
 export const clanSearch = (page: Page): Locator => page.locator('#builder').getByRole('searchbox', { name: 'Search clans', exact: true });
 
+/** The keys that go to the search, written at the field's right edge. */
+export const clanSearchHint = (page: Page): Locator => page.locator('[data-clan-search-hint]');
+
 /** The status the search's result count is written into. */
 export const clanResults = (page: Page): Locator => page.locator('[data-clan-results]');
 

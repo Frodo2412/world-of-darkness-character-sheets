@@ -5,9 +5,14 @@ import {
   OWN_ARCHETYPE_HELP,
   archetypeListView,
   assignedNotice,
+  clearedNotice,
   matchArchetypes,
+  noticeText,
+  ownArchetypeLabel,
+  pressOutcome,
   roleCards,
   roleInfo,
+  settleNotice,
 } from './archetypes';
 import { ARCHETYPES } from './rules';
 import { fresh, play } from './testing/play';
@@ -45,6 +50,16 @@ describe('the copy', () => {
   test('an assignment is announced with the name and the role', () => {
     expect(assignedNotice('Visionary', 'nature')).toBe('Visionary assigned as Nature.');
     expect(assignedNotice('Bon Vivant', 'demeanor')).toBe('Bon Vivant assigned as Demeanor.');
+  });
+
+  test('a clearing is announced with the name and the role', () => {
+    expect(clearedNotice('Visionary', 'nature')).toBe('Visionary cleared as Nature.');
+    expect(clearedNotice('Bon Vivant', 'demeanor')).toBe('Bon Vivant cleared as Demeanor.');
+  });
+
+  test('the own-archetype field is named for the active role', () => {
+    expect(ownArchetypeLabel('nature')).toBe('Your own Nature');
+    expect(ownArchetypeLabel('demeanor')).toBe('Your own Demeanor');
   });
 });
 
@@ -152,11 +167,43 @@ describe('the pressed state', () => {
 });
 
 describe('assigning', () => {
-  test('choosing a name sets it for the role, and choosing it again keeps it', () => {
-    const once = play(fresh(), (build) => setConceptText(build, 'nature', 'Visionary'));
-    const twice = play(once, (build) => setConceptText(build, 'nature', 'Visionary'));
-    expect(twice.concept.nature).toBe('Visionary');
-    expect(entry(archetypeListView('', twice.concept, 'nature'), 'Visionary').pressed).toBe(true);
+  /** The concept after pressing `name` for `role` on a build whose Nature and Demeanor are as given, through the real update. */
+  const pressed = (nature: string, demeanor: string, role: 'nature' | 'demeanor', name: string) =>
+    play(
+      fresh(),
+      (build) => setConceptText(build, 'nature', nature),
+      (build) => setConceptText(build, 'demeanor', demeanor),
+      (build) => setConceptText(build, role, pressOutcome(build.concept, role, name).text),
+    ).concept;
+
+  test('pressing a name the role does not hold sets it', () => {
+    expect(pressOutcome(temperament('', ''), 'nature', 'Visionary')).toEqual({
+      text: 'Visionary',
+      notice: { kind: 'assigned', name: 'Visionary', role: 'nature' },
+    });
+    expect(pressOutcome(temperament('Bon Vivant', ''), 'nature', 'Visionary').text).toBe('Visionary');
+  });
+
+  test('pressing the name the role holds clears the role', () => {
+    expect(pressOutcome(temperament('Visionary', ''), 'nature', 'Visionary')).toEqual({
+      text: '',
+      notice: { kind: 'cleared', name: 'Visionary', role: 'nature' },
+    });
+    const cleared = pressed('Visionary', '', 'nature', 'Visionary');
+    expect(roleCards(cleared)[0].value).toBe('Not chosen');
+    expect(entry(archetypeListView('', cleared, 'nature'), 'Visionary')).toMatchObject({ markText: '', pressed: false });
+  });
+
+  test('the name is judged ignoring case and the space around it', () => {
+    expect(pressOutcome(temperament('  visionary ', ''), 'nature', 'Visionary').text).toBe('');
+  });
+
+  test('a name held by the other role only is set, not cleared', () => {
+    expect(pressOutcome(temperament('Visionary', ''), 'demeanor', 'Visionary').text).toBe('Visionary');
+  });
+
+  test('clearing a name held by both roles leaves the other role as it was', () => {
+    expect(roleCards(pressed('Visionary', 'Visionary', 'demeanor', 'Visionary')).map((card) => card.value)).toEqual(['Visionary', 'Not chosen']);
   });
 
   test('the same name may fill both roles', () => {
@@ -180,6 +227,42 @@ describe('assigning', () => {
       { role: 'nature', title: 'Nature', value: 'Not chosen' },
       { role: 'demeanor', title: 'Demeanor', value: 'Wanderer' },
     ]);
+  });
+});
+
+describe('the notice', () => {
+  const assigned = { kind: 'assigned', name: 'Visionary', role: 'nature' } as const;
+  const cleared = { kind: 'cleared', name: 'Visionary', role: 'nature' } as const;
+
+  test('says nothing when there is none, and says what was done otherwise', () => {
+    expect(noticeText(null)).toBe('');
+    expect(noticeText(assigned)).toBe('Visionary assigned as Nature.');
+    expect(noticeText(cleared)).toBe('Visionary cleared as Nature.');
+  });
+
+  test('an assignment stays while the role holds the name', () => {
+    expect(settleNotice(assigned, temperament('Visionary', ''))).toBe(assigned);
+    expect(settleNotice(assigned, temperament(' visionary ', ''))).toBe(assigned);
+  });
+
+  test('an assignment is dropped once the role holds something else, and stays dropped when the name returns', () => {
+    const gone = settleNotice(assigned, temperament('Visionar', ''));
+    expect(gone).toBeNull();
+    expect(settleNotice(gone, temperament('Visionary', ''))).toBeNull();
+  });
+
+  test('an assignment is dropped when the role is emptied', () => {
+    expect(settleNotice(assigned, temperament('', ''))).toBeNull();
+  });
+
+  test('a clearing stays while the role is blank, and is dropped once the role holds any text', () => {
+    expect(settleNotice(cleared, temperament('', 'Bon Vivant'))).toBe(cleared);
+    expect(settleNotice(cleared, temperament('  ', ''))).toBe(cleared);
+    expect(settleNotice(cleared, temperament('W', ''))).toBeNull();
+  });
+
+  test('the notice follows its own role, not the active one', () => {
+    expect(settleNotice(assigned, temperament('Bon Vivant', 'Visionary'))).toBeNull();
   });
 });
 

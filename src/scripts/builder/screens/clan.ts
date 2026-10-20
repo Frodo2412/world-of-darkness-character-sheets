@@ -7,7 +7,8 @@ import type { V20Build } from '../../../domain/v20/creation/build';
 import { ANY_DISCIPLINE, clanDetail, clanListView, keepLabel } from '../../../domain/v20/creation/clanCards';
 import { clanChangeEffects, setClan } from '../../../domain/v20/creation/updates';
 import { movedTo } from '../parts/listKeys';
-import { isMacPlatform, shortcutHint, wireSearchShortcut } from '../parts/search';
+import { isMacPlatform, wireSearchHint, wireSearchShortcut } from '../parts/search';
+import { createSettledStatus } from '../parts/settledStatus';
 import type { Wiring } from '../wiring';
 import type { ScreenModule } from './index';
 
@@ -21,6 +22,8 @@ const state = {
   asked: '',
   /** The clan card that holds the tab stop; the chosen clan, or the first listed, when it is not listed. */
   stop: '',
+  /** Says the result count once the player has paused; set when the screen is wired. */
+  sayResults: (_text: string): void => {},
 };
 
 const cardsOf = (root: HTMLElement): HTMLButtonElement[] => [...root.querySelectorAll<HTMLButtonElement>('[data-clan-card]')];
@@ -74,7 +77,7 @@ function draw(build: V20Build, root: HTMLElement): void {
   }
   say(root.querySelector<HTMLElement>('[data-clan-heading]')!, view.heading);
   say(root.querySelector<HTMLElement>('[data-clan-selected]')!, view.selected);
-  say(root.querySelector<HTMLElement>('[data-clan-results]')!, view.results);
+  state.sayResults(view.results);
   drawDetail(root, build.clan);
   recheckQuestion(root, build);
 }
@@ -218,11 +221,9 @@ function wireArrowKeys(root: HTMLElement, { current }: Wiring): void {
 
 function wireSearch(root: HTMLElement, { current }: Wiring): void {
   const search = root.querySelector<HTMLInputElement>('[data-clan-search]')!;
-  const hint = root.querySelector<HTMLElement>('[data-clan-search-hint]')!;
   const mac = isMacPlatform();
-  hint.textContent = shortcutHint(mac);
-  hint.hidden = false;
-  search.setAttribute('aria-keyshortcuts', mac ? 'Meta+K' : 'Control+K');
+  wireSearchHint(search, root.querySelector<HTMLElement>('[data-clan-search-hint]')!, mac);
+  state.sayResults = createSettledStatus(root.querySelector<HTMLElement>('[data-clan-results]')!);
   state.query = search.value;
   search.addEventListener('input', () => {
     state.query = search.value;

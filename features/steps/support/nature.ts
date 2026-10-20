@@ -18,11 +18,12 @@ export const roleCardValue = (page: Page, role: Role): Locator => roleCard(page,
 export const roleSwitch = (page: Page): Locator => page.locator('#builder').getByRole('radiogroup', { name: 'Role to assign', exact: true });
 export const roleOption = (page: Page, role: Role): Locator => roleSwitch(page).getByRole('radio', { name: `Assign as ${role}`, exact: true });
 
-/** The field for the player's own archetype. */
-export const ownArchetype = (page: Page): Locator => page.locator('#builder').getByRole('textbox', { name: 'Write your own archetype', exact: true });
+/** The field for the player's own archetype; its label names the active role ("Your own Nature"). */
+export const ownArchetype = (page: Page): Locator => page.locator('#builder').getByRole('textbox', { name: /^Your own (?:Nature|Demeanor)$/ });
 
 export const archetypeSearch = (page: Page): Locator => page.locator('#builder').getByRole('searchbox', { name: 'Search archetypes', exact: true });
 export const archetypeResults = (page: Page): Locator => page.locator('[data-nd-results]');
+export const archetypeSearchHint = (page: Page): Locator => page.locator('[data-nd-search-hint]');
 export const archetypeHeading = (page: Page): Locator => page.locator('[data-nd-heading]');
 
 /** The "Visionary assigned as Nature." status. */

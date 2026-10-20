@@ -41,10 +41,12 @@ Feature: The Nature & Demeanor screen
     When I assign Visionary as Nature
     Then the assignment "Visionary assigned as Nature." is announced
 
-  Scenario: Choosing the assigned archetype again keeps it
+  Scenario: Choosing the assigned archetype again clears that role
     Given Visionary is assigned as Nature
     When I choose Visionary again with Nature active
-    Then the Nature card reads Visionary
+    Then the Nature card reads "Not chosen"
+    And Visionary has no mark
+    And the assignment "Visionary cleared as Nature." is announced
 
   Scenario: Emptying my own archetype clears that role
     Given Visionary is assigned as Nature
@@ -76,8 +78,9 @@ Feature: The Nature & Demeanor screen
   Scenario: No archetype description is shown
     Then no archetype shows a description line
 
-  Scenario: The keys are named beside the controls
-    Then the role switch and the archetype list are described as arrow keys switch role, Tab moves between archetypes, Space or Enter assigns
+  Scenario: The keys are named beside the role switch
+    Then the role switch is described as arrow keys switch role, Tab moves between archetypes, Space or Enter assigns
+    And the archetype list is not described by that line
 
   Scenario Outline: The search shortcut on each platform
     Given the platform is "<platform>"

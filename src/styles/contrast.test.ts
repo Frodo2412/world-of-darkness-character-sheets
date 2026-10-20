@@ -198,6 +198,23 @@ describe("the builder's colour pairs", () => {
   }
 });
 
+/** What marks a selected control (an edge or a dot, not text), each with the fills it is drawn on: 3:1, WCAG 1.4.11. */
+describe("the builder's selection indicators", () => {
+  for (const [indicator, fill] of [['--color-accent-text', '--color-selected']]) {
+    it(`${indicator} marks a selection on ${fill} at 3:1`, () => {
+      expect(contrastRatio(colourOf(`var(${indicator})`, tokens)!, colourOf(`var(${fill})`, tokens)!)).toBeGreaterThanOrEqual(3);
+    });
+  }
+
+  it('the selected role of the Nature & Demeanor switch is edged in an indicator that holds 3:1 on its fill', () => {
+    const rules = rulesOf(read(new URL('builder/natureDemeanor.css', styles)));
+    const selected = rules.find((rule) => rule.selector === '.nd-role:has(input:checked)')!;
+    const edge = colourOf(selected.declarations.get('border-color')!, tokens)!;
+    const fill = colourOf(selected.declarations.get('background')!, tokens)!;
+    expect(contrastRatio(edge, fill)).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe('the guard itself', () => {
   it('reads the rules of the stylesheets it guards, so a pass is not an empty parse', () => {
     const dossier = read(new URL('dossier.css', styles));

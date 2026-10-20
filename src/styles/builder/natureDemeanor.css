@@ -30,7 +30,8 @@
 	margin: 0;
 }
 
-/* The role switch: two options side by side; the chosen one is filled and, as a radio, checked. */
+/* The role switch: two options side by side; the chosen one is filled, edged in the accent text colour (3:1
+   on the fill, which the accent fill colour is not) and, as a radio, checked. */
 .nd-roles {
 	display: flex;
 	flex-wrap: wrap;
@@ -49,9 +50,13 @@
 	cursor: pointer;
 }
 
+.nd-role input {
+	accent-color: var(--color-accent-text);
+}
+
 .nd-role:has(input:checked) {
 	background: var(--color-selected);
-	border-color: var(--color-accent);
+	border-color: var(--color-accent-text);
 }
 
 .nd-assigned {

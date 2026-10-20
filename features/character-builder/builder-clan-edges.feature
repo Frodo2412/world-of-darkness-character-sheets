@@ -42,6 +42,19 @@ Feature: The Clan screen keeps to the browser's habits and to the build as it is
     When I open Creation settings
     Then Control+K is left to the browser
 
+  Scenario: The search is announced once typing settles
+    Given I am on the Clan screen of a new build
+    When I type "tor" into the clan search one key at a time
+    Then the clan result count "1 clan listed" is announced once
+
+  Scenario: The search hint steps aside while the search holds text
+    Given I am on the Clan screen of a new build
+    Then the clan search hint is shown
+    When I search the clans for "tor"
+    Then the clan search hint is hidden
+    When I empty the clan search
+    Then the clan search hint is shown
+
   Scenario: The clan list says how its keys work
     Given I am on the Clan screen of a new build
     Then the clan list is described as moving with the arrow keys and choosing with Space or Enter
