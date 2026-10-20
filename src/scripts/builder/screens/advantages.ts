@@ -1,3 +1,4 @@
+import '../../../styles/builder/advantages.css';
 import { report } from '../../../domain/v20/creation/progress';
 import { renderDisciplineRows, wireDisciplineRows } from '../parts/ranked';
 import type { ScreenModule } from './index';

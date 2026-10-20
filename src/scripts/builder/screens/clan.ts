@@ -6,6 +6,9 @@ import { clanChangeEffects, setClan } from '../../../domain/v20/creation/updates
 import type { Wiring } from '../wiring';
 import type { ScreenModule } from './index';
 
+/** The clan a switch is waiting on, or null when no question is open. The panel only shows it. */
+const state: { pendingClan: string | null } = { pendingClan: null };
+
 function wireClanChoice(root: HTMLElement, { commit, current }: Wiring): void {
   const select = root.querySelector<HTMLSelectElement>('[data-clan]');
   const panel = root.querySelector<HTMLElement>('[data-clan-change]');
@@ -15,6 +18,7 @@ function wireClanChoice(root: HTMLElement, { commit, current }: Wiring): void {
   const keepButton = panel.querySelector<HTMLButtonElement>('[data-clan-keep]')!;
 
   function hidePanel(): void {
+    state.pendingClan = null;
     panel!.hidden = true;
     text.replaceChildren();
   }
@@ -44,12 +48,12 @@ function wireClanChoice(root: HTMLElement, { commit, current }: Wiring): void {
     text.replaceChildren(question, list);
     switchButton.textContent = `Switch to ${clan}`;
     keepButton.textContent = `Keep ${build.clan}`;
-    panel.dataset.pendingClan = clan;
+    state.pendingClan = clan;
     panel.hidden = false;
   });
 
   switchButton.addEventListener('click', () => {
-    const clan = panel.dataset.pendingClan!;
+    const clan = state.pendingClan!;
     hidePanel();
     commit((latest) => setClan(latest, clan), select);
     select.focus();
@@ -69,8 +73,7 @@ export default {
   },
   render(build, root) {
     for (const select of root.querySelectorAll<HTMLSelectElement>('[data-clan]')) {
-      const panel = root.querySelector<HTMLElement>('[data-clan-change]');
-      if (panel?.hidden !== false && select.value !== build.clan) select.value = build.clan;
+      if (state.pendingClan === null && select.value !== build.clan) select.value = build.clan;
       // Once a clan is chosen it can be switched but not cleared.
       select.options[0].disabled = build.clan !== '';
     }

@@ -31,8 +31,8 @@
 .step-nav li {
 	display: flex;
 	flex-direction: column;
-	border: 1px solid var(--color-line);
-	border-radius: 4px;
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
 	background: var(--color-surface);
 	padding: var(--space-1) var(--space-2);
 }
@@ -81,15 +81,20 @@
 	font-weight: 600;
 }
 
-.builder-field select,
-.builder-field input {
+/* A text field or a select, wherever a screen puts one. */
+.builder select,
+.builder input[type='text'] {
 	font: inherit;
 	color: var(--color-text);
 	background: var(--color-surface);
-	border: 1px solid var(--color-border-control);
-	border-radius: 4px;
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
 	min-block-size: var(--control-size);
 	padding: var(--space-1) var(--space-2);
+}
+
+.builder-field select,
+.builder-field input {
 	inline-size: 100%;
 }
 
@@ -120,8 +125,8 @@
 }
 
 .field-tag {
-	border: 1px solid var(--color-border-control);
-	border-radius: 4px;
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
 	padding: 0 var(--space-2);
 	font-size: var(--text-small);
 	color: var(--color-text);
@@ -154,8 +159,8 @@
 }
 
 .settings-readouts > div {
-	border: 1px solid var(--color-line);
-	border-radius: 4px;
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
 	padding: var(--space-2) var(--space-3);
 }
 
@@ -215,24 +220,6 @@
 	content: '⚠ ';
 }
 
-.rank-field {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--space-2);
-	margin-block-end: var(--space-2);
-}
-
-.rank-field select {
-	font: inherit;
-	color: var(--color-text);
-	background: var(--color-surface);
-	border: 1px solid var(--color-border-control);
-	border-radius: 4px;
-	min-block-size: var(--control-size);
-	padding: var(--space-1) var(--space-2);
-}
-
 .builder .rating-row {
 	display: flex;
 	align-items: center;
@@ -247,61 +234,14 @@
 	justify-content: flex-end;
 }
 
-.discipline-add {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--space-2);
-	margin-block: var(--space-2);
-}
-
-.discipline-add input {
-	font: inherit;
-	color: var(--color-text);
-	background: var(--color-surface);
-	border: 1px solid var(--color-border-control);
-	border-radius: 4px;
-	min-block-size: var(--control-size);
-	padding: var(--space-1) var(--space-2);
-	inline-size: 12rem;
-	max-inline-size: 100%;
-}
-
-.discipline-row-actions {
-	display: flex;
-	align-items: center;
-	gap: var(--space-2);
-}
-
 /* The freebie bar stays at the top; group headings stick below it, and a
    focused control scrolls clear of both. */
 html {
 	scroll-padding-block-start: 7rem;
 }
 
-.freebie-bar {
-	position: sticky;
-	inset-block-start: 0;
-	z-index: 2;
-	background: var(--color-page);
-	border-block-end: 1px solid var(--color-line);
-	margin-block-start: var(--space-3);
-}
-
-.freebie-bar p {
-	margin: 0;
-	padding-block: var(--space-2);
-	font-weight: 600;
-}
-
 .builder {
 	--sticky-top: 2.6rem;
-}
-
-.review-link {
-	display: inline-flex;
-	align-items: center;
-	min-block-size: var(--control-size);
 }
 
 /* Pieces the screens share. A screen's own rules live in styles/builder/<screen>.css. */

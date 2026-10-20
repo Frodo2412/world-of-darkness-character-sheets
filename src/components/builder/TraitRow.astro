@@ -3,6 +3,7 @@
 // `report(build)`: its value, floor, top dot, lock and announced value text.
 import type { BuildTraitRef } from '../../domain/v20/creation/build';
 import { traitLabel } from '../../domain/v20/creation/ratings';
+import { traitLabelId } from '../../scripts/builder/labelId';
 
 interface Props {
 	trait: BuildTraitRef;
@@ -15,7 +16,7 @@ interface Props {
 }
 
 const { trait, mode, step, noticeId } = Astro.props;
-const labelId = `${step}-${trait.replace(/[^a-zA-Z0-9]/g, '-')}-label`;
+const labelId = traitLabelId(step, trait);
 ---
 
 <div class="rating-row">

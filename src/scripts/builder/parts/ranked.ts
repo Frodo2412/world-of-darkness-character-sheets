@@ -4,6 +4,7 @@
 import type { BuildTraitRef } from '../../../domain/v20/creation/build';
 import type { BuildReport } from '../../../domain/v20/creation/progress';
 import { addDiscipline, removeDiscipline, type DotSource } from '../../../domain/v20/creation/updates';
+import { traitLabelId } from '../labelId';
 import type { Wiring } from '../wiring';
 
 /** Wires the add field and the Remove buttons of the Discipline rows made for `mode`. */
@@ -27,16 +28,16 @@ export function wireDisciplineRows(root: HTMLElement, { commit }: Wiring, mode: 
       const name = button.dataset.removeDiscipline!;
       // The button goes with its row, so a refusal is shown on the rows' first control.
       commit((build) => removeDiscipline(build, name), button);
-      rows.querySelector<HTMLElement>('dot-rating, button')?.focus();
+      // With no row left, the add field is the nearest control; focus would otherwise fall to the page.
+      const addField = rows.parentElement?.querySelector<HTMLElement>(`[data-discipline-add][data-mode="${mode}"] input`);
+      (rows.querySelector<HTMLElement>('dot-rating, button') ?? addField)?.focus();
     });
   }
 }
 
-const slug = (text: string): string => text.replace(/[^a-zA-Z0-9]/g, '-');
-
 function disciplineRow(container: HTMLElement, ref: BuildTraitRef, label: string, removable: boolean): HTMLElement {
   const { mode, stepId, noticeId } = container.dataset;
-  const labelId = `${stepId}-${slug(ref)}-label`;
+  const labelId = traitLabelId(stepId!, ref);
   const name = document.createElement('span');
   name.id = labelId;
   name.textContent = label;
@@ -69,6 +70,21 @@ function disciplineRow(container: HTMLElement, ref: BuildTraitRef, label: string
   return row;
 }
 
+/**
+ * Makes `container` hold exactly `rows`, in order, touching only the rows that were added, removed or moved: a
+ * row that stays is never re-inserted, so a focused rating keeps its focus. A moved row that had focus gets it back.
+ */
+function syncRows(container: HTMLElement, rows: HTMLElement[]): void {
+  const focused = document.activeElement;
+  const keep = new Set<Element>(rows);
+  // A static list: removing from `container.children` while walking it would skip rows.
+  for (const child of container.querySelectorAll(':scope > *')) if (!keep.has(child)) child.remove();
+  rows.forEach((row, index) => {
+    if (container.children[index] !== row) container.insertBefore(row, container.children[index] ?? null);
+  });
+  if (focused instanceof HTMLElement && container.contains(focused) && document.activeElement !== focused) focused.focus();
+}
+
 /** Keeps each container's rows for `mode` in report order, reusing rows that are still there. */
 export function renderDisciplineRows(root: HTMLElement, report: BuildReport, mode: DotSource): void {
   const { disciplines } = report;
@@ -82,7 +98,6 @@ export function renderDisciplineRows(root: HTMLElement, report: BuildReport, mod
     const rows = refs.map(
       (ref) => existing.get(`${ref}|${removable}`) ?? disciplineRow(container, ref, report.traits[ref].label, removable),
     );
-    const same = rows.length === existing.size && rows.every((row, index) => container.children[index] === row);
-    if (!same) container.replaceChildren(...rows);
+    syncRows(container, rows);
   }
 }

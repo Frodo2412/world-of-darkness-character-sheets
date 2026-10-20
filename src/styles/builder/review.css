@@ -2,7 +2,7 @@
 
 .review {
 	margin-block-start: var(--space-5);
-	border-block-start: 1px solid var(--color-line);
+	border-block-start: var(--stroke) solid var(--color-line);
 	padding-block-start: var(--space-3);
 }
 
@@ -21,4 +21,11 @@
 .finish-button[aria-disabled='true'] {
 	color: var(--color-muted);
 	cursor: not-allowed;
+}
+
+/* The pager's way to this screen from every other step. */
+.review-link {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--control-size);
 }

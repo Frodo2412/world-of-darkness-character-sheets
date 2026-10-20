@@ -1,0 +1,20 @@
+/* The Discipline rows of Advantages (and of Finishing touches, which draws the same rows): the add field and each row's controls. */
+
+.discipline-add {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2);
+	margin-block: var(--space-2);
+}
+
+.discipline-add input {
+	inline-size: 12rem;
+	max-inline-size: 100%;
+}
+
+.discipline-row-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
