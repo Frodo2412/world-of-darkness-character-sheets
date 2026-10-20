@@ -2,7 +2,9 @@
 // The page serves (or, for a Discipline, creates) an empty `.rating-stepper`; `renderStepper` fills it
 // once and then only updates it, so a focused button is never replaced. A button that cannot act is
 // `aria-disabled`, not `disabled`: it keeps its focus and says why in text, and pressing it still asks
-// the build, which refuses with the reason.
+// the build, which refuses with the reason. Each button is described by its own reason (the plus by
+// "Maximum 5", the minus by "Minimum 1, free dot"), and a press that is applied says the trait's new
+// value text once through the stepper's polite slot.
 
 import type { BuildTraitRef } from '../../../domain/v20/creation/build';
 import type { TraitReport } from '../../../domain/v20/creation/progress';
@@ -16,14 +18,26 @@ export interface StepperView {
   canRaise: boolean;
   /** The visible reason a button cannot act, beside the plus: "Maximum 5", "Fixed for Nosferatu". */
   limit: string | null;
+  /** Why the minus cannot act, for assistive technology: "Minimum 1, free dot", "Fixed for Nosferatu". */
+  lowerReason: string | null;
+}
+
+/** What holds a trait at its floor: the Virtues give Humanity and Willpower theirs, a free dot gives the rest. */
+function floorReason(trait: TraitReport): string {
+  if (trait.floor === 0) return 'Minimum 0';
+  if (trait.ref === 'humanity' || trait.ref === 'willpower') return `Minimum ${trait.floor}, from Virtues`;
+  return `Minimum ${trait.floor}, free ${trait.floor === 1 ? 'dot' : 'dots'}`;
 }
 
 export function stepperView(trait: TraitReport, settings: { maxTrait: number }, clan: string): StepperView {
+  const canLower = !trait.locked && trait.rating > trait.floor;
+  const fixed = `Fixed for ${clan}`;
   return {
     dots: trait.locked ? settings.maxTrait : trait.max,
-    canLower: !trait.locked && trait.rating > trait.floor,
+    canLower,
     canRaise: !trait.locked && trait.rating < trait.max,
-    limit: trait.locked ? `Fixed for ${clan}` : trait.rating >= trait.max ? `Maximum ${trait.max}` : null,
+    limit: trait.locked ? fixed : trait.rating >= trait.max ? `Maximum ${trait.max}` : null,
+    lowerReason: trait.locked ? fixed : canLower ? null : floorReason(trait),
   };
 }
 
@@ -31,7 +45,7 @@ export function stepperView(trait: TraitReport, settings: { maxTrait: number }, 
 export interface StepperHost {
   trait: BuildTraitRef;
   mode: DotSource;
-  /** The id of the row's visible name; the stepper's reason is `<labelId>-limit`. */
+  /** The id of the row's visible name; the plus's reason is `<labelId>-limit`, the minus's `<labelId>-minimum`. */
   labelId: string;
   /** The message slot the row's refusals appear in. */
   noticeId: string;
@@ -53,7 +67,11 @@ function stepButton(step: -1 | 1, label: string): HTMLButtonElement {
   button.className = 'rating-step';
   button.dataset.ratingStep = String(step);
   button.setAttribute('aria-label', `${step < 0 ? 'Decrease' : 'Increase'} ${label}`);
-  button.textContent = step < 0 ? '−' : '+';
+  // The symbol only draws the button; its name is the aria-label, so a name never has to contain the symbol.
+  const symbol = document.createElement('span');
+  symbol.setAttribute('aria-hidden', 'true');
+  symbol.textContent = step < 0 ? '−' : '+';
+  button.append(symbol);
   return button;
 }
 
@@ -77,6 +95,13 @@ function fill(host: HTMLElement, label: string): void {
   limit.dataset.ratingLimit = '';
   limit.id = `${host.dataset.labelId}-limit`;
   limit.hidden = true;
+  const minimum = span('visually-hidden');
+  minimum.dataset.ratingMinimum = '';
+  minimum.id = `${host.dataset.labelId}-minimum`;
+  // Said once per applied press, apart from the readouts: a polite slot that is always on the page.
+  const announce = span('visually-hidden');
+  announce.dataset.ratingAnnounce = '';
+  announce.setAttribute('role', 'status');
   // The dots only show the rating; the number and its text say it.
   const shown = span('rating-dots', dots);
   shown.setAttribute('aria-hidden', 'true');
@@ -86,10 +111,14 @@ function fill(host: HTMLElement, label: string): void {
     span('rating-value', number, text),
     stepButton(1, label),
     limit,
+    minimum,
+    announce,
   );
-  // Both buttons are described by the row's message slot; the plus by its reason first.
+  // The row is a group named by the trait. Each button is described by its own reason, then the row's message slot.
+  host.setAttribute('role', 'group');
+  host.setAttribute('aria-labelledby', host.dataset.labelId!);
   const [lower, raise] = host.querySelectorAll('button');
-  lower.setAttribute('aria-describedby', host.dataset.noticeId!);
+  lower.setAttribute('aria-describedby', `${minimum.id} ${host.dataset.noticeId}`);
   raise.setAttribute('aria-describedby', `${limit.id} ${host.dataset.noticeId}`);
 }
 
@@ -128,4 +157,11 @@ export function renderStepper(host: HTMLElement, trait: TraitReport, settings: {
   const limit = host.querySelector<HTMLElement>('[data-rating-limit]')!;
   setText(limit, view.limit ?? '');
   limit.hidden = view.limit === null;
+  setText(host.querySelector('[data-rating-minimum]')!, view.lowerReason ?? '');
+}
+
+/** Says the trait's value text through the stepper's polite slot; called once for each applied press. */
+export function announceValue(host: HTMLElement): void {
+  if (!host.isConnected) return;
+  setText(host.querySelector('[data-rating-announce]')!, host.querySelector('[data-rating-text]')!.textContent ?? '');
 }

@@ -3,7 +3,7 @@
 import { expect } from '@playwright/test';
 import type { DataTable } from 'playwright-bdd';
 import { Then, When } from './fixtures';
-import { chooseClan, clanSelect, openClanScreen } from './support/clan';
+import { chooseClan, clanQuestionStatus, clanSelect, openClanScreen } from './support/clan';
 
 When('they look at the clan choices', async ({ page }) => {
   await openClanScreen(page);
@@ -37,4 +37,17 @@ Then('the chosen clan is {string}', async ({ page }, clan: string) => {
 
 Then('the {string} placeholder can no longer be chosen', async ({ page }, placeholder: string) => {
   await expect(clanSelect(page).getByRole('option', { name: placeholder })).toBeDisabled();
+});
+
+Then("the clan question's status region is on the page and says nothing", async ({ page }) => {
+  const status = clanQuestionStatus(page);
+  await expect(status).toHaveAttribute('role', 'status');
+  await expect(status).toBeEmpty();
+  // A live region that starts out hidden is not reliably announced when it is shown with its text.
+  expect(await status.evaluate((element) => element.closest('[hidden]') === null)).toBe(true);
+});
+
+Then("the clan question's status region says {string}", async ({ page }, text: string) => {
+  await expect(clanQuestionStatus(page)).toContainText(text);
+  await expect(clanQuestionStatus(page)).toBeVisible();
 });

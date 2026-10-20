@@ -5,11 +5,11 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 import { Then, When } from './fixtures';
-import { expectUniqueControlNames } from './support/accessibility';
 import { openStep, shownStep, stepNav } from './support/builder';
 import { openFreebieSections } from './support/ranked';
 import { openRoster } from './support/pages';
 import { putRosterInState } from './support/library-states';
+import { expectNoSidewaysScrollAt } from './support/standards';
 
 const PHONE = { width: 375, height: 800 };
 
@@ -100,14 +100,6 @@ Then('no WCAG 2.1 AA violations are reported', async ({ memory }) => {
   expect(memory.violations).toEqual([]);
 });
 
-Then('every control has a unique, non-empty accessible name', async ({ page }) => {
-  await expectUniqueControlNames(page.locator('main'));
-});
-
 Then('at 375 pixels wide the page does not scroll horizontally', async ({ page }) => {
-  await page.setViewportSize(PHONE);
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBe(0);
+  await expectNoSidewaysScrollAt(page, PHONE.width);
 });

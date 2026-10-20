@@ -9,6 +9,9 @@ export const clanSelect = (page: Page): Locator => page.locator('#builder').getB
 /** The question asked before a switch that would remove dots. */
 export const clanPanel = (page: Page): Locator => page.locator('[data-clan-change]');
 
+/** The status region the question is written into: part of the page whether or not a question is open. */
+export const clanQuestionStatus = (page: Page): Locator => page.locator('#clan-change-text');
+
 /** The polite slot under the select, where what a clan change did is said. */
 export const clanNotice = (page: Page): Locator => page.locator('#clan-choice-notice');
 

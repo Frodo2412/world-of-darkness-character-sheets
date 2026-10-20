@@ -13,13 +13,17 @@ function wireClanChoice(root: HTMLElement, { commit, current }: Wiring): void {
   const select = root.querySelector<HTMLSelectElement>('[data-clan]');
   const panel = root.querySelector<HTMLElement>('[data-clan-change]');
   if (!select || !panel) return;
+  // The status region is always on the page and the question is written into it, so it is announced when it
+  // appears; only the buttons are hidden while no question is open.
   const text = panel.querySelector<HTMLElement>('[data-clan-change-text]')!;
+  const actions = panel.querySelector<HTMLElement>('[data-clan-change-actions]')!;
   const switchButton = panel.querySelector<HTMLButtonElement>('[data-clan-switch]')!;
   const keepButton = panel.querySelector<HTMLButtonElement>('[data-clan-keep]')!;
 
   function hidePanel(): void {
     state.pendingClan = null;
-    panel!.hidden = true;
+    panel!.toggleAttribute('data-open', false);
+    actions.hidden = true;
     text.replaceChildren();
   }
 
@@ -49,7 +53,8 @@ function wireClanChoice(root: HTMLElement, { commit, current }: Wiring): void {
     switchButton.textContent = `Switch to ${clan}`;
     keepButton.textContent = `Keep ${build.clan}`;
     state.pendingClan = clan;
-    panel.hidden = false;
+    actions.hidden = false;
+    panel.toggleAttribute('data-open', true);
   });
 
   switchButton.addEventListener('click', () => {

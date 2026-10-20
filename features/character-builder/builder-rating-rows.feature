@@ -51,3 +51,35 @@ Feature: A rating is changed with named minus and plus buttons
       | before | button   | presses |
       | 3      | Increase | 2       |
       | 3      | Decrease | 2       |
+
+  Scenario: A rating at its floor says why beside the minus
+    Given a player who has ranked Physical primary
+    Then Decrease Stamina is described by "Minimum 1, free dot"
+    When they press Increase Strength
+    Then Decrease Strength is described by nothing about a minimum
+
+  Scenario: A locked trait gives both buttons its reason
+    Given a build of clan "Nosferatu" with Social ranked primary
+    When they open the attributes step
+    Then Decrease Appearance is described by "Fixed for Nosferatu"
+    And Increase Appearance is described by "Fixed for Nosferatu"
+
+  Scenario: Each press says the new value once
+    Given a player who has ranked Physical primary
+    When they press Increase Strength
+    And they press Increase Strength
+    Then pressing announced "3 of 5" for Strength
+
+  Scenario: A refused press says its reason and not a value
+    Given a player who has ranked Physical primary
+    When they press Decrease Stamina
+    Then nothing was announced as a value for Stamina
+
+  Scenario: The visible minus and plus are decoration for the buttons named for the trait
+    Given a player who has ranked Physical primary
+    Then the visible symbol of Decrease Strength is hidden from assistive technology
+    And the visible symbol of Increase Strength is hidden from assistive technology
+
+  Scenario: A rating row is a group named for its trait
+    Given a player who has ranked Physical primary
+    Then Strength is a group holding the buttons "Decrease Strength" and "Increase Strength"

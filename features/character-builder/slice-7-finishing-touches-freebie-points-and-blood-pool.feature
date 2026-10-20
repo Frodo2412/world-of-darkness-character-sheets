@@ -171,6 +171,18 @@ Feature: Finishing touches
     Then there are 15 freebie points remaining
     And Auspex is no longer among the build's Disciplines
 
+  Scenario: Lowering a bought Discipline to nothing keeps keyboard focus among the Disciplines
+    Given a Brujah build with the freebie Discipline "Auspex" rated 1 and 8 freebie points remaining
+    When they press Decrease Auspex with the Enter key alone
+    Then Auspex is no longer among the build's Disciplines
+    And keyboard focus is still inside the Disciplines group
+
+  Scenario: Lowering the only bought Discipline to nothing moves focus to the buy field
+    Given a Caitiff build with the freebie Discipline "Auspex" rated 1 and 8 freebie points remaining
+    When they press Decrease Auspex with the Enter key alone
+    Then Auspex is no longer among the build's Disciplines
+    And keyboard focus is on the "Discipline to buy" field
+
   Scenario: A clan change keeps Disciplines bought with freebie points
     Given a Brujah build with Potence rated 2: 1 from a creation dot and 1 from a freebie dot
     When they choose the clan "Toreador" and confirm

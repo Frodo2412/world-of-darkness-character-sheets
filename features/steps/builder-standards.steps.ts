@@ -18,7 +18,8 @@ Then('there is exactly one h1', async ({ page }) => {
   await expectOneH1(page);
 });
 
-Then('every control has a unique accessible name', async ({ page }) => {
+// Slices written before the shared standards say "unique, non-empty"; both phrasings are this one check.
+Then(/^every control has a unique(?:, non-empty)? accessible name$/, async ({ page }) => {
   await expectUniqueControlNames(page.locator('main'));
 });
 

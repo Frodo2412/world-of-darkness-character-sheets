@@ -11,9 +11,9 @@ import { CLAN_NAMES } from '../../domain/v20/creation/rules';
 			{CLAN_NAMES.map((clan) => <option value={clan}>{clan}</option>)}
 		</select>
 		<p id="clan-choice-notice" class="field-notice" role="status" data-notice></p>
-		<div class="clan-change" data-clan-change hidden>
+		<div class="clan-change" data-clan-change>
 			<div id="clan-change-text" role="status" data-clan-change-text></div>
-			<div class="clan-change-actions">
+			<div class="clan-change-actions" data-clan-change-actions hidden>
 				<button type="button" data-clan-switch></button>
 				<button type="button" data-clan-keep></button>
 			</div>

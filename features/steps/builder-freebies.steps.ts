@@ -12,6 +12,7 @@ import {
   ratingRow,
   ratingsIn,
   requestRating,
+  stepButton,
   traitName,
   traitRating,
 } from './support/ranked';
@@ -128,6 +129,17 @@ When(/^they remove the freebie dot of (.+)$/, async ({ page }, name: string) => 
   await requestRating(control, (await ratingOf(control)) - 1);
 });
 
+/** One press of Enter on a row's button, the way a keyboard player lowers it; the row may go with the press. */
+When(
+  /^they press (Increase|Decrease) (\w+) with the Enter key alone$/,
+  async ({ page }, direction: 'Increase' | 'Decrease', name: string) => {
+    await onFinishing(page);
+    const button = stepButton(await traitRating(page, name), direction);
+    await button.focus();
+    await page.keyboard.press('Enter');
+  },
+);
+
 When(/^they look at (.+?) on the (finishing touches|attributes) step$/, async ({ page }, name: string, step: string) => {
   if (step === 'attributes') {
     await openStep(page, 'Attributes');
@@ -217,6 +229,14 @@ Then(/^(\w+) is rated (\d+), from the freebie dot$/, async ({ page }, name: stri
 Then(/^(\w+) is no longer among the build's Disciplines$/, async ({ page }, name: string) => {
   await onFinishing(page);
   await expect(ratingRow(await groupBox(page, 'Disciplines'), name)).toHaveCount(0);
+});
+
+Then('keyboard focus is still inside the Disciplines group', async ({ page }) => {
+  await expect((await groupBox(page, 'Disciplines')).locator(':focus')).toHaveCount(1);
+});
+
+Then('keyboard focus is on the {string} field', async ({ page }, label: string) => {
+  await expect((await groupBox(page, 'Disciplines')).getByLabel(label, { exact: true })).toBeFocused();
 });
 
 Then(/^the build holds six (Disciplines|Backgrounds)$/, async ({ page }, kind: string) => {

@@ -19,7 +19,7 @@ const settings = { maxTrait: 5 };
 
 describe('stepperView', () => {
   it('lets a rating between its floor and maximum go either way, with nothing to explain', () => {
-    expect(stepperView(trait(), settings, 'Brujah')).toEqual({ dots: 5, canLower: true, canRaise: true, limit: null });
+    expect(stepperView(trait(), settings, 'Brujah')).toEqual({ dots: 5, canLower: true, canRaise: true, limit: null, lowerReason: null });
   });
 
   it('cannot lower a rating at its floor, and still lets it rise', () => {
@@ -38,10 +38,31 @@ describe('stepperView', () => {
 
   it('keeps both buttons unavailable on a locked trait and draws it to the generation scale', () => {
     const view = stepperView(trait({ rating: 0, floor: 0, max: 0, locked: true }), settings, 'Nosferatu');
-    expect(view).toEqual({ dots: 5, canLower: false, canRaise: false, limit: 'Fixed for Nosferatu' });
+    expect(view).toEqual({ dots: 5, canLower: false, canRaise: false, limit: 'Fixed for Nosferatu', lowerReason: 'Fixed for Nosferatu' });
   });
 
   it('cannot lower a rating when its floor is 0 and it is 0', () => {
     expect(stepperView(trait({ rating: 0, floor: 0 }), settings, 'Brujah').canLower).toBe(false);
+  });
+
+  it('names the free dot that holds an Attribute or Virtue at its floor', () => {
+    expect(stepperView(trait({ rating: 1 }), settings, 'Brujah').lowerReason).toBe('Minimum 1, free dot');
+    const virtue = trait({ ref: 'virtue:courage', label: 'Courage', rating: 1 });
+    expect(stepperView(virtue, settings, 'Brujah').lowerReason).toBe('Minimum 1, free dot');
+  });
+
+  it('names the Virtues as what holds Humanity and Willpower at their floor', () => {
+    const humanity = trait({ ref: 'humanity', label: 'Humanity', rating: 4, floor: 4 });
+    expect(stepperView(humanity, settings, 'Brujah').lowerReason).toBe('Minimum 4, from Virtues');
+    const willpower = trait({ ref: 'willpower', label: 'Willpower', rating: 2, floor: 2 });
+    expect(stepperView(willpower, settings, 'Brujah').lowerReason).toBe('Minimum 2, from Virtues');
+  });
+
+  it('says the minimum of a trait with no free dots plainly', () => {
+    expect(stepperView(trait({ rating: 0, floor: 0 }), settings, 'Brujah').lowerReason).toBe('Minimum 0');
+  });
+
+  it('gives a lowerable rating no reason', () => {
+    expect(stepperView(trait({ rating: 3 }), settings, 'Brujah').lowerReason).toBeNull();
   });
 });

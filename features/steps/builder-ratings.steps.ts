@@ -3,7 +3,7 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
-import { openStep } from './support/builder';
+import { openStep, shownStep } from './support/builder';
 import {
   expectRated,
   groupNotice,
@@ -178,8 +178,39 @@ Then(/^no limit is shown beside Increase (\w+)$/, async ({ page }, name: string)
   await expect((await traitRating(page, name)).locator('[data-rating-limit]')).toBeHidden();
 });
 
-Then(/^Increase (\w+) is described by "([^"]+)"$/, async ({ page }, name: string, text: string) => {
-  await expect(await rowButton(page, 'Increase', name)).toHaveAccessibleDescription(new RegExp(text));
+Then(new RegExp(`^${BUTTON} (\\w+) is described by "([^"]+)"$`), async ({ page }, direction: 'Increase' | 'Decrease', name: string, text: string) => {
+  await expect(await rowButton(page, direction, name)).toHaveAccessibleDescription(new RegExp(text));
+});
+
+Then(/^Decrease (\w+) is described by nothing about a minimum$/, async ({ page }, name: string) => {
+  await expect(await rowButton(page, 'Decrease', name)).not.toHaveAccessibleDescription(/Minimum|Fixed/);
+});
+
+/** The stepper's polite slot for the value a press produced. */
+const valueSlot = async (page: Page, name: string): Promise<Locator> =>
+  (await traitRating(page, name)).locator('[data-rating-announce]');
+
+Then(/^pressing announced "([^"]+)" for (\w+)$/, async ({ page }, text: string, name: string) => {
+  const slot = await valueSlot(page, name);
+  await expect(slot).toHaveAttribute('role', 'status');
+  await expect(slot).toHaveText(text);
+});
+
+Then(/^nothing was announced as a value for (\w+)$/, async ({ page }, name: string) => {
+  await expect(await valueSlot(page, name)).toBeEmpty();
+});
+
+Then(new RegExp(`^the visible symbol of ${BUTTON} (\\w+) is hidden from assistive technology$`), async ({ page }, direction: 'Increase' | 'Decrease', name: string) => {
+  const symbol = (await rowButton(page, direction, name)).locator('[aria-hidden="true"]');
+  await expect(symbol).toHaveText(direction === 'Increase' ? '+' : '−');
+});
+
+Then(/^(\w+) is a group holding the buttons "([^"]+)" and "([^"]+)"$/, async ({ page }, name: string, first: string, second: string) => {
+  const row = await traitRating(page, name);
+  await expect(row).toHaveAttribute('role', 'group');
+  const group = shownStep(page).getByRole('group', { name, exact: true });
+  await expect(group.getByRole('button')).toHaveText([/./, /./]);
+  expect(await group.getByRole('button').evaluateAll((buttons) => buttons.map((button) => button.getAttribute('aria-label')))).toEqual([first, second]);
 });
 
 Then(/^the (\w+) group says "([^"]+)"$/, async ({ page }, group: string, text: string) => {

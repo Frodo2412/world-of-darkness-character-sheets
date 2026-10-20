@@ -11,7 +11,7 @@ import { setRank, setRating, type DotSource } from '../../domain/v20/creation/up
 import type { BuildStore } from '../../storage/buildStore';
 import type { CharacterStore } from '../../storage/characterStore';
 import { showReadout } from './messages';
-import { renderStepper } from './parts/ratingStepper';
+import { announceValue, renderStepper } from './parts/ratingStepper';
 import { renderTypedNumbers, wireTypedNumbers } from './parts/typedNumber';
 
 export type Update = (build: V20Build) => UpdateResult;
@@ -48,7 +48,9 @@ export function wireControls(root: HTMLElement, wiring: Wiring): void {
     const trait = stepper.dataset.buildTrait as BuildTraitRef;
     const mode = stepper.dataset.mode as DotSource;
     const step = Number(button.dataset.ratingStep);
-    commit((build) => setRating(build, trait, rating(build, trait) + step, mode), button);
+    const result = commit((build) => setRating(build, trait, rating(build, trait) + step, mode), button);
+    // A refusal is said by the row's message slot; only an applied press says the new value.
+    if (result === 'applied') announceValue(stepper);
   });
 }
 

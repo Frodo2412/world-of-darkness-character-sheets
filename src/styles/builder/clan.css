@@ -1,6 +1,7 @@
-/* The Clan screen: the question asked before a switch that would remove dots. */
+/* The Clan screen: the question asked before a switch that would remove dots. The panel is always on the
+   page, empty and unboxed, so the status region inside it can announce the question; it is boxed while open. */
 
-.clan-change {
+.clan-change[data-open] {
 	border: var(--stroke) solid var(--color-accent);
 	border-inline-start-width: 0.4rem;
 	border-radius: var(--radius-badge);
