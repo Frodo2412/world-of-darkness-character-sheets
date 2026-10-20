@@ -2531,9 +2531,9 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
   - [x] Step 8.1: Rank swap, pool views, callouts and summary
   - [x] Step 8.2: Attributes screen
   - [x] Step 8.3: Abilities screen
-- [ ] Slice 9: Advantages screen
-  - [ ] Step 9.1: Advantages view models
-  - [ ] Step 9.2: The Advantages screen
+- [x] Slice 9: Advantages screen
+  - [x] Step 9.1: Advantages view models
+  - [x] Step 9.2: The Advantages screen
 
 #### Wave 7
 - [ ] Slice 10: Finishing touches — Humanity, Willpower and the freebie ledger
