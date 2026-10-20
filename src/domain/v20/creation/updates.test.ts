@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
 import { CONCEPT_FIELDS } from './build';
-import { setBaseGeneration, setClan, setConceptText, setExtraFreebies } from './updates';
+import { CONCEPT_KINDS } from './rules';
+import { setBaseGeneration, setClan, setConceptKind, setConceptText, setDrive, setExtraFreebies } from './updates';
 
 describe('setBaseGeneration', () => {
   const build = blankBuild('abc');
@@ -86,6 +87,54 @@ describe('setConceptText', () => {
   test('does not mutate its input', () => {
     const snapshot = structuredClone(build);
     setConceptText(build, 'name', 'Lucita');
+    expect(build).toEqual(snapshot);
+  });
+});
+
+describe('setConceptKind and setDrive', () => {
+  const build = blankBuild('abc');
+
+  test('a new build has no sample concept and no drive', () => {
+    expect(build.concept).toMatchObject({ conceptKind: '', drive: '' });
+  });
+
+  test('the sample concepts are the fourteen names', () => {
+    expect(CONCEPT_KINDS).toEqual([
+      'Criminal', 'Drifter', 'Entertainer', 'Intellectual', 'Investigator', 'Kid', 'Outsider',
+      'Politician', 'Professional', 'Reporter', 'Scenester', 'Socialite', 'Soldier', 'Worker',
+    ]);
+  });
+
+  test.each(CONCEPT_KINDS)('accepts %s, then clears it with a blank', (kind) => {
+    const chosen = setConceptKind(build, kind);
+    expect(chosen).toEqual({
+      status: 'applied',
+      build: { ...build, concept: { ...build.concept, conceptKind: kind } },
+      notices: [],
+    });
+    expect(setConceptKind(chosen.build, '').build.concept.conceptKind).toBe('');
+  });
+
+  test.each(['Vampire', 'criminal', ' Criminal', 'Criminal '])('refuses %j and hands back the same build', (kind) => {
+    const result = setConceptKind(build, kind);
+    expect(result.status).toBe('refused');
+    expect(result.build).toBe(build);
+  });
+
+  test('keeps the drive as entered, then clears it', () => {
+    const entered = setDrive(build, '  Revenge on the one who sired me ');
+    expect(entered).toEqual({
+      status: 'applied',
+      build: { ...build, concept: { ...build.concept, drive: '  Revenge on the one who sired me ' } },
+      notices: [],
+    });
+    expect(setDrive(entered.build, '').build.concept.drive).toBe('');
+  });
+
+  test('neither mutates its input', () => {
+    const snapshot = structuredClone(build);
+    setConceptKind(build, 'Kid');
+    setDrive(build, 'Hunger');
     expect(build).toEqual(snapshot);
   });
 });

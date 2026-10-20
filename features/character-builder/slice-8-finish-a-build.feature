@@ -4,13 +4,14 @@ Feature: Finishing a build
     Given a player who has started building a character
     When they open the finishing touches step
     Then the outstanding list shows exactly
-      | item                                   | step       |
-      | Choose a clan                          | Concept    |
-      | Rank the Attribute groups              | Attributes |
-      | Rank the Ability groups                | Abilities  |
-      | Place 3 Discipline dots                | Advantages |
-      | Place 5 Background dots                | Advantages |
-      | Place 7 Virtue dots                    | Advantages |
+      | item                         | step              |
+      | Choose a clan                | Concept           |
+      | Rank the Attribute groups    | Attributes        |
+      | Rank the Ability groups      | Abilities         |
+      | Place 3 Discipline dots      | Advantages        |
+      | Place 5 Background dots      | Advantages        |
+      | Place 7 Virtue dots          | Advantages        |
+      | Record a starting Blood Pool | Finishing touches |
     And the build cannot be finished
 
   Scenario Outline: One unplaced dot blocks finishing
@@ -49,6 +50,17 @@ Feature: Finishing a build
     When they place the last Virtue dot and return to the finishing touches step
     Then nothing is outstanding
     And the build can be finished
+
+  Scenario: Trying to finish gives back the field an earlier refusal left
+    Given a complete build with no Blood Pool recorded
+    And an entry of "99" has been refused for the Blood Pool
+    When they try to finish the build
+    Then the Blood Pool field shows its stored value, not marked invalid
+
+  Scenario: Every try at a blocked Finish says why
+    Given a complete build with no Blood Pool recorded
+    When they try to finish the build twice
+    Then the reason "This build is not finished: resolve the outstanding items first." has been announced twice
 
   Scenario: Every step offers a way to review and finish
     Given a player on the "Attributes" step of a new build

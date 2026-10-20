@@ -1,0 +1,67 @@
+---
+// The creation settings, in a modal dialog opened from the builder's header.
+// Changes apply as they are made, so the dialog only closes; it never saves.
+// Its fields and readouts are found by data attributes, as on every step.
+import { GENERATION_TABLE } from '../../domain/v20/creation/rules';
+
+const READOUTS = [
+	{ key: 'freebieBudget', label: 'Freebie pool' },
+	{ key: 'effectiveGeneration', label: 'Effective generation' },
+	{ key: 'maxTrait', label: 'Maximum trait rating' },
+	{ key: 'bloodPoolMax', label: 'Blood Pool maximum' },
+	{ key: 'bloodPerTurn', label: 'Blood points per turn' },
+];
+---
+
+<dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-dialog-title" data-settings-dialog>
+	<div class="dialog-header">
+		<h2 id="settings-dialog-title">Creation settings</h2>
+		<button type="button" data-dialog-close>Close</button>
+	</div>
+	<!-- The page's own alert is out of reach behind a modal dialog, so a failed save is also said here. -->
+	<p class="status-message" role="alert" hidden data-dialog-alert></p>
+	<p class="field-hint">Changes apply immediately.</p>
+	<div class="builder-fields">
+		<div class="builder-field">
+			<label for="settings-base-generation">Base generation</label>
+			<select
+				id="settings-base-generation"
+				data-entry="baseGeneration"
+				aria-describedby="settings-base-generation-hint settings-base-generation-notice"
+				autofocus
+			>
+				{GENERATION_TABLE.map((row) => <option value={row.generation}>{row.generation}th</option>)}
+			</select>
+			<p id="settings-base-generation-hint" class="field-hint">Leave at 13th unless your Storyteller says otherwise.</p>
+			<p id="settings-base-generation-notice" class="field-notice" role="status" data-notice></p>
+		</div>
+		<div class="builder-field">
+			<label for="settings-extra-freebies">Extra freebie points</label>
+			<input
+				type="text"
+				inputmode="numeric"
+				autocomplete="off"
+				id="settings-extra-freebies"
+				data-entry="extraFreebies"
+				aria-describedby="settings-extra-freebies-hint settings-extra-freebies-notice"
+			/>
+			<p id="settings-extra-freebies-hint" class="field-hint">Leave at 0 unless your Storyteller grants more.</p>
+			<p id="settings-extra-freebies-notice" class="field-notice" role="status" data-notice></p>
+		</div>
+	</div>
+	<dl class="settings-readouts">
+		{
+			READOUTS.map((readout) => (
+				<div>
+					<dt id={`settings-readout-${readout.key}`}>{readout.label}</dt>
+					<dd>
+						<output data-readout={readout.key} aria-labelledby={`settings-readout-${readout.key}`} />
+					</dd>
+				</div>
+			))
+		}
+	</dl>
+	<form method="dialog">
+		<button>Done</button>
+	</form>
+</dialog>

@@ -53,11 +53,14 @@ export const abilitiesRanked: Step[] = [
   rank('knowledges', 'tertiary'),
 ];
 
+/** The starting Blood Pool a complete build has recorded: the 13th generation maximum. */
+export const COMPLETE_BLOOD_POOL = 10;
+
 /**
  * Every creation dot placed for `clanName`, at 13th generation with nothing
- * bought: the clan's first Discipline at 1 and the rest as below. A Nosferatu
- * puts Appearance's Social dot on Charisma; a Caitiff takes Celerity, Potence
- * and Presence.
+ * bought and a starting Blood Pool of 10 recorded: the clan's first Discipline
+ * at 1 and the rest as below. A Nosferatu puts Appearance's Social dot on
+ * Charisma; a Caitiff takes Celerity, Potence and Presence.
  */
 export function completeBuild(clanName = 'Brujah'): V20Build {
   const disciplines = clanName === 'Caitiff' ? ['Celerity', 'Potence', 'Presence'] : clanDisciplinesOf(clanName);
@@ -96,6 +99,7 @@ export function completeBuild(clanName = 'Brujah'): V20Build {
     creation('virtue:conscience', 4),
     creation('virtue:selfControl', 3),
     creation('virtue:courage', 3),
+    bloodPool(COMPLETE_BLOOD_POOL),
   );
 }
 

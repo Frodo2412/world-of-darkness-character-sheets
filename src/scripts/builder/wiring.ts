@@ -7,6 +7,7 @@ import type { BuildTraitRef, ConceptField, V20Build } from '../../domain/v20/cre
 import { BUILD_STEPS, type BuildReport } from '../../domain/v20/creation/progress';
 import type { UpdateResult } from '../../domain/v20/creation/result';
 import { ordinal } from '../../domain/v20/creation/limits';
+import { plural } from '../../domain/v20/creation/wording';
 import {
   addDiscipline,
   clanChangeEffects,
@@ -35,14 +36,23 @@ export interface Wiring {
   current: () => V20Build;
 }
 
-type Setting = 'baseGeneration' | 'extraFreebies';
+/** The fields whose entry is judged when it is finished: the settings and the starting Blood Pool. */
+type EntryField = 'baseGeneration' | 'extraFreebies' | 'bloodPool';
 
-const SETTING_UPDATES: Record<Setting, (build: V20Build, entry: string) => UpdateResult> = {
-  baseGeneration: (build, entry) => setBaseGeneration(build, Number(entry)),
+const ENTRY_UPDATES: Record<EntryField, (build: V20Build, text: string) => UpdateResult> = {
+  baseGeneration: (build, text) => setBaseGeneration(build, Number(text)),
   extraFreebies: setExtraFreebies,
+  bloodPool: setBloodPool,
 };
 
-type SettingControl = HTMLInputElement | HTMLSelectElement;
+/** What an entry's field shows for the build as it is; an unrecorded Blood Pool is an empty field. */
+const ENTRY_TEXT: Record<EntryField, (report: BuildReport) => string> = {
+  baseGeneration: (report) => String(report.settings.baseGeneration),
+  extraFreebies: (report) => String(report.settings.extraFreebies),
+  bloodPool: (report) => (report.bloodPool === null ? '' : String(report.bloodPool)),
+};
+
+type EntryControl = HTMLInputElement | HTMLSelectElement;
 
 function wireClanChoice(root: HTMLElement, { commit, current }: Wiring): void {
   const select = root.querySelector<HTMLSelectElement>('[data-clan]');
@@ -105,9 +115,9 @@ function wireClanChoice(root: HTMLElement, { commit, current }: Wiring): void {
 export function wireControls(root: HTMLElement, wiring: Wiring): void {
   const { commit } = wiring;
   // Typed numbers are judged on `change` (leaving the field or Enter), never per keystroke.
-  for (const control of root.querySelectorAll<SettingControl>('[data-setting]')) {
+  for (const control of root.querySelectorAll<EntryControl>('[data-entry]')) {
     control.addEventListener('change', () => {
-      const update = SETTING_UPDATES[control.dataset.setting as Setting];
+      const update = ENTRY_UPDATES[control.dataset.entry as EntryField];
       commit((build) => update(build, control.value), control);
     });
   }
@@ -125,11 +135,6 @@ export function wireControls(root: HTMLElement, wiring: Wiring): void {
     });
   }
   wireDisciplines(root, wiring);
-  for (const input of root.querySelectorAll<HTMLInputElement>('[data-blood-pool]')) {
-    input.addEventListener('change', () => {
-      commit((build) => setBloodPool(build, input.value), input);
-    });
-  }
   // Rating rows are found when they change, so rows drawn later need no wiring.
   root.addEventListener('change', (event) => {
     const control = (event.target as Element).closest<RatingControl>('[data-build-trait]');
@@ -252,8 +257,13 @@ function renderOutstanding(root: HTMLElement, report: BuildReport): void {
     );
     list.hidden = outstanding.length === 0;
   }
+}
+
+/** Finish stays focusable but does nothing while anything is outstanding, and says why. */
+function renderFinishGate(root: HTMLElement, { finish }: BuildReport): void {
   for (const button of root.querySelectorAll<HTMLButtonElement>('[data-finish]')) {
-    button.setAttribute('aria-disabled', String(outstanding.length > 0));
+    button.setAttribute('aria-disabled', String(finish.blocked));
+    showReadout(button, finish.label);
   }
 }
 
@@ -263,15 +273,22 @@ function renderFreebies(root: HTMLElement, report: BuildReport): void {
   }
   for (const count of root.querySelectorAll<HTMLElement>('[data-freebie-dots]')) {
     const { dots } = report.freebies.sections[count.dataset.freebieDots as keyof BuildReport['freebies']['sections']];
-    showReadout(count, `${dots} ${dots === 1 ? 'dot' : 'dots'} bought`);
+    showReadout(count, `${plural(dots, 'dot')} bought`);
   }
-  for (const input of root.querySelectorAll<HTMLInputElement>('[data-blood-pool]')) {
-    if (input.getAttribute('aria-invalid') !== 'true' && input.value !== String(report.bloodPool)) {
-      input.value = String(report.bloodPool);
-    }
-  }
+}
+
+/** The Blood Pool field's own words: its range, whether it is recorded, and that it is required until then. */
+function renderBloodPool(root: HTMLElement, report: BuildReport): void {
+  const unrecorded = report.bloodPool === null;
   for (const hint of root.querySelectorAll<HTMLElement>('[data-blood-pool-hint]')) {
-    showReadout(hint, `0 to ${report.settings.bloodPoolMax} — set with your Storyteller`);
+    showReadout(hint, report.bloodPoolHint);
+  }
+  for (const state of root.querySelectorAll<HTMLElement>('[data-blood-pool-state]')) {
+    showReadout(state, unrecorded ? 'Not recorded' : '');
+  }
+  for (const tag of root.querySelectorAll<HTMLElement>('[data-blood-pool-required]')) tag.hidden = !unrecorded;
+  for (const input of root.querySelectorAll<HTMLInputElement>('[data-entry="bloodPool"]')) {
+    input.setAttribute('aria-required', String(unrecorded));
   }
 }
 
@@ -299,10 +316,10 @@ function renderRating(control: RatingControl, report: BuildReport): void {
 }
 
 export function renderControls(root: HTMLElement, report: BuildReport): void {
-  for (const control of root.querySelectorAll<SettingControl>('[data-setting]')) {
+  for (const control of root.querySelectorAll<EntryControl>('[data-entry]')) {
     // A refused entry stays as typed until it is corrected or another change applies.
     if (control.getAttribute('aria-invalid') === 'true') continue;
-    const value = String(report.settings[control.dataset.setting as Setting]);
+    const value = ENTRY_TEXT[control.dataset.entry as EntryField](report);
     if (control.value !== value) control.value = value;
   }
   for (const readout of root.querySelectorAll<HTMLElement>('[data-readout]')) {
@@ -332,7 +349,9 @@ export function renderControls(root: HTMLElement, report: BuildReport): void {
   }
   renderDisciplines(root, report);
   renderFreebies(root, report);
+  renderBloodPool(root, report);
   renderOutstanding(root, report);
+  renderFinishGate(root, report);
   for (const control of root.querySelectorAll<RatingControl>('[data-build-trait]')) {
     renderRating(control, report);
   }

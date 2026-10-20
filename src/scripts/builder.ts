@@ -7,6 +7,7 @@ import type { CharacterStore } from '../storage/characterStore';
 import { wireFinish } from './builder/finish';
 import { clearNotices, reportSave, showNotices, showRefusal } from './builder/messages';
 import { pageState, showView } from './builder/pageState';
+import { wireDialog } from './builder/parts/dialog';
 import { startSteps } from './builder/steps';
 import { renderControls, wireControls, type Update } from './builder/wiring';
 import { STORAGE_UNAVAILABLE, showStatus } from './status';
@@ -48,7 +49,12 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
   }
 
   wireControls(root, { commit, current: () => build });
-  wireFinish(root, () => build, store, characters);
+  wireFinish(root, () => build, store, characters, render);
+  wireDialog(
+    root.querySelector<HTMLDialogElement>('[data-settings-dialog]')!,
+    root.querySelector<HTMLElement>('[data-settings-open]')!,
+    render,
+  );
 
   // "Review and finish" on every step opens Finishing touches at the outstanding list.
   root.addEventListener('click', (event) => {

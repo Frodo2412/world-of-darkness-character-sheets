@@ -1,5 +1,6 @@
 import { blankBuild, type DisciplineEntry, type V20Build } from '../domain/v20/creation/build';
-import { CLAN_NAMES, EXTRA_FREEBIES_RANGE, GENERATION_TABLE, RANKS } from '../domain/v20/creation/rules';
+import { isClanName, isConceptKind } from '../domain/v20/creation/ratings';
+import { EXTRA_FREEBIES_RANGE, GENERATION_TABLE, RANKS } from '../domain/v20/creation/rules';
 import { generateId, hasShapeOf, storedIds, type StoragePort } from './storagePort';
 
 /** A stored record that is not a build this version can read. It is never rewritten. */
@@ -49,31 +50,79 @@ function isDisciplineList(value: unknown): value is DisciplineEntry[] {
   });
 }
 
+type Fields = Record<string, unknown>;
+
+const isFields = (value: unknown): value is Fields =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const isLegacyRecord = (raw: unknown): raw is Fields & { concept: Fields } =>
+  isFields(raw) && isFields(raw.concept) && !('conceptKind' in raw.concept);
+
+function upgradedLegacyRecord(raw: Fields & { concept: Fields }): Fields {
+  return {
+    ...raw,
+    bloodPool: raw.bloodPool === 0 ? null : raw.bloodPool,
+    // Only what the old shape lacked is defaulted: a `drive` it somehow has is kept.
+    concept: { conceptKind: '', drive: '', ...raw.concept },
+  };
+}
+
+function hasValidIdentity(build: V20Build, id: string): boolean {
+  return build.id === id && build.system === 'v20' && build.kind === 'build' && build.schemaVersion === 1;
+}
+
+function hasValidSettings(build: V20Build): boolean {
+  return (
+    GENERATION_TABLE.some((row) => row.generation === build.settings.baseGeneration) &&
+    isWholeInRange(build.settings.extraFreebies, EXTRA_FREEBIES_RANGE.min, EXTRA_FREEBIES_RANGE.max)
+  );
+}
+
+/** The choices the player makes: sample concept, clan and ranks. */
+function hasValidChoices(build: V20Build): boolean {
+  return (
+    (build.concept.conceptKind === '' || isConceptKind(build.concept.conceptKind)) &&
+    (build.clan === '' || isClanName(build.clan)) &&
+    Object.values(build.ranks).every((rank) => rank === '' || (RANKS as readonly string[]).includes(rank))
+  );
+}
+
+/** Each trait's creation and freebie dots are counts, and the Blood Pool is null or a count; whether the Blood Pool is within the generation's maximum is the rules' to say. */
+function hasValidTraits(build: V20Build): boolean {
+  return (
+    Object.values(build.traits).every((dots) => isDotCount(dots.creation) && isDotCount(dots.freebie)) &&
+    (build.bloodPool === null || isDotCount(build.bloodPool))
+  );
+}
+
 function isV20Build(value: unknown, id: string): value is V20Build {
   if (typeof value !== 'object' || value === null) return false;
-  const { disciplines, ...fixed } = value as V20Build;
-  const { disciplines: _template, ...template } = blankBuild(id);
+  // Neither has a fixed shape: the list is checked entry by entry, the Blood Pool is null or a count.
+  const { disciplines, bloodPool: _pool, ...fixed } = value as V20Build;
+  const { disciplines: _disciplines, bloodPool: _blank, ...template } = blankBuild(id);
   if (!hasShapeOf(fixed, template) || !isDisciplineList(disciplines)) return false;
   const build = value as V20Build;
-  return (
-    build.id === id &&
-    build.system === 'v20' &&
-    build.kind === 'build' &&
-    build.schemaVersion === 1 &&
-    GENERATION_TABLE.some((row) => row.generation === build.settings.baseGeneration) &&
-    isWholeInRange(build.settings.extraFreebies, EXTRA_FREEBIES_RANGE.min, EXTRA_FREEBIES_RANGE.max) &&
-    (build.clan === '' || (CLAN_NAMES as readonly string[]).includes(build.clan)) &&
-    Object.values(build.ranks).every((rank) => rank === '' || (RANKS as readonly string[]).includes(rank)) &&
-    Object.values(build.traits).every((dots) => isDotCount(dots.creation) && isDotCount(dots.freebie)) &&
-    isDotCount(build.bloodPool)
-  );
+  return hasValidIdentity(build, id) && hasValidSettings(build) && hasValidChoices(build) && hasValidTraits(build);
+}
+
+/**
+ * Reads a stored value as a build, or undefined if it is not one. A record
+ * written before the Blood Pool was recorded explicitly (it has no
+ * `concept.conceptKind`) is brought to the current shape first: its Blood Pool
+ * of 0, which was only ever the default, reads as not recorded and the new
+ * concept fields start empty. A record that has `conceptKind` is read as it is,
+ * so a recorded 0 stays 0.
+ */
+function readStoredBuild(raw: unknown, id: string): V20Build | undefined {
+  // A legacy Blood Pool was always a number, so anything else is damage and the record stays unreadable.
+  const value = isLegacyRecord(raw) && typeof raw.bloodPool === 'number' ? upgradedLegacyRecord(raw) : raw;
+  return isV20Build(value, id) ? value : undefined;
 }
 
 /** The only way stored text becomes a build. */
 function parseRecord(text: string, id: string): V20Build | undefined {
   try {
-    const value: unknown = JSON.parse(text);
-    return isV20Build(value, id) ? value : undefined;
+    return readStoredBuild(JSON.parse(text), id);
   } catch {
     return undefined;
   }

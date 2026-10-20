@@ -2,12 +2,17 @@ import { expect, type Page } from '@playwright/test';
 import { BACKGROUNDS } from '../../src/domain/v20/creation/rules';
 import { Given, Then, When } from './fixtures';
 import {
+  baseGeneration,
   expectRated,
   groupBox,
   groupReadout,
+  openCreationSettings,
   openPlayed,
   openStep,
   rateTrait,
+  readout,
+  setBaseGeneration,
+  settingsDialog,
   shownStep,
   traitRating,
 } from './support/builder';
@@ -19,7 +24,8 @@ const PLURAL: Record<string, string> = { Discipline: 'Disciplines', Background: 
 const clanSelect = (page: Page) => page.locator('#builder').getByRole('combobox', { name: 'Clan', exact: true });
 
 /** The visible notice that holds `text`, wherever the refused control was. */
-const noticeWith = (page: Page, text: string | RegExp) => shownStep(page).locator('[data-notice]').filter({ hasText: text });
+const noticeWith = (page: Page, text: string | RegExp) =>
+  shownStep(page).locator('[data-notice]').or(settingsDialog(page).locator('[data-notice]')).filter({ hasText: text });
 
 async function disciplineNames(page: Page): Promise<string[]> {
   const group = await groupBox(page, 'Disciplines');
@@ -88,8 +94,7 @@ When(
 );
 
 When('they try to set the base generation to {string}', async ({ page }, label: string) => {
-  await openStep(page, 'Settings');
-  await page.getByRole('combobox', { name: 'Base generation', exact: true }).selectOption({ label });
+  await setBaseGeneration(page, label);
 });
 
 When(
@@ -172,26 +177,26 @@ Then('the choices are exactly', async ({ page }, table: import('playwright-bdd')
 });
 
 Then(
-  /^they are told, beside Generation, that the effective generation is now (\d+th) with a blood pool maximum of (\d+)$/,
+  /^they are told, beside Generation, that the effective generation is now (\d+th) with a Blood Pool maximum of (\d+)$/,
   async ({ page }, generation: string, pool: string) => {
     await expect((await groupBox(page, 'Backgrounds')).locator('[data-notice]')).toHaveText(
-      `The effective generation is now ${generation}, with a blood pool maximum of ${pool}.`,
+      `The effective generation is now ${generation}, with a Blood Pool maximum of ${pool}.`,
     );
   },
 );
 
 Then(
-  'the settings step shows the effective generation {string} beside the base generation {string}',
+  'the Creation settings show the effective generation {string} beside the base generation {string}',
   async ({ page }, effective: string, base: string) => {
-    await openStep(page, 'Settings');
-    await expect(page.getByRole('status', { name: 'Effective generation', exact: true })).toHaveText(effective);
-    await expect(page.getByRole('combobox', { name: 'Base generation' }).locator('option:checked')).toHaveText(base);
+    await openCreationSettings(page);
+    await expect(readout(page, 'Effective generation')).toHaveText(effective);
+    await expect(baseGeneration(page).locator('option:checked')).toHaveText(base);
   },
 );
 
 Then('the effective generation is {string}', async ({ page }, effective: string) => {
-  await openStep(page, 'Settings');
-  await expect(page.getByRole('status', { name: 'Effective generation', exact: true })).toHaveText(effective);
+  await openCreationSettings(page);
+  await expect(readout(page, 'Effective generation')).toHaveText(effective);
 });
 
 Then('they are told the effective generation cannot be better than 4th', async ({ page }) => {

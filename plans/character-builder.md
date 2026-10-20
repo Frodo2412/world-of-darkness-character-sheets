@@ -5,6 +5,7 @@
 **Status**: built
 **Gherkin persistence**: features
 **Spec**: `docs/specs/character-builder.md`
+**Superseded in part**: the starting Blood Pool Gherkin (Slice 7: "entered by the player", "starts at 0", "cannot leave the generation's range") is superseded by `plans/character-builder-redesign.md` Slice 1 (no default; required before Finish). Those scenarios are no longer exported to `features/character-builder/`.
 
 ## Goal
 
@@ -1403,6 +1404,7 @@ Feature: Finishing touches
     When they set the extra freebie points to 25
     Then there are 0 freebie points remaining
 
+  # Superseded by plans/character-builder-redesign.md Slice 1: the three blood pool scenarios below.
   Scenario: The blood pool is entered by the player
     Given a 13th generation build
     When they enter 7 as the starting blood pool

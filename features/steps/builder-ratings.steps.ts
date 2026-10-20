@@ -20,7 +20,6 @@ import { SHEET_ADDRESS } from './support/pages';
 import { expectRating, rating } from './support/ratings';
 
 const STEP_TITLES: Record<string, string> = {
-  settings: 'Settings',
   concept: 'Concept',
   attributes: 'Attributes',
   abilities: 'Abilities',

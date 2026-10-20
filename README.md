@@ -29,15 +29,16 @@ existed opens on every one of them.
 
 ## Building a character
 
-"Build a character" on the roster opens the builder: Settings, Concept, Attributes,
-Abilities, Advantages and Finishing touches, visited in any order. Every change is saved
+"Build a character" on the roster opens the builder: Concept, Attributes, Abilities,
+Advantages and Finishing touches, visited in any order. Every change is saved
 as you go, and builds in progress are listed on the roster to continue or delete.
 
-- **Two creation settings** come first, for the Storyteller's house rules: the base
-  generation (4th–13th, default 13th) and extra freebie points (0–999, default 0, added
-  to the standard 15). Either can be changed later unless the change would leave a trait
-  above its new maximum or the freebie points already spent above the new budget; the
-  builder then says what to lower first.
+- **Two creation settings** are for the Storyteller's house rules: the base generation
+  (4th–13th, default 13th) and extra freebie points (0–999, default 0, added to the
+  standard 15). They are set in a "Creation settings" dialog opened from the builder
+  header, and apply as they change. Either can be changed at any time unless the change
+  would leave a trait above its new maximum or the freebie points already spent above
+  the new budget; the builder then says what to lower first.
 - **What it enforces:** Attributes ranked 7/5/3 with one free dot each; Abilities ranked
   13/9/5, none above 3 before freebie points; 3 Discipline dots on the clan's three
   Disciplines (any for Caitiff, including write-ins); 5 Background dots; 7 Virtue dots
@@ -47,13 +48,14 @@ as you go, and builds in progress are listed on the roster to continue or delete
   the Virtues. Freebie points cost 5/2/7/1/2/2/1 per Attribute, Ability, Discipline,
   Background, Virtue, Humanity and Willpower dot. A Nosferatu's Appearance is fixed at 0.
   Anything that would break a rule is refused, with the reason shown beside it.
-- **Finishing** is blocked until a clan is chosen and every creation dot is placed;
-  unspent freebie points only ask for confirmation. The finished build becomes an
+- **Finishing** is blocked until a clan is chosen, every creation dot is placed and the
+  starting Blood Pool is recorded (there is no default: 0 is a valid recorded value,
+  anywhere from 0 to the generation's Blood Pool maximum); the Finish button says how many
+  items are left. Unspent freebie points only ask for confirmation. The finished build becomes an
   ordinary character on the sheet, freely editable from then on, and the build is removed.
 - **Not covered:** Merits and Flaws, Paths of Enlightenment, bloodlines and thin-blooded
   generations, write-in Abilities, experience points, and re-opening a finished
-  character in the builder. The starting blood pool is entered by the player; no dice
-  are rolled.
+  character in the builder.
 
 ## Using the sheet
 

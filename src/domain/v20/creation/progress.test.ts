@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
-import { BACKGROUNDS } from './rules';
-import { conceptReport, report, settingsReport, stepStatuses } from './progress';
+import { completeBuild, creation, generation, play } from './testing/play';
+import { BACKGROUNDS, BUILD_STEPS } from './rules';
+import { bloodPoolHint, conceptReport, finishReport, isFinishable, report, settingsReport, stepStatuses } from './progress';
 import { setBaseGeneration, setClan, setConceptText, setExtraFreebies } from './updates';
 
 function played(generation: number, extra: string) {
@@ -55,6 +56,59 @@ describe('report', () => {
   });
 });
 
+describe('bloodPoolHint', () => {
+  test.each([
+    [13, 0, '0 to 10 at 13th generation'],
+    [13, 1, '0 to 11 at 12th generation'],
+    [6, 2, '0 to 50 at 4th generation'],
+  ])('from base %ith with %i Generation dots it reads %j', (base, dots, expected) => {
+    const build = play(blankBuild('abc'), generation(base), creation('background:Generation', dots));
+    expect(bloodPoolHint(build)).toBe(expected);
+    expect(report(build).bloodPoolHint).toBe(expected);
+  });
+});
+
+describe('finishReport', () => {
+  test('a complete build is not blocked and says nothing', () => {
+    expect(finishReport(completeBuild('Brujah'))).toEqual({
+      blocked: false,
+      itemsLeft: 0,
+      unspentFreebies: 15,
+      label: 'Finish character',
+      refusalMessage: 'This build is not finished: resolve the outstanding items first.',
+    });
+  });
+
+  test('one item left reads in the singular', () => {
+    const build = { ...completeBuild('Brujah'), bloodPool: null };
+    expect(finishReport(build)).toMatchObject({
+      blocked: true,
+      itemsLeft: 1,
+      label: 'Finish character · 1 item left',
+      refusalMessage: 'This build is not finished: resolve the outstanding items first.',
+    });
+  });
+
+  test('several items left read in the plural', () => {
+    // A new build owes a clan, both rank sets, three allotments and the Blood Pool.
+    expect(finishReport(blankBuild('abc'))).toMatchObject({
+      blocked: true,
+      itemsLeft: 7,
+      label: 'Finish character · 7 items left',
+    });
+  });
+
+  test('a build is finishable exactly when nothing is outstanding', () => {
+    expect(isFinishable(completeBuild('Brujah'))).toBe(true);
+    expect(isFinishable({ ...completeBuild('Brujah'), bloodPool: null })).toBe(false);
+  });
+
+  test('report carries it', () => {
+    const build = blankBuild('abc');
+    expect(report(build).finish).toEqual(finishReport(build));
+  });
+});
+
 describe('conceptReport', () => {
   test('shows the concept text and clan as stored', () => {
     let build = setConceptText(blankBuild('abc'), 'name', 'Lucita').build;
@@ -67,6 +121,10 @@ describe('conceptReport', () => {
 });
 
 describe('stepStatuses', () => {
+  test('has a status entry for exactly the builder steps', () => {
+    expect(Object.keys(stepStatuses(blankBuild('abc')))).toEqual(BUILD_STEPS.map((entry) => entry.step));
+  });
+
   test('the concept step needs a clan until one is chosen', () => {
     const build = blankBuild('abc');
     expect(stepStatuses(build).concept).toBe('clan needed');

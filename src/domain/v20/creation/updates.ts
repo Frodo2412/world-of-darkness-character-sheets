@@ -13,7 +13,8 @@ import type {
   V20Build,
 } from './build';
 import { freebieCost, freebiesRemaining } from './freebies';
-import { GENERATION_REF, effectiveGeneration, limits, maximumFor, ordinal } from './limits';
+import { plural } from './wording';
+import { GENERATION_REF, bloodPoolRangeMessage, effectiveGeneration, limits, maximumFor, ordinal } from './limits';
 import {
   catalogueDiscipline,
   clanDisciplines,
@@ -26,6 +27,8 @@ import {
   freebieFloor,
   isCaitiff,
   isClanDiscipline,
+  isClanName,
+  isConceptKind,
   isLocked,
   keyOf,
   kindOf,
@@ -36,7 +39,6 @@ import {
 import { applied, commit, refuse, type UpdateResult } from './result';
 import {
   CLAN_FIXED_TRAITS,
-  CLAN_NAMES,
   EXTRA_FREEBIES_RANGE,
   FIXED_MAXIMUMS,
   FLAT_ALLOTMENTS,
@@ -68,9 +70,6 @@ function wholeNumber(text: string, range: Range): number | undefined {
 const stepTitle = (step: string): string =>
   BUILD_STEPS.find((entry) => entry.step === step)?.title ?? step;
 
-const plural = (count: number, one: string, many = `${one}s`): string =>
-  `${count} ${count === 1 ? one : many}`;
-
 function joined(names: readonly string[]): string {
   if (names.length <= 1) return names.join('');
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
@@ -80,6 +79,10 @@ function joined(names: readonly string[]): string {
 
 function withSettings(build: V20Build, change: Partial<BuildSettings>): V20Build {
   return { ...build, settings: { ...build.settings, ...change } };
+}
+
+function withConcept(build: V20Build, change: Partial<V20Build['concept']>): V20Build {
+  return { ...build, concept: { ...build.concept, ...change } };
 }
 
 export function setBaseGeneration(build: V20Build, generation: number): UpdateResult {
@@ -104,13 +107,14 @@ export function setExtraFreebies(build: V20Build, text: string): UpdateResult {
   return commit(build, withSettings(build, { extraFreebies: value }), []);
 }
 
-/** Takes the player's text: a whole number from 0 to the generation's blood pool maximum. */
+/**
+ * Takes the player's text: a whole number from 0 to the generation's Blood Pool
+ * maximum, or a blank entry, which returns the Blood Pool to not recorded.
+ */
 export function setBloodPool(build: V20Build, text: string): UpdateResult {
-  const { bloodPoolMax } = limits(build);
-  const value = wholeNumber(text, { min: 0, max: bloodPoolMax });
-  if (value === undefined) {
-    return refuse(build, `The blood pool must be a whole number from 0 to ${bloodPoolMax}.`);
-  }
+  if (text.trim() === '') return commit(build, { ...build, bloodPool: null }, []);
+  const value = wholeNumber(text, { min: 0, max: limits(build).bloodPoolMax });
+  if (value === undefined) return refuse(build, bloodPoolRangeMessage(build));
   return commit(build, { ...build, bloodPool: value }, []);
 }
 
@@ -118,7 +122,20 @@ export function setBloodPool(build: V20Build, text: string): UpdateResult {
 
 /** Any text is kept as entered, including none. */
 export function setConceptText(build: V20Build, field: ConceptField, text: string): UpdateResult {
-  return commit(build, { ...build, concept: { ...build.concept, [field]: text } }, []);
+  return commit(build, withConcept(build, { [field]: text }), []);
+}
+
+/** A sample concept by name, or '' for none. */
+export function setConceptKind(build: V20Build, kind: string): UpdateResult {
+  if (kind !== '' && !isConceptKind(kind)) {
+    return refuse(build, `${kind} is not one of the sample concepts the builder offers.`);
+  }
+  return commit(build, withConcept(build, { conceptKind: kind }), []);
+}
+
+/** Any text is kept as entered, including none. */
+export function setDrive(build: V20Build, text: string): UpdateResult {
+  return commit(build, withConcept(build, { drive: text }), []);
 }
 
 interface ClanChange {
@@ -178,7 +195,7 @@ function changeClan(build: V20Build, clan: ClanName): ClanChange {
 
 /** What choosing `clan` would remove, as sentences for the player to confirm. Empty if nothing. */
 export function clanChangeEffects(build: V20Build, clan: string): string[] {
-  if (!(CLAN_NAMES as readonly string[]).includes(clan) || clan === build.clan) return [];
+  if (!isClanName(clan) || clan === build.clan) return [];
   return changeClan(build, clan as ClanName).pending;
 }
 
@@ -190,7 +207,7 @@ export function setClan(build: V20Build, clan: string): UpdateResult {
   if (clan === '') {
     return refuse(build, 'A chosen clan cannot be cleared. Choose another clan instead.');
   }
-  if (!(CLAN_NAMES as readonly string[]).includes(clan)) {
+  if (!isClanName(clan)) {
     return refuse(build, `${clan} is not one of the clans the builder offers.`);
   }
   if (clan === build.clan) return applied(build);
@@ -275,7 +292,7 @@ function heldCapRefusal(build: V20Build, ref: BuildTraitRef, target: number): st
 function generationNotice(before: V20Build, after: V20Build): string[] {
   if (effectiveGeneration(before) === effectiveGeneration(after)) return [];
   return [
-    `The effective generation is now ${ordinal(effectiveGeneration(after))}, with a blood pool maximum of ${limits(after).bloodPoolMax}.`,
+    `The effective generation is now ${ordinal(effectiveGeneration(after))}, with a Blood Pool maximum of ${limits(after).bloodPoolMax}.`,
   ];
 }
 

@@ -2,6 +2,18 @@ import { describe, expect, test } from 'vitest';
 import * as rules from './rules';
 import { ARCHETYPES, CLANS, CLAN_NAMES, GENERATION_TABLE, STANDARD_FREEBIE_BUDGET } from './rules';
 
+describe('build steps', () => {
+  test('are the five that place dots and text, in order, with no step for the creation settings', () => {
+    expect(rules.BUILD_STEPS.map((entry) => entry.step)).toEqual([
+      'concept',
+      'attributes',
+      'abilities',
+      'advantages',
+      'finishing',
+    ]);
+  });
+});
+
 describe('generation table', () => {
   test('has one row for each generation from 4th to 13th, most potent first', () => {
     expect(GENERATION_TABLE.map((row) => row.generation)).toEqual([4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);

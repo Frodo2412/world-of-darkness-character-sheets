@@ -8,11 +8,14 @@ import {
   ATTRIBUTE_ALLOTMENT,
   BUILD_VIRTUES,
   CLAN_FIXED_TRAITS,
+  CLAN_NAMES,
   CLANS,
+  CONCEPT_KINDS,
   DISCIPLINES,
   VIRTUE_ALLOTMENT,
   type BuildStep,
   type ClanName,
+  type ConceptKind,
   type TraitKind,
 } from './rules';
 
@@ -64,6 +67,12 @@ export function catalogueDiscipline(name: string): string | undefined {
 export function findDiscipline(build: V20Build, name: string): DisciplineEntry | undefined {
   return build.disciplines.find((entry) => sameName(entry.name, name));
 }
+
+/** Whether `name` is one of the clans the builder offers. */
+export const isClanName = (name: string): name is ClanName => (CLAN_NAMES as readonly string[]).includes(name);
+
+/** Whether `name` is one of the sample concepts the builder offers. */
+export const isConceptKind = (name: string): name is ConceptKind => (CONCEPT_KINDS as readonly string[]).includes(name);
 
 export const isCaitiff = (build: V20Build): boolean => build.clan === 'Caitiff';
 

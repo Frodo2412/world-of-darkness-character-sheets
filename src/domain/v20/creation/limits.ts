@@ -62,6 +62,11 @@ export function maximumFor(build: V20Build, ref: BuildTraitRef): number {
   }
 }
 
+/** What a refused Blood Pool entry says: the range the generation allows. */
+export function bloodPoolRangeMessage(build: V20Build): string {
+  return `The Blood Pool must be a whole number from 0 to ${limits(build).bloodPoolMax}.`;
+}
+
 /** A hard rule break, as a sentence naming what to lower and the step to do it on. */
 export interface Violation {
   message: string;
@@ -108,8 +113,8 @@ export function violations(build: V20Build): Violation[] {
   }
 
   const { bloodPoolMax } = limits(build);
-  if (build.bloodPool > bloodPoolMax) {
-    found.push({ message: `Lower the starting blood pool to ${bloodPoolMax} first.`, step: 'finishing' });
+  if (build.bloodPool !== null && build.bloodPool > bloodPoolMax) {
+    found.push({ message: `Lower the starting Blood Pool to ${bloodPoolMax} first.`, step: 'finishing' });
   }
 
   const spent = freebiesSpent(build);

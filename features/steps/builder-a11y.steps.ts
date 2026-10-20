@@ -5,15 +5,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 import { Then, When } from './fixtures';
+import { expectUniqueControlNames } from './support/accessibility';
 import { openFreebieSections, openStep, shownStep } from './support/builder';
 import { openRoster } from './support/pages';
 import { putRosterInState } from './support/library-states';
 
 const PHONE = { width: 375, height: 800 };
 
-const CONTROL_ROLES = 'textbox|searchbox|combobox|slider|button|link|checkbox|radio|spinbutton|tab';
-const CONTROL_LINE = new RegExp(`^\\s*- (?:${CONTROL_ROLES})\\b`);
-const CONTROL_NAME = new RegExp(`^\\s*- (${CONTROL_ROLES}) "([^"]+)"`);
 
 /** Accessibility rule ids the page breaks, with the elements that break them. */
 async function wcagViolations(page: Page): Promise<string[]> {
@@ -105,17 +103,7 @@ Then('no WCAG 2.1 AA violations are reported', async ({ memory }) => {
 });
 
 Then('every control has a unique, non-empty accessible name', async ({ page }) => {
-  // The accessibility tree as assistive technology receives it, one node per line.
-  const tree = await page.locator('main').ariaSnapshot();
-  const lines = tree.split('\n').filter((line) => CONTROL_LINE.test(line));
-  const named = lines.map((line) => CONTROL_NAME.exec(line));
-
-  expect(lines.length).toBeGreaterThan(0);
-  expect(lines.filter((_, index) => !named[index]?.[2].trim())).toEqual([]);
-  // A role is announced with its name, so the "Concept" step link and the
-  // "Concept" text field are told apart; two links of one name are not.
-  const identities = named.map((match) => `${match![1]} "${match![2]}"`);
-  expect(identities.filter((identity, index) => identities.indexOf(identity) !== index)).toEqual([]);
+  await expectUniqueControlNames(page.locator('main'));
 });
 
 Then('at 375 pixels wide the page does not scroll horizontally', async ({ page }) => {

@@ -26,15 +26,19 @@ import TraitRow from './TraitRow.astro';
 		<p id="finishing-morality-notice" class="field-notice" role="status" data-notice></p>
 	</div>
 	<div class="builder-field">
-		<label for="blood-pool">Starting blood pool</label>
-		<input
-			type="text"
-			inputmode="numeric"
-			autocomplete="off"
-			id="blood-pool"
-			data-blood-pool
-			aria-describedby="blood-pool-hint blood-pool-notice"
-		/>
+		<label for="blood-pool">Starting Blood Pool</label>
+		<div class="field-line">
+			<input
+				type="text"
+				inputmode="numeric"
+				autocomplete="off"
+				id="blood-pool"
+				data-entry="bloodPool"
+				aria-describedby="blood-pool-hint blood-pool-state blood-pool-notice"
+			/>
+			<span id="blood-pool-state" class="field-state" data-blood-pool-state></span>
+			<span class="field-tag" data-blood-pool-required hidden>Required</span>
+		</div>
 		<p id="blood-pool-hint" class="field-hint" data-blood-pool-hint></p>
 		<p id="blood-pool-notice" class="field-notice" role="status" data-notice></p>
 	</div>

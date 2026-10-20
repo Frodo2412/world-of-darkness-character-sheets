@@ -2,29 +2,39 @@
 // points are unspent, then the two-store finish and the sheet.
 
 import type { V20Build } from '../../domain/v20/creation/build';
-import { outstanding, unspentFreebies } from '../../domain/v20/creation/progress';
+import { finishReport } from '../../domain/v20/creation/progress';
 import type { BuildStore } from '../../storage/buildStore';
 import type { CharacterStore } from '../../storage/characterStore';
 import { finishBuild } from '../../storage/finishBuild';
 import { clearStatus, showStatus } from '../status';
+import { plural } from '../../domain/v20/creation/wording';
+import { showRefusal } from './messages';
 import { showView } from './pageState';
 
 const sheetUrl = (id: string): string => `/sheet/?id=${encodeURIComponent(id)}`;
 
-const points = (count: number): string => `${count} freebie ${count === 1 ? 'point' : 'points'}`;
+const points = (count: number): string => plural(count, 'freebie point');
 
 export function wireFinish(
   root: HTMLElement,
   current: () => V20Build,
   builds: BuildStore,
   characters: CharacterStore,
+  /** Redraws every field from the build, giving back what a cleared refusal had left typed. */
+  render: () => void,
 ): void {
   const button = root.querySelector<HTMLButtonElement>('[data-finish]')!;
-  const list = root.querySelector<HTMLElement>('[data-outstanding]')!;
   const notice = root.querySelector<HTMLElement>('[data-finish-notice]')!;
   const dialog = root.querySelector<HTMLDialogElement>('[data-finish-dialog]')!;
   const message = dialog.querySelector<HTMLElement>('[data-finish-dialog-message]')!;
   const confirm = dialog.querySelector<HTMLButtonElement>('[data-finish-confirm]')!;
+
+  /** The finish did not happen: say so, and leave the build and the button as they were. */
+  function keepBuild(text: string): void {
+    showStatus(text);
+    button.disabled = false;
+    button.focus();
+  }
 
   function finish(): void {
     // Disabled at once, so a second activation cannot start a second finish.
@@ -46,21 +56,25 @@ export function wireFinish(
       case 'build-missing':
         showView('not-found');
         return;
+      case 'not-finishable':
+        keepBuild('This build still has items outstanding, so it was not finished. Your build has been kept.');
+        return;
       case 'save-failed':
-        showStatus('The character could not be saved. This browser refused to store it. Your build has been kept.');
-        button.disabled = false;
-        button.focus();
+        keepBuild('The character could not be saved. This browser refused to store it. Your build has been kept.');
         return;
     }
   }
 
   button.addEventListener('click', () => {
     const build = current();
-    if (outstanding(build).length > 0) {
-      list.focus();
+    const { blocked, refusalMessage, unspentFreebies: unspent } = finishReport(build);
+    if (blocked) {
+      // Disabled but explained: nothing happens except the reason, said politely, every time it is tried.
+      showRefusal(root, button, refusalMessage, undefined, true);
+      // That cleared any other field's refusal, so the fields give back the values they hold.
+      render();
       return;
     }
-    const unspent = unspentFreebies(build);
     if (unspent === 0) {
       finish();
       return;

@@ -2,9 +2,9 @@
 // the page never compares numbers against budgets or maximums itself.
 
 import { allotmentStates, type AllotmentState } from './allotments';
-import { FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
+import { CONCEPT_FIELDS, FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
 import { freebieBudget, freebiesRemaining, freebiesSpent } from './freebies';
-import { effectiveGeneration, limits, maximumFor, violations } from './limits';
+import { effectiveGeneration, limits, maximumFor, ordinal, violations } from './limits';
 import {
   clanDisciplines,
   creationRating,
@@ -17,6 +17,7 @@ import {
   traitLabel,
 } from './ratings';
 import { BUILD_STEPS, FREEBIE_COSTS, RANKED_ALLOTMENTS, type BuildStep, type Rank } from './rules';
+import { plural } from './wording';
 
 export { BUILD_STEPS, type BuildStep } from './rules';
 
@@ -79,6 +80,18 @@ export interface FreebieReport {
   sections: Record<FreebieSection, { cost: number; dots: number }>;
 }
 
+/** Whether the build can be finished now, and what the Finish control says about it. */
+export interface FinishReport {
+  /** Something is outstanding, so Finish does nothing yet. */
+  blocked: boolean;
+  itemsLeft: number;
+  unspentFreebies: number;
+  /** The Finish control's label: "Finish character · 2 items left" while blocked, "Finish character" otherwise. */
+  label: string;
+  /** What activating a blocked Finish says. The label already says how many items are left, so this does not. */
+  refusalMessage: string;
+}
+
 export interface BuildReport {
   settings: SettingsReport;
   concept: ConceptReport;
@@ -96,14 +109,14 @@ export interface BuildReport {
     freebieRows: BuildTraitRef[];
   };
   freebies: FreebieReport;
-  bloodPool: number;
+  bloodPool: number | null;
+  /** The range shown beside the Blood Pool field: "0 to 10 at 13th generation". */
+  bloodPoolHint: string;
   outstanding: OutstandingItem[];
+  finish: FinishReport;
   /** A short text status per step, '' when there is nothing to say. */
   steps: Record<BuildStep, string>;
 }
-
-const plural = (count: number, one: string, many = `${one}s`): string =>
-  `${count} ${count === 1 ? one : many}`;
 
 export function settingsReport(build: V20Build): SettingsReport {
   const { maxTrait, bloodPoolMax, bloodPerTurn } = limits(build);
@@ -119,7 +132,9 @@ export function settingsReport(build: V20Build): SettingsReport {
 }
 
 export function conceptReport(build: V20Build): ConceptReport {
-  return { fields: { ...build.concept }, clan: build.clan };
+  // The sample concept and drive are not sheet header fields, so the readout leaves them out.
+  const fields = Object.fromEntries(CONCEPT_FIELDS.map((field) => [field, build.concept[field]])) as Record<ConceptField, string>;
+  return { fields, clan: build.clan };
 }
 
 function valueText(build: V20Build, ref: BuildTraitRef, max: number): string {
@@ -246,6 +261,7 @@ export function outstanding(build: V20Build): OutstandingItem[] {
       items.push({ step: state.step, message: `Lower ${state.label} by ${plural(-state.remaining, 'dot')}` });
     }
   }
+  if (build.bloodPool === null) items.push({ step: 'finishing', message: 'Record a starting Blood Pool' });
   for (const violation of violations(build)) {
     items.push({ step: violation.step, message: violation.message });
   }
@@ -258,9 +274,8 @@ export function outstanding(build: V20Build): OutstandingItem[] {
 export const unspentFreebies = (build: V20Build): number => Math.max(0, freebiesRemaining(build));
 
 /** The step navigation's word on each step, from the same reads as the outstanding list. */
-export function stepStatuses(build: V20Build): Record<BuildStep, string> {
+export function stepStatuses(build: V20Build, items: OutstandingItem[] = outstanding(build)): Record<BuildStep, string> {
   const states = allotmentStates(build);
-  const items = outstanding(build);
   const statusOf = (step: BuildStep): string => {
     const own = states.filter((state) => state.step === step);
     if (own.some((state) => state.remaining < 0)) return 'overspent';
@@ -271,7 +286,6 @@ export function stepStatuses(build: V20Build): Record<BuildStep, string> {
     return '';
   };
   return {
-    settings: '',
     concept: build.clan === '' ? 'clan needed' : '',
     attributes: statusOf('attributes'),
     abilities: statusOf('abilities'),
@@ -280,7 +294,31 @@ export function stepStatuses(build: V20Build): Record<BuildStep, string> {
   };
 }
 
+/** The range shown beside the Blood Pool field, which follows the effective generation. */
+export function bloodPoolHint(build: V20Build): string {
+  return `0 to ${limits(build).bloodPoolMax} at ${ordinal(effectiveGeneration(build))} generation`;
+}
+
+const FINISH_REFUSAL = 'This build is not finished: resolve the outstanding items first.';
+
+/** Whether the build can be finished: nothing is outstanding. The one test the page and the storage both make. */
+export const isFinishable = (build: V20Build, items: OutstandingItem[] = outstanding(build)): boolean =>
+  items.length === 0;
+
+export function finishReport(build: V20Build, items: OutstandingItem[] = outstanding(build)): FinishReport {
+  const blocked = !isFinishable(build, items);
+  const left = `${plural(items.length, 'item')} left`;
+  return {
+    blocked,
+    itemsLeft: items.length,
+    unspentFreebies: unspentFreebies(build),
+    label: blocked ? `Finish character · ${left}` : 'Finish character',
+    refusalMessage: FINISH_REFUSAL,
+  };
+}
+
 export function report(build: V20Build): BuildReport {
+  const items = outstanding(build);
   const disciplines = disciplineRows(build);
   const refs: BuildTraitRef[] = [...FIXED_TRAIT_REFS, ...disciplines.freebieRows];
   return {
@@ -292,7 +330,9 @@ export function report(build: V20Build): BuildReport {
     disciplines,
     freebies: freebieReport(build),
     bloodPool: build.bloodPool,
-    outstanding: outstanding(build),
-    steps: stepStatuses(build),
+    bloodPoolHint: bloodPoolHint(build),
+    outstanding: items,
+    finish: finishReport(build, items),
+    steps: stepStatuses(build, items),
   };
 }

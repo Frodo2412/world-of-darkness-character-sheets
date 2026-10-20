@@ -35,7 +35,7 @@ Feature: Finishing touches
     When they open the finishing touches step
     Then the sections show the costs Attributes 5, Abilities 2, Disciplines 7, Backgrounds 1, Virtues 2, Humanity 2 and Willpower 1
 
-  Scenario Outline: The freebie points remaining are shown on every step after settings
+  Scenario Outline: The freebie points remaining are shown on every step
     Given a build with a freebie budget of 15 and one freebie dot of Strength
     When they open the "<step>" step
     Then the step shows 10 freebie points remaining
@@ -218,39 +218,6 @@ Feature: Finishing touches
     Then they are told to remove a freebie dot of Humanity first, with a link to Finishing touches
     And Self-Control is rated 3
     And Humanity is rated 10
-
-  Scenario: Extra freebie points cannot be cut below what is spent
-    Given a build with 75 extra freebie points and 40 freebie points spent
-    When they enter "20" as the extra freebie points
-    Then they are told 40 freebie points are spent, so at least 5 points of purchases must be removed first, with a link to Finishing touches
-    And the freebie budget is still 90
-
-  Scenario: Extra freebie points can be cut to exactly what is spent
-    Given a build with 75 extra freebie points and 40 freebie points spent
-    When they set the extra freebie points to 25
-    Then there are 0 freebie points remaining
-
-  Scenario: The blood pool is entered by the player
-    Given a 13th generation build
-    When they enter 7 as the starting blood pool
-    Then the starting blood pool is 7
-
-  Scenario: The blood pool starts at 0
-    Given a player who has started building a character
-    When they open the finishing touches step
-    Then the starting blood pool is 0
-
-  Scenario Outline: The blood pool cannot leave the generation's range
-    Given a build with base generation "<generation>"
-    When they enter "<entry>" as the starting blood pool
-    Then they are told, beside the field, that the blood pool must be a whole number from 0 to <max>
-    And the starting blood pool is still 0
-
-    Examples:
-      | generation | entry | max |
-      | 13th       | 11    | 10  |
-      | 13th       | -1    | 10  |
-      | 8th        | 16    | 15  |
 
   Scenario: A generation change that would put the blood pool out of range is refused
     Given a build with base generation "8th" and a starting blood pool of 15

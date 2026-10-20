@@ -1,6 +1,24 @@
 /* The builder: one step at a time under a step navigation that wraps on a
    phone. Fields stack; every control is at least 24 px with room around it. */
 
+/* The title with the settings button beside it; the button drops below on a phone. */
+.builder-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-4);
+}
+
+/* A dialog's title with its close button. */
+.dialog-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
 .step-nav ol {
 	list-style: none;
 	padding: 0;
@@ -84,6 +102,33 @@
 .builder-field input[aria-invalid='true'] {
 	border-color: var(--color-danger);
 	border-width: 2px;
+}
+
+.field-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.field-line input {
+	inline-size: 6rem;
+}
+
+.field-state {
+	color: var(--color-muted);
+}
+
+.field-tag {
+	border: 1px solid var(--color-border-control);
+	border-radius: 4px;
+	padding: 0 var(--space-2);
+	font-size: var(--text-small);
+	color: var(--color-text);
+}
+
+.field-tag[hidden] {
+	display: none;
 }
 
 .field-hint {
@@ -271,7 +316,7 @@ html {
 	font-weight: 600;
 }
 
-.builder[data-freebie-bar-shown] {
+.builder {
 	--sticky-top: 2.6rem;
 }
 
