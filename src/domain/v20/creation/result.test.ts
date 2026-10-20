@@ -56,6 +56,7 @@ describe('creation module layers', () => {
     updates: BELOW_UPDATES,
     progress: BELOW_UPDATES,
     screens: [...BELOW_UPDATES, 'progress'],
+    shellView: [...BELOW_UPDATES, 'progress'],
     toCharacter: BELOW_UPDATES,
   };
 
