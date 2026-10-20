@@ -39,6 +39,7 @@ import {
   isClanDiscipline,
   isClanName,
   isConceptKind,
+  isRank,
   isLocked,
   keyOf,
   kindOf,
@@ -55,10 +56,10 @@ import {
   GENERATION_TABLE,
   MAX_HELD,
   RANKED_ALLOTMENTS,
-  RANKS,
   type BuildStep,
   type ClanName,
   type Rank,
+  type RankedAllotment,
   SCREENS,
 } from './rules';
 
@@ -156,42 +157,75 @@ export function setDrive(build: V20Build, text: string): UpdateResult {
   return commit(build, withConcept(build, { drive: text }), []);
 }
 
-interface ClanChange {
-  candidate: V20Build;
-  /** What the change will remove, for the player to confirm. */
-  pending: string[];
-  /** The same, said after it was done. */
-  done: string[];
+/** A trait the new clan fixes loses every dot it had, of either kind. */
+interface TraitReset {
+  kind: 'reset';
+  ref: FixedTraitRef;
+  label: string;
+  /** The ranked group the creation dots return to. */
+  group: string;
+  /** Creation dots returned to the group. */
+  dots: number;
+  /** Freebie points refunded. */
+  points: number;
 }
 
-function changeClan(build: V20Build, clan: ClanName): ClanChange {
-  const pending: string[] = [];
-  const done: string[] = [];
-  let traits = build.traits;
+/** Creation dots go only on clan Disciplines, so the new clan's removes the rest. */
+interface DisciplineRemoval {
+  kind: 'removal';
+  names: string[];
+  dots: number;
+  clan: string;
+}
 
-  // A trait the new clan fixes loses every dot it had, of either kind.
-  for (const ref of Object.keys(CLAN_FIXED_TRAITS[clan] ?? {}) as FixedTraitRef[]) {
-    const { creation, freebie } = build.traits[ref];
-    if (creation === 0 && freebie === 0) continue;
-    traits = { ...traits, [ref]: { creation: 0, freebie: 0 } };
-    const group = rankedGroupOf(ref)?.group.label ?? '';
-    const label = traitLabel(ref);
-    const willParts = [`${label} will be set to 0`];
-    const wasParts = [`${label} was set to 0`];
-    if (creation > 0) {
-      willParts.push(`${plural(creation, 'dot')} returned to ${group}`);
-      wasParts.push(`${plural(creation, 'dot')} ${creation === 1 ? 'was' : 'were'} returned to ${group}`);
-    }
-    if (freebie > 0) {
-      const points = plural(freebie * freebieCost(ref), 'freebie point');
-      willParts.push(`${points} refunded`);
-      wasParts.push(`${points} ${freebie * freebieCost(ref) === 1 ? 'was' : 'were'} refunded`);
-    }
-    pending.push(`${joined(willParts)}.`);
-    done.push(`${joined(wasParts)}.`);
+type ClanEffect = TraitReset | DisciplineRemoval;
+
+const was = (count: number): string => (count === 1 ? 'was' : 'were');
+
+/** What `effect` will do, for the player to confirm. */
+function willSentence(effect: ClanEffect): string {
+  if (effect.kind === 'removal') {
+    return `The ${joined(effect.names)} ${effect.dots === 1 ? 'dot' : 'dots'} will be removed ${removalReason(effect)}.`;
   }
+  const parts = [`${effect.label} will be set to 0`];
+  if (effect.dots > 0) parts.push(`${plural(effect.dots, 'dot')} returned to ${effect.group}`);
+  if (effect.points > 0) parts.push(`${plural(effect.points, 'freebie point')} refunded`);
+  return `${joined(parts)}.`;
+}
 
-  // Creation dots go only on clan Disciplines; a Caitiff may hold any. Bought dots stay.
+/** The same, said after it was done. */
+function wasSentence(effect: ClanEffect): string {
+  if (effect.kind === 'removal') {
+    return `The ${joined(effect.names)} ${effect.dots === 1 ? 'dot' : 'dots'} ${was(effect.dots)} removed ${removalReason(effect)}.`;
+  }
+  const parts = [`${effect.label} was set to 0`];
+  if (effect.dots > 0) parts.push(`${plural(effect.dots, 'dot')} ${was(effect.dots)} returned to ${effect.group}`);
+  if (effect.points > 0) parts.push(`${plural(effect.points, 'freebie point')} ${was(effect.points)} refunded`);
+  return `${joined(parts)}.`;
+}
+
+const removalReason = (removal: DisciplineRemoval): string =>
+  `because ${removal.clan} does not have ${removal.names.length === 1 ? 'it' : 'them'}`;
+
+function traitResets(build: V20Build, clan: ClanName): TraitReset[] {
+  return (Object.keys(CLAN_FIXED_TRAITS[clan] ?? {}) as FixedTraitRef[]).flatMap((ref): TraitReset[] => {
+    const { creation, freebie } = build.traits[ref];
+    if (creation === 0 && freebie === 0) return [];
+    return [
+      {
+        kind: 'reset',
+        ref,
+        label: traitLabel(ref),
+        group: rankedGroupOf(ref)?.group.label ?? '',
+        dots: creation,
+        points: freebie * freebieCost(ref),
+      },
+    ];
+  });
+}
+
+/** A Caitiff may hold any Discipline; bought dots stay either way. */
+function disciplinesUnder(build: V20Build, clan: ClanName): { disciplines: DisciplineEntry[]; removal?: DisciplineRemoval } {
   const keepsAll = clan === 'Caitiff';
   const offered = (name: string) =>
     keepsAll || clanDisciplinesOf(clan).some((discipline) => sameName(discipline, name));
@@ -199,22 +233,28 @@ function changeClan(build: V20Build, clan: ClanName): ClanChange {
   const disciplines = build.disciplines
     .map((entry) => (offered(entry.name) ? entry : { ...entry, creation: 0 }))
     .filter((entry) => entry.creation + entry.freebie > 0 || (keepsAll && offered(entry.name)));
-  if (removed.length > 0) {
-    const dots = removed.reduce((sum, entry) => sum + entry.creation, 0);
-    const names = joined(removed.map((entry) => entry.name));
-    const subject = `The ${names} ${dots === 1 ? 'dot' : 'dots'}`;
-    const reason = `because ${clan} does not have ${removed.length === 1 ? 'it' : 'them'}`;
-    pending.push(`${subject} will be removed ${reason}.`);
-    done.push(`${subject} ${dots === 1 ? 'was' : 'were'} removed ${reason}.`);
-  }
+  if (removed.length === 0) return { disciplines };
+  const dots = removed.reduce((sum, entry) => sum + entry.creation, 0);
+  return { disciplines, removal: { kind: 'removal', names: removed.map((entry) => entry.name), dots, clan } };
+}
 
-  return { candidate: { ...build, clan, traits, disciplines }, pending, done };
+interface ClanChange {
+  candidate: V20Build;
+  /** What the change removes, trait resets first. */
+  effects: ClanEffect[];
+}
+
+function changeClan(build: V20Build, clan: ClanName): ClanChange {
+  const resets = traitResets(build, clan);
+  const traits = resets.reduce((kept, { ref }) => ({ ...kept, [ref]: { creation: 0, freebie: 0 } }), build.traits);
+  const { disciplines, removal } = disciplinesUnder(build, clan);
+  return { candidate: { ...build, clan, traits, disciplines }, effects: removal ? [...resets, removal] : resets };
 }
 
 /** What choosing `clan` would remove, as sentences for the player to confirm. Empty if nothing. */
 export function clanChangeEffects(build: V20Build, clan: string): string[] {
   if (!isClanName(clan) || clan === build.clan) return [];
-  return changeClan(build, clan as ClanName).pending;
+  return changeClan(build, clan as ClanName).effects.map(willSentence);
 }
 
 /**
@@ -229,11 +269,47 @@ export function setClan(build: V20Build, clan: string): UpdateResult {
     return refuse(build, `${clan} is not one of the clans the builder offers.`);
   }
   if (clan === build.clan) return applied(build);
-  const { candidate, done } = changeClan(build, clan as ClanName);
-  return commit(build, candidate, done);
+  const { candidate, effects } = changeClan(build, clan as ClanName);
+  return commit(build, candidate, effects.map(wasSentence));
 }
 
 // Ranks
+
+type RankedGroup = RankedAllotment['groups'][number];
+
+/**
+ * The ranks once `groupKey` takes `rank`, and the groups that held it. A stored build may hold the rank twice:
+ * every holder gives it up, and the first takes this group's previous rank unless another group already holds
+ * that, so the order that results is unique.
+ */
+function resolveRanks(
+  build: V20Build,
+  allotment: RankedAllotment,
+  groupKey: string,
+  rank: Rank,
+): { ranks: Record<string, Rank | ''>; holders: readonly RankedGroup[] } {
+  const previous = build.ranks[groupKey] ?? '';
+  const others = allotment.groups.filter((group) => group.key !== groupKey);
+  const holders = others.filter((group) => build.ranks[group.key] === rank);
+  const ranks = { ...build.ranks, [groupKey]: rank };
+  for (const holder of holders) ranks[holder.key] = '';
+  const previousRankFree = previous !== '' && !others.some((group) => ranks[group.key] === previous);
+  if (holders.length > 0 && previousRankFree) ranks[holders[0].key] = previous;
+  return { ranks, holders };
+}
+
+/** What a swap says: the choice once, then what each group that gave up the rank is left with. */
+function swapNotices(candidate: V20Build, allotment: RankedAllotment, groupKey: string, rank: Rank, holders: readonly RankedGroup[]): string[] {
+  const label = (key: string) => allotment.groups.find((group) => group.key === key)!.label;
+  return holders.map((holder, index) => {
+    const name = holder.label;
+    const now = candidate.ranks[holder.key];
+    const placed = allotmentStates(candidate).find((state) => state.key === holder.key)!.placed;
+    const overspent = placed > 0 ? `, so ${plural(placed, `${name} dot`)} ${placed === 1 ? 'is' : 'are'} overspent until ${name} is ranked` : '';
+    const outcome = now ? `${name} is now ${titleCase(now)}` : `${name} now has no rank${overspent}`;
+    return `${index === 0 ? `${label(groupKey)} is now ${titleCase(rank)} and ` : ''}${outcome}.`;
+  });
+}
 
 /**
  * Gives a group a rank. A rank another group of the same allotment holds is
@@ -242,34 +318,17 @@ export function setClan(build: V20Build, clan: string): UpdateResult {
 export function setRank(build: V20Build, groupKey: string, rank: string): UpdateResult {
   const allotment = RANKED_ALLOTMENTS.find((entry) => entry.groups.some((group) => group.key === groupKey));
   if (!allotment) return refuse(build, `There is no group called ${groupKey}.`);
-  if (!(RANKS as readonly string[]).includes(rank)) {
-    return refuse(build, 'Choose primary, secondary or tertiary.');
-  }
-  const previous = build.ranks[groupKey];
-  if (previous === rank) return applied(build);
+  if (!isRank(rank)) return refuse(build, 'Choose primary, secondary or tertiary.');
+  if (build.ranks[groupKey] === rank) return applied(build);
 
-  const label = (key: string) => allotment.groups.find((group) => group.key === key)!.label;
-  // A stored build may hold the rank twice: every holder gives it up, and the first takes this group's previous
-  // rank unless another group already holds that, so the order that results is unique.
-  const holders = allotment.groups.filter((group) => group.key !== groupKey && build.ranks[group.key] === rank);
-  const ranks = { ...build.ranks, [groupKey]: rank as Rank };
-  for (const holder of holders) ranks[holder.key] = '';
-  if (holders.length > 0 && previous && !allotment.groups.some((group) => group.key !== groupKey && ranks[group.key] === previous)) {
-    ranks[holders[0].key] = previous;
-  }
+  const { ranks, holders } = resolveRanks(build, allotment, groupKey, rank);
   const candidate = { ...build, ranks };
-
   // A rank nobody held is told by the group alone; a swap names both groups, so the choice is said once either way.
-  if (holders.length === 0) return commit(build, candidate, [`${label(groupKey)} is now ${titleCase(rank)}.`]);
-  const notices = holders.map((holder, index) => {
-    const name = label(holder.key);
-    const now = ranks[holder.key];
-    const placed = allotmentStates(candidate).find((state) => state.key === holder.key)!.placed;
-    const overspent = placed > 0 ? `, so ${plural(placed, `${name} dot`)} ${placed === 1 ? 'is' : 'are'} overspent until ${name} is ranked` : '';
-    const outcome = now ? `${name} is now ${titleCase(now)}` : `${name} now has no rank${overspent}`;
-    return `${index === 0 ? `${label(groupKey)} is now ${titleCase(rank)} and ` : ''}${outcome}.`;
-  });
-  return commit(build, candidate, notices);
+  if (holders.length === 0) {
+    const label = allotment.groups.find((group) => group.key === groupKey)!.label;
+    return commit(build, candidate, [`${label} is now ${titleCase(rank)}.`]);
+  }
+  return commit(build, candidate, swapNotices(candidate, allotment, groupKey, rank, holders));
 }
 
 // Ratings
@@ -280,16 +339,15 @@ function withDots(build: V20Build, ref: BuildTraitRef, dots: Dots, keepAtZero: b
   }
   const name = keyOf(ref);
   const existing = findDiscipline(build, name);
-  const entry: DisciplineEntry = existing
-    ? { ...existing, ...dots }
-    : { name: catalogueDiscipline(name) ?? name.trim(), writeIn: !catalogueDiscipline(name), ...dots };
+  if (!existing) {
+    const entry: DisciplineEntry = { name: catalogueDiscipline(name) ?? name.trim(), writeIn: !catalogueDiscipline(name), ...dots };
+    const empty = entry.creation + entry.freebie === 0;
+    return { ...build, disciplines: empty ? build.disciplines : [...build.disciplines, entry] };
+  }
+  const entry: DisciplineEntry = { ...existing, ...dots };
   const empty = entry.creation + entry.freebie === 0;
-  const disciplines = existing
-    ? build.disciplines.flatMap((current) => (current === existing ? (empty && !keepAtZero ? [] : [entry]) : [current]))
-    : empty
-      ? build.disciplines
-      : [...build.disciplines, entry];
-  return { ...build, disciplines };
+  const kept = empty && !keepAtZero ? [] : [entry];
+  return { ...build, disciplines: build.disciplines.flatMap((current) => (current === existing ? kept : [current])) };
 }
 
 /** How many Disciplines or Backgrounds the build holds: those rated above 0. */

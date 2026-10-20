@@ -12,10 +12,12 @@ import {
   CLANS,
   CONCEPT_KINDS,
   DISCIPLINES,
+  RANKS,
   VIRTUE_ALLOTMENT,
   type BuildStep,
   type ClanName,
   type ConceptKind,
+  type Rank,
   type TraitKind,
 } from './rules';
 
@@ -73,6 +75,9 @@ export const isClanName = (name: string): name is ClanName => (CLAN_NAMES as rea
 
 /** Whether `name` is one of the sample concepts the builder offers. */
 export const isConceptKind = (name: string): name is ConceptKind => (CONCEPT_KINDS as readonly string[]).includes(name);
+
+/** Whether `name` is one of the ranks a group can hold. */
+export const isRank = (name: string): name is Rank => (RANKS as readonly string[]).includes(name);
 
 export const isCaitiff = (build: V20Build): boolean => build.clan === 'Caitiff';
 
