@@ -12,7 +12,7 @@ import {
 import type { TraitRef } from '../traits';
 import { CONCEPT_FIELDS, composeConcept, FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
 import { effectiveGeneration, limits, ordinal } from './limits';
-import { clanDisciplines, keyOf, kindOf, rating } from './ratings';
+import { disciplineOrder, keyOf, kindOf, rating } from './ratings';
 import { BACKGROUNDS } from './rules';
 
 type Change = (character: V20Character) => V20Character;
@@ -29,12 +29,7 @@ function sheetTrait(ref: BuildTraitRef): TraitRef {
 
 /** Held Disciplines in the builder's order: the clan's, then the rest as added. */
 function heldDisciplines(build: V20Build): { name: string; rating: number }[] {
-  const clan = clanDisciplines(build);
-  const names = [
-    ...clan,
-    ...build.disciplines.map((entry) => entry.name).filter((name) => !clan.includes(name)),
-  ];
-  return names
+  return disciplineOrder(build)
     .map((name) => ({ name, rating: rating(build, `discipline:${name}`) }))
     .filter((entry) => entry.rating > 0);
 }

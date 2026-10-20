@@ -4,6 +4,7 @@ import { createCharacterStore } from '../../../storage/characterStore';
 import { bloodPool, clan, completeBuild, creation, extra, freebie, generation, play, rank } from './testing/play';
 import { rating } from './ratings';
 import { composeConcept } from './build';
+import { disciplineRows } from './progress';
 import { toCharacter } from './toCharacter';
 import { addDiscipline } from './updates';
 
@@ -82,6 +83,14 @@ describe('toCharacter', () => {
   test('a bought Discipline outside the clan follows the clan ones', () => {
     const result = addDiscipline(completeBuild('Brujah'), 'Auspex', 'freebie');
     expect(toCharacter(result.build).disciplines.slice(0, 4).map((row) => row.name)).toEqual(['Celerity', 'Potence', 'Presence', 'Auspex']);
+  });
+
+  test('the sheet lists Disciplines in the order the builder lists its rows', () => {
+    const build = addDiscipline(completeBuild('Brujah'), 'Auspex', 'freebie').build;
+    const held = disciplineRows(build)
+      .freebieRows.filter((ref) => rating(build, ref) > 0)
+      .map((ref) => ref.slice('discipline:'.length));
+    expect(toCharacter(build).disciplines.map((row) => row.name).filter((name) => name !== '')).toEqual(held);
   });
 
   test('a Nosferatu has Appearance 0', () => {

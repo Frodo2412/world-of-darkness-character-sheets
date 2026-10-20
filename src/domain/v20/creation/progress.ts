@@ -8,6 +8,7 @@ import { effectiveGeneration, limits, maximumFor, ordinal, violations } from './
 import {
   clanDisciplines,
   creationRating,
+  disciplineOrder,
   dotsOf,
   freeDots,
   isCaitiff,
@@ -196,7 +197,6 @@ export function freebieReport(build: V20Build): FreebieReport {
 export function disciplineRows(build: V20Build): BuildReport['disciplines'] {
   const clan = clanDisciplines(build);
   // Catalogue names are stored in catalogue spelling, so a plain comparison finds clan rows.
-  const others = build.disciplines.map((entry) => entry.name).filter((name) => !clan.includes(name));
   const placedOthers = build.disciplines
     .filter((entry) => !clan.includes(entry.name) && (isCaitiff(build) || entry.creation > 0))
     .map((entry) => entry.name);
@@ -204,7 +204,7 @@ export function disciplineRows(build: V20Build): BuildReport['disciplines'] {
     needsClan: build.clan === '',
     choosesOwn: isCaitiff(build),
     creationRows: [...clan, ...placedOthers].map(disciplineRef),
-    freebieRows: [...clan, ...others].map(disciplineRef),
+    freebieRows: disciplineOrder(build).map(disciplineRef),
   };
 }
 

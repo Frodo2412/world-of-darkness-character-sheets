@@ -89,6 +89,12 @@ export function clanDisciplinesOf(clan: string): readonly string[] {
 /** The chosen clan's three Disciplines; none for Caitiff or before a clan is chosen. */
 export const clanDisciplines = (build: V20Build): readonly string[] => clanDisciplinesOf(build.clan);
 
+/** Every Discipline the build lists, in the one order the builder and the sheet share: the clan's, then the rest as added. */
+export function disciplineOrder(build: V20Build): string[] {
+  const clan = clanDisciplines(build);
+  return [...clan, ...build.disciplines.map((entry) => entry.name).filter((name) => !clan.includes(name))];
+}
+
 export const isClanDiscipline = (build: V20Build, name: string): boolean =>
   clanDisciplines(build).some((discipline) => sameName(discipline, name));
 
