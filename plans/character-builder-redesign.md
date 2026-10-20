@@ -2201,9 +2201,9 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
   - [x] Step 3.5: Rating rows with minus/plus buttons
 
 #### Wave 4
-- [ ] Slice 4: Shell chrome — identity bar, autosave status, character panel
-  - [ ] Step 4.1: View models for the identity bar and character panel
-  - [ ] Step 4.2: Top bar, identity bar, panel, autosave status, Save & exit
+- [x] Slice 4: Shell chrome — identity bar, autosave status, character panel
+  - [x] Step 4.1: View models for the identity bar and character panel
+  - [x] Step 4.2: Top bar, identity bar, panel, autosave status, Save & exit
 
 #### Wave 5
 - [ ] Slice 5: Character concept screen
