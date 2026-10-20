@@ -16,8 +16,7 @@ const setting =
 export default {
   id: 'concept',
   wire(root, { commit }) {
-    // Free text is kept as it is typed, as on the sheet. Every `[data-concept]` field is handled here,
-    // those of the Nature & Demeanor screen too: they are the same entries of the build.
+    // Free text is kept as it is typed, as on the sheet. Every `[data-concept]` field is handled here.
     for (const input of root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[data-concept]')) {
       input.addEventListener('input', () => commit(setting(input.dataset.concept as TextField, input.value), input));
     }

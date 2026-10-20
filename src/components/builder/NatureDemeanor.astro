@@ -1,30 +1,71 @@
 ---
-// Nature and Demeanor suggest Archetypes but accept any text. Filled by the same free-text wiring as the
-// concept fields (`data-concept`), which looks for them wherever they are on the page.
+// The Nature & Demeanor screen: two cards for what each role holds, the switch for the role a press assigns
+// to, a field for a player's own Archetype, and a search over the Archetypes, one toggle button each. The
+// screen module shows, hides and marks the buttons and writes the text that changes with the build, from
+// archetypes.ts. No Archetype carries a description.
+import { ARCHETYPE_KEYS_HELP, ARCHETYPE_ROLES, OWN_ARCHETYPE_HELP } from '../../domain/v20/creation/archetypes';
 import { ARCHETYPES } from '../../domain/v20/creation/rules';
-import { HEADER_FIELDS } from '../../domain/v20/traits';
-
-const fields = HEADER_FIELDS.filter((field) => field.key === 'nature' || field.key === 'demeanor');
+import { NOT_CHOSEN } from '../../domain/v20/creation/wording';
 ---
 
-<div class="builder-fields">
-	{
-		fields.map((field) => (
-			<div class="builder-field">
-				<label for={`concept-${field.key}`}>{field.label}</label>
-				<input
-					type="text"
-					id={`concept-${field.key}`}
-					data-concept={field.key}
-					autocomplete="off"
-					list="archetypes"
-					aria-describedby="archetype-hint"
-				/>
-			</div>
-		))
-	}
-	<p id="archetype-hint" class="field-hint">For Nature and Demeanor, pick a suggested Archetype or write your own.</p>
-	<datalist id="archetypes">
-		{ARCHETYPES.map((archetype) => <option value={archetype} />)}
-	</datalist>
+<div class="nd-layout">
+	<div class="nd-cards">
+		{
+			ARCHETYPE_ROLES.map((info) => (
+				<div class="builder-card nd-card" data-nd-card={info.role}>
+					<h3 class="nd-heading">{info.title}</h3>
+					<p class="nd-card-value" data-nd-value>
+						{NOT_CHOSEN}
+					</p>
+				</div>
+			))
+		}
+	</div>
+
+	<p id="nd-keys-help" class="builder-helper nd-text">{ARCHETYPE_KEYS_HELP}</p>
+
+	<div class="nd-roles" role="radiogroup" aria-label="Role to assign" aria-describedby="nd-keys-help">
+		{
+			ARCHETYPE_ROLES.map((info) => (
+				<label class="nd-role">
+					<input type="radio" name="nd-role" value={info.role} checked={info.role === 'nature'} data-nd-role />
+					{info.assignLabel}
+				</label>
+			))
+		}
+	</div>
+
+	<div class="builder-field">
+		<label for="nd-own">Write your own archetype</label>
+		<input type="text" id="nd-own" autocomplete="off" aria-describedby="nd-own-help" data-nd-own />
+		<p id="nd-own-help" class="builder-helper nd-text">{OWN_ARCHETYPE_HELP}</p>
+	</div>
+
+	<p class="nd-assigned" role="status" data-nd-assigned></p>
+
+	<div class="builder-field">
+		<label for="nd-search">Search archetypes</label>
+		<div class="nd-search-field">
+			<input id="nd-search" type="search" autocomplete="off" data-nd-search />
+			<span class="nd-search-hint" data-nd-search-hint aria-hidden="true" hidden></span>
+		</div>
+		<p class="builder-helper nd-text" role="status" data-nd-results></p>
+	</div>
+
+	<h3 class="nd-heading" data-nd-heading>All Archetypes · {ARCHETYPES.length}</h3>
+
+	<div class="nd-list" role="group" aria-label="Archetypes" aria-describedby="nd-keys-help" data-nd-list>
+		{
+			ARCHETYPES.map((name, index) => (
+				<button type="button" class="builder-chip nd-chip" aria-pressed="false" aria-describedby={`nd-assigned-${index}`} data-archetype={name}>
+					<span class="nd-chip-name">{name}</span>
+					<span class="nd-chip-marks" data-archetype-marks aria-hidden="true" />
+					<span class="nd-chip-state" data-archetype-state aria-hidden="true" hidden>
+						✓ Selected
+					</span>
+					<span id={`nd-assigned-${index}`} hidden data-archetype-assigned />
+				</button>
+			))
+		}
+	</div>
 </div>
