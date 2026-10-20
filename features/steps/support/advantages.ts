@@ -2,13 +2,13 @@
 
 import type { Page } from '@playwright/test';
 import { openStep } from './builder';
-import { groupBox } from './ranked';
+import { groupBox, ratingsIn } from './ranked';
 
 /** The names of the Disciplines shown, in order. */
 export async function disciplineNames(page: Page): Promise<string[]> {
   const group = await groupBox(page, 'Disciplines');
-  return group.getByRole('slider').evaluateAll((sliders) =>
-    sliders.map((slider) => document.getElementById(slider.getAttribute('aria-labelledby')!)!.textContent ?? ''),
+  return ratingsIn(group).evaluateAll((rows) =>
+    rows.map((row) => document.getElementById(row.getAttribute('data-label-id')!)!.textContent ?? ''),
   );
 }
 

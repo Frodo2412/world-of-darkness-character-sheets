@@ -30,7 +30,7 @@ import {
   stepLink,
 } from './support/builder';
 import { chooseClan, clanNotice, clanPanel, clanSelect, openClanScreen } from './support/clan';
-import { groupNotice, placeDots, rankGroup, rankSelect, rateTrait, requestRating, traitRating } from './support/ranked';
+import { groupNotice, placeDots, rankGroup, rankSelect, rateTrait, ratingOf, ratingRow, requestRating, stepButton, traitRating } from './support/ranked';
 import { buildEntries, openRoster } from './support/pages';
 import { identityName, identitySummary } from './support/sheet';
 import { overwriteRecord, refuseWrites } from './support/storage';
@@ -41,14 +41,14 @@ async function spendEverything(page: Page): Promise<void> {
   const left = async () => Number(/^(\d+)/.exec((await freebieBar(page).textContent()) ?? '0')![1]);
   await openStep(page, 'Finishing touches');
   const willpower = await traitRating(page, 'Willpower');
-  const current = Number(await willpower.getAttribute('aria-valuenow'));
+  const current = await ratingOf(willpower);
   const room = Math.min(await left(), 10 - current);
   if (room > 0) await rateTrait(page, 'Willpower', current + room);
   for (const name of ['Contacts', 'Domain', 'Fame', 'Herd', 'Influence']) {
     const remaining = await left();
     if (remaining === 0) break;
     const control = await traitRating(page, name);
-    const value = Number(await control.getAttribute('aria-valuenow'));
+    const value = await ratingOf(control);
     await rateTrait(page, name, Math.min(5, value + remaining));
   }
   await expect(freebieBar(page)).toHaveText('0 freebie points remaining');
@@ -279,37 +279,37 @@ const KEYBOARD: Record<string, (page: Page, stops: { control: string; visible: b
     await keyboardOpen(page, 'Attributes', stops);
     await tabTo(page, page.getByRole('combobox', { name: 'Physical rank' }), stops);
     await page.keyboard.type('p');
-    await tabTo(page, shownStep(page).getByRole('slider', { name: 'Strength', exact: true }), stops);
-    await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('ArrowRight');
+    await tabTo(page, shownStep(page).getByRole('button', { name: 'Increase Strength', exact: true }), stops);
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
   },
   'rank Talents primary and raise Brawl to 2': async (page, stops) => {
     await keyboardOpen(page, 'Abilities', stops);
     await tabTo(page, page.getByRole('combobox', { name: 'Talents rank' }), stops);
     await page.keyboard.type('p');
-    await tabTo(page, shownStep(page).getByRole('slider', { name: 'Brawl', exact: true }), stops);
-    await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('ArrowRight');
+    await tabTo(page, shownStep(page).getByRole('button', { name: 'Increase Brawl', exact: true }), stops);
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
   },
   'add the Discipline "Protean" and raise it to 1': async (page, stops) => {
     await keyboardOpen(page, 'Advantages', stops);
     await tabTo(page, shownStep(page).getByLabel('Discipline to add', { exact: true }), stops);
     await page.keyboard.type('Protean');
     await page.keyboard.press('Enter');
-    await tabTo(page, shownStep(page).getByRole('slider', { name: 'Protean', exact: true }), stops, true);
-    await page.keyboard.press('ArrowRight');
+    await tabTo(page, shownStep(page).getByRole('button', { name: 'Increase Protean', exact: true }), stops, true);
+    await page.keyboard.press('Enter');
   },
   'buy one dot of Willpower with freebie points': async (page, stops) => {
     await keyboardOpen(page, 'Finishing touches', stops);
-    await tabTo(page, shownStep(page).getByRole('slider', { name: 'Willpower', exact: true }), stops);
-    await page.keyboard.press('ArrowRight');
+    await tabTo(page, shownStep(page).getByRole('button', { name: 'Increase Willpower', exact: true }), stops);
+    await page.keyboard.press('Enter');
   },
   'move from Concept to Advantages with the navigation': async (page, stops) => {
     await keyboardOpen(page, 'Advantages', stops);
   },
 };
 
-When(/^using only the keyboard they ((?!focus \w+ and press)(?!move the clan choice).+)$/, async ({ page, memory }, action: string) => {
+When(/^using only the keyboard they ((?!focus .+ and press)(?!move the clan choice).+)$/, async ({ page, memory }, action: string) => {
   if (action === 'activate Finish and press Escape') {
     await keyboardOpen(page, 'Review & resolve', memory.focusStops);
     await tabTo(page, finishButton(page), memory.focusStops);
@@ -339,10 +339,10 @@ When('Strength is read by assistive technology on the attributes step', async ({
 Then(
   /^it is announced as "([^"]+)", value (\d+), lowest (\d+), highest (\d+)$/,
   async ({ page }, name: string, value: string, lowest: string, highest: string) => {
-    const control = shownStep(page).getByRole('slider', { name, exact: true });
-    await expect(control).toHaveAttribute('aria-valuenow', String(value));
-    await expect(control).toHaveAttribute('aria-valuemin', String(lowest));
-    await expect(control).toHaveAttribute('aria-valuemax', String(highest));
+    const row = ratingRow(shownStep(page), name);
+    await expect(row.locator('[data-rating-text]')).toHaveText(`${value} of ${highest}`);
+    await expect(row).toHaveAttribute('data-min', String(lowest));
+    await expect(row).toHaveAttribute('data-max', String(highest));
   },
 );
 
@@ -357,7 +357,7 @@ Then('the refusal text is shown inside the Mental group', async ({ page }) => {
 });
 
 Then('Wits is described by that refusal text', async ({ page }) => {
-  await expect(await traitRating(page, 'Wits')).toHaveAccessibleDescription(/Mental has no dots remaining\./);
+  await expect(stepButton(await traitRating(page, 'Wits'), 'Increase')).toHaveAccessibleDescription(/Mental has no dots remaining\./);
 });
 
 Then('nothing new is announced', async ({ page }) => {

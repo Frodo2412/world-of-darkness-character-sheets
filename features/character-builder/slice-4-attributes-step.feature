@@ -67,9 +67,9 @@ Feature: Attributes step
     And they are told Social is now primary and Physical now has no rank, so its 3 dots are overspent until it is ranked
     And Strength is rated 4
 
-  Scenario: Home on a rating goes to its real floor
+  Scenario: Lowering from the keyboard stops at the real floor
     Given a player who has ranked Physical primary and raised Stamina to 3
-    When using only the keyboard they focus Stamina and press Home
+    When using only the keyboard they focus Decrease Stamina and press Enter 3 times
     Then Stamina is rated 1
     And Stamina reports 1 as its lowest rating
 

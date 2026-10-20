@@ -8,6 +8,9 @@ import {
   groupBox,
   groupReadout,
   openFreebieSections,
+  ratingOf,
+  ratingRow,
+  ratingsIn,
   requestRating,
   traitName,
   traitRating,
@@ -29,13 +32,12 @@ async function rememberFreebies(page: Page, memory: { entered: Map<string, strin
 async function buyOne(page: Page, name: string): Promise<void> {
   await onFinishing(page);
   const label = traitName(name);
-  const control = shownStep(page).getByRole('slider', { name: label, exact: true });
+  const control = ratingRow(shownStep(page), label);
   if ((await control.count()) === 0 && name.startsWith('the Discipline')) {
     await buyNamedDiscipline(page, label);
     return;
   }
-  const current = Number(await control.getAttribute('aria-valuenow'));
-  await requestRating(control, current + 1);
+  await requestRating(control, (await ratingOf(control)) + 1);
 }
 
 async function buyNamedDiscipline(page: Page, name: string): Promise<void> {
@@ -123,8 +125,7 @@ When(/^they (?:try to )?buy one dot of (.+?) with freebie points$/, async ({ pag
 When(/^they remove the freebie dot of (.+)$/, async ({ page }, name: string) => {
   await onFinishing(page);
   const control = await traitRating(page, name);
-  const current = Number(await control.getAttribute('aria-valuenow'));
-  await requestRating(control, current - 1);
+  await requestRating(control, (await ratingOf(control)) - 1);
 });
 
 When(/^they look at (.+?) on the (finishing touches|attributes) step$/, async ({ page }, name: string, step: string) => {
@@ -135,7 +136,7 @@ When(/^they look at (.+?) on the (finishing touches|attributes) step$/, async ({
   await onFinishing(page);
   // A Discipline the build does not hold has no row until one dot of it is bought.
   const label = traitName(name);
-  const shown = await shownStep(page).getByRole('slider', { name: label, exact: true }).count();
+  const shown = await ratingRow(shownStep(page), label).count();
   if (name.startsWith('the Discipline') && shown === 0) await buyNamedDiscipline(page, label);
 });
 
@@ -195,8 +196,7 @@ Then(
 );
 
 Then(/^(\w+) is announced as (\d+) from creation and (\d+) from freebie points$/, async ({ page }, name: string, creationDots: string, freebieDots: string) => {
-  await expect(await traitRating(page, name)).toHaveAttribute(
-    'aria-valuetext',
+  await expect((await traitRating(page, name)).locator('[data-rating-text]')).toHaveText(
     new RegExp(`${creationDots} from creation, ${freebieDots} from freebie points`),
   );
 });
@@ -211,17 +211,17 @@ Then(/^(\w+) is rated (\d+), from the freebie dot$/, async ({ page }, name: stri
   await onFinishing(page);
   const control = await traitRating(page, name);
   await expectRated(control, Number(value));
-  await expect(control).toHaveAttribute('aria-valuetext', /0 from creation, 1 from freebie points/);
+  await expect(control.locator('[data-rating-text]')).toHaveText(/0 from creation, 1 from freebie points/);
 });
 
 Then(/^(\w+) is no longer among the build's Disciplines$/, async ({ page }, name: string) => {
   await onFinishing(page);
-  await expect((await groupBox(page, 'Disciplines')).getByRole('slider', { name, exact: true })).toHaveCount(0);
+  await expect(ratingRow(await groupBox(page, 'Disciplines'), name)).toHaveCount(0);
 });
 
 Then(/^the build holds six (Disciplines|Backgrounds)$/, async ({ page }, kind: string) => {
-  const sliders = (await groupBox(page, KINDS[kind])).getByRole('slider');
-  const values = await sliders.evaluateAll((all) => all.map((slider) => Number(slider.getAttribute('aria-valuenow'))));
+  const rows = ratingsIn(await groupBox(page, KINDS[kind]));
+  const values = await rows.evaluateAll((all) => all.map((row) => Number(row.getAttribute('data-value'))));
   expect(values.filter((value) => value > 0)).toHaveLength(6);
 });
 

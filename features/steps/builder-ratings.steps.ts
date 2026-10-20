@@ -1,7 +1,7 @@
 // Steps every builder step shares: opening a step, setting and reading
 // ratings, ranks and what a group has left.
 
-import { expect } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import { openStep } from './support/builder';
 import {
@@ -11,7 +11,9 @@ import {
   rankGroup,
   rankSelect,
   rateTrait,
+  ratingOf,
   requestRating,
+  stepButton,
   traitName,
   traitRating,
 } from './support/ranked';
@@ -47,8 +49,7 @@ When(
   new RegExp(`^they (?:try to )?(raise|lower) ${NAME} by (\\d+)(?: again)?$`),
   async ({ page }, direction: string, name: string, by: string) => {
     const control = await traitRating(page, name);
-    const current = Number(await control.getAttribute('aria-valuenow'));
-    await requestRating(control, current + (direction === 'raise' ? 1 : -1) * Number(by));
+    await requestRating(control, (await ratingOf(control)) + (direction === 'raise' ? 1 : -1) * Number(by));
   },
 );
 
@@ -72,7 +73,7 @@ Then(new RegExp(`^${NAME} is rated (\\d+)$`), async ({ page }, name: string, val
 
 Then(new RegExp(`^${NAME} reports (\\d+) as its (highest|lowest) rating$`), async ({ page }, name: string, value: string, end: string) => {
   const control = await traitRating(page, traitName(name));
-  await expect(control).toHaveAttribute(end === 'highest' ? 'aria-valuemax' : 'aria-valuemin', String(value));
+  await expect(control).toHaveAttribute(end === 'highest' ? 'data-max' : 'data-min', String(value));
 });
 
 When(
@@ -119,18 +120,72 @@ Then(/^no message is shown beside the (\w+) group$/, async ({ page }, group: str
   await expect(await groupNotice(page, group)).toHaveText('');
 });
 
+/** "focus Decrease Stamina and press Enter 3 times": the keyboard alone, one press at a time. */
 When(
-  /^using only the keyboard they focus (\w+) and press (Home|End)$/,
-  async ({ page }, name: string, key: string) => {
-    const control = await traitRating(page, name);
-    await control.focus();
-    await page.keyboard.press(key);
+  /^using only the keyboard they focus (Increase|Decrease) (\w+) and press Enter (\d+) times$/,
+  async ({ page }, direction: 'Increase' | 'Decrease', name: string, times: string) => {
+    const button = stepButton(await traitRating(page, name), direction);
+    await button.focus();
+    for (let press = 0; press < Number(times); press += 1) await page.keyboard.press('Enter');
+    await expect(button).toBeFocused();
   },
 );
 
 Then(/^(\w+) is rated 0 and is announced as fixed for (\w+)$/, async ({ page }, name: string, clan: string) => {
   const control = await traitRating(page, name);
   await expectRated(control, 0);
-  await expect(control).toHaveAttribute('aria-valuetext', new RegExp(`fixed for ${clan}`));
-  await expect(control).toHaveAttribute('aria-disabled', 'true');
+  await expect(control.locator('[data-rating-text]')).toHaveText(new RegExp(`fixed for ${clan}`));
+  await expect(control.getByRole('button')).toHaveCount(2);
+  for (const button of await control.getByRole('button').all()) await expect(button).toHaveAttribute('aria-disabled', 'true');
+  await expect(control.locator('[data-rating-limit]')).toHaveText(`Fixed for ${clan}`);
+});
+
+// Rating rows: the Increase and Decrease buttons (builder-rating-rows.feature)
+
+const BUTTON = '(Increase|Decrease)';
+
+const rowButton = async (page: Page, direction: 'Increase' | 'Decrease', name: string): Promise<Locator> =>
+  stepButton(await traitRating(page, name), direction);
+
+When(new RegExp(`^they press ${BUTTON} (\\w+)$`), async ({ page }, direction: 'Increase' | 'Decrease', name: string) => {
+  // Playwright treats aria-disabled as not enabled; a button at its bound is still pressed.
+  await (await rowButton(page, direction, name)).click({ force: true });
+});
+
+Then(/^(\w+) has the buttons "([^"]+)" and "([^"]+)"$/, async ({ page }, name: string, first: string, second: string) => {
+  const names = await (await traitRating(page, name)).getByRole('button').evaluateAll((buttons) => buttons.map((button) => button.getAttribute('aria-label')));
+  expect(names).toEqual([first, second]);
+});
+
+Then(new RegExp(`^${BUTTON} (\\w+) is (available|unavailable)$`), async ({ page }, direction: 'Increase' | 'Decrease', name: string, state: string) => {
+  const button = await rowButton(page, direction, name);
+  if (state === 'unavailable') await expect(button).toHaveAttribute('aria-disabled', 'true');
+  else await expect(button).not.toHaveAttribute('aria-disabled', /./);
+});
+
+Then(new RegExp(`^${BUTTON} (\\w+) is still on the page and can be focused$`), async ({ page }, direction: 'Increase' | 'Decrease', name: string) => {
+  const button = await rowButton(page, direction, name);
+  await button.focus();
+  await expect(button).toBeFocused();
+});
+
+Then(/^"([^"]+)" is shown beside Increase (\w+)$/, async ({ page }, text: string, name: string) => {
+  await expect((await traitRating(page, name)).locator('[data-rating-limit]')).toHaveText(text);
+  await expect((await traitRating(page, name)).locator('[data-rating-limit]')).toBeVisible();
+});
+
+Then(/^no limit is shown beside Increase (\w+)$/, async ({ page }, name: string) => {
+  await expect((await traitRating(page, name)).locator('[data-rating-limit]')).toBeHidden();
+});
+
+Then(/^Increase (\w+) is described by "([^"]+)"$/, async ({ page }, name: string, text: string) => {
+  await expect(await rowButton(page, 'Increase', name)).toHaveAccessibleDescription(new RegExp(text));
+});
+
+Then(/^the (\w+) group says "([^"]+)"$/, async ({ page }, group: string, text: string) => {
+  await expect(await groupNotice(page, group)).toHaveText(text);
+});
+
+Then(new RegExp(`^${BUTTON} (\\w+) still has keyboard focus$`), async ({ page }, direction: 'Increase' | 'Decrease', name: string) => {
+  await expect(await rowButton(page, direction, name)).toBeFocused();
 });

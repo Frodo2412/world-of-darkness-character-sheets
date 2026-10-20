@@ -1,3 +1,4 @@
+// The rating steppers draw their dots with the sheet's dot-rating, read-only.
 import '../components/controls/dot-rating';
 import type { V20Build } from '../domain/v20/creation/build';
 import { report } from '../domain/v20/creation/progress';

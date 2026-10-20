@@ -13,7 +13,7 @@ import {
 } from './support/builder';
 import { addDiscipline, disciplineNames } from './support/advantages';
 import { CLAN_SELECT_ID, clanNotice, clanPanel, clanSelect, openClanScreen } from './support/clan';
-import { expectRated, groupBox, groupReadout, rateTrait, traitRating } from './support/ranked';
+import { expectRated, groupBox, groupReadout, rateTrait, ratingsIn, traitRating } from './support/ranked';
 import { seedSteps } from './builder-seeding.steps';
 import { addCreationDiscipline, creation } from '../../src/domain/v20/creation/testing/play';
 
@@ -103,7 +103,7 @@ Then('they are told to choose a clan on the Clan step before placing Discipline 
 });
 
 Then('no Discipline dots can be placed', async ({ page }) => {
-  await expect((await groupBox(page, 'Disciplines')).getByRole('slider')).toHaveCount(0);
+  await expect(ratingsIn(await groupBox(page, 'Disciplines'))).toHaveCount(0);
 });
 
 Then(/^the Disciplines offered are exactly "([^"]+)", "([^"]+)" and "([^"]+)"$/, async ({ page }, a: string, b: string, c: string) => {
@@ -150,9 +150,9 @@ Then('no clan-change notice is shown', async ({ page }) => {
 });
 
 Then('the choices are exactly', async ({ page }, table: import('playwright-bdd').DataTable) => {
-  const sliders = (await groupBox(page, 'Backgrounds')).getByRole('slider');
-  const names = await sliders.evaluateAll((elements) =>
-    elements.map((slider) => document.getElementById(slider.getAttribute('aria-labelledby')!)!.textContent ?? ''),
+  const rows = ratingsIn(await groupBox(page, 'Backgrounds'));
+  const names = await rows.evaluateAll((elements) =>
+    elements.map((row) => document.getElementById(row.getAttribute('data-label-id')!)!.textContent ?? ''),
   );
   expect(names).toEqual(table.raw().flat());
   expect(names).toEqual([...BACKGROUNDS]);

@@ -25,9 +25,7 @@ Feature: Every builder screen meets the screen standards
       | Finishing touches |
       | Review & resolve  |
 
-  # Finishing touches is left out: its ten-dot Humanity and Willpower rows are 33 px too wide at 320 px
-  # (the same before the sidebar), which the minus/plus rating rows of Step 3.5 and Slice 14 resolve.
-  Scenario Outline: Each screen but Finishing touches fits the narrowest phone
+  Scenario Outline: Each screen fits the narrowest phone
     Given a build named "Lucita" of clan "Lasombra"
     When I choose <screen> in the sidebar
     Then the page does not scroll horizontally at 320 px
@@ -40,6 +38,7 @@ Feature: Every builder screen meets the screen standards
       | Attributes        |
       | Abilities         |
       | Advantages        |
+      | Finishing touches |
       | Review & resolve  |
 
   Scenario: A gated Continue with its reason and go-to button is accessible and fits a phone

@@ -6,6 +6,7 @@ import type { BuildReport } from '../../../domain/v20/creation/progress';
 import { addDiscipline, removeDiscipline, type DotSource } from '../../../domain/v20/creation/updates';
 import { traitLabelId } from '../labelId';
 import type { Wiring } from '../wiring';
+import { createStepperHost } from './ratingStepper';
 
 /** Wires the add field and the Remove buttons of the Discipline rows made for `mode`. */
 export function wireDisciplineRows(root: HTMLElement, { commit }: Wiring, mode: DotSource): void {
@@ -30,7 +31,7 @@ export function wireDisciplineRows(root: HTMLElement, { commit }: Wiring, mode: 
       commit((build) => removeDiscipline(build, name), button);
       // With no row left, the add field is the nearest control; focus would otherwise fall to the page.
       const addField = rows.parentElement?.querySelector<HTMLElement>(`[data-discipline-add][data-mode="${mode}"] input`);
-      (rows.querySelector<HTMLElement>('dot-rating, button') ?? addField)?.focus();
+      (rows.querySelector<HTMLElement>('button') ?? addField)?.focus();
     });
   }
 }
@@ -42,13 +43,7 @@ function disciplineRow(container: HTMLElement, ref: BuildTraitRef, label: string
   name.id = labelId;
   name.textContent = label;
 
-  const rating = document.createElement('dot-rating');
-  rating.dataset.buildTrait = ref;
-  rating.dataset.mode = mode;
-  rating.setAttribute('aria-labelledby', labelId);
-  rating.setAttribute('aria-describedby', noticeId!);
-  rating.setAttribute('max', '5');
-  rating.setAttribute('value', '0');
+  const rating = createStepperHost({ trait: ref, mode: mode as DotSource, labelId, noticeId: noticeId! });
 
   const actions = document.createElement('span');
   actions.className = 'discipline-row-actions';

@@ -3,7 +3,7 @@ import { abilitiesRanked, creation } from '../../src/domain/v20/creation/testing
 import { ABILITY_GROUPS } from '../../src/domain/v20/traits';
 import { Given, Then } from './fixtures';
 import { openPlayed, openStep, startBuild } from './support/builder';
-import { expectRated, groupBox, groupNotice, traitRating } from './support/ranked';
+import { expectRated, groupBox, groupNotice, ratingsIn, traitRating } from './support/ranked';
 
 Given('a player on the abilities step', async ({ page }) => {
   await startBuild(page);
@@ -34,7 +34,7 @@ Then(
   "with a group's last row scrolled into view, that group's remaining-dots readout is inside the viewport",
   async ({ page }) => {
     const group = await groupBox(page, 'Knowledges');
-    await group.getByRole('slider').last().scrollIntoViewIfNeeded();
+    await ratingsIn(group).last().scrollIntoViewIfNeeded();
     const readout = group.locator('[data-allotment-status]');
     const box = (await readout.boundingBox())!;
     const viewport = page.viewportSize()!;

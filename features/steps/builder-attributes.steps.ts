@@ -12,6 +12,10 @@ import {
   rankGroup,
   rankSelect,
   rateTrait,
+  ratingNameOf,
+  ratingOf,
+  ratingsIn,
+  requestRating,
   traitRating,
 } from './support/ranked';
 import { escaped } from './support/text';
@@ -63,9 +67,8 @@ Given(
     await rankGroup(page, group, value);
     const cap = ATTRIBUTE_GROUPS.some((entry) => entry.label === group) ? 5 : 3;
     await placeDots(page, group, Number(count), cap);
-    const sliders = page.getByRole('group', { name: group, exact: true }).getByRole('slider');
-    for (const slider of await sliders.all()) {
-      memory.ratings.set((await slider.getAttribute('aria-labelledby'))!, Number(await slider.getAttribute('aria-valuenow')));
+    for (const row of await ratingsIn(page.getByRole('group', { name: group, exact: true })).all()) {
+      memory.ratings.set(await ratingNameOf(row), await ratingOf(row));
     }
   },
 );
@@ -75,8 +78,7 @@ Given('a player who was just told Mental has no dots remaining', async ({ page }
   await rankGroup(page, 'Mental', 'tertiary');
   await rateTrait(page, 'Perception', 3);
   await rateTrait(page, 'Intelligence', 2);
-  const wits = await traitRating(page, 'Wits');
-  await wits.locator('.rating-mark').nth(1).click();
+  await requestRating(await traitRating(page, 'Wits'), 2);
   await expect(await groupNotice(page, 'Mental')).toContainText('Mental has no dots remaining');
 });
 
@@ -101,8 +103,8 @@ Given('a build with ranked Attribute groups, an overspent group and a refusal sh
     rank('physical', 'tertiary'),
   );
   await openStep(page, 'Attributes');
-  await (await traitRating(page, 'Charisma')).locator('.rating-mark').nth(4).click();
-  await (await traitRating(page, 'Strength')).locator('.rating-mark').nth(4).click();
+  await requestRating(await traitRating(page, 'Charisma'), 5);
+  await requestRating(await traitRating(page, 'Strength'), 5);
   await expect(await groupNotice(page, 'Physical')).toContainText('Physical has no dots remaining');
 });
 
@@ -172,10 +174,8 @@ Then(
 
 Then(/^the (\w+) ratings are unchanged$/, async ({ page, memory }, group: string) => {
   expect(memory.ratings.size).toBe(3);
-  const sliders = shownStep(page).getByRole('group', { name: group, exact: true }).getByRole('slider');
-  for (const slider of await sliders.all()) {
-    const key = (await slider.getAttribute('aria-labelledby'))!;
-    await expect(slider).toHaveAttribute('aria-valuenow', String(memory.ratings.get(key)));
+  for (const row of await ratingsIn(shownStep(page).getByRole('group', { name: group, exact: true })).all()) {
+    await expect(row).toHaveAttribute('data-value', String(memory.ratings.get(await ratingNameOf(row))));
   }
 });
 

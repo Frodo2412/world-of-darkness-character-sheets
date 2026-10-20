@@ -52,7 +52,7 @@ type Box = { x: number; y: number; width: number; height: number };
  */
 async function focusStopsClearOfStickyParts(page: Page, includeHeadings: boolean): Promise<void> {
   await page.setViewportSize(PHONE);
-  const controls = shownStep(page).locator('a, button, input, select, summary, [role="slider"]').filter({ visible: true });
+  const controls = shownStep(page).locator('a, button, input, select, summary').filter({ visible: true });
   const total = await controls.count();
   expect(total).toBeGreaterThan(0);
   // Every control is visited when there are few; on long steps, a spread of them.

@@ -360,16 +360,72 @@
 
 .builder .rating-row {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: var(--space-2);
+	gap: var(--space-1) var(--space-2);
 	min-block-size: 2rem;
 }
 
-.builder dot-rating {
-	--mark-size: 1.5rem;
+/* A rating row's controls: minus, the dots with the number, plus, then why the plus cannot act. They wrap
+   rather than widen the page, so a ten-dot row fits the narrowest phone. */
+.rating-stepper {
+	--control-size: var(--control-compact);
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--space-1) var(--space-2);
+	min-inline-size: 0;
+	margin-inline-start: auto;
+}
+
+.rating-step {
+	inline-size: var(--control-size);
+	padding: 0;
+	background: var(--color-control);
+	font-weight: 600;
+	line-height: 1;
+}
+
+/* At its bound a button stays focusable and keeps its place; it only says it does nothing. */
+.rating-step[aria-disabled='true'] {
+	color: var(--color-muted);
+	border-style: dashed;
+	cursor: not-allowed;
+}
+
+.rating-step[aria-disabled='true']:hover {
+	border-color: var(--color-border-control);
+}
+
+.rating-dots {
+	min-inline-size: 0;
+}
+
+.rating-dots dot-rating {
+	--mark-size: 1.25rem;
+	flex-shrink: 1;
 	flex-wrap: wrap;
 	justify-content: flex-end;
+	cursor: default;
+}
+
+.rating-stepper[data-locked] .rating-mark {
+	border-style: dashed;
+}
+
+.rating-number {
+	display: inline-block;
+	min-inline-size: 1.5ch;
+	text-align: center;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.rating-limit {
+	color: var(--color-text-status);
+	font-size: var(--text-small);
 }
 
 /* The freebie row stays at the top; group headings stick below it, and a

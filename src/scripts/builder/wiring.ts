@@ -2,15 +2,16 @@
 // without new wiring here. The page never judges a value itself: it forwards
 // what the player entered and draws what `report` says.
 
-import type { RatingChange, RatingControl } from '../../components/controls/rating-control';
 import type { BuildTraitRef, V20Build } from '../../domain/v20/creation/build';
 import type { BuildReport } from '../../domain/v20/creation/progress';
 import type { UpdateResult } from '../../domain/v20/creation/result';
 import { ordinal } from '../../domain/v20/creation/limits';
+import { rating } from '../../domain/v20/creation/ratings';
 import { setRank, setRating, type DotSource } from '../../domain/v20/creation/updates';
 import type { BuildStore } from '../../storage/buildStore';
 import type { CharacterStore } from '../../storage/characterStore';
 import { showReadout } from './messages';
+import { renderStepper } from './parts/ratingStepper';
 import { renderTypedNumbers, wireTypedNumbers } from './parts/typedNumber';
 
 export type Update = (build: V20Build) => UpdateResult;
@@ -38,14 +39,16 @@ export function wireControls(root: HTMLElement, wiring: Wiring): void {
       commit((build) => setRank(build, select.dataset.rank!, select.value), select);
     });
   }
-  // Rating rows are found when they change, so rows drawn later need no wiring.
-  root.addEventListener('change', (event) => {
-    const control = (event.target as Element).closest<RatingControl>('[data-build-trait]');
-    if (!control || !(event instanceof CustomEvent)) return;
-    const { value } = (event as CustomEvent<RatingChange>).detail;
-    const trait = control.dataset.buildTrait as BuildTraitRef;
-    const mode = control.dataset.mode as DotSource;
-    commit((build) => setRating(build, trait, value, mode), control);
+  // A step button is found when it is pressed, so rows drawn later need no wiring. The build, not the
+  // page, judges the step: a button that cannot act (aria-disabled) still asks, and the refusal says why.
+  root.addEventListener('click', (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('[data-rating-step]');
+    const stepper = button?.closest<HTMLElement>('[data-build-trait]');
+    if (!button || !stepper) return;
+    const trait = stepper.dataset.buildTrait as BuildTraitRef;
+    const mode = stepper.dataset.mode as DotSource;
+    const step = Number(button.dataset.ratingStep);
+    commit((build) => setRating(build, trait, rating(build, trait) + step, mode), button);
   });
 }
 
@@ -53,24 +56,6 @@ export function wireControls(root: HTMLElement, wiring: Wiring): void {
 const READOUT_FORMATS: Partial<Record<keyof BuildReport['settings'], (value: number) => string>> = {
   effectiveGeneration: ordinal,
 };
-
-function renderRating(control: RatingControl, report: BuildReport): void {
-  const trait = report.traits[control.dataset.buildTrait!];
-  if (!trait) return;
-  // A locked trait is drawn to the generation's scale so its fixed 0 is visible as empty dots.
-  const max = trait.locked ? report.settings.maxTrait : trait.max;
-  const attributes: Record<string, string> = {
-    max: String(max),
-    min: String(trait.floor),
-    valuetext: trait.valueText,
-    freebie: String(trait.freebieDots),
-  };
-  for (const [name, value] of Object.entries(attributes)) {
-    if (control.getAttribute(name) !== value) control.setAttribute(name, value);
-  }
-  control.toggleAttribute('locked', trait.locked);
-  if (control.value !== trait.rating) control.value = trait.rating;
-}
 
 export function renderControls(root: HTMLElement, report: BuildReport): void {
   renderTypedNumbers(root, report);
@@ -88,7 +73,8 @@ export function renderControls(root: HTMLElement, report: BuildReport): void {
     status.toggleAttribute('data-overspent', allotment.overspent);
     showReadout(status.querySelector<HTMLElement>('[data-readout-text]')!, allotment.status);
   }
-  for (const control of root.querySelectorAll<RatingControl>('[data-build-trait]')) {
-    renderRating(control, report);
+  for (const stepper of root.querySelectorAll<HTMLElement>('[data-build-trait]')) {
+    const trait = report.traits[stepper.dataset.buildTrait!];
+    if (trait) renderStepper(stepper, trait, report.settings, report.concept.clan);
   }
 }
