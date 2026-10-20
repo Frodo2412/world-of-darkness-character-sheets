@@ -53,11 +53,21 @@ export function wireFinish(
         notice.replaceChildren('This build was already finished and has been removed. Its character is on your roster. ', link);
         return;
       }
+      case 'already-finished-build-kept': {
+        const link = document.createElement('a');
+        link.href = '/';
+        link.textContent = 'Go to your characters';
+        notice.replaceChildren('This build was already finished, but it could not be removed. Its character is on your roster. ', link);
+        return;
+      }
       case 'build-missing':
         showView('not-found');
         return;
       case 'not-finishable':
         keepBuild('This build still has items outstanding, so it was not finished. Your build has been kept.');
+        return;
+      case 'character-unreadable':
+        keepBuild('A saved character under this build could not be read, so the build was not finished. Your build has been kept.');
         return;
       case 'save-failed':
         keepBuild('The character could not be saved. This browser refused to store it. Your build has been kept.');

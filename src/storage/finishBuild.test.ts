@@ -83,6 +83,22 @@ describe('finishBuild', () => {
     expect(items.has(buildKeyFor(build.id))).toBe(false);
   });
 
+  test('keeps the build and the unreadable record when the character under the id cannot be read', () => {
+    const { build, items, builds, characters } = arrange();
+    items.set(keyFor(build.id), '{not a character');
+    expect(finishBuild(builds, characters, build)).toBe('character-unreadable');
+    expect(items.has(buildKeyFor(build.id))).toBe(true);
+    expect(items.get(keyFor(build.id))).toBe('{not a character');
+  });
+
+  test('keeps the build, and says so, when it is already finished elsewhere but cannot be removed', () => {
+    const { build, items, builds, characters } = arrange({ remove: true });
+    characters.save(toCharacter(build));
+    expect(finishBuild(builds, characters, build)).toBe('already-finished-build-kept');
+    expect(items.has(buildKeyFor(build.id))).toBe(true);
+    expect(characters.load(build.id).status).toBe('found');
+  });
+
   test('reports a build deleted in another tab as missing, even though this tab still holds it unfinishable', () => {
     const { build, builds, characters } = arrange();
     builds.delete(build.id);

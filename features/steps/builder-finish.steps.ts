@@ -10,7 +10,7 @@ import {
   type Step,
 } from '../../src/domain/v20/creation/testing/play';
 import type { ConceptField } from '../../src/domain/v20/creation/build';
-import { createCharacterStore } from '../../src/storage/characterStore';
+import { createCharacterStore, keyFor as characterKey } from '../../src/storage/characterStore';
 import { watchWrites, writtenTexts } from './support/announcements';
 import { bloodPoolField, bloodPoolMessage, recordBloodPool, unrecordedBloodPool } from './support/bloodpool';
 import { buyDots, leaveFreebies } from './builder-seeding.steps';
@@ -55,7 +55,7 @@ import {
   savedCharacter,
   willpowerTotal,
 } from './support/sheet';
-import { storedKeys } from './support/storage';
+import { refuseRemovals, storedKeys, storedText, writeRecord } from './support/storage';
 
 /** One creation dot taken off a complete Brujah build, by the allotment that loses it. */
 const ONE_SHORT: Record<string, Step> = {
@@ -175,6 +175,16 @@ Given('a finished character whose build was not removed', async ({ page, memory 
   await page.evaluate((entries) => {
     for (const [key, value] of entries) window.localStorage.setItem(key, value);
   }, [...records]);
+});
+
+const DAMAGED_CHARACTER = '{"id": damaged';
+
+Given('the stored character record for the build is damaged', async ({ page, memory }) => {
+  await writeRecord(page, characterKey(memory.build!.id), DAMAGED_CHARACTER);
+});
+
+Given('the browser refuses to remove stored data', async ({ page }) => {
+  await refuseRemovals(page);
 });
 
 Given('the player has since renamed the character {string} on the sheet', async ({ page, memory }, name: string) => {
@@ -445,6 +455,19 @@ Then('the roster lists one character', async ({ page }) => {
 Then('they are told the character could not be saved and the build has been kept', async ({ page }) => {
   await expect(page.getByRole('alert')).toContainText('The character could not be saved');
   await expect(page.getByRole('alert')).toContainText('Your build has been kept.');
+});
+
+Then('they are told the saved character could not be read and the build has been kept', async ({ page }) => {
+  await expect(page.getByRole('alert')).toContainText('A saved character under this build could not be read');
+  await expect(page.getByRole('alert')).toContainText('Your build has been kept.');
+});
+
+Then('the damaged record is still stored as it was', async ({ page, memory }) => {
+  expect(await storedText(page, characterKey(memory.build!.id))).toBe(DAMAGED_CHARACTER);
+});
+
+Then('they are told the build was already finished but could not be removed', async ({ page }) => {
+  await expect(page.locator('[data-finish-notice]')).toContainText('This build was already finished, but it could not be removed.');
 });
 
 Then('the build is still stored', async ({ page, memory }) => {
