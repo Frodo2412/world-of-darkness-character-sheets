@@ -54,6 +54,7 @@ describe('creation module layers', () => {
     result: ['rules', 'build', 'limits'],
     updates: BELOW_UPDATES,
     progress: BELOW_UPDATES,
+    screens: [...BELOW_UPDATES, 'progress'],
     toCharacter: BELOW_UPDATES,
   };
 

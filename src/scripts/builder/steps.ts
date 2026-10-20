@@ -1,7 +1,7 @@
 // The step router: one step shown at a time, kept in the address hash with
 // replaceState so Back leaves the builder rather than walking the steps.
 
-import type { BuildReport, BuildStep } from '../../domain/v20/creation/progress';
+import type { BuildReport, LegacyStep } from '../../domain/v20/creation/progress';
 
 export interface StepRouter {
   /** Rewrites the document title, for when the build's name changes. */
@@ -56,7 +56,7 @@ export function startSteps(root: HTMLElement, buildName: () => string): StepRout
     },
     renderStatuses(report) {
       for (const status of statuses) {
-        const text = report.steps[status.dataset.stepStatus as BuildStep];
+        const text = report.steps[status.dataset.stepStatus as LegacyStep];
         if (status.textContent !== text) status.textContent = text;
       }
     },

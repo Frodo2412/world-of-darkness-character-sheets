@@ -14,6 +14,33 @@ describe('build steps', () => {
   });
 });
 
+describe('screens', () => {
+  test('are the nine, in order, under their titles', () => {
+    expect(rules.SCREENS.map((entry) => [entry.id, entry.title])).toEqual([
+      ['concept', 'Character concept'],
+      ['clan', 'Clan'],
+      ['natureDemeanor', 'Nature & Demeanor'],
+      ['attributes', 'Attributes'],
+      ['abilities', 'Abilities'],
+      ['advantages', 'Advantages'],
+      ['finishing', 'Finishing touches'],
+      ['review', 'Review & resolve'],
+      ['summary', 'Character sheet'],
+    ]);
+  });
+
+  test('sit in five phases, with Character concept and Finishing touches holding three screens each', () => {
+    expect(rules.PHASES).toEqual(['Character concept', 'Attributes', 'Abilities', 'Advantages', 'Finishing touches']);
+    const counts = rules.PHASES.map((phase) => rules.SCREENS.filter((entry) => entry.phase === phase).length);
+    expect(counts).toEqual([3, 1, 1, 1, 3]);
+  });
+
+  test('every legacy step is one of the screens', () => {
+    const ids: string[] = rules.SCREENS.map((entry) => entry.id);
+    expect(rules.BUILD_STEPS.filter((entry) => !ids.includes(entry.step))).toEqual([]);
+  });
+});
+
 describe('generation table', () => {
   test('has one row for each generation from 4th to 13th, most potent first', () => {
     expect(GENERATION_TABLE.map((row) => row.generation)).toEqual([4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);

@@ -16,10 +16,10 @@ import {
   rating,
   traitLabel,
 } from './ratings';
-import { BUILD_STEPS, FREEBIE_COSTS, RANKED_ALLOTMENTS, type BuildStep, type Rank } from './rules';
+import { FREEBIE_COSTS, RANKED_ALLOTMENTS, SCREENS, type BuildStep, type LegacyStep, type Rank } from './rules';
 import { plural } from './wording';
 
-export { BUILD_STEPS, type BuildStep } from './rules';
+export { BUILD_STEPS, type BuildStep, type LegacyStep } from './rules';
 
 export interface SettingsReport {
   baseGeneration: number;
@@ -114,8 +114,8 @@ export interface BuildReport {
   bloodPoolHint: string;
   outstanding: OutstandingItem[];
   finish: FinishReport;
-  /** A short text status per step, '' when there is nothing to say. */
-  steps: Record<BuildStep, string>;
+  /** A short text status per legacy step, '' when there is nothing to say. */
+  steps: Record<LegacyStep, string>;
 }
 
 export function settingsReport(build: V20Build): SettingsReport {
@@ -231,7 +231,7 @@ export function allotmentReports(build: V20Build): Record<string, AllotmentRepor
   );
 }
 
-const stepIndex = (step: BuildStep): number => BUILD_STEPS.findIndex((entry) => entry.step === step);
+const stepIndex = (step: BuildStep): number => SCREENS.findIndex((entry) => entry.id === step);
 
 /** What still stands between the build and a finished character, in step order. */
 export function outstanding(build: V20Build): OutstandingItem[] {
@@ -274,7 +274,7 @@ export function outstanding(build: V20Build): OutstandingItem[] {
 export const unspentFreebies = (build: V20Build): number => Math.max(0, freebiesRemaining(build));
 
 /** The step navigation's word on each step, from the same reads as the outstanding list. */
-export function stepStatuses(build: V20Build, items: OutstandingItem[] = outstanding(build)): Record<BuildStep, string> {
+export function stepStatuses(build: V20Build, items: OutstandingItem[] = outstanding(build)): Record<LegacyStep, string> {
   const states = allotmentStates(build);
   const statusOf = (step: BuildStep): string => {
     const own = states.filter((state) => state.step === step);
