@@ -2327,9 +2327,9 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
 - [x] Slice 6: Clan screen
   - [x] Step 6.1: Clan cards, search and detail
   - [x] Step 6.2: The Clan screen
-- [ ] Slice 7: Nature & Demeanor screen
-  - [ ] Step 7.1: Archetype search and marks
-  - [ ] Step 7.2: The Nature & Demeanor screen
+- [x] Slice 7: Nature & Demeanor screen
+  - [x] Step 7.1: Archetype search and marks
+  - [x] Step 7.2: The Nature & Demeanor screen
 
 #### Wave 6
 - [ ] Slice 8: Attributes and Abilities screens
