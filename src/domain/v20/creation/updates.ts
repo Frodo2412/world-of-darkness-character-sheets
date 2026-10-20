@@ -2,7 +2,7 @@
 // input: a refusal hands back the same build, an applied change a new one.
 
 import type { Range } from '../traits';
-import { allotmentStateFor, allotmentStates, rankedGroupOf } from './allotments';
+import { allotmentStateFor, allotmentStates, rankedGroupOf, type AllotmentState } from './allotments';
 import type {
   BuildSettings,
   BuildTraitRef,
@@ -46,6 +46,7 @@ import {
   MAX_HELD,
   RANKED_ALLOTMENTS,
   RANKS,
+  type BuildStep,
   type ClanName,
   type Rank,
   SCREENS,
@@ -56,6 +57,14 @@ export type DotSource = 'creation' | 'freebie';
 
 const FIRST_GENERATION = GENERATION_TABLE[0].generation;
 const LAST_GENERATION = GENERATION_TABLE[GENERATION_TABLE.length - 1].generation;
+
+/** Why a change is refused, and the screen that can put it right when it is not this one. */
+interface Refusal {
+  reason: string;
+  step?: BuildStep;
+}
+
+const because = (reason: string, step?: BuildStep): Refusal => ({ reason, step });
 
 const MORE_WITH_FREEBIES = 'More can be bought with freebie points on Finishing touches.';
 const PAST_FOURTH = `The effective generation cannot be better than ${ordinal(FIRST_GENERATION)}.`;
@@ -285,12 +294,12 @@ function heldCount(build: V20Build, ref: BuildTraitRef): number {
   return traits.filter((trait) => rating(build, trait) > 0).length;
 }
 
-function heldCapRefusal(build: V20Build, ref: BuildTraitRef, target: number): string | undefined {
+function heldCapRefusal(build: V20Build, ref: BuildTraitRef, target: number): Refusal | undefined {
   const kind = kindOf(ref);
   if (kind !== 'discipline' && kind !== 'background') return undefined;
   if (rating(build, ref) > 0 || target === 0) return undefined;
   if (heldCount(build, ref) < MAX_HELD) return undefined;
-  return `A character holds at most six ${kind === 'discipline' ? 'Disciplines' : 'Backgrounds'}.`;
+  return because(`A character holds at most six ${kind === 'discipline' ? 'Disciplines' : 'Backgrounds'}.`);
 }
 
 function generationNotice(before: V20Build, after: V20Build): string[] {
@@ -305,14 +314,14 @@ function knownDiscipline(build: V20Build, ref: BuildTraitRef): boolean {
   return findDiscipline(build, name) !== undefined || isClanDiscipline(build, name);
 }
 
-function costRefusal(build: V20Build, ref: BuildTraitRef, added: number): string | undefined {
+function costRefusal(build: V20Build, ref: BuildTraitRef, added: number): Refusal | undefined {
   if (added <= 0) return undefined;
   const cost = added * freebieCost(ref);
   const left = freebiesRemaining(build);
   if (cost <= left) return undefined;
   const noun = NOUNS[kindOf(ref)];
   const what = added === 1 ? `A ${noun} dot costs` : `${added} ${noun} dots cost`;
-  return `${what} ${plural(cost, 'freebie point')} and only ${left} ${left === 1 ? 'remains' : 'remain'}.`;
+  return because(`${what} ${plural(cost, 'freebie point')} and only ${left} ${left === 1 ? 'remains' : 'remain'}.`);
 }
 
 const NOUNS: Record<ReturnType<typeof kindOf>, string> = {
@@ -348,96 +357,114 @@ export function setRating(
     : setFreebieRating(build, ref, target);
 }
 
-function setCreationRating(build: V20Build, ref: BuildTraitRef, target: number): UpdateResult {
-  const label = traitLabel(ref);
-  const dots = dotsOf(build, ref);
-  if (ref === 'humanity' || ref === 'willpower') {
-    return refuse(
-      build,
-      `${label} comes from the Virtues. ${MORE_WITH_FREEBIES}`,
+// The rules both setters share. Each returns why a change is refused, or nothing when the rule allows it.
+
+function ceilingRefusal(build: V20Build, ref: BuildTraitRef, target: number): Refusal | undefined {
+  const max = maximumFor(build, ref);
+  return target > max ? because(`${traitLabel(ref)} cannot go above ${max}.`) : undefined;
+}
+
+function generationRefusal(build: V20Build, ref: BuildTraitRef, target: number): Refusal | undefined {
+  return ref === GENERATION_REF && build.settings.baseGeneration - target < FIRST_GENERATION ? because(PAST_FOURTH) : undefined;
+}
+
+// The rules creation dots alone are held to.
+
+/** Humanity and Willpower take no creation dots: they follow the Virtues. */
+function derivedRefusal(build: V20Build, ref: BuildTraitRef): Refusal | undefined {
+  if (ref !== 'humanity' && ref !== 'willpower') return undefined;
+  return because(`${traitLabel(ref)} comes from the Virtues. ${MORE_WITH_FREEBIES}`, 'finishing');
+}
+
+/** Creation dots go on a chosen clan's Disciplines; a Caitiff may hold any it knows. */
+function disciplineRefusal(build: V20Build, ref: BuildTraitRef): Refusal | undefined {
+  if (kindOf(ref) !== 'discipline') return undefined;
+  if (build.clan === '') return because('Choose a clan on the Clan step before placing Discipline dots.', 'clan');
+  if (isCaitiff(build) ? knownDiscipline(build, ref) : isClanDiscipline(build, keyOf(ref))) return undefined;
+  return because(`${traitLabel(ref)} is not a ${build.clan} Discipline. ${MORE_WITH_FREEBIES}`, 'finishing');
+}
+
+function creationFloorRefusal(build: V20Build, ref: BuildTraitRef, target: number): Refusal | undefined {
+  const floor = creationFloor(build, ref);
+  if (target >= floor) return undefined;
+  if (dotsOf(build, ref).freebie > 0 && target >= freeDots(build, ref)) {
+    return because('Freebie dots are removed on Finishing touches.', 'finishing');
+  }
+  return because(`${traitLabel(ref)} cannot go below ${floor}.`);
+}
+
+/** What a pool that cannot take another dot says: how many it has left, or that it has none. */
+function poolShortMessage(state: AllotmentState): string {
+  if (state.kind === 'ranked') {
+    return state.remaining > 0
+      ? `${state.label} has only ${plural(state.remaining, 'dot')} remaining.`
+      : `${state.label} has no dots remaining.`;
+  }
+  if (state.remaining > 0) {
+    return `There ${state.remaining === 1 ? 'is' : 'are'} only ${plural(state.remaining, `${state.noun} dot`)} remaining.`;
+  }
+  return `There are no ${state.noun} dots remaining.`;
+}
+
+/** Placing `added` more creation dots: the group needs a rank, the Ability a creation ceiling, the pool enough left. */
+function poolRefusal(build: V20Build, ref: BuildTraitRef, target: number, added: number): Refusal | undefined {
+  if (added <= 0) return undefined;
+  const state = allotmentStateFor(build, ref)!;
+  if (state.kind === 'ranked' && state.rank === '') {
+    return because(`Rank the ${state.label} group before placing dots in it.`);
+  }
+  if (target > creationMaximum(build, ref)) {
+    return because(
+      `Abilities cannot go above ${FIXED_MAXIMUMS.abilityCreation} before freebie points, which are spent on Finishing touches.`,
       'finishing',
     );
   }
-  if (kindOf(ref) === 'discipline') {
-    if (build.clan === '') {
-      return refuse(build, 'Choose a clan on the Clan step before placing Discipline dots.', 'clan');
-    }
-    if (isCaitiff(build) ? !knownDiscipline(build, ref) : !isClanDiscipline(build, keyOf(ref))) {
-      return refuse(build, `${label} is not a ${build.clan} Discipline. ${MORE_WITH_FREEBIES}`, 'finishing');
-    }
-  }
+  if (added > state.remaining) return because(`${poolShortMessage(state)} ${MORE_WITH_FREEBIES}`, 'finishing');
+  return undefined;
+}
 
-  const floor = creationFloor(build, ref);
-  if (target < floor) {
-    if (dots.freebie > 0 && target >= freeDots(build, ref)) {
-      return refuse(build, 'Freebie dots are removed on Finishing touches.', 'finishing');
-    }
-    return refuse(build, `${label} cannot go below ${floor}.`);
-  }
-  const max = maximumFor(build, ref);
-  if (target > max) return refuse(build, `${label} cannot go above ${max}.`);
-
+function setCreationRating(build: V20Build, ref: BuildTraitRef, target: number): UpdateResult {
+  const dots = dotsOf(build, ref);
   const creation = target - freeDots(build, ref) - dots.freebie;
-  const added = creation - dots.creation;
-  if (added > 0) {
-    const state = allotmentStateFor(build, ref)!;
-    if (state.kind === 'ranked' && state.rank === '') {
-      return refuse(build, `Rank the ${state.label} group before placing dots in it.`);
-    }
-    if (target > creationMaximum(build, ref)) {
-      return refuse(
-        build,
-        `Abilities cannot go above ${FIXED_MAXIMUMS.abilityCreation} before freebie points, which are spent on Finishing touches.`,
-        'finishing',
-      );
-    }
-    if (added > state.remaining) {
-      const what =
-        state.kind === 'ranked'
-          ? state.remaining > 0
-            ? `${state.label} has only ${plural(state.remaining, 'dot')} remaining.`
-            : `${state.label} has no dots remaining.`
-          : state.remaining > 0
-            ? `There ${state.remaining === 1 ? 'is' : 'are'} only ${plural(state.remaining, `${state.noun} dot`)} remaining.`
-            : `There are no ${state.noun} dots remaining.`;
-      return refuse(build, `${what} ${MORE_WITH_FREEBIES}`, 'finishing');
-    }
-  }
-  if (ref === GENERATION_REF && build.settings.baseGeneration - target < FIRST_GENERATION) {
-    return refuse(build, PAST_FOURTH);
-  }
-  const held = heldCapRefusal(build, ref, target);
-  if (held) return refuse(build, held);
+  const refusal =
+    derivedRefusal(build, ref) ??
+    disciplineRefusal(build, ref) ??
+    creationFloorRefusal(build, ref, target) ??
+    ceilingRefusal(build, ref, target) ??
+    poolRefusal(build, ref, target, creation - dots.creation) ??
+    generationRefusal(build, ref, target) ??
+    heldCapRefusal(build, ref, target);
+  if (refusal) return refuse(build, refusal.reason, refusal.step);
 
   // A Caitiff keeps an emptied Discipline as a row to fill again; a clan's rows are always there.
   const candidate = withDots(build, ref, { ...dots, creation }, isCaitiff(build));
   return commit(build, candidate, generationNotice(build, candidate));
 }
 
-function setFreebieRating(build: V20Build, ref: BuildTraitRef, target: number): UpdateResult {
-  const label = traitLabel(ref);
-  const dots = dotsOf(build, ref);
-  const floor = freebieFloor(build, ref);
-  if (target < floor) {
-    if (target >= freeDots(build, ref) && dots.creation > 0) {
-      return refuse(build, `Creation dots are changed on the ${stepTitle(creationStepOf(ref))} step.`, creationStepOf(ref));
-    }
-    if (ref === 'humanity' || ref === 'willpower') {
-      return refuse(build, `${label} from the Virtues is changed on the Advantages step.`, 'advantages');
-    }
-    return refuse(build, `${label} cannot go below ${floor}.`);
-  }
-  const max = maximumFor(build, ref);
-  if (target > max) return refuse(build, `${label} cannot go above ${max}.`);
+// The rules freebie points alone are held to.
 
-  const freebie = target - floor;
-  const unaffordable = costRefusal(build, ref, freebie - dots.freebie);
-  if (unaffordable) return refuse(build, unaffordable);
-  if (ref === GENERATION_REF && build.settings.baseGeneration - target < FIRST_GENERATION) {
-    return refuse(build, PAST_FOURTH);
+function freebieFloorRefusal(build: V20Build, ref: BuildTraitRef, target: number): Refusal | undefined {
+  const floor = freebieFloor(build, ref);
+  if (target >= floor) return undefined;
+  if (target >= freeDots(build, ref) && dotsOf(build, ref).creation > 0) {
+    return because(`Creation dots are changed on the ${stepTitle(creationStepOf(ref))} step.`, creationStepOf(ref));
   }
-  const held = heldCapRefusal(build, ref, target);
-  if (held) return refuse(build, held);
+  if (ref === 'humanity' || ref === 'willpower') {
+    return because(`${traitLabel(ref)} from the Virtues is changed on the Advantages step.`, 'advantages');
+  }
+  return because(`${traitLabel(ref)} cannot go below ${floor}.`);
+}
+
+function setFreebieRating(build: V20Build, ref: BuildTraitRef, target: number): UpdateResult {
+  const dots = dotsOf(build, ref);
+  const freebie = target - freebieFloor(build, ref);
+  const refusal =
+    freebieFloorRefusal(build, ref, target) ??
+    ceilingRefusal(build, ref, target) ??
+    costRefusal(build, ref, freebie - dots.freebie) ??
+    generationRefusal(build, ref, target) ??
+    heldCapRefusal(build, ref, target);
+  if (refusal) return refuse(build, refusal.reason, refusal.step);
 
   // A bought Discipline whose dots are all removed leaves the list.
   const candidate = withDots(build, ref, { ...dots, freebie }, false);
@@ -478,10 +505,8 @@ export function addDiscipline(build: V20Build, name: string, source: DotSource):
     return commit(build, { ...build, disciplines: [...build.disciplines, entry] }, []);
   }
   const ref: BuildTraitRef = `discipline:${canonical}`;
-  const unaffordable = costRefusal(build, ref, 1);
-  if (unaffordable) return refuse(build, unaffordable);
-  const held = heldCapRefusal(build, ref, 1);
-  if (held) return refuse(build, held);
+  const refusal = costRefusal(build, ref, 1) ?? heldCapRefusal(build, ref, 1);
+  if (refusal) return refuse(build, refusal.reason, refusal.step);
   return commit(build, { ...build, disciplines: [...build.disciplines, { ...entry, freebie: 1 }] }, []);
 }
 
