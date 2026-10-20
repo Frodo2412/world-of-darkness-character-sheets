@@ -11,11 +11,9 @@ import {
   settingsDialog,
   shownStep,
 } from './support/builder';
-import { addDiscipline, disciplineNames } from './support/advantages';
+import { addDiscipline, backgroundChips, disciplineNames } from './support/advantages';
 import { clanNotice, clanPanel, clanRadio, expectClanChosen, focusedClan, openClanScreen } from './support/clan';
-import { expectRated, groupBox, groupReadout, rateTrait, ratingsIn, traitRating } from './support/ranked';
-import { seedSteps } from './builder-seeding.steps';
-import { addCreationDiscipline, creation } from '../../src/domain/v20/creation/testing/play';
+import { expectRated, expectRemaining, groupBox, rateTrait, traitRating } from './support/ranked';
 
 const PLURAL: Record<string, string> = { Discipline: 'Disciplines', Background: 'Backgrounds', Virtue: 'Virtues' };
 
@@ -33,23 +31,6 @@ Given('a player on the advantages step', async ({ page }) => {
   await openPlayed(page);
   await openStep(page, 'Advantages');
 });
-
-Given(
-  'a build of clan {string} with a write-in Discipline, Backgrounds and Virtues placed',
-  async ({ page }, clan: string) => {
-    await openPlayed(
-      page,
-      ...seedSteps(undefined, undefined, clan),
-      addCreationDiscipline('Flight'),
-      creation('discipline:Flight', 2),
-      creation('background:Resources', 3),
-      creation('background:Allies', 2),
-      creation('virtue:conscience', 4),
-      creation('virtue:courage', 3),
-    );
-    await openStep(page, 'Advantages');
-  },
-);
 
 // When
 
@@ -100,28 +81,12 @@ When(
 
 // Then
 
-Then('they are told to choose a clan on the Clan step before placing Discipline dots', async ({ page }) => {
-  const group = await groupBox(page, 'Disciplines');
-  await expect(group).toContainText('Choose a clan on the Clan step before placing Discipline dots.');
-  await expect(group.getByRole('link', { name: 'Go to Clan' })).toBeVisible();
-});
-
-Then('no Discipline dots can be placed', async ({ page }) => {
-  await expect(ratingsIn(await groupBox(page, 'Disciplines'))).toHaveCount(0);
-});
-
-Then(/^the Disciplines offered are exactly "([^"]+)", "([^"]+)" and "([^"]+)"$/, async ({ page }, a: string, b: string, c: string) => {
-  expect(await disciplineNames(page)).toEqual([a, b, c]);
-});
-
 Then('the Disciplines are still only {string}', async ({ page }, name: string) => {
   expect(await disciplineNames(page)).toEqual([name]);
 });
 
 Then(/^there (?:are|is) (\d+) (Discipline|Background|Virtue) dots? remaining$/, async ({ page }, count: string, noun: string) => {
-  const label = PLURAL[noun];
-  const dots = Number(count) === 1 ? 'dot' : 'dots';
-  await expect(await groupReadout(page, label)).toHaveText(`${label}: ${count} ${dots} remaining`);
+  await expectRemaining(page, PLURAL[noun], Number(count));
 });
 
 Then(
@@ -154,10 +119,8 @@ Then('no clan-change notice is shown', async ({ page }) => {
 });
 
 Then('the choices are exactly', async ({ page }, table: import('playwright-bdd').DataTable) => {
-  const rows = ratingsIn(await groupBox(page, 'Backgrounds'));
-  const names = await rows.evaluateAll((elements) =>
-    elements.map((row) => document.getElementById(row.getAttribute('data-label-id')!)!.textContent ?? ''),
-  );
+  // The choices are the chips; a row appears only once its chip is chosen.
+  const names = await backgroundChips(page).evaluateAll((chips) => chips.map((chip) => chip.getAttribute('data-bg-chip') ?? ''));
   expect(names).toEqual(table.raw().flat());
   expect(names).toEqual([...BACKGROUNDS]);
 });
@@ -198,7 +161,3 @@ Then(
     await expect(notice.getByRole('link', { name: `Go to ${step}` })).toBeVisible();
   },
 );
-
-Then('Conscience, Self-Control and Courage are each rated 1', async ({ page }) => {
-  for (const name of ['Conscience', 'Self-Control', 'Courage']) await expectRated(await traitRating(page, name), 1);
-});

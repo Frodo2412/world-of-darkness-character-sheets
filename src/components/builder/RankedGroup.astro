@@ -6,6 +6,7 @@
 import type { BuildTraitRef } from '../../domain/v20/creation/build';
 import { rankOptions } from '../../domain/v20/creation/poolViews';
 import type { RankedAllotment } from '../../domain/v20/creation/rules';
+import Pool from './Pool.astro';
 import TraitRow from './TraitRow.astro';
 
 interface Props {
@@ -39,19 +40,7 @@ const options = rankOptions(allotment);
 					))}
 				</select>
 			</div>
-			<div class="ranked-pool" data-pool>
-				<div class="builder-meter ranked-meter" aria-hidden="true" data-pool-meter />
-				<p class="ranked-pool-line">
-					<span class="ranked-remaining" data-pool-remaining />
-					<span class="builder-status" data-pool-spent />
-				</p>
-				<span class="visually-hidden" role="status" data-pool-status />
-			</div>
-			<div class="builder-callout ranked-callout" data-callout hidden>
-				<h4 class="ranked-callout-heading" data-callout-heading />
-				<p data-callout-summary />
-				<p data-callout-traits />
-			</div>
+			<Pool callout />
 			<div class="ranked-rows">
 				{traits.map((trait) => <TraitRow trait={trait} mode={mode} step={step} noticeId={`${id}-notice`} />)}
 			</div>

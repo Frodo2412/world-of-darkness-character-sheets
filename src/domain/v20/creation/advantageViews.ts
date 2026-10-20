@@ -37,6 +37,7 @@ export const VIRTUES_DERIVATION = 'Humanity and Willpower are derived from the V
 export const BACKGROUND_KEYS_HELP = 'Tab moves between chips; Space or Enter chooses or clears a Background.';
 
 const BACKGROUNDS_LINE = 'Five dots across at most six Backgrounds.';
+const NO_BACKGROUND_ROWS = 'Choose a chip to add its row.';
 const VIRTUES_LINE = 'Seven dots over the free dot each Virtue has.';
 const DISCIPLINES_LINE = {
   clan: "Three dots across the clan's Disciplines.",
@@ -117,6 +118,8 @@ export interface BackgroundsView {
   limit: string | null;
   /** A row for each Background chosen, whatever the search says. */
   rows: BackgroundRow[];
+  /** What stands where the rows will be while none is chosen; null once one is. */
+  empty: string | null;
 }
 
 /** The Backgrounds that are chosen: held with a dot, or picked, in list order. */
@@ -168,6 +171,7 @@ export function backgroundsView(build: V20Build, picked: ReadonlySet<BackgroundN
     selected: `Selected · ${chosen.length}/${MAX_HELD}`,
     limit: full ? SIX_IS_THE_MOST : null,
     rows: chosen.map((name) => backgroundRow(build, report, name)),
+    empty: chosen.length === 0 ? NO_BACKGROUND_ROWS : null,
   };
 }
 

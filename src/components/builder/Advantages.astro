@@ -1,30 +1,74 @@
 ---
+// The Advantages screen: three cards. Disciplines holds the clan's rows (or the reason there are none), Backgrounds
+// a search, a chip for each Background and a row for each one chosen, and Virtues three rows with a callout and
+// the line that Humanity and Willpower follow them. The screen module (scripts/builder/screens/advantages.ts)
+// writes everything that changes with the build, from advantageViews.ts; the chips are toggle buttons it shows,
+// hides and marks, and the rows of the chosen Backgrounds are drawn as they are chosen.
 import type { BuildTraitRef } from '../../domain/v20/creation/build';
+import { BACKGROUND_KEYS_HELP, backgroundLabel } from '../../domain/v20/creation/advantageViews';
 import { BACKGROUNDS, BUILD_VIRTUES } from '../../domain/v20/creation/rules';
 import DisciplineRows from './DisciplineRows.astro';
-import FlatGroup from './FlatGroup.astro';
+import Pool from './Pool.astro';
+import SearchField from './SearchField.astro';
 import TraitRow from './TraitRow.astro';
 ---
 
-<p class="field-hint">
-	Place 3 Discipline dots on your clan's Disciplines, 5 Background dots, and 7 Virtue dots over the free dot each Virtue has.
-</p>
-<div class="builder-columns">
-	<FlatGroup key="disciplines" label="Disciplines" mode="creation" step="advantages">
-		<DisciplineRows mode="creation" step="advantages" />
-	</FlatGroup>
-	<FlatGroup key="backgrounds" label="Backgrounds" mode="creation" step="advantages">
-		{
-			BACKGROUNDS.map((name) => (
-				<TraitRow trait={`background:${name}` as BuildTraitRef} mode="creation" step="advantages" noticeId="advantages-backgrounds-notice" />
-			))
-		}
-	</FlatGroup>
-	<FlatGroup key="virtues" label="Virtues" mode="creation" step="advantages">
-		{
-			BUILD_VIRTUES.map((virtue) => (
-				<TraitRow trait={`virtue:${virtue.key}` as BuildTraitRef} mode="creation" step="advantages" noticeId="advantages-virtues-notice" />
-			))
-		}
-	</FlatGroup>
+<div class="advantages-screen" data-advantages-screen>
+	<p class="builder-helper advantages-intro" data-adv-intro></p>
+	<div class="builder-columns">
+		<div class="builder-card advantages-card" role="group" aria-labelledby="advantages-disciplines-label" data-advantage-card="disciplines">
+			<h3 id="advantages-disciplines-label" class="advantages-heading">Disciplines</h3>
+			<p class="builder-helper advantages-line" data-adv-line></p>
+			<Pool />
+			<div class="advantages-gate" data-needs-clan hidden>
+				<p class="builder-reason advantages-line" data-needs-clan-text></p>
+				<button type="button" aria-label="Go to Clan to place Discipline dots" data-step-go="clan">Go to Clan</button>
+			</div>
+			<DisciplineRows mode="creation" step="advantages" />
+			<p id="advantages-disciplines-notice" class="field-notice" role="status" data-notice></p>
+		</div>
+
+		<div class="builder-card advantages-card" role="group" aria-labelledby="advantages-backgrounds-label" data-advantage-card="backgrounds">
+			<h3 id="advantages-backgrounds-label" class="advantages-heading">Backgrounds</h3>
+			<p class="builder-helper advantages-line" data-adv-line></p>
+			<Pool />
+			<SearchField id="bg-search" label="Search Backgrounds" prefix="bg" />
+			<div class="advantages-counts">
+				<h4 class="advantages-subheading" data-bg-heading>All Backgrounds · {BACKGROUNDS.length}</h4>
+				<span class="builder-status" data-bg-selected>Selected · 0/6</span>
+			</div>
+			<p id="bg-keys-help" class="builder-helper advantages-line">{BACKGROUND_KEYS_HELP}</p>
+			<div class="advantages-chips" role="group" aria-label="Background choices" aria-describedby="bg-keys-help" data-bg-chips>
+				{
+					BACKGROUNDS.map((name) => (
+						<button type="button" class="builder-chip advantages-chip" aria-pressed="false" aria-describedby="advantages-backgrounds-notice" data-bg-chip={name}>
+							<span data-bg-chip-name>{backgroundLabel(name)}</span>
+							<span class="advantages-chip-state" data-bg-chip-state aria-hidden="true" hidden>
+								✓ Selected
+							</span>
+						</button>
+					))
+				}
+			</div>
+			<p id="bg-limit" class="builder-reason advantages-line" data-bg-limit hidden></p>
+			<p class="builder-helper advantages-line" data-bg-empty hidden></p>
+			<div class="advantages-rows" data-bg-rows data-notice-id="advantages-backgrounds-notice"></div>
+			<p id="advantages-backgrounds-notice" class="field-notice" role="status" data-notice></p>
+		</div>
+
+		<div class="builder-card advantages-card" role="group" aria-labelledby="advantages-virtues-label" data-advantage-card="virtues">
+			<h3 id="advantages-virtues-label" class="advantages-heading">Virtues</h3>
+			<p class="builder-helper advantages-line" data-adv-line></p>
+			<Pool callout />
+			<div class="advantages-rows">
+				{
+					BUILD_VIRTUES.map((virtue) => (
+						<TraitRow trait={`virtue:${virtue.key}` as BuildTraitRef} mode="creation" step="advantages" noticeId="advantages-virtues-notice" />
+					))
+				}
+			</div>
+			<p class="builder-helper advantages-line" data-adv-derivation></p>
+			<p id="advantages-virtues-notice" class="field-notice" role="status" data-notice></p>
+		</div>
+	</div>
 </div>

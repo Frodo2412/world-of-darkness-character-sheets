@@ -7,6 +7,7 @@
 import { ARCHETYPE_KEYS_HELP, ARCHETYPE_ROLES, OWN_ARCHETYPE_HELP, ownArchetypeLabel } from '../../domain/v20/creation/archetypes';
 import { ARCHETYPES } from '../../domain/v20/creation/rules';
 import { NOT_CHOSEN } from '../../domain/v20/creation/wording';
+import SearchField from './SearchField.astro';
 ---
 
 <div class="nd-layout">
@@ -44,14 +45,7 @@ import { NOT_CHOSEN } from '../../domain/v20/creation/wording';
 
 	<p class="nd-assigned" role="status" data-nd-assigned></p>
 
-	<div class="builder-field">
-		<label for="nd-search">Search archetypes</label>
-		<div class="nd-search-field">
-			<input id="nd-search" type="search" autocomplete="off" data-nd-search />
-			<span class="nd-search-hint" data-nd-search-hint aria-hidden="true" hidden></span>
-		</div>
-		<p class="builder-helper nd-text" role="status" data-nd-results></p>
-	</div>
+	<SearchField id="nd-search" label="Search archetypes" prefix="nd" />
 
 	<h3 class="nd-heading" data-nd-heading>All Archetypes · {ARCHETYPES.length}</h3>
 

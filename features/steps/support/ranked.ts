@@ -6,6 +6,7 @@ import { RANKED_ALLOTMENTS } from '../../../src/domain/v20/creation/rules';
 import { ABILITY_GROUPS, ATTRIBUTE_GROUPS } from '../../../src/domain/v20/traits';
 import { memoryFor, type ScenarioMemory } from '../fixtures';
 import { openStep, shownStep } from './builder';
+import { escaped } from './text';
 
 /** The step a trait's creation dots are placed on, by its label. */
 export function homeStepOf(label: string): string {
@@ -41,13 +42,18 @@ export async function openFreebieSections(page: Page): Promise<void> {
 export const ratingRow = (scope: Locator, label: string): Locator =>
   scope.locator('.rating-stepper').filter({ has: scope.page().getByRole('button', { name: `Increase ${label}`, exact: true }) });
 
-/** A trait's rating row on the shown step, opening the trait's own step if it is not there. */
+/**
+ * A trait's rating row on the shown step, opening the trait's own step if it is not there. A Background has a
+ * row only once it is chosen, so a player who wants one presses its chip first.
+ */
 export async function traitRating(page: Page, name: string): Promise<Locator> {
   const label = traitName(name);
   await openFreebieSections(page);
   const here = ratingRow(shownStep(page), label);
   if ((await here.count()) > 0) return here;
   await openStep(page, homeStepOf(label));
+  const chip = shownStep(page).getByRole('button', { name: new RegExp(`^${escaped(label)}(?: \\(Sabbat\\))?$`), pressed: false });
+  if ((await here.count()) === 0 && (await chip.count()) > 0) await chip.click();
   return ratingRow(shownStep(page), label);
 }
 

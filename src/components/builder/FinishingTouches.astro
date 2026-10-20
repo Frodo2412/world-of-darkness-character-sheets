@@ -56,12 +56,12 @@ import TraitRow from './TraitRow.astro';
 		</div>
 	</FreebieSection>
 	<FreebieSection section="disciplines" label="Disciplines" cost={FREEBIE_COSTS.discipline}>
-		<FlatGroup key="disciplines" label="Disciplines" mode="freebie" step="finishing">
+		<FlatGroup key="disciplines" label="Disciplines" step="finishing">
 			<DisciplineRows mode="freebie" step="finishing" />
 		</FlatGroup>
 	</FreebieSection>
 	<FreebieSection section="backgrounds" label="Backgrounds" cost={FREEBIE_COSTS.background}>
-		<FlatGroup key="backgrounds" label="Backgrounds" mode="freebie" step="finishing">
+		<FlatGroup key="backgrounds" label="Backgrounds" step="finishing">
 			{
 				BACKGROUNDS.map((name) => (
 					<TraitRow trait={`background:${name}` as BuildTraitRef} mode="freebie" step="finishing" noticeId="finishing-backgrounds-notice" />
@@ -70,7 +70,7 @@ import TraitRow from './TraitRow.astro';
 		</FlatGroup>
 	</FreebieSection>
 	<FreebieSection section="virtues" label="Virtues" cost={FREEBIE_COSTS.virtue}>
-		<FlatGroup key="virtues" label="Virtues" mode="freebie" step="finishing">
+		<FlatGroup key="virtues" label="Virtues" step="finishing">
 			{
 				BUILD_VIRTUES.map((virtue) => (
 					<TraitRow trait={`virtue:${virtue.key}` as BuildTraitRef} mode="freebie" step="finishing" noticeId="finishing-virtues-notice" />

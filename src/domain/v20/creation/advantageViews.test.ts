@@ -134,6 +134,12 @@ describe('the Backgrounds chips', () => {
     expect(view.rows.map((row) => [row.name, row.rating])).toEqual([['Contacts', 0], ['Mentor', 0], ['Resources', 1]]);
   });
 
+  test('says where the rows go while none is chosen', () => {
+    expect(backgrounds(fresh()).empty).toBe('Choose a chip to add its row.');
+    expect(backgrounds(fresh(), picks('Fame')).empty).toBeNull();
+    expect(backgrounds(play(fresh(), creation('background:Fame', 1))).empty).toBeNull();
+  });
+
   test('a row at 0 dots can be removed and a row holding dots cannot', () => {
     const view = backgrounds(play(fresh(), creation('background:Resources', 1)), picks('Contacts'));
     expect(rowOf(view, 'Contacts').removable).toBe(true);
@@ -431,6 +437,7 @@ describe('the screen', () => {
           view.backgrounds.results,
           view.backgrounds.selected,
           view.backgrounds.limit ?? '',
+          view.backgrounds.empty ?? '',
           view.backgrounds.pool.remainingText,
           view.backgrounds.pool.spentText,
           view.backgrounds.pool.announcement,
@@ -459,6 +466,7 @@ describe('the screen', () => {
       disciplinesView(play(fresh(), clan('Brujah'))).line,
       disciplinesView(play(fresh(), clan('Caitiff'))).line,
       backgrounds(fresh()).line,
+      backgrounds(fresh()).empty!,
       virtuesView(fresh()).line,
       virtuesView(fresh()).derivation,
       BACKGROUND_KEYS_HELP,

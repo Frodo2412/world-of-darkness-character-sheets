@@ -1,7 +1,8 @@
 /* The Attributes and Abilities screens: an intro card, a card for each ranked group (its priority select, pool
-   meter and counts, callout and rows) and the "What the choices say" card. The shared card, meter, callout,
-   helper and status pieces are in builder.css. The group's meter only echoes the words beside it; an
-   overspent group says so in words and with a mark, never by colour alone. */
+   meter and counts, callout and rows) and the "What the choices say" card. The Advantages cards draw the same
+   pool and callout. The shared card, meter, callout, helper and status pieces are in builder.css. The group's
+   meter only echoes the words beside it; an overspent group says so in words and with a mark, never by colour
+   alone. */
 
 .ranked-screen {
 	display: grid;

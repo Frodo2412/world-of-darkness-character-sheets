@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { statusAfter } from './ranked';
+import { statusAfter } from './pool';
 
 describe('statusAfter', () => {
   const press = { group: 'physical', before: 'Physical: 6 remaining' };

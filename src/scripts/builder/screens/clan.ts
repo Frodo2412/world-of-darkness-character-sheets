@@ -7,8 +7,7 @@ import type { V20Build } from '../../../domain/v20/creation/build';
 import { ANY_DISCIPLINE, clanDetail, clanListView, keepLabel } from '../../../domain/v20/creation/clanCards';
 import { clanChangeEffects, setClan } from '../../../domain/v20/creation/updates';
 import { movedTo } from '../parts/listKeys';
-import { isMacPlatform, wireSearchHint, wireSearchShortcut } from '../parts/search';
-import { createSettledStatus } from '../parts/settledStatus';
+import { findSearch, wireSearchField } from '../parts/search';
 import type { Wiring } from '../wiring';
 import type { ScreenModule } from './index';
 
@@ -220,18 +219,12 @@ function wireArrowKeys(root: HTMLElement, { current }: Wiring): void {
 }
 
 function wireSearch(root: HTMLElement, { current }: Wiring): void {
-  const search = root.querySelector<HTMLInputElement>('[data-clan-search]')!;
-  const mac = isMacPlatform();
-  wireSearchHint(search, root.querySelector<HTMLElement>('[data-clan-search-hint]')!, mac);
-  state.sayResults = createSettledStatus(root.querySelector<HTMLElement>('[data-clan-results]')!);
-  state.query = search.value;
-  search.addEventListener('input', () => {
-    state.query = search.value;
+  const parts = findSearch(root, 'clan');
+  state.query = parts.search.value;
+  state.sayResults = wireSearchField(parts, (query) => {
+    state.query = query;
     draw(current(), root);
   });
-  // The shortcut goes to this field only while the Clan screen is the one shown: neither it nor the builder
-  // around it is hidden.
-  wireSearchShortcut(document, () => (search.closest('[hidden]') ? undefined : search), mac);
 }
 
 export default {

@@ -5,48 +5,15 @@
 //    Advantages, and anyone buying with freebie points, can add one from the catalogue or by name.
 
 import type { BuildTraitRef, V20Build } from '../../../domain/v20/creation/build';
-import { rankedView, type RankedGroupView, type RankedKey, type Segment } from '../../../domain/v20/creation/poolViews';
+import { rankedView, type RankedGroupView, type RankedKey } from '../../../domain/v20/creation/poolViews';
 import { report, type BuildReport } from '../../../domain/v20/creation/progress';
 import { addDiscipline, removeDiscipline, type DotSource } from '../../../domain/v20/creation/updates';
 import { traitLabelId } from '../labelId';
 import { showReadout } from '../messages';
 import type { ScreenModule } from '../screens';
 import type { Wiring } from '../wiring';
+import { drawCallout, drawPool, part, statusAfter, type Press } from './pool';
 import { createStepperHost, renderStepper } from './ratingStepper';
-
-/** A press on a row's plus or minus, remembered from the click until the draw it causes. */
-export interface Press {
-  group: string;
-  /** What the group's status would have said just before the press. */
-  before: string;
-}
-
-/**
- * What a group's status region holds after a draw. Only the group a press changed says its pool: the same
- * words, once. A press the build refused changes nothing, so what the region held stays. Any other change (a
- * re-rank, a change elsewhere) leaves the region empty rather than stale, and an emptied region is not read out.
- */
-export function statusAfter(press: Press | null, group: string, announcement: string, shown: string): string {
-  if (press?.group !== group) return '';
-  return announcement === press.before ? shown : announcement;
-}
-
-const part = <T extends HTMLElement>(scope: ParentNode, name: string): T => scope.querySelector<T>(`[data-${name}]`)!;
-
-/** Keeps the meter's segments in step with the pool, adding or dropping only the ones that differ. */
-function drawMeter(meter: HTMLElement, segments: Segment[]): void {
-  while (meter.childElementCount < segments.length) {
-    const segment = document.createElement('span');
-    segment.className = 'builder-meter-segment';
-    meter.append(segment);
-  }
-  while (meter.childElementCount > segments.length) meter.lastElementChild!.remove();
-  segments.forEach((state, index) => {
-    const segment = meter.children[index];
-    if (segment.getAttribute('data-segment') !== state) segment.setAttribute('data-segment', state);
-    segment.toggleAttribute('data-filled', state === 'placed');
-  });
-}
 
 /** Keeps the summary's lines as given, rewriting the list only when its words change. */
 function drawLines(list: HTMLElement, lines: string[]): void {
@@ -58,17 +25,6 @@ function drawLines(list: HTMLElement, lines: string[]): void {
       return item;
     }),
   );
-}
-
-function drawCallout(group: HTMLElement, callout: RankedGroupView['callout']): void {
-  const box = part(group, 'callout');
-  box.hidden = callout === null;
-  if (callout === null) return;
-  showReadout(part(box, 'callout-heading'), callout.heading);
-  showReadout(part(box, 'callout-summary'), callout.summary);
-  const traits = part(box, 'callout-traits');
-  showReadout(traits, callout.traitsText);
-  traits.hidden = callout.traitsText === '';
 }
 
 /**
@@ -86,11 +42,7 @@ export function createRankedScreen(key: RankedKey): Pick<ScreenModule, 'wire' | 
     tag.hidden = view.tag === null;
 
     const { pool } = view;
-    part(group, 'pool').dataset.state = pool.state;
-    drawMeter(part(group, 'pool-meter'), pool.segments);
-    showReadout(part(group, 'pool-remaining'), pool.remainingText);
-    showReadout(part(group, 'pool-spent'), pool.spentText);
-    showReadout(part(group, 'pool-status'), statusAfter(press, view.key, pool.announcement, part(group, 'pool-status').textContent ?? ''));
+    drawPool(group, pool, statusAfter(press, view.key, pool.announcement, part(group, 'pool-status').textContent ?? ''));
     said.set(view.key, pool.announcement);
 
     drawCallout(group, view.callout);
@@ -161,7 +113,7 @@ function disciplineRow(container: HTMLElement, ref: BuildTraitRef, label: string
   const rating = createStepperHost({ trait: ref, mode: mode as DotSource, labelId, noticeId: noticeId! });
 
   const actions = document.createElement('span');
-  actions.className = 'discipline-row-actions';
+  actions.className = 'advantages-row-actions';
   actions.append(rating);
   if (removable) {
     const remove = document.createElement('button');
@@ -197,7 +149,7 @@ function refocusNear(container: HTMLElement, index: number): void {
  * row that stays is never re-inserted, so a focused rating keeps its focus. A moved row that had focus gets it
  * back; a removed one (a Remove press, or a bought Discipline lowered to 0) hands it on with `refocusNear`.
  */
-function syncRows(container: HTMLElement, rows: HTMLElement[]): void {
+export function syncRows(container: HTMLElement, rows: HTMLElement[]): void {
   const focused = document.activeElement;
   const keep = new Set<Element>(rows);
   const before = [...container.children];

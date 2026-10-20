@@ -31,6 +31,7 @@ import {
 } from './support/builder';
 import { chooseClan, clanNotice, clanPanel, clanRadio, expectClanChosen } from './support/clan';
 import { conceptField } from './support/concept';
+import { placeBackgroundDots } from './support/advantages';
 import { groupNotice, placeDots, rankGroup, rankSelect, rateTrait, ratingOf, ratingRow, requestRating, stepButton, traitRating } from './support/ranked';
 import { buildEntries, openRoster } from './support/pages';
 import { identityName, identitySummary } from './support/sheet';
@@ -99,7 +100,7 @@ When(
   'they place 3 Discipline dots, 5 Background dots \\(none on Generation) and 7 Virtue dots',
   async ({ page }) => {
     await placeDots(page, 'Disciplines', 3, 3);
-    await placeDots(page, 'Backgrounds', 5, 5);
+    await placeBackgroundDots(page, 5);
     await placeDots(page, 'Virtues', 7, 5);
   },
 );
@@ -111,7 +112,7 @@ When('they spend all 20 freebie points \\(none on Generation)', async ({ page })
 
 When('they place 7 Virtue dots and 5 Background dots before anything else', async ({ page }) => {
   await placeDots(page, 'Virtues', 7, 5);
-  await placeDots(page, 'Backgrounds', 5, 5);
+  await placeBackgroundDots(page, 5);
 });
 
 When('they choose the clan {string} and place 3 Discipline dots', async ({ page }, clan: string) => {

@@ -1,5 +1,7 @@
-// The search shortcut every searchable screen shares: Ctrl/⌘+K focuses the current screen's search field,
-// and the field's hint names the key for the platform.
+// The search every searchable screen shares: Ctrl/⌘+K focuses the current screen's search field, the field's
+// hint names the key for the platform, and the result count is said once the player pauses.
+
+import { createSettledStatus } from './settledStatus';
 
 export const isMacPlatform = (platform: string = navigator.platform): boolean => /^mac/i.test(platform);
 
@@ -51,4 +53,36 @@ export function wireSearchShortcut(
     event.preventDefault();
     field.focus();
   });
+}
+
+/** The three parts of a screen's search, as `SearchField.astro` draws them. */
+export interface SearchParts {
+  search: HTMLInputElement;
+  hint: HTMLElement;
+  results: HTMLElement;
+}
+
+/** Finds a screen's search parts by the prefix its `SearchField` was given: `data-<prefix>-search`, `-search-hint`, `-results`. */
+export function findSearch(root: ParentNode, prefix: string): SearchParts {
+  return {
+    search: root.querySelector<HTMLInputElement>(`[data-${prefix}-search]`)!,
+    hint: root.querySelector<HTMLElement>(`[data-${prefix}-search-hint]`)!,
+    results: root.querySelector<HTMLElement>(`[data-${prefix}-results]`)!,
+  };
+}
+
+/**
+ * Wires one screen's search: the hint and key names on the field, `onInput` with the query at every change, and
+ * the shortcut, which goes to this field only while its screen is the one shown (neither it nor the builder
+ * around it is hidden). Returns what says a result count, once the player has paused.
+ */
+export function wireSearchField(
+  { search, hint, results }: SearchParts,
+  onInput: (query: string) => void,
+  mac: boolean = isMacPlatform(),
+): (text: string) => void {
+  wireSearchHint(search, hint, mac);
+  search.addEventListener('input', () => onInput(search.value));
+  wireSearchShortcut(document, () => (search.closest('[hidden]') ? undefined : search), mac);
+  return createSettledStatus(results);
 }

@@ -2,6 +2,7 @@
 // The Discipline rows of one step, drawn by the page from report(build):
 // the clan's three, then any others. A Caitiff on the Advantages step, and
 // anyone buying with freebie points, can add one from the catalogue or by name.
+// The Advantages card says why there are no rows before a clan is chosen.
 import { DISCIPLINES } from '../../domain/v20/creation/rules';
 
 interface Props {
@@ -14,13 +15,6 @@ const noticeId = `${step}-disciplines-notice`;
 const addId = `${step}-discipline-add`;
 ---
 
-{
-	mode === 'creation' && (
-		<p class="field-hint" data-needs-clan hidden>
-			Choose a clan on the Clan step before placing Discipline dots. <a href="#clan" data-step-go="clan">Go to Clan</a>
-		</p>
-	)
-}
 <div data-discipline-rows data-mode={mode} data-step-id={step} data-notice-id={noticeId}></div>
 <div class="discipline-add" data-discipline-add data-mode={mode} hidden={mode === 'creation'}>
 	<label for={addId}>{mode === 'creation' ? 'Discipline to add' : 'Discipline to buy'}</label>

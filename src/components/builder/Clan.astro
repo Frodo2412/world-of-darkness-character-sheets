@@ -3,20 +3,14 @@
 // it, the question a switch that would remove dots asks. The cards are a radiogroup the screen module
 // shows, hides and marks; the text that changes with the build is written there from clanCards.ts.
 import { CAITIFF_NOTE, CLAN_CARDS, CLAN_LIST_HELP } from '../../domain/v20/creation/clanCards';
+import SearchField from './SearchField.astro';
 
 const slug = (name: string): string => name.toLowerCase().replaceAll(' ', '-');
 ---
 
 <div class="clan-layout">
 	<div class="clan-column">
-		<div class="builder-field">
-			<label for="clan-search">Search clans</label>
-			<div class="clan-search-field">
-				<input id="clan-search" type="search" autocomplete="off" data-clan-search />
-				<span class="clan-search-hint" data-clan-search-hint aria-hidden="true" hidden></span>
-			</div>
-			<p class="builder-helper clan-results" role="status" data-clan-results></p>
-		</div>
+		<SearchField id="clan-search" label="Search clans" prefix="clan" />
 
 		<div class="clan-counts">
 			<h3 class="clan-heading" data-clan-heading>All Clans · {CLAN_CARDS.length}</h3>

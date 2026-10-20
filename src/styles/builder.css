@@ -494,22 +494,6 @@
 	gap: var(--space-1) var(--space-2);
 }
 
-.allotment-readout {
-	font-family: var(--font-body);
-	font-size: var(--text-small);
-	letter-spacing: normal;
-	text-transform: none;
-	color: var(--color-text);
-}
-
-.allotment-readout[data-overspent] {
-	color: var(--color-danger);
-}
-
-.allotment-readout[data-overspent]::before {
-	content: '⚠ ';
-}
-
 .builder .rating-row {
 	display: flex;
 	flex-wrap: wrap;
@@ -655,6 +639,46 @@ html {
 
 .builder-chip[aria-pressed='true'] {
 	background: var(--color-selected);
+}
+
+/* A search field and, at its right edge, the keys that go to it; a touch screen has no keys to press. */
+.builder-search-field {
+	position: relative;
+}
+
+.builder-search-field input {
+	font: inherit;
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+	min-block-size: var(--control-size);
+	padding-block: var(--space-1);
+	padding-inline: var(--space-2) 4.5rem;
+	inline-size: 100%;
+	box-sizing: border-box;
+}
+
+.builder-search-hint {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-end: var(--space-2);
+	display: flex;
+	align-items: center;
+	font-size: var(--text-small);
+	color: var(--color-text-helper);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+@media (pointer: coarse) {
+	.builder-search-hint {
+		display: none;
+	}
+}
+
+.builder-search-results {
+	margin: 0;
 }
 
 /* Small text that helps, explains why something is unavailable, or names a state. */

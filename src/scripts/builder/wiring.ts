@@ -70,11 +70,6 @@ export function renderControls(root: HTMLElement, report: BuildReport): void {
     const rank = report.ranks[select.dataset.rank!];
     if (select.value !== rank) select.value = rank;
   }
-  for (const status of root.querySelectorAll<HTMLElement>('[data-allotment-status]')) {
-    const allotment = report.allotments[status.dataset.allotmentStatus!];
-    status.toggleAttribute('data-overspent', allotment.overspent);
-    showReadout(status.querySelector<HTMLElement>('[data-readout-text]')!, allotment.status);
-  }
   for (const stepper of root.querySelectorAll<HTMLElement>('[data-build-trait]')) {
     const trait = report.traits[stepper.dataset.buildTrait!];
     if (trait) renderStepper(stepper, trait, report.settings, report.concept.clan);
