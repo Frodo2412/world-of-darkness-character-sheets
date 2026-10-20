@@ -16,7 +16,8 @@ import {
 import type { V20Build } from './build';
 import { rating } from './ratings';
 import { BACKGROUNDS, CLANS, type BackgroundName } from './rules';
-import { DISCIPLINES_NEED_CLAN, gateReason } from './screens';
+import { gateReason } from './screens';
+import { DISCIPLINES_NEED_CLAN } from './wording';
 import { addCreationDiscipline, buyDiscipline, clan, creation, extra, freebie, fresh, generation, play } from './testing/play';
 import { setRating } from './updates';
 

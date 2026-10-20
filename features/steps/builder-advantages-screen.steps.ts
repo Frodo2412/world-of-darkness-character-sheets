@@ -5,7 +5,7 @@
 import { expect, type Page } from '@playwright/test';
 import { BACKGROUND_KEYS_HELP } from '../../src/domain/v20/creation/advantageViews';
 import { BACKGROUNDS, type BackgroundName } from '../../src/domain/v20/creation/rules';
-import { DISCIPLINES_NEED_CLAN } from '../../src/domain/v20/creation/screens';
+import { DISCIPLINES_NEED_CLAN } from '../../src/domain/v20/creation/wording';
 import { clan, completeBuild, creation, freebie, generation, play } from '../../src/domain/v20/creation/testing/play';
 import { setRating } from '../../src/domain/v20/creation/updates';
 import { Given, Then, When, memoryFor } from './fixtures';

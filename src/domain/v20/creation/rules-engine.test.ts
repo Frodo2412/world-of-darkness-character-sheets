@@ -193,7 +193,7 @@ describe('Disciplines', () => {
   test('wait for a clan', () => {
     const build = fresh();
     expect(refused(setRating(build, 'discipline:Celerity', 1, 'creation'), build)).toMatchObject({
-      reason: 'Choose a clan on the Clan step before placing Discipline dots.',
+      reason: 'Choose a clan to place Discipline dots',
       step: 'clan',
     });
   });
@@ -425,7 +425,7 @@ describe('freebie points', () => {
   test('cannot remove creation or free dots', () => {
     const build = play(fresh(), rank('physical', 'primary'), creation('attribute:strength', 3));
     expect(refused(setRating(build, 'attribute:strength', 2, 'freebie'), build)).toMatchObject({
-      reason: 'Creation dots are changed on the Attributes step.',
+      reason: 'Creation dots are changed on the Attributes screen.',
       step: 'attributes',
     });
     expect(refused(setRating(build, 'attribute:stamina', 0, 'freebie'), build).reason).toBe('Stamina cannot go below 1.');

@@ -13,7 +13,7 @@ import type {
   V20Build,
 } from './build';
 import { freebieCost, freebiesRemaining } from './freebies';
-import { list, plural, screenTitle, titleCase } from './wording';
+import { DISCIPLINES_NEED_CLAN, list, plural, screenTitle, titleCase } from './wording';
 import {
   GENERATION_REF,
   PAST_BEST_GENERATION,
@@ -437,7 +437,7 @@ function derivedRefusal(build: V20Build, ref: BuildTraitRef): Refusal | undefine
 /** Creation dots go on a chosen clan's Disciplines; a Caitiff may hold any it knows. */
 function disciplineRefusal(build: V20Build, ref: BuildTraitRef): Refusal | undefined {
   if (kindOf(ref) !== 'discipline') return undefined;
-  if (build.clan === '') return because('Choose a clan on the Clan step before placing Discipline dots.', 'clan');
+  if (build.clan === '') return because(DISCIPLINES_NEED_CLAN, 'clan');
   if (isCaitiff(build) ? knownDiscipline(build, ref) : isClanDiscipline(build, keyOf(ref))) return undefined;
   return because(`${traitLabel(ref)} is not a ${build.clan} Discipline. ${MORE_WITH_FREEBIES}`, 'finishing');
 }
@@ -505,10 +505,10 @@ function freebieFloorRefusal(build: V20Build, ref: BuildTraitRef, target: number
   const floor = freebieFloor(build, ref);
   if (target >= floor) return undefined;
   if (target >= freeDots(build, ref) && dotsOf(build, ref).creation > 0) {
-    return because(`Creation dots are changed on the ${screenTitle(creationStepOf(ref))} step.`, creationStepOf(ref));
+    return because(`Creation dots are changed on the ${screenTitle(creationStepOf(ref))} screen.`, creationStepOf(ref));
   }
   if (ref === 'humanity' || ref === 'willpower') {
-    return because(`${traitLabel(ref)} from the Virtues is changed on the Advantages step.`, 'advantages');
+    return because(`${traitLabel(ref)} from the Virtues is changed on the ${screenTitle('advantages')} screen.`, 'advantages');
   }
   return because(`${traitLabel(ref)} cannot go below ${floor}.`);
 }
@@ -555,7 +555,7 @@ export function addDiscipline(build: V20Build, name: string, source: DotSource):
   };
   if (source === 'creation') {
     if (build.clan === '') {
-      return refuse(build, 'Choose a clan on the Clan step before placing Discipline dots.', 'clan');
+      return refuse(build, DISCIPLINES_NEED_CLAN, 'clan');
     }
     if (!isCaitiff(build)) {
       return refuse(build, `Only Caitiff choose their own Disciplines. ${MORE_WITH_FREEBIES}`, 'finishing');

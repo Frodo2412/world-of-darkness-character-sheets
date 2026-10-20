@@ -30,6 +30,9 @@ export function searchListWords(noun: string, pluralNoun: string, count: number,
 /** What a value the player has not chosen yet reads. */
 export const NOT_CHOSEN = 'Not chosen';
 
+/** Why no Discipline dots can be placed before a clan is chosen: Continue's reason, the Disciplines card's and a refusal's. */
+export const DISCIPLINES_NEED_CLAN = 'Choose a clan to place Discipline dots';
+
 /** What a pool with no dots placed reads. */
 export const NOT_ALLOCATED = 'Not allocated';
 

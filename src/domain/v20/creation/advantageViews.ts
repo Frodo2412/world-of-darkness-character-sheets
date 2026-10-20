@@ -23,8 +23,8 @@ import {
   VIRTUE_ALLOTMENT,
   type BackgroundName,
 } from './rules';
-import { DISCIPLINES_NEED_CLAN, type GateReason } from './screens';
-import { list, plural, searchListWords } from './wording';
+import type { GateReason } from './screens';
+import { DISCIPLINES_NEED_CLAN, list, plural, searchListWords } from './wording';
 
 /** Said beside the Background chips once six are chosen: the other chips cannot be pressed. */
 export const SIX_IS_THE_MOST = 'Six is the most';

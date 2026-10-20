@@ -197,9 +197,9 @@ Then(/^they are told a (\w+) dot costs (\d+) freebie points and only (\d+) remai
 });
 
 Then(
-  /^they are told (creation dots are changed on the \w+ step|freebie dots are removed on Finishing touches), with a link to it$/,
+  /^they are told (creation dots are changed on the \w+ screen|freebie dots are removed on Finishing touches), with a link to it$/,
   async ({ page }, what: string) => {
-    const step = /on the (\w+) step/.exec(what)?.[1];
+    const step = /on the (\w+) screen/.exec(what)?.[1];
     const sentence = `${what[0].toUpperCase()}${what.slice(1)}.`;
     const notice = noticeWith(page, sentence);
     await expect(notice).toBeVisible();

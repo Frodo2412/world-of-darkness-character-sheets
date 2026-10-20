@@ -67,7 +67,7 @@ Feature: Finishing touches
   Scenario: Freebie points cannot remove creation dots
     Given a build where Strength is rated 3 from creation dots and has no freebie dots
     When they try to lower Strength to 2 on the finishing touches step
-    Then they are told creation dots are changed on the Attributes step, with a link to it
+    Then they are told creation dots are changed on the Attributes screen, with a link to it
     And Strength is rated 3
 
   Scenario: Freebie points cannot remove a free dot

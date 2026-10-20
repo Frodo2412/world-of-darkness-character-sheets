@@ -6,7 +6,7 @@ import { isPlaced, isUnranked, poolsOn, poolStateOf, type AllotmentState } from 
 import type { V20Build } from './build';
 import { isFinishable, outstanding } from './progress';
 import { PHASES, SCREENS, type ScreenId } from './rules';
-import { itemsLeftText, list, plural } from './wording';
+import { DISCIPLINES_NEED_CLAN, itemsLeftText, list, plural } from './wording';
 
 /** The word the sidebar shows beside a screen. */
 export type ScreenStatus = 'Done' | 'To do' | 'Optional';
@@ -76,9 +76,6 @@ function poolReason(pools: AllotmentState[]): GateReason | undefined {
   const dots = list(left.map((state) => plural(state.remaining, `${dotNoun(state)} dot`)));
   return { text: `${dots} ${one ? 'remains' : 'remain'} · Allocate ${one ? 'it' : 'them'} to continue` };
 }
-
-/** Why no Discipline dots can be placed before a clan is chosen: Continue's reason and the Disciplines card's. */
-export const DISCIPLINES_NEED_CLAN = 'Choose a clan to place Discipline dots';
 
 /** The reason Continue is disabled on `screen`, or undefined when the screen does not gate. */
 export function gateReason(build: V20Build, screen: ScreenId): GateReason | undefined {
