@@ -46,6 +46,7 @@ describe('creation module layers', () => {
   const ALLOWED: Record<string, string[]> = {
     rules: [],
     wording: [],
+    catalogue: [],
     build: ['rules'],
     ratings: ['rules', 'build'],
     allotments: ['rules', 'build', 'ratings'],
