@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TraitReport } from '../../../domain/v20/creation/progress';
-import { stepperView } from './ratingStepper';
+import { stepperView, type RowOverride } from './ratingStepper';
 
 const trait = (overrides: Partial<TraitReport> = {}): TraitReport => ({
   ref: 'attribute:strength',
@@ -64,5 +64,41 @@ describe('stepperView', () => {
 
   it('gives a lowerable rating no reason', () => {
     expect(stepperView(trait({ rating: 3 }), settings, 'Brujah').lowerReason).toBeNull();
+  });
+});
+
+describe('stepperView with a screen\'s row', () => {
+  const row = (overrides: Partial<RowOverride> = {}): RowOverride => ({
+    max: 5,
+    canRaise: true,
+    limit: null,
+    canLower: true,
+    lowerLimit: null,
+    ...overrides,
+  });
+
+  it('shows the row as given, not what the trait alone would allow', () => {
+    // The trait could rise (3 of 5), but the group has no dots left: the screen said so.
+    const view = stepperView(trait(), settings, 'Brujah', row({ canRaise: false, limit: 'No dots left in Physical' }));
+    expect(view).toEqual({ dots: 5, canLower: true, canRaise: false, limit: 'No dots left in Physical', lowerReason: null });
+  });
+
+  it('gives the minus the row\'s own reason', () => {
+    const view = stepperView(trait({ rating: 1 }), settings, 'Brujah', row({ canLower: false, lowerLimit: 'Minimum 1, free dot' }));
+    expect(view).toMatchObject({ canLower: false, lowerReason: 'Minimum 1, free dot' });
+  });
+
+  it('draws as many dots as the row\'s top, not the trait\'s', () => {
+    expect(stepperView(trait({ rating: 2, max: 5 }), settings, 'Brujah', row({ max: 3 })).dots).toBe(3);
+  });
+
+  it('still shows the dots of a rating above the row\'s top, as freebie dots make', () => {
+    expect(stepperView(trait({ rating: 4, max: 5 }), settings, 'Brujah', row({ max: 3, canRaise: false, limit: 'Maximum 3' })).dots).toBe(4);
+  });
+
+  it('keeps a locked trait drawn to the generation\'s scale', () => {
+    const locked = trait({ rating: 0, floor: 0, max: 0, locked: true });
+    const view = stepperView(locked, settings, 'Nosferatu', row({ max: 0, canRaise: false, limit: 'Fixed for Nosferatu', canLower: false, lowerLimit: 'Fixed for Nosferatu' }));
+    expect(view).toEqual({ dots: 5, canLower: false, canRaise: false, limit: 'Fixed for Nosferatu', lowerReason: 'Fixed for Nosferatu' });
   });
 });

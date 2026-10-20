@@ -7,6 +7,7 @@
 // value text once through the stepper's polite slot.
 
 import type { BuildTraitRef } from '../../../domain/v20/creation/build';
+import type { RowView } from '../../../domain/v20/creation/poolViews';
 import type { TraitReport } from '../../../domain/v20/creation/progress';
 import type { DotSource } from '../../../domain/v20/creation/updates';
 
@@ -29,7 +30,23 @@ function floorReason(trait: TraitReport): string {
   return `Minimum ${trait.floor}, free ${trait.floor === 1 ? 'dot' : 'dots'}`;
 }
 
-export function stepperView(trait: TraitReport, settings: { maxTrait: number }, clan: string): StepperView {
+/**
+ * What a screen that judges its own rows (the ranked groups, whose plus also depends on the group's pool)
+ * says about one: the stepper then shows it as given instead of deciding from the trait alone.
+ */
+export type RowOverride = Pick<RowView, 'max' | 'canRaise' | 'limit' | 'canLower' | 'lowerLimit'>;
+
+export function stepperView(trait: TraitReport, settings: { maxTrait: number }, clan: string, row?: RowOverride): StepperView {
+  if (row) {
+    return {
+      // A locked trait keeps the generation's scale; a rating above the row's top (freebie dots) still shows its dots.
+      dots: trait.locked ? settings.maxTrait : Math.max(row.max, trait.rating),
+      canLower: row.canLower,
+      canRaise: row.canRaise,
+      limit: row.limit,
+      lowerReason: row.lowerLimit,
+    };
+  }
   const canLower = !trait.locked && trait.rating > trait.floor;
   const fixed = `Fixed for ${clan}`;
   return {
@@ -137,9 +154,15 @@ function setText(element: Element, text: string): void {
   if (element.textContent !== text) element.textContent = text;
 }
 
-export function renderStepper(host: HTMLElement, trait: TraitReport, settings: { maxTrait: number }, clan: string): void {
+/**
+ * Draws the stepper from `trait`, or from `row` where a screen decides for its rows. A row drawn from a screen's
+ * view (`data-row-view`) stays the screen's: a later draw without a `row`, such as the page-wide one, leaves it be.
+ */
+export function renderStepper(host: HTMLElement, trait: TraitReport, settings: { maxTrait: number }, clan: string, row?: RowOverride): void {
+  if (row === undefined && host.hasAttribute('data-row-view')) return;
+  if (row !== undefined) setAttr(host, 'data-row-view', '');
   if (host.childElementCount === 0) fill(host, trait.label);
-  const view = stepperView(trait, settings, clan);
+  const view = stepperView(trait, settings, clan, row);
   const dots = host.querySelector('dot-rating')!;
   setAttr(dots, 'max', String(view.dots));
   setAttr(dots, 'freebie', String(trait.freebieDots));
@@ -148,7 +171,7 @@ export function renderStepper(host: HTMLElement, trait: TraitReport, settings: {
   // What the row holds, for styling and for the end-to-end steps; the buttons and text are what a player meets.
   host.dataset.value = String(trait.rating);
   host.dataset.min = String(trait.floor);
-  host.dataset.max = String(trait.max);
+  host.dataset.max = String(row?.max ?? trait.max);
   setText(host.querySelector('[data-rating-number]')!, String(trait.rating));
   setText(host.querySelector('[data-rating-text]')!, trait.valueText);
   const [lower, raise] = host.querySelectorAll('button');

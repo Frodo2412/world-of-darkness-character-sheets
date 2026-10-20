@@ -7,7 +7,8 @@ import { chooseClan, clanNotice, clanPanel, clanRadio, expectClanChosen } from '
 import {
   expectRated,
   groupNotice,
-  groupReadout,
+  groupPoolRemaining,
+  groupPoolSpent,
   placeDots,
   rankGroup,
   rankSelect,
@@ -128,7 +129,7 @@ Then('no Attribute group has a rank yet', async ({ page }) => {
 
 Then('each group says to rank it before placing dots', async ({ page }) => {
   for (const group of ATTRIBUTE_GROUPS) {
-    await expect(await groupReadout(page, group.label)).toHaveText(`${group.label}: Rank this group to place dots`);
+    await expect(await groupPoolSpent(page, group.label)).toHaveText('Rank the group to place dots');
   }
 });
 
@@ -165,12 +166,9 @@ Then(
   },
 );
 
-Then(
-  /^(\w+) is reported in words as overspent by (\d+) dots, with the instruction to lower \w+ traits by \d+$/,
-  async ({ page }, group: string, by: string) => {
-    await expect(await groupReadout(page, group)).toHaveText(`${group}: Overspent by ${by} — lower ${group} traits by ${by}`);
-  },
-);
+Then(/^(\w+) is reported in words as overspent by (\d+) dots$/, async ({ page }, group: string, by: string) => {
+  await expect(await groupPoolRemaining(page, group)).toHaveText(`Overspent by ${by}`);
+});
 
 Then(/^the (\w+) ratings are unchanged$/, async ({ page, memory }, group: string) => {
   expect(memory.ratings.size).toBe(3);
@@ -180,7 +178,7 @@ Then(/^the (\w+) ratings are unchanged$/, async ({ page, memory }, group: string
 });
 
 Then(/^(\w+) is no longer reported as overspent$/, async ({ page }, group: string) => {
-  await expect(await groupReadout(page, group)).not.toContainText('Overspent');
+  await expect(await groupPoolRemaining(page, group)).not.toContainText('Overspent');
 });
 
 Then(

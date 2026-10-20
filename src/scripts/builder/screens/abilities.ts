@@ -1,4 +1,4 @@
-import '../../../styles/builder/attributes.css';
+import '../../../styles/builder/ranked.css';
 import type { ScreenModule } from './index';
 
 export default {

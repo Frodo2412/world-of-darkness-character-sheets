@@ -5,12 +5,13 @@ import { Given, Then, When } from './fixtures';
 import { freebiePointsRemaining, openPlayedFrom, openStep, shownStep } from './support/builder';
 import {
   expectRated,
+  expectRemaining,
   groupBox,
-  groupReadout,
   openFreebieSections,
   ratingOf,
   ratingRow,
   ratingsIn,
+  remainingCount,
   requestRating,
   stepButton,
   traitName,
@@ -66,8 +67,7 @@ Given(
     if (freebies?.includes('plus one')) steps.push(buyDots(ref, 1));
     await openPlayedFrom(page, fresh(), ...steps);
     if (ref.startsWith('attribute:')) {
-      const readout = await groupReadout(page, 'Physical');
-      memory.entered.set('physical', (await readout.textContent()) ?? '');
+      memory.entered.set('physical', String(await remainingCount(page, 'Physical')));
     }
   },
 );
@@ -214,9 +214,7 @@ Then(/^(\w+) is announced as (\d+) from creation and (\d+) from freebie points$/
 });
 
 Then('the Physical group has one more dot remaining than before', async ({ page, memory }) => {
-  const before = Number(/(\d+) dots? remaining/.exec(memory.entered.get('physical')!)![1]);
-  const dots = before + 1 === 1 ? 'dot' : 'dots';
-  await expect(await groupReadout(page, 'Physical')).toHaveText(`Physical: ${before + 1} ${dots} remaining`);
+  await expectRemaining(page, 'Physical', Number(memory.entered.get('physical')) + 1);
 });
 
 Then(/^(\w+) is rated (\d+), from the freebie dot$/, async ({ page }, name: string, value: string) => {

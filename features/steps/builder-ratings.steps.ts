@@ -6,8 +6,8 @@ import { Given, Then, When } from './fixtures';
 import { openStep, shownStep } from './support/builder';
 import {
   expectRated,
+  expectRemaining,
   groupNotice,
-  groupReadout,
   rankGroup,
   rankSelect,
   rateTrait,
@@ -90,8 +90,7 @@ When(/^they rank (\w+) (primary|secondary|tertiary)$/, async ({ page }, group: s
 });
 
 Then(/^(\w+) has (\d+) dots? remaining$/, async ({ page }, group: string, count: string) => {
-  const dots = Number(count) === 1 ? 'dot' : 'dots';
-  await expect(await groupReadout(page, group)).toHaveText(`${group}: ${count} ${dots} remaining`);
+  await expectRemaining(page, group, Number(count));
 });
 
 Then(/^(\w+) is (primary|secondary|tertiary)$/, async ({ page }, group: string, rank: string) => {

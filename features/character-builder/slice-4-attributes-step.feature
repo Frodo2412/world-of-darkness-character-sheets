@@ -82,7 +82,7 @@ Feature: Attributes step
   Scenario: Re-ranking a group below what it holds reports it as overspent
     Given a player who has ranked Physical primary and placed all 7 Physical dots
     When they rank Physical tertiary
-    Then Physical is reported in words as overspent by 4 dots, with the instruction to lower Physical traits by 4
+    Then Physical is reported in words as overspent by 4 dots
     And the Physical ratings are unchanged
 
   Scenario: Lowering an overspent group clears the report

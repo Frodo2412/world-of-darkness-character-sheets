@@ -99,6 +99,33 @@ export async function groupBox(page: Page, label: string): Promise<Locator> {
 export const groupReadout = async (page: Page, label: string): Promise<Locator> =>
   (await groupBox(page, label)).locator('[data-allotment-status]');
 
+/** What a group of a ranked screen says it has left to place, as its pool reads it: "7 remaining", "Overspent by 4". */
+export const groupPoolRemaining = async (page: Page, label: string): Promise<Locator> =>
+  (await groupBox(page, label)).locator('[data-pool-remaining]');
+
+/** The group's pool beside its meter: "4 / 7 spent · Allocation needed". */
+export const groupPoolSpent = async (page: Page, label: string): Promise<Locator> =>
+  (await groupBox(page, label)).locator('[data-pool-spent]');
+
+/**
+ * The dots a ranked group has left, said as its screen says them. A group of a ranked card reads "N remaining" in its pool;
+ * the plain group of a screen not yet redrawn reads "<group>: N dots remaining" in its readout.
+ */
+export async function remainingCount(page: Page, label: string): Promise<number> {
+  const group = await groupBox(page, label);
+  const pool = group.locator('[data-pool-remaining]');
+  if ((await pool.count()) > 0) return Number(/^(\d+) remaining$/.exec((await pool.textContent()) ?? '')?.[1]);
+  return Number(/(\d+) dots? remaining/.exec((await group.locator('[data-allotment-status]').textContent()) ?? '')?.[1]);
+}
+
+export async function expectRemaining(page: Page, label: string, count: number): Promise<void> {
+  const group = await groupBox(page, label);
+  const pool = group.locator('[data-pool-remaining]');
+  if ((await pool.count()) > 0) return expect(pool).toHaveText(`${count} remaining`);
+  const dots = count === 1 ? 'dot' : 'dots';
+  await expect(group.locator('[data-allotment-status]')).toHaveText(`${label}: ${count} ${dots} remaining`);
+}
+
 export const groupNotice = async (page: Page, label: string): Promise<Locator> =>
   (await groupBox(page, label)).locator('[data-notice]');
 

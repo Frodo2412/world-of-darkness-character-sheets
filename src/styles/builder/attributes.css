@@ -1,9 +1,0 @@
-/* The rank field above a group of Attributes or Abilities (both screens draw the same ranked groups). */
-
-.rank-field {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--space-2);
-	margin-block-end: var(--space-2);
-}
