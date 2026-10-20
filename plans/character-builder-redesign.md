@@ -2225,9 +2225,9 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
   - [x] Step 4.2: Top bar, identity bar, panel, autosave status, Save & exit
 
 #### Wave 5
-- [ ] Slice 5: Character concept screen
-  - [ ] Step 5.1: Sample concepts and the finished Concept text
-  - [ ] Step 5.2: The Character concept screen
+- [x] Slice 5: Character concept screen
+  - [x] Step 5.1: Sample concepts and the finished Concept text
+  - [x] Step 5.2: The Character concept screen
 - [ ] Slice 6: Clan screen
   - [ ] Step 6.1: Clan cards, search and detail
   - [ ] Step 6.2: The Clan screen
