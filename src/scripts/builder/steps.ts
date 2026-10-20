@@ -30,7 +30,8 @@ export function startSteps(
   let current = screenFromHash(window.location.hash);
 
   function updateTitle(): void {
-    document.title = documentTitle(current, buildName());
+    const title = documentTitle(current, buildName());
+    if (document.title !== title) document.title = title;
   }
 
   function show(screen: ScreenId, how: { history: 'push' | 'replace' | 'none'; focus?: HTMLElement | 'heading' }): void {

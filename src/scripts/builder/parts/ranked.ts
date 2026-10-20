@@ -90,7 +90,8 @@ export function wireAddField(button: HTMLButtonElement, add: (name: string, inpu
   };
   button.addEventListener('click', submit);
   input.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') submit();
+    // The Enter that accepts an input-method candidate (as in Japanese or Chinese) is not a submission.
+    if (event.key === 'Enter' && !event.isComposing) submit();
   });
 }
 

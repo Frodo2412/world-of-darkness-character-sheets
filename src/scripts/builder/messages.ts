@@ -41,6 +41,20 @@ export function restoreDialogAlert(dialog: HTMLElement): void {
   for (const alert of dialog.querySelectorAll<HTMLElement>('[data-dialog-alert]')) showDialogAlert(alert);
 }
 
+/** Redraws "Saved 2 min ago" every so often while the builder is shown. At most one clock runs. */
+export function startAgeUpdates(): void {
+  if (savedAt === undefined) return;
+  drawAge();
+  ageTimer ??= window.setInterval(drawAge, AGE_REFRESH_MS);
+}
+
+/** Stops that clock, for a view that has no status line to keep up to date. */
+export function stopAgeUpdates(): void {
+  if (ageTimer === undefined) return;
+  window.clearInterval(ageTimer);
+  ageTimer = undefined;
+}
+
 const autosave = <T extends HTMLElement>(part: string): T => document.querySelector<T>(`[data-autosave-${part}]`)!;
 
 /** The status line: "Saved 2 min ago" or "Changes not saved", with a mark that echoes it. */
@@ -100,8 +114,7 @@ export function reportSave(status: 'saved' | 'failed', ask: SaveAsk = 'change'):
   }
   savedAt = Date.now();
   clearFailure();
-  drawAge();
-  ageTimer ??= window.setInterval(drawAge, AGE_REFRESH_MS);
+  startAgeUpdates();
   for (const dialog of document.querySelectorAll<HTMLElement>('dialog')) clearDialogAlert(dialog);
 }
 

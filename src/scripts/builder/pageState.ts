@@ -5,6 +5,7 @@ import type { V20Build } from '../../domain/v20/creation/build';
 import { createBuildStore, type BuildStore } from '../../storage/buildStore';
 import { createCharacterStore, type CharacterStore } from '../../storage/characterStore';
 import { browserStorage } from '../../storage/storagePort';
+import { startAgeUpdates, stopAgeUpdates } from './messages';
 
 export type PageState =
   | { kind: 'loaded'; build: V20Build; store: BuildStore; characters: CharacterStore }
@@ -45,4 +46,7 @@ export function showView(view: keyof typeof views): void {
     for (const dialog of views.builder.querySelectorAll('dialog[open]')) (dialog as HTMLDialogElement).close();
   }
   for (const [name, element] of Object.entries(views)) element.hidden = name !== view;
+  // Only the builder has a status line to keep current.
+  if (view === 'builder') startAgeUpdates();
+  else stopAgeUpdates();
 }
