@@ -434,6 +434,10 @@ Then(new RegExp(`^the ${GROUP} status region reads the new remaining count$`), a
   await expect(await poolStatus(page, group)).toHaveText(`${group}: ${text}`);
 });
 
+Then(new RegExp(`^the ${GROUP} status region is empty$`), async ({ page }, group: string) => {
+  await expect(await poolStatus(page, group)).toHaveText('');
+});
+
 Then(new RegExp(`^the ${GROUP} status region reads "([^"]+)"$`), async ({ page }, group: string, text: string) => {
   await expect(await poolStatus(page, group)).toContainText(text);
 });
