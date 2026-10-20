@@ -2,7 +2,7 @@
 // limit, and the Virtues card. Screen standards are the shared steps (builder-standards.steps.ts) and are
 // not restated here; the platform, key and navigation steps are the Clan and navigation steps'.
 
-import { expect } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { BACKGROUND_KEYS_HELP } from '../../src/domain/v20/creation/advantageViews';
 import { BACKGROUNDS, type BackgroundName } from '../../src/domain/v20/creation/rules';
 import { DISCIPLINES_NEED_CLAN } from '../../src/domain/v20/creation/screens';
@@ -35,6 +35,12 @@ const advantages = (world: Parameters<typeof memoryFor>[0]): AdvantagesMemory =>
 /** Five Backgrounds with a creation dot each. */
 const FIVE = ['Allies', 'Contacts', 'Herd', 'Mentor', 'Resources'] as const;
 const fiveHeld = FIVE.map((name) => creation(`background:${name}`, 1));
+
+/** Every Background chip, once all of them are there: a loop over fewer would pass by checking nothing. */
+async function everyBackgroundChip(page: Page) {
+  await expect(backgroundChips(page)).toHaveCount(BACKGROUNDS.length);
+  return backgroundChips(page).all();
+}
 
 /** The names in "Contacts, Resources and Mentor". */
 const names = (list: string): string[] => list.split(/, | and /);
@@ -210,10 +216,16 @@ Then(new RegExp(`^the ${NAME} chip reads "Selected" and is pressed$`), async ({ 
 });
 
 Then('the other Background chips are not selected', async ({ page, memory }) => {
-  for (const chip of await backgroundChips(page).all()) {
+  const { chosen } = advantages({ memory });
+  const chips = await everyBackgroundChip(page);
+  let others = 0;
+  for (const chip of chips) {
     const name = (await chip.getAttribute('data-bg-chip'))!;
-    if (!advantages({ memory }).chosen.includes(name)) await expectChipChosen(page, name, false);
+    if (chosen.includes(name)) continue;
+    others += 1;
+    await expectChipChosen(page, name, false);
   }
+  expect(others, 'chips left over to check').toBe(BACKGROUNDS.length - chosen.length);
 });
 
 Then('the Background chips are described as {string}', async ({ page }, keys: string) => {
@@ -222,11 +234,14 @@ Then('the Background chips are described as {string}', async ({ page }, keys: st
 });
 
 Then('the chips for Black Hand Membership and Rituals read {string}', async ({ page }, label: string) => {
-  for (const chip of await backgroundChips(page).all()) {
+  let sabbat = 0;
+  for (const chip of await everyBackgroundChip(page)) {
     const name = (await chip.getAttribute('data-bg-chip'))!;
-    const sabbat = name === 'Black Hand Membership' || name === 'Rituals';
-    await expect(chip.locator('[data-bg-chip-name]')).toHaveText(sabbat ? `${name} ${label}` : name);
+    const isSabbat = name === 'Black Hand Membership' || name === 'Rituals';
+    if (isSabbat) sabbat += 1;
+    await expect(chip.locator('[data-bg-chip-name]')).toHaveText(isSabbat ? `${name} ${label}` : name);
   }
+  expect(sabbat, 'Sabbat chips found').toBe(2);
 });
 
 Then('the finished character\'s row is named {string}', async ({ page }, name: string) => {
@@ -237,25 +252,29 @@ Then('the finished character\'s row is named {string}', async ({ page }, name: s
 });
 
 Then('the other Background chips are unavailable', async ({ page }) => {
-  for (const chip of await backgroundChips(page).all()) {
+  let others = 0;
+  for (const chip of await everyBackgroundChip(page)) {
     const chosen = (await chip.getAttribute('aria-pressed')) === 'true';
     if (chosen) await expect(chip).not.toHaveAttribute('aria-disabled', 'true');
-    else await expect(chip).toHaveAttribute('aria-disabled', 'true');
+    else {
+      others += 1;
+      await expect(chip).toHaveAttribute('aria-disabled', 'true');
+    }
   }
+  expect(others, 'unchosen chips found').toBeGreaterThan(0);
 });
 
 Then('the other Background chips are unavailable with the reason {string}', async ({ page }, reason: string) => {
   await expect(backgroundLimit(page)).toBeVisible();
   await expect(backgroundLimit(page)).toHaveText(reason);
-  for (const chip of await backgroundChips(page).all()) {
+  let others = 0;
+  for (const chip of await everyBackgroundChip(page)) {
     if ((await chip.getAttribute('aria-pressed')) === 'true') continue;
+    others += 1;
     await expect(chip).toHaveAttribute('aria-disabled', 'true');
     await expect(chip).toHaveAccessibleDescription(new RegExp(escaped(reason)));
   }
-});
-
-Then('the reason {string} is announced', async ({ page }, reason: string) => {
-  await expect.poll(() => announcements(page)).toContain(reason);
+  expect(others, 'unchosen chips found').toBeGreaterThan(0);
 });
 
 Then('the chip is still unavailable and still focused', async ({ page, memory }) => {

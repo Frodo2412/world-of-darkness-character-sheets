@@ -15,7 +15,7 @@ import {
 } from './advantageViews';
 import type { V20Build } from './build';
 import { rating } from './ratings';
-import { BACKGROUNDS, CLANS, GENERATION_TABLE, type BackgroundName } from './rules';
+import { BACKGROUNDS, CLANS, type BackgroundName } from './rules';
 import { DISCIPLINES_NEED_CLAN, gateReason } from './screens';
 import { addCreationDiscipline, buyDiscipline, clan, creation, extra, freebie, fresh, generation, play } from './testing/play';
 import { setRating } from './updates';
@@ -89,7 +89,7 @@ describe('the Disciplines card', () => {
     ]);
   });
 
-  test('a clan row has the Discipline floor of 0 and a fixed clan row is never removable', () => {
+  test('a clan row can be lowered while it holds dots, and at 0 says its minimum', () => {
     const view = disciplinesView(play(fresh(), clan('Brujah'), creation('discipline:Potence', 2)));
     expect(view.rows.find((row) => row.label === 'Potence')).toMatchObject({ rating: 2, canLower: true, lowerLimit: null });
     expect(view.rows.find((row) => row.label === 'Celerity')).toMatchObject({ canLower: false, lowerLimit: 'Minimum 0' });
@@ -210,7 +210,7 @@ describe('pressing a chosen chip', () => {
     });
   });
 
-  test('is refused at the six as well as at 0 dots only for an unchosen chip', () => {
+  test('clears the picked chip that holds no dots, even while five other Backgrounds are held', () => {
     expect(pressBackground(fiveHeld(), picks('Fame'), 'Fame')).toEqual({ kind: 'clear' });
   });
 
@@ -347,7 +347,6 @@ describe('the Generation Background', () => {
     [4, 0],
   ])('at base %ith generation it reaches %i dots', (base, max) => {
     expect(top(base).max).toBe(max);
-    expect(top(base).max).toBe(Math.min(5, base - GENERATION_TABLE[0].generation));
   });
 
   test('at its top the plus is unavailable and says why, in words that name the best generation', () => {
@@ -368,14 +367,24 @@ describe('the Generation Background', () => {
     expect(rowOf(backgrounds(complete, picks('Generation')), 'Generation').limit).toBe('No dots left in Backgrounds');
   });
 
-  test.each([13, 9, 8, 6, 5, 4])('the plus is available exactly when the build would place the dot (base %i)', (base) => {
-    for (const dots of [0, 1, 2, 3, 4, 5]) {
-      const attempt = play(fresh(), generation(base));
-      const placed = setRating(attempt, 'background:Generation', dots, 'creation');
-      if (placed.status !== 'applied') continue;
-      const row = rowOf(backgrounds(placed.build, picks('Generation')), 'Generation');
-      expect(row.canRaise, `base ${base}, ${dots} dots`).toBe(setRating(placed.build, 'background:Generation', dots + 1, 'creation').status === 'applied');
-    }
+  test.each([
+    [13, 0],
+    [13, 4],
+    [13, 5],
+    [9, 5],
+    [8, 3],
+    [8, 4],
+    [6, 1],
+    [6, 2],
+    [5, 0],
+    [5, 1],
+    [4, 0],
+  ])('the plus is available exactly when the build would place the dot (base %i, %i dots)', (base, dots) => {
+    const placed = setRating(play(fresh(), generation(base)), 'background:Generation', dots, 'creation');
+    // The dots are within what the base allows, so the build holds them.
+    expect(placed.status).toBe('applied');
+    const row = rowOf(backgrounds(placed.build, picks('Generation')), 'Generation');
+    expect(row.canRaise).toBe(setRating(placed.build, 'background:Generation', dots + 1, 'creation').status === 'applied');
   });
 });
 

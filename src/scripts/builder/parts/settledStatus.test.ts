@@ -65,11 +65,22 @@ describe('createSettledStatus', () => {
   });
 
   it('says nothing for a text it already shows', () => {
-    const { clock, region, say } = setup();
+    const clock = stillClock();
+    const writes: (string | null)[] = [];
+    const region: Region = {
+      get textContent() {
+        return writes.at(-1) ?? '';
+      },
+      set textContent(text) {
+        writes.push(text);
+      },
+    };
+    const say = createSettledStatus(region, clock);
     say('42 archetypes listed');
     say('42 archetypes listed');
     clock.pass(1000);
     clock.frame();
-    expect(region.textContent).toBe('42 archetypes listed');
+    // A repeat would have emptied the region and written the text again.
+    expect(writes).toEqual(['42 archetypes listed']);
   });
 });

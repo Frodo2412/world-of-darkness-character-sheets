@@ -42,7 +42,9 @@ Then('the Disciplines are listed as {string} and {string}', async ({ page }, fir
 
 Then('each of those Disciplines has a rating row named for it and described by its own reasons', async ({ page }) => {
   const group = await groupBox(page, 'Disciplines');
-  for (const name of await disciplineNames(page)) {
+  const listed = await disciplineNames(page);
+  expect(listed.length, 'Disciplines listed').toBeGreaterThan(0);
+  for (const name of listed) {
     // The row is a group named by its own label, so the name finds one row and not the look-alike.
     const row = group.getByRole('group', { name, exact: true });
     await expect(row).toHaveCount(1);

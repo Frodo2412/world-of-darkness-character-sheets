@@ -5,7 +5,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page } from '@playwright/test';
 import { completeBuild, creation, generation } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When } from './fixtures';
-import { announcements } from './support/announcements';
+import { ANNOUNCEMENT_WINDOW_MS, announcements, waitOnPageClock } from './support/announcements';
 import {
   activateFinish,
   builderAddress,
@@ -333,7 +333,11 @@ Then('every control they stopped on showed a visible focus indicator', async ({ 
 // Announcements
 
 Then('{string} is announced once', async ({ page }, text: string) => {
-  await expect.poll(async () => (await announcements(page)).filter((entry) => entry === text)).toEqual([text]);
+  const heard = async (): Promise<string[]> => (await announcements(page)).filter((entry) => entry === text);
+  await expect.poll(heard).not.toEqual([]);
+  // Given the time a repeat would take, so "once" is not read before the second arrives.
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  expect(await heard()).toEqual([text]);
 });
 
 When('Strength is read by assistive technology on the attributes step', async ({ page }) => {
@@ -351,9 +355,12 @@ Then(
 );
 
 Then('the refusal text is announced once', async ({ page }) => {
-  await expect
-    .poll(async () => (await announcements(page)).filter((entry) => entry.includes('Mental has no dots remaining')).length)
-    .toBe(1);
+  const times = async (): Promise<number> =>
+    (await announcements(page)).filter((entry) => entry.includes('Mental has no dots remaining')).length;
+  await expect.poll(times).toBeGreaterThan(0);
+  // Given the time a repeat would take, so "once" is not read before the second arrives.
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  expect(await times()).toBe(1);
 });
 
 Then('the refusal text is shown inside the Mental group', async ({ page }) => {
@@ -365,7 +372,8 @@ Then('Wits is described by that refusal text', async ({ page }) => {
 });
 
 Then('nothing new is announced', async ({ page }) => {
-  // Mutation records are delivered before the click that caused them returns.
+  // A repeat would come after the pause, so the log is read once the pause has passed.
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
   const log = await announcements(page);
   expect(log.filter((entry) => entry.includes('Mental has no dots remaining'))).toHaveLength(1);
   expect(log.at(-1)).toContain('Mental has no dots remaining');

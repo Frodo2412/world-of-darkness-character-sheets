@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
 import { creationMaximum, freebieBudget, limits, maximumFor, violations } from './limits';
+import { dotsOf } from './ratings';
 import { clan, creation, freebie, fresh, play, rank } from './testing/play';
 
 describe('blankBuild', () => {
@@ -70,8 +71,8 @@ describe('violations', () => {
 });
 
 describe('creationMaximum', () => {
-  test('is the trait maximum for an Attribute', () => {
-    expect(creationMaximum(fresh(), 'attribute:strength')).toBe(maximumFor(fresh(), 'attribute:strength'));
+  test('is 5 for an Attribute at 13th generation', () => {
+    expect(creationMaximum(fresh(), 'attribute:strength')).toBe(5);
   });
 
   test('stops an Ability at 3 before freebie points', () => {
@@ -84,7 +85,14 @@ describe('creationMaximum', () => {
     expect(creationMaximum(build, 'ability:crafts')).toBe(4);
   });
 
-  test('never goes past the trait maximum, and a fixed trait keeps its value', () => {
+  test('never goes past the trait maximum, however many dots were bought', () => {
+    const build = play(fresh(), rank('skills', 'primary'), creation('ability:crafts', 2), freebie('ability:crafts', 5));
+    expect(dotsOf(build, 'ability:crafts')).toEqual({ creation: 2, freebie: 3 });
+    expect(creationMaximum(build, 'ability:crafts')).toBe(maximumFor(build, 'ability:crafts'));
+    expect(creationMaximum(build, 'ability:crafts')).toBe(5);
+  });
+
+  test('keeps a fixed trait at its value', () => {
     const nosferatu = play(fresh(), clan('Nosferatu'));
     expect(creationMaximum(nosferatu, 'attribute:appearance')).toBe(0);
   });

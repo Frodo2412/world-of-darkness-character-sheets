@@ -59,6 +59,12 @@ describe("the tabs' class names", () => {
     });
   }
 
+  it('reads the builder partials, so a pass is not an empty parse', () => {
+    expect(builderPartials().map((sheet) => sheet.pathname)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/styles\/builder\/clan\.css$/)]),
+    );
+  });
+
   it('reads the older stylesheets, so a pass is not an empty parse', () => {
     expect(older).toEqual(expect.arrayContaining(['card', 'power', 'discipline-entry', 'rating-mark']));
   });

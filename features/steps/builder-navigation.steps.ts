@@ -11,6 +11,7 @@ import {
   rank,
   type Step,
 } from '../../src/domain/v20/creation/testing/play';
+import { outstanding } from '../../src/domain/v20/creation/progress';
 import { PHASES, SCREENS } from '../../src/domain/v20/creation/rules';
 import { Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
 import {
@@ -26,6 +27,7 @@ import {
   stepLink,
   stepNav,
 } from './support/builder';
+import { unrecordedBloodPool } from './support/bloodpool';
 import { rateTrait } from './support/ranked';
 import { expectOnRoster } from './support/pages';
 import { escaped } from './support/text';
@@ -102,7 +104,10 @@ Given(new RegExp(`^a build where (${Object.keys(UNFINISHED).map(escaped).join('|
 
 Given('a build with nothing placed', openBlank);
 
-Given('a build with no name', openBlank);
+Given('a build with no name', async ({ page }) => {
+  const build = await openPlayedFrom(page, buildWith({ concept: { name: '' } }));
+  expect(build.concept.name.trim()).toBe('');
+});
 
 Given('a build with Visionary as Nature', async ({ page }) => {
   await openPlayedFrom(page, buildWith({ concept: { nature: 'Visionary' } }));
@@ -112,13 +117,19 @@ Given('a build with a recorded Blood Pool of {int}', async ({ page }, value: num
   await openPlayed(page, bloodPool(value));
 });
 
-Given('a build with no Blood Pool recorded', openBlank);
+Given('a build with no Blood Pool recorded', async ({ page }) => {
+  const build = await openPlayed(page, unrecordedBloodPool);
+  expect(build.bloodPool).toBeNull();
+});
 
 Given('a build with nothing outstanding', async ({ page }) => {
   await openPlayedFrom(page, completeBuild('Brujah'));
 });
 
-Given('a build with items outstanding', openBlank);
+Given('a build with items outstanding', async ({ page }) => {
+  const build = await openPlayed(page);
+  expect(outstanding(build).length).toBeGreaterThan(0);
+});
 
 Given('every Attribute dot is placed and no Ability dot is placed and a clan is chosen', async ({ page }) => {
   await openPlayed(

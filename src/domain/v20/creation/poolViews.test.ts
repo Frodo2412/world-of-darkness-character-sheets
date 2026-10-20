@@ -96,7 +96,9 @@ describe('the pool meter', () => {
       ['skills', '9 remaining'],
       ['knowledges', '13 remaining'],
     ]);
-    expect(view.groups.flatMap((entry) => entry.rows).every((row) => rating(fresh(), row.ref) === 0)).toBe(true);
+    const rows = view.groups.flatMap((entry) => entry.rows);
+    expect(rows).toHaveLength(30);
+    expect(rows.map((row) => row.rating)).toEqual(Array(30).fill(0));
   });
 
   test('re-ranking keeps the dots, so the group reads overspent with extra segments', () => {

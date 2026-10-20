@@ -5,7 +5,7 @@ import { expect, type Page } from '@playwright/test';
 import { CLAN_NAMES, type ConceptKind } from '../../src/domain/v20/creation/rules';
 import { creation, rank, type Step } from '../../src/domain/v20/creation/testing/play';
 import { Any, Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
-import { announcements } from './support/announcements';
+import { ANNOUNCEMENT_WINDOW_MS, announcements, waitOnPageClock } from './support/announcements';
 import { BUILDER_ADDRESS, builderHeading, buildWith, openPlayedFrom, openSavedBuild } from './support/builder';
 import { enterConceptField } from './support/concept';
 import { entryNamed } from './support/pages';
@@ -137,7 +137,8 @@ When("I change my character's name", async ({ page, memory }) => {
   await changeName(page, memory);
 });
 
-When('{int} seconds pass', async ({ page }, seconds: number) => {
+When('{int} seconds pass', async ({ page, memory }, seconds: number) => {
+  await takeClock(page, shell({ memory }).clock);
   await page.clock.runFor(seconds * 1000);
 });
 
@@ -193,6 +194,8 @@ Then('it reads {string}', async ({ page }, text: string) => {
 });
 
 Then('nothing is announced to assistive technology', async ({ page }) => {
+  // An announcement comes after a pause, so an absence is only an absence once the pause has passed.
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
   expect(await announcements(page)).toEqual([]);
 });
 
@@ -202,10 +205,13 @@ Then('the autosave status reads {string} and says what to do', async ({ page }, 
 });
 
 Then(/^the failure alert has been announced (\d+) times?$/, async ({ page }, count: string) => {
-  // A repeat is written on the frame after it is cleared, so it is waited for rather than read once.
-  await expect
-    .poll(async () => (await announcements(page)).filter((text) => text.includes('Changes are not being saved')).length)
-    .toBe(Number(count));
+  const times = async (): Promise<number> =>
+    (await announcements(page)).filter((text) => text.includes('Changes are not being saved')).length;
+  // A repeat is written on the frame after it is cleared, so it is waited for rather than read once...
+  await expect.poll(times).toBeGreaterThanOrEqual(Number(count));
+  // ...and then given the time a further one would take, so "exactly" is not read before it arrives.
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  expect(await times()).toBe(Number(count));
 });
 
 Then('it is announced as an alert', async ({ page }) => {

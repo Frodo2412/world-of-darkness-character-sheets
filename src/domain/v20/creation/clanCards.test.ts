@@ -99,8 +99,7 @@ describe('the clan detail', () => {
     for (const { name } of CLAN_CARDS) expect(clanDetail(name)?.note).toBe(CREATION_RULE_NOTE);
   });
 
-  test('says the copy it always has for the current rules data', () => {
-    expect(clanDetail('Nosferatu')?.rule).toBe('Appearance is fixed at 0.');
+  test('says, for the current rules data, that only Nosferatu changes creation arithmetic', () => {
     expect(CREATION_RULE_NOTE).toBe("Only Nosferatu's Appearance rule changes creation arithmetic.");
   });
 

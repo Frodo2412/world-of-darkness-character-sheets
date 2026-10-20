@@ -103,7 +103,17 @@ describe('footerFor', () => {
 
 describe('screenTitle', () => {
   it('is the sidebar word for each screen', () => {
-    expect(SCREENS.map(({ id }) => screenTitle(id))).toEqual(SCREENS.map(({ title }) => title));
+    expect(SCREENS.map(({ id }) => screenTitle(id))).toEqual([
+      'Character concept',
+      'Clan',
+      'Nature & Demeanor',
+      'Attributes',
+      'Abilities',
+      'Advantages',
+      'Finishing touches',
+      'Review & resolve',
+      'Character sheet',
+    ]);
   });
 });
 

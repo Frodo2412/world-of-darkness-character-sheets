@@ -2,28 +2,14 @@
 // AA violations, unique non-empty names for every control, no sideways scroll
 // at 375 px.
 
-import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 import { Then, When } from './fixtures';
+import { violationsOnPage } from './support/accessibility';
 import { openStep, shownStep, stepNav } from './support/builder';
 import { openFreebieSections } from './support/ranked';
 import { openRoster } from './support/pages';
 import { putRosterInState } from './support/library-states';
-import { expectNoSidewaysScrollAt } from './support/standards';
-
-const PHONE = { width: 375, height: 800 };
-
-
-/** Accessibility rule ids the page breaks, with the elements that break them. */
-async function wcagViolations(page: Page): Promise<string[]> {
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze();
-  return results.violations.map(
-    (violation) =>
-      `${violation.id}: ${violation.help} — ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`,
-  );
-}
+import { PHONE, expectNoSidewaysScrollAt } from './support/standards';
 
 When(/^the "?([^"]+?)"? step is checked$/, async ({ page, memory }, step: string) => {
   const heading = page.getByRole('heading', { name: step, level: 2, exact: false });
@@ -31,13 +17,13 @@ When(/^the "?([^"]+?)"? step is checked$/, async ({ page, memory }, step: string
     await stepNav(page).getByRole('link', { name: new RegExp(`^(Character )?${step}`, 'i') }).click();
   }
   await expect(heading).toBeVisible();
-  memory.violations = await wcagViolations(page);
+  memory.violations = await violationsOnPage(page);
 });
 
 When('the finishing touches step is checked with every section open', async ({ page, memory }) => {
   await openStep(page, 'Finishing touches');
   await openFreebieSections(page);
-  memory.violations = await wcagViolations(page);
+  memory.violations = await violationsOnPage(page);
 });
 
 /** Whether two boxes overlap. */
@@ -85,7 +71,7 @@ Then('at 375 pixels wide no focused control is covered by a group readout', asyn
 When('the roster is checked', async ({ page, memory }) => {
   await openRoster(page);
   await putRosterInState(page, memory.libraryState);
-  memory.violations = await wcagViolations(page);
+  memory.violations = await violationsOnPage(page);
 });
 
 Then('no WCAG 2.1 AA violations are reported', async ({ memory }) => {

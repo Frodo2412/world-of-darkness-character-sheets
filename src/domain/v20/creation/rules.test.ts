@@ -99,7 +99,19 @@ describe('clans', () => {
   });
 });
 
-test('Archetypes are unique and include Architect and Visionary', () => {
-  expect(new Set(ARCHETYPES).size).toBe(ARCHETYPES.length);
-  expect(ARCHETYPES).toEqual(expect.arrayContaining(['Architect', 'Visionary']));
+describe('Archetypes', () => {
+  test('are the 42 the builder offers, in alphabetical order', () => {
+    expect([...ARCHETYPES]).toEqual([
+      'Architect', 'Autocrat', 'Bon Vivant', 'Bravo', 'Capitalist', 'Caregiver', 'Celebrant', 'Chameleon',
+      'Child', 'Competitor', 'Conformist', 'Conniver', 'Creep Show', 'Curmudgeon', 'Dabbler', 'Deviant',
+      'Director', 'Enigma', 'Eye of the Storm', 'Fanatic', 'Gallant', 'Guru', 'Idealist', 'Judge', 'Loner',
+      'Martyr', 'Masochist', 'Monster', 'Pedagogue', 'Penitent', 'Perfectionist', 'Rebel', 'Rogue', 'Sadist',
+      'Scientist', 'Sociopath', 'Soldier', 'Survivor', 'Thrill-Seeker', 'Traditionalist', 'Trickster',
+      'Visionary',
+    ]);
+  });
+
+  test('are unique', () => {
+    expect(new Set(ARCHETYPES).size).toBe(42);
+  });
 });
