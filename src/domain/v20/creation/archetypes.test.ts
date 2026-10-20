@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest';
 import {
-  ARCHETYPE_KEYS_HELP,
   ARCHETYPE_ROLES,
   OWN_ARCHETYPE_HELP,
   archetypeListView,
@@ -34,7 +33,7 @@ const temperament = (nature: string, demeanor: string) =>
 const entry = (view: ReturnType<typeof archetypeListView>, name: string) => view.entries.find((item) => item.name === name)!;
 
 describe('the copy', () => {
-  test.each([ARCHETYPE_KEYS_HELP, OWN_ARCHETYPE_HELP])('the line %j is short and has no pronoun', (line) => {
+  test.each([OWN_ARCHETYPE_HELP])('the line %j is short and has no pronoun', (line) => {
     expect(words(line).length).toBeLessThanOrEqual(12);
     expect(line).not.toMatch(PRONOUN);
   });

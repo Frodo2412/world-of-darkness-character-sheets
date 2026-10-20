@@ -3,7 +3,6 @@ import {
   ANY_DISCIPLINE,
   CAITIFF_NOTE,
   CLAN_CARDS,
-  CLAN_LIST_HELP,
   CREATION_RULE_NOTE,
   clanCards,
   clanDetail,
@@ -124,13 +123,6 @@ describe('the label of the button that keeps the current clan', () => {
 
   test('says so when no clan is chosen, rather than ending on a space', () => {
     expect(keepLabel('')).toBe('Keep no clan');
-  });
-});
-
-describe('the description of the clan list', () => {
-  test('says how the keys move and choose, and names no person', () => {
-    expect(CLAN_LIST_HELP).toBe('Arrow keys move between clans; Space or Enter chooses.');
-    expect(PRONOUN.test(CLAN_LIST_HELP)).toBe(false);
   });
 });
 

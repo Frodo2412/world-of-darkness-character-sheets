@@ -2,7 +2,8 @@
 // The Clan screen: a search over the clans, one card for each, the detail of the chosen clan and, beside
 // it, the question a switch that would remove dots asks. The cards are a radiogroup the screen module
 // shows, hides and marks; the text that changes with the build is written there from clanCards.ts.
-import { CAITIFF_NOTE, CLAN_CARDS, CLAN_LIST_HELP } from '../../domain/v20/creation/clanCards';
+import { CAITIFF_NOTE, CLAN_CARDS } from '../../domain/v20/creation/clanCards';
+import { CLAN_LIST_HELP } from '../../scripts/builder/parts/keyHelp';
 import SearchField from './SearchField.astro';
 
 const slug = (name: string): string => name.toLowerCase().replaceAll(' ', '-');

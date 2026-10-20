@@ -27,9 +27,6 @@ export const ARCHETYPE_ROLES: readonly RoleInfo[] = [
 
 export const roleInfo = (role: ArchetypeRole): RoleInfo => ARCHETYPE_ROLES.find((info) => info.role === role)!;
 
-/** Said as the description of the role switch: how the keys work. The arrow keys do nothing on the list. */
-export const ARCHETYPE_KEYS_HELP = 'Arrow keys switch role; Tab moves between archetypes; Space or Enter assigns.';
-
 /** Said beside the field for a player's own Archetype: it fills the active role. */
 export const OWN_ARCHETYPE_HELP = 'Fills the active role. Emptying the field clears the role.';
 

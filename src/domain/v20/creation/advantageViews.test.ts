@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest';
 import {
-  BACKGROUND_KEYS_HELP,
   SIX_IS_THE_MOST,
   VIRTUES_DERIVATION,
   advantagesView,
@@ -507,7 +506,6 @@ describe('the screen', () => {
           view.virtues.callout?.summary ?? '',
           view.virtues.callout?.traitsText ?? '',
           ...view.virtues.rows.flatMap((row) => [row.limit ?? '', row.lowerLimit ?? '']),
-          BACKGROUND_KEYS_HELP,
           refusal(build),
         ];
         for (const line of lines) {
@@ -527,7 +525,6 @@ describe('the screen', () => {
       backgrounds(fresh()).empty!,
       virtuesView(fresh()).line,
       virtuesView(fresh()).derivation,
-      BACKGROUND_KEYS_HELP,
       SIX_IS_THE_MOST,
     ];
     for (const line of lines) expect(line.split(/\s+/).length, line).toBeLessThanOrEqual(12);

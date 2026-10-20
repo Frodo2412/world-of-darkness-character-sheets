@@ -3,7 +3,7 @@
 // the shared steps (builder-standards.steps.ts) and are not restated here.
 
 import { expect } from '@playwright/test';
-import { ARCHETYPE_KEYS_HELP } from '../../src/domain/v20/creation/archetypes';
+import { ARCHETYPE_KEYS_HELP } from '../../src/scripts/builder/parts/keyHelp';
 import { ARCHETYPES } from '../../src/domain/v20/creation/rules';
 import { Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
 import { ANNOUNCEMENT_WINDOW_MS, announcements, waitOnPageClock, watchWrites, writtenTexts } from './support/announcements';

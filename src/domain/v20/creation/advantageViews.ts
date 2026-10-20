@@ -32,9 +32,6 @@ export const SIX_IS_THE_MOST = 'Six is the most';
 /** The line under the Virtues: Humanity and Willpower follow them. */
 export const VIRTUES_DERIVATION = 'Humanity and Willpower are derived from the Virtues.';
 
-/** Describes the group of Background chips: how the keys work. */
-export const BACKGROUND_KEYS_HELP = 'Tab moves between chips; Space or Enter chooses or clears a Background.';
-
 const BACKGROUNDS_LINE = 'Five dots across at most six Backgrounds.';
 const NO_BACKGROUND_ROWS = 'Choose a chip to add its row.';
 const VIRTUES_LINE = 'Seven dots over the free dot each Virtue has.';

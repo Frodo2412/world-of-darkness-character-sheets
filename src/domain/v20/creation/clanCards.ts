@@ -68,9 +68,6 @@ export const CAITIFF_NOTE = {
   text: 'Caitiff is a clan choice distinct from leaving the clan unchosen.',
 } as const;
 
-/** Said as the description of the list: how the keys work in a radiogroup. */
-export const CLAN_LIST_HELP = 'Arrow keys move between clans; Space or Enter chooses.';
-
 /** The button that answers a switch question by keeping the chosen clan; '' is no clan chosen yet. */
 export const keepLabel = (chosen: string): string => `Keep ${chosen === '' ? 'no clan' : chosen}`;
 

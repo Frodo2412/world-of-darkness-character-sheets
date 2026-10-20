@@ -3,7 +3,7 @@
 // not restated here; the platform, key and navigation steps are the Clan and navigation steps'.
 
 import { expect, type Page } from '@playwright/test';
-import { BACKGROUND_KEYS_HELP } from '../../src/domain/v20/creation/advantageViews';
+import { BACKGROUND_KEYS_HELP } from '../../src/scripts/builder/parts/keyHelp';
 import { BACKGROUNDS, type BackgroundName } from '../../src/domain/v20/creation/rules';
 import { DISCIPLINES_NEED_CLAN } from '../../src/domain/v20/creation/wording';
 import { clan, completeBuild, creation, freebie, generation, play } from '../../src/domain/v20/creation/testing/play';
