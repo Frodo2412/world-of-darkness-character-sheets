@@ -3,7 +3,7 @@ import type { V20Build } from './build';
 import { allotmentStates } from './allotments';
 import { PRIORITY_UNIQUE, rankedView, type RankedGroupView, type RankedScreenView } from './poolViews';
 import { rating } from './ratings';
-import { abilitiesRanked, attributesRanked, clan, completeBuild, creation, fresh, play, rank } from './testing/play';
+import { abilitiesRanked, attributesRanked, clan, completeBuild, creation, freebie, fresh, play, rank } from './testing/play';
 import { setRank, setRating } from './updates';
 
 const PRONOUN =
@@ -112,6 +112,15 @@ describe('the pool meter', () => {
     expect(group(attributes(build), 'physical').pool).toMatchObject({ state: 'overspent', remainingText: 'Overspent by 3' });
   });
 
+  test('an unranked group still holding dots says to rank it, with the dots it holds', () => {
+    const build = play(fresh(), rank('physical', 'primary'), creation('attribute:strength', 4), rank('social', 'primary'));
+    const pool = group(attributes(build), 'physical').pool;
+    expect(pool).toMatchObject({ state: 'overspent', placed: 3, total: 0, spentText: 'Rank the group to place dots · 3 dots held' });
+    expect(pool.segments).toEqual(['over', 'over', 'over']);
+    const single = play(fresh(), rank('physical', 'primary'), creation('attribute:strength', 2), rank('social', 'primary'));
+    expect(group(attributes(single), 'physical').pool.spentText).toBe('Rank the group to place dots · 1 dot held');
+  });
+
   test('matches allotmentStates for every group of a complete build', () => {
     const build = completeBuild();
     const reported = [...attributes(build).groups, ...abilities(build).groups];
@@ -191,7 +200,37 @@ describe('the plus limits and the callout', () => {
     ['overspent', play(socialPrimary(7), rank('social', 'tertiary'))],
     ['Nosferatu', play(fresh(), clan('Nosferatu'), ...attributesRanked)],
     ['complete', completeBuild('Nosferatu')],
+    ['freebie dots', play(fresh(), ...attributesRanked, ...abilitiesRanked, creation('attribute:strength', 2), freebie('attribute:strength', 3), freebie('attribute:dexterity', 2), freebie('ability:law', 1))],
   ];
+
+  test('a row states its rating, so the page never reads one', () => {
+    const build = play(fresh(), clan('Nosferatu'), ...attributesRanked, creation('attribute:strength', 3));
+    const rows = attributes(build).groups.flatMap((entry) => entry.rows);
+    for (const row of rows) expect(row.rating, row.ref).toBe(rating(build, row.ref));
+    expect(rows.find((row) => row.ref === 'attribute:strength')!.rating).toBe(3);
+    expect(rows.find((row) => row.ref === 'attribute:appearance')!.rating).toBe(0);
+  });
+
+  test('a minus says why it cannot act: free dot, nothing to lower, fixed, or freebie dots', () => {
+    const build = play(fresh(), clan('Nosferatu'), ...attributesRanked, ...abilitiesRanked, creation('attribute:strength', 3), creation('ability:law', 2), freebie('attribute:dexterity', 2));
+    const row = (view: RankedScreenView, ref: string) => view.groups.flatMap((entry) => entry.rows).find((entry) => entry.ref === ref)!;
+    expect(row(attributes(build), 'attribute:strength')).toMatchObject({ canLower: true, lowerLimit: null });
+    expect(row(attributes(build), 'attribute:stamina')).toMatchObject({ canLower: false, lowerLimit: 'Minimum 1, free dot' });
+    expect(row(attributes(build), 'attribute:appearance')).toMatchObject({ canLower: false, lowerLimit: 'Fixed for Nosferatu' });
+    expect(row(attributes(build), 'attribute:dexterity')).toMatchObject({ canLower: false, lowerLimit: 'Minimum 2, freebie dots are removed on Finishing touches' });
+    expect(row(abilities(build), 'ability:law')).toMatchObject({ canLower: true, lowerLimit: null });
+    expect(row(abilities(build), 'ability:crafts')).toMatchObject({ canLower: false, lowerLimit: 'Minimum 0' });
+  });
+
+  test.each(builds)('a minus is available exactly when the build would lower the dot (%s)', (_name, build) => {
+    for (const view of [attributes(build), abilities(build)]) {
+      for (const row of view.groups.flatMap((entry) => entry.rows)) {
+        const applied = setRating(build, row.ref, rating(build, row.ref) - 1, 'creation').status === 'applied';
+        expect(row.canLower, row.ref).toBe(applied);
+        expect(row.lowerLimit === null, row.ref).toBe(row.canLower);
+      }
+    }
+  });
 
   test.each(builds)('a plus is available exactly when the build would place the dot (%s)', (_name, build) => {
     for (const view of [attributes(build), abilities(build)]) {
@@ -213,7 +252,12 @@ describe('the summary and the copy', () => {
   test('says only what is ranked, and when nothing is', () => {
     expect(attributes(play(fresh(), rank('mental', 'primary'))).summary).toEqual(['Strongest: Mental']);
     expect(attributes(fresh()).summary).toEqual(['No priorities set yet.']);
-    expect(attributes(play(fresh(), rank('mental', 'secondary'))).summary).toEqual(['No priorities set yet.']);
+  });
+
+  test('a lone Secondary is still said, so a ranked build never reads as having no priorities', () => {
+    expect(attributes(play(fresh(), rank('mental', 'secondary'))).summary).toEqual(['Secondary: Mental']);
+    const tied: V20Build = { ...fresh(), ranks: { ...fresh().ranks, talents: 'secondary', skills: 'secondary' } };
+    expect(abilities(tied).summary).toEqual(['Secondary: Talents and Skills']);
   });
 
   test('names every group on a tie', () => {
@@ -222,11 +266,17 @@ describe('the summary and the copy', () => {
   });
 
   test('the Attributes card states the automatic dot, the Abilities card the cap', () => {
-    expect(attributes(fresh())).toMatchObject({ intro: 'Dot counts include 1 automatic dot in each trait.', tag: null });
-    expect(abilities(fresh())).toMatchObject({
-      intro: 'Every Ability starts at 0 and stops at 3 before freebie points.',
-      tag: 'All ratings 0–3',
-    });
+    expect(attributes(fresh()).intro).toBe('Dot counts include 1 automatic dot in each trait.');
+    expect(abilities(fresh()).intro).toBe('Every Ability starts at 0 and stops at 3 before freebie points.');
+  });
+
+  test('each Abilities group states the cap as its tag and no Attributes group has one', () => {
+    expect(abilities(fresh()).groups.map((entry) => [entry.key, entry.tag])).toEqual([
+      ['talents', 'All ratings 0–3'],
+      ['skills', 'All ratings 0–3'],
+      ['knowledges', 'All ratings 0–3'],
+    ]);
+    expect(attributes(fresh()).groups.map((entry) => entry.tag)).toEqual([null, null, null]);
   });
 
   test('every Attribute of a Toreador build shows at least one dot once ranked', () => {
@@ -249,7 +299,6 @@ describe('the summary and the copy', () => {
       for (const view of [attributes(build), abilities(build)]) {
         const lines = [
           view.intro,
-          view.tag ?? '',
           view.priority.text,
           ...view.options.map((option) => option.text),
           ...view.summary,
@@ -257,10 +306,11 @@ describe('the summary and the copy', () => {
             entry.pool.remainingText,
             entry.pool.spentText,
             entry.pool.announcement,
+            entry.tag ?? '',
             entry.callout?.heading ?? '',
             entry.callout?.summary ?? '',
             entry.callout?.traitsText ?? '',
-            ...entry.rows.map((row) => row.limit ?? ''),
+            ...entry.rows.flatMap((row) => [row.limit ?? '', row.lowerLimit ?? '']),
           ]),
         ];
         for (const line of lines) {

@@ -7,10 +7,10 @@
 import { allotmentReports, type AllotmentReport } from './progress';
 import type { FixedTraitRef, V20Build } from './build';
 import { creationMaximum } from './limits';
-import { isLocked, rating, traitLabel } from './ratings';
+import { creationFloor, dotsOf, freeDots, isLocked, rating, traitLabel } from './ratings';
 import { dotNoun, list } from './screens';
 import { FIXED_MAXIMUMS, RANKED_ALLOTMENTS, RANKS, type Rank, type RankedAllotment } from './rules';
-import { plural } from './wording';
+import { plural, titleCase } from './wording';
 
 export type RankedKey = RankedAllotment['key'];
 
@@ -52,11 +52,17 @@ export interface PoolView {
 export interface RowView {
   ref: FixedTraitRef;
   label: string;
+  /** The trait's rating now, free, creation and freebie dots together. */
+  rating: number;
   /** The highest rating creation dots reach: "Maximum 3". */
   max: number;
   canRaise: boolean;
   /** "Maximum 3", "Fixed for Nosferatu", "No dots left in Social", "Rank Social first"; null when the plus can act. */
   limit: string | null;
+  /** Whether the minus can take a creation dot off now. */
+  canLower: boolean;
+  /** "Minimum 1, free dot", "Minimum 0", "Fixed for Nosferatu"; null when the minus can act. */
+  lowerLimit: string | null;
 }
 
 export interface Callout {
@@ -74,6 +80,8 @@ export interface RankedGroupView {
   key: string;
   label: string;
   rank: Rank | '';
+  /** "All ratings 0–3" on every Abilities group; null on Attributes groups, which state no cap. */
+  tag: string | null;
   pool: PoolView;
   rows: RowView[];
   callout: Callout | null;
@@ -82,8 +90,6 @@ export interface RankedGroupView {
 export interface RankedScreenView {
   key: RankedKey;
   intro: string;
-  /** "All ratings 0–3" on Abilities; null where no cap is stated. */
-  tag: string | null;
   /** The select's entries, the same for every group. */
   options: RankOption[];
   groups: RankedGroupView[];
@@ -92,8 +98,6 @@ export interface RankedScreenView {
   /** "Strongest: Social", "Tertiary: Physical": neutral lines for the summary card. */
   summary: string[];
 }
-
-const titleCase = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 
 export const rankOptions = (allotment: RankedAllotment): RankOption[] =>
   RANKS.map((rank) => ({
@@ -105,8 +109,8 @@ export const rankOptions = (allotment: RankedAllotment): RankOption[] =>
 
 function poolOf(report: AllotmentReport): PoolView {
   const { label, placed, remaining, dots } = report;
-  const state: PoolState =
-    remaining < 0 ? 'overspent' : report.rank === '' ? 'unranked' : remaining === 0 ? 'complete' : 'open';
+  const unranked = report.rank === '';
+  const state: PoolState = remaining < 0 ? 'overspent' : unranked ? 'unranked' : remaining === 0 ? 'complete' : 'open';
   const remainingText =
     state === 'overspent' ? `Overspent by ${-remaining}` : state === 'unranked' ? 'Not allocated' : `${remaining} remaining`;
   const segments: Segment[] = Array.from({ length: Math.max(dots, placed) }, (_, index) =>
@@ -118,10 +122,9 @@ function poolOf(report: AllotmentReport): PoolView {
     placed,
     total: dots,
     remainingText,
-    spentText:
-      state === 'unranked'
-        ? 'Rank the group to place dots'
-        : `${placed} / ${dots} spent · ${state === 'complete' ? 'Complete' : 'Allocation needed'}`,
+    spentText: unranked
+      ? `Rank the group to place dots${placed > 0 ? ` · ${plural(placed, 'dot')} held` : ''}`
+      : `${placed} / ${dots} spent · ${state === 'complete' ? 'Complete' : 'Allocation needed'}`,
     announcement: `${label}: ${state === 'complete' ? 'Complete' : remainingText}`,
   };
 }
@@ -135,10 +138,30 @@ function limitOf(build: V20Build, report: AllotmentReport, ref: FixedTraitRef, m
   return null;
 }
 
+/** Why the minus on `ref` cannot take a dot off, or null when it can: fixed, or at the floor free and freebie dots set. */
+function lowerLimitOf(build: V20Build, ref: FixedTraitRef): string | null {
+  if (isLocked(build, ref)) return `Fixed for ${build.clan}`;
+  const floor = creationFloor(build, ref);
+  if (rating(build, ref) > floor) return null;
+  if (dotsOf(build, ref).freebie > 0) return `Minimum ${floor}, freebie dots are removed on Finishing touches`;
+  const free = freeDots(build, ref);
+  return free > 0 ? `Minimum ${floor}, free ${free === 1 ? 'dot' : 'dots'}` : `Minimum ${floor}`;
+}
+
 function rowOf(build: V20Build, report: AllotmentReport, ref: FixedTraitRef): RowView {
   const max = creationMaximum(build, ref);
   const limit = limitOf(build, report, ref, max);
-  return { ref, label: traitLabel(ref), max, canRaise: limit === null, limit };
+  const lowerLimit = lowerLimitOf(build, ref);
+  return {
+    ref,
+    label: traitLabel(ref),
+    rating: rating(build, ref),
+    max,
+    canRaise: limit === null,
+    limit,
+    canLower: lowerLimit === null,
+    lowerLimit,
+  };
 }
 
 function calloutOf(report: AllotmentReport, rows: RowView[], additional: boolean): Callout | null {
@@ -159,16 +182,19 @@ function summaryOf(groups: RankedGroupView[]): string[] {
     named('primary').length > 0 ? `Strongest: ${list(named('primary'))}` : '',
     named('tertiary').length > 0 ? `Tertiary: ${list(named('tertiary'))}` : '',
   ].filter((line) => line !== '');
-  return lines.length > 0 ? lines : ['No priorities set yet.'];
+  if (lines.length > 0) return lines;
+  // Only Secondary is held: say it, so a build with a rank never reads as having none.
+  return named('secondary').length > 0 ? [`Secondary: ${list(named('secondary'))}`] : ['No priorities set yet.'];
 }
 
-function introOf(allotment: RankedAllotment): { intro: string; tag: string | null } {
-  if (allotment.freeDots > 0) {
-    return { intro: `Dot counts include ${plural(allotment.freeDots, 'automatic dot')} in each trait.`, tag: null };
-  }
-  const cap = FIXED_MAXIMUMS.abilityCreation;
-  return { intro: `Every ${allotment.noun} starts at 0 and stops at ${cap} before freebie points.`, tag: `All ratings 0–${cap}` };
+function introOf(allotment: RankedAllotment): string {
+  if (allotment.freeDots > 0) return `Dot counts include ${plural(allotment.freeDots, 'automatic dot')} in each trait.`;
+  return `Every ${allotment.noun} starts at 0 and stops at ${FIXED_MAXIMUMS.abilityCreation} before freebie points.`;
 }
+
+/** The cap each group of an allotment with no automatic dots states; null where none is stated. */
+const tagOf = (allotment: RankedAllotment): string | null =>
+  allotment.freeDots > 0 ? null : `All ratings 0–${FIXED_MAXIMUMS.abilityCreation}`;
 
 /** Everything the screen for one ranked allotment draws. */
 export function rankedView(build: V20Build, key: RankedKey): RankedScreenView {
@@ -181,6 +207,7 @@ export function rankedView(build: V20Build, key: RankedKey): RankedScreenView {
       key: group.key,
       label: group.label,
       rank: report.rank,
+      tag: tagOf(allotment),
       pool: poolOf(report),
       rows,
       callout: calloutOf(report, rows, allotment.freeDots > 0),
@@ -190,7 +217,7 @@ export function rankedView(build: V20Build, key: RankedKey): RankedScreenView {
   const unique = held.length > 0 && new Set(held).size === held.length;
   return {
     key,
-    ...introOf(allotment),
+    intro: introOf(allotment),
     options: rankOptions(allotment),
     groups,
     priority: { unique, text: unique ? PRIORITY_UNIQUE : '' },

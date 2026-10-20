@@ -13,7 +13,7 @@ import type {
   V20Build,
 } from './build';
 import { freebieCost, freebiesRemaining } from './freebies';
-import { plural } from './wording';
+import { plural, titleCase } from './wording';
 import { GENERATION_REF, bloodPoolRangeMessage, creationMaximum, effectiveGeneration, limits, maximumFor, ordinal } from './limits';
 import {
   catalogueDiscipline,
@@ -231,22 +231,24 @@ export function setRank(build: V20Build, groupKey: string, rank: string): Update
   if (previous === rank) return applied(build);
 
   const label = (key: string) => allotment.groups.find((group) => group.key === key)!.label;
-  const holder = allotment.groups.find((group) => group.key !== groupKey && build.ranks[group.key] === rank);
+  // A stored build may hold the rank twice: every holder gives it up, and the first takes this group's previous
+  // rank unless another group already holds that, so the order that results is unique.
+  const holders = allotment.groups.filter((group) => group.key !== groupKey && build.ranks[group.key] === rank);
   const ranks = { ...build.ranks, [groupKey]: rank as Rank };
-  if (holder) ranks[holder.key] = previous;
+  for (const holder of holders) ranks[holder.key] = '';
+  if (holders.length > 0 && previous && !allotment.groups.some((group) => group.key !== groupKey && ranks[group.key] === previous)) {
+    ranks[holders[0].key] = previous;
+  }
   const candidate = { ...build, ranks };
 
-  const notices: string[] = [];
-  if (holder) {
-    const first = `${label(groupKey)} is now ${rank}`;
-    if (previous === '') {
-      const placed = allotmentStates(candidate).find((state) => state.key === holder.key)!.placed;
-      const overspent = placed > 0 ? `, so its ${plural(placed, 'dot')} ${placed === 1 ? 'is' : 'are'} overspent until it is ranked` : '';
-      notices.push(`${first} and ${label(holder.key)} now has no rank${overspent}.`);
-    } else {
-      notices.push(`${first} and ${label(holder.key)} is now ${previous}.`);
-    }
-  }
+  const notices = holders.map((holder, index) => {
+    const name = label(holder.key);
+    const now = ranks[holder.key];
+    const placed = allotmentStates(candidate).find((state) => state.key === holder.key)!.placed;
+    const overspent = placed > 0 ? `, so ${plural(placed, `${name} dot`)} ${placed === 1 ? 'is' : 'are'} overspent until ${name} is ranked` : '';
+    const outcome = now ? `${name} is now ${titleCase(now)}` : `${name} now has no rank${overspent}`;
+    return `${index === 0 ? `${label(groupKey)} is now ${titleCase(rank)} and ` : ''}${outcome}.`;
+  });
   return commit(build, candidate, notices);
 }
 

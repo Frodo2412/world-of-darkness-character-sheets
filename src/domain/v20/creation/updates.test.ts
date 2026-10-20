@@ -3,7 +3,9 @@ import { blankBuild } from './build';
 import { CONCEPT_FIELDS } from './build';
 import { rating } from './ratings';
 import { CONCEPT_KINDS } from './rules';
-import { creation, fresh, play, rank } from './testing/play';
+import { attributesRanked, creation, fresh, play, rank } from './testing/play';
+import type { V20Build } from './build';
+import type { UpdateResult } from './result';
 import { setBaseGeneration, setClan, setConceptKind, setConceptText, setDrive, setExtraFreebies, setRank } from './updates';
 
 describe('setBaseGeneration', () => {
@@ -173,12 +175,21 @@ describe('setClan', () => {
   });
 });
 
+const PRONOUN =
+  /\b(?:i|me|my|mine|myself|we|us|our|ours|ourselves|you|your|yours|yourself|he|him|his|himself|she|her|hers|herself|it|its|itself|they|them|their|theirs|themselves|who|whom|whose|which|that|this|these|those)\b/i;
+
+/** What an applied change tells the player. */
+const noticesOf = (result: UpdateResult): string[] => (result.status === 'applied' ? result.notices : []);
+
+/** A stored build with these ranks, whether or not they are unique. */
+const stored = (ranks: Record<string, string>): V20Build => ({ ...fresh(), ranks: { ...fresh().ranks, ...ranks } as V20Build['ranks'] });
+
 describe('setRank swaps within one allotment', () => {
   const abilities = () => play(fresh(), rank('talents', 'primary'), rank('skills', 'secondary'), rank('knowledges', 'tertiary'));
 
   test('an Abilities group taking a held rank swaps with its holder and names both', () => {
     const result = setRank(abilities(), 'knowledges', 'primary');
-    expect(result).toMatchObject({ status: 'applied', notices: ['Knowledges is now primary and Talents is now tertiary.'] });
+    expect(result).toMatchObject({ status: 'applied', notices: ['Knowledges is now Primary and Talents is now Tertiary.'] });
     expect(result.build.ranks).toMatchObject({ knowledges: 'primary', talents: 'tertiary', skills: 'secondary' });
   });
 
@@ -206,5 +217,54 @@ describe('setRank swaps within one allotment', () => {
     const result = setRank(build, 'knowledges', 'primary');
     expect(rating(result.build, 'ability:crafts')).toBe(3);
     expect(rating(result.build, 'ability:law')).toBe(2);
+  });
+
+  test('every notice is free of pronouns, however the swap goes', () => {
+    const dotted = play(fresh(), rank('physical', 'primary'), creation('attribute:strength', 4), creation('attribute:dexterity', 3));
+      const notices = [
+      ...noticesOf(setRank(play(fresh(), ...attributesRanked), 'mental', 'primary')),
+      ...noticesOf(setRank(dotted, 'social', 'primary')),
+      ...noticesOf(setRank(play(dotted, rank('social', 'secondary')), 'mental', 'primary')),
+      ...noticesOf(setRank(play(fresh(), rank('physical', 'primary'), creation('attribute:strength', 2)), 'social', 'primary')),
+      ...noticesOf(setRank(stored({ physical: 'primary', social: 'primary', mental: 'secondary' }), 'mental', 'primary')),
+    ];
+    expect(notices.length).toBeGreaterThanOrEqual(5);
+    for (const notice of notices) expect(notice, notice).not.toMatch(PRONOUN);
+  });
+
+  test('a swap into a group left unranked names the group and its dots, with no pronoun', () => {
+    const build = play(fresh(), rank('physical', 'primary'), creation('attribute:strength', 2));
+    expect(noticesOf(setRank(build, 'social', 'primary'))).toEqual([
+      'Social is now Primary and Physical now has no rank, so 1 Physical dot is overspent until Physical is ranked.',
+    ]);
+  });
+});
+
+describe('setRank on a stored build that holds a rank twice', () => {
+  const attributeRanks = (build: V20Build) => ['physical', 'social', 'mental'].map((key) => build.ranks[key]);
+  const unique = (held: string[]) => held.filter((value) => value !== '').length === new Set(held.filter((value) => value !== '')).size;
+
+  test('the first holder takes the previous rank and the other is cleared, so the order is unique', () => {
+    const result = setRank(stored({ physical: 'primary', social: 'primary', mental: 'secondary' }), 'mental', 'primary');
+    expect(result.build.ranks).toMatchObject({ mental: 'primary', physical: 'secondary', social: '' });
+    expect(unique(attributeRanks(result.build))).toBe(true);
+    expect(noticesOf(result)).toEqual(['Mental is now Primary and Physical is now Secondary.', 'Social now has no rank.']);
+  });
+
+  test('an unranked group taking a rank held twice clears both holders and names the dots they keep', () => {
+    const base = stored({ physical: 'primary', social: 'primary' });
+    const build = play(base, creation('attribute:strength', 3), creation('attribute:charisma', 2));
+    const result = setRank(build, 'mental', 'primary');
+    expect(result.build.ranks).toMatchObject({ mental: 'primary', physical: '', social: '' });
+    expect(noticesOf(result)).toEqual([
+      'Mental is now Primary and Physical now has no rank, so 2 Physical dots are overspent until Physical is ranked.',
+      'Social now has no rank, so 1 Social dot is overspent until Social is ranked.',
+    ]);
+  });
+
+  test('the previous rank is not handed on while another group already holds it', () => {
+    const result = setRank(stored({ physical: 'primary', social: 'primary', mental: 'secondary' }), 'physical', 'secondary');
+    expect(attributeRanks(result.build)).toEqual(['secondary', 'primary', '']);
+    expect(unique(attributeRanks(result.build))).toBe(true);
   });
 });

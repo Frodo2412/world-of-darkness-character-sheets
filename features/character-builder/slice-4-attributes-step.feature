@@ -52,7 +52,7 @@ Feature: Attributes step
     Given a player who has ranked Physical primary, Social secondary and Mental tertiary
     When they rank Mental primary
     Then Mental is primary and Physical is tertiary
-    And they are told both changes: Mental is now primary and Physical is now tertiary
+    And they are told both changes: Mental is now Primary and Physical is now Tertiary
 
   Scenario: Ranking one group leaves unranked groups alone
     Given a player on the attributes step with no ranks chosen
@@ -64,7 +64,7 @@ Feature: Attributes step
     Given a player who has ranked Physical primary and raised Strength to 4
     When they rank Social primary
     Then Social is primary and Physical has no rank
-    And they are told Social is now primary and Physical now has no rank, so its 3 dots are overspent until it is ranked
+    And they are told Social is now Primary and Physical now has no rank, so 3 Physical dots are overspent until Physical is ranked
     And Strength is rated 4
 
   Scenario: Lowering from the keyboard stops at the real floor

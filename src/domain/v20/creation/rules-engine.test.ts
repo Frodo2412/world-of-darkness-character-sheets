@@ -70,7 +70,7 @@ describe('ranked groups', () => {
   test('taking a held rank swaps the two groups and names both', () => {
     const build = play(fresh(), ...attributesRanked);
     const result = setRank(build, 'mental', 'primary');
-    expect(result).toMatchObject({ status: 'applied', notices: ['Mental is now primary and Physical is now tertiary.'] });
+    expect(result).toMatchObject({ status: 'applied', notices: ['Mental is now Primary and Physical is now Tertiary.'] });
     expect(result.build.ranks).toMatchObject({ mental: 'primary', physical: 'tertiary', social: 'secondary' });
   });
 
@@ -79,7 +79,7 @@ describe('ranked groups', () => {
     const result = setRank(build, 'social', 'primary');
     expect(result).toMatchObject({
       status: 'applied',
-      notices: ['Social is now primary and Physical now has no rank, so its 3 dots are overspent until it is ranked.'],
+      notices: ['Social is now Primary and Physical now has no rank, so 3 Physical dots are overspent until Physical is ranked.'],
     });
     expect(result.build.ranks.physical).toBe('');
     expect(remaining(result.build, 'physical')).toBe(-3);

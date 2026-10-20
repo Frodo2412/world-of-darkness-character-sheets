@@ -157,10 +157,10 @@ Then(
 );
 
 Then(
-  /^they are told (\w+) is now (\w+) and (\w+) now has no rank, so its (\d+) dots are overspent until it is ranked$/,
+  /^they are told (\w+) is now (\w+) and (\w+) now has no rank, so (\d+) \w+ dots are overspent until \w+ is ranked$/,
   async ({ page }, a: string, ra: string, b: string, dots: string) => {
     await expect(await groupNotice(page, a)).toHaveText(
-      `${a} is now ${ra} and ${b} now has no rank, so its ${dots} dots are overspent until it is ranked.`,
+      `${a} is now ${ra} and ${b} now has no rank, so ${dots} ${b} dots are overspent until ${b} is ranked.`,
     );
   },
 );
