@@ -193,7 +193,7 @@ export function freebieReport(build: V20Build): FreebieReport {
   };
 }
 
-function disciplineRows(build: V20Build): BuildReport['disciplines'] {
+export function disciplineRows(build: V20Build): BuildReport['disciplines'] {
   const clan = clanDisciplines(build);
   // Catalogue names are stored in catalogue spelling, so a plain comparison finds clan rows.
   const others = build.disciplines.map((entry) => entry.name).filter((name) => !clan.includes(name));

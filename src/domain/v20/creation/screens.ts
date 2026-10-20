@@ -82,13 +82,16 @@ function poolReason(pools: AllotmentState[]): GateReason | undefined {
   return { text: `${dots} ${one ? 'remains' : 'remain'} · Allocate ${one ? 'it' : 'them'} to continue` };
 }
 
+/** Why no Discipline dots can be placed before a clan is chosen: Continue's reason and the Disciplines card's. */
+export const DISCIPLINES_NEED_CLAN = 'Choose a clan to place Discipline dots';
+
 /** The reason Continue is disabled on `screen`, or undefined when the screen does not gate. */
 export function gateReason(build: V20Build, screen: ScreenId): GateReason | undefined {
   switch (screen) {
     case 'clan':
       return build.clan === '' ? { text: 'Choose a clan to continue' } : undefined;
     case 'advantages':
-      if (build.clan === '') return { text: 'Choose a clan to place Discipline dots', goTo: 'clan' };
+      if (build.clan === '') return { text: DISCIPLINES_NEED_CLAN, goTo: 'clan' };
       return poolReason(poolsOn(build, screen));
     case 'attributes':
     case 'abilities':

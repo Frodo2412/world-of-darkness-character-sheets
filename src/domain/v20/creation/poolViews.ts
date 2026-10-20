@@ -2,10 +2,11 @@
 // pool meter and status words, its rows' limits, the callout for a group not fully placed, and the neutral
 // "What the choices say" lines. Built on `allotmentReports`, `creationMaximum` and the rating selectors, so the
 // page never recounts dots or compares a number against a budget or a maximum. No line names the character
-// or uses a pronoun.
+// or uses a pronoun. The pool, row and callout pieces also serve the Advantages screen's flat pools
+// (advantageViews.ts), which have no rank.
 
 import { allotmentReports, type AllotmentReport } from './progress';
-import type { FixedTraitRef, V20Build } from './build';
+import type { BuildTraitRef, FixedTraitRef, V20Build } from './build';
 import { creationMaximum } from './limits';
 import { creationFloor, dotsOf, freeDots, isLocked, rating, traitLabel } from './ratings';
 import { dotNoun, list } from './screens';
@@ -53,7 +54,7 @@ export interface PoolView {
 
 /** One trait's plus control: whether it can place a dot now, and the visible reason when it cannot. */
 export interface RowView {
-  ref: FixedTraitRef;
+  ref: BuildTraitRef;
   label: string;
   /** The trait's rating now, free, creation and freebie dots together. */
   rating: number;
@@ -113,9 +114,13 @@ export const rankOptions = (allotment: RankedAllotment): RankOption[] =>
     text: `${titleCase(rank)} · ${plural(allotment.rankDots[rank], 'dot')}`,
   }));
 
-function poolOf(report: AllotmentReport): PoolView {
+/** A ranked group with no rank holds no dots to place; a flat pool is never unranked. */
+const isUnranked = (report: AllotmentReport): boolean => report.kind === 'ranked' && report.rank === '';
+
+/** A pool's meter and words, for a ranked group or a flat pool. */
+export function poolOf(report: AllotmentReport): PoolView {
   const { label, placed, remaining, dots } = report;
-  const unranked = report.rank === '';
+  const unranked = isUnranked(report);
   const state: PoolState = remaining < 0 ? 'overspent' : unranked ? 'unranked' : remaining === 0 ? 'complete' : 'open';
   const remainingText =
     state === 'overspent' ? `Overspent by ${-remaining}` : state === 'unranked' ? 'Not allocated' : `${remaining} remaining`;
@@ -136,16 +141,16 @@ function poolOf(report: AllotmentReport): PoolView {
 }
 
 /** Why the plus on `ref` cannot place a dot, in the order a player can act on: fixed, at its top, unranked, pool spent. */
-function limitOf(build: V20Build, report: AllotmentReport, ref: FixedTraitRef, max: number): string | null {
+function limitOf(build: V20Build, report: AllotmentReport, ref: BuildTraitRef, max: number): string | null {
   if (isLocked(build, ref)) return `Fixed for ${build.clan}`;
   if (rating(build, ref) >= max) return `Maximum ${max}`;
-  if (report.rank === '') return `Rank ${report.label} first`;
+  if (isUnranked(report)) return `Rank ${report.label} first`;
   if (report.remaining <= 0) return `No dots left in ${report.label}`;
   return null;
 }
 
 /** Why the minus on `ref` cannot take a dot off, or null when it can: fixed, or at the floor free and freebie dots set. */
-function lowerLimitOf(build: V20Build, ref: FixedTraitRef, floor: number): string | null {
+function lowerLimitOf(build: V20Build, ref: BuildTraitRef, floor: number): string | null {
   if (isLocked(build, ref)) return `Fixed for ${build.clan}`;
   if (rating(build, ref) > floor) return null;
   if (dotsOf(build, ref).freebie > 0) return `Minimum ${floor}, freebie dots are removed on Finishing touches`;
@@ -153,8 +158,8 @@ function lowerLimitOf(build: V20Build, ref: FixedTraitRef, floor: number): strin
   return free > 0 ? `Minimum ${floor}, free ${free === 1 ? 'dot' : 'dots'}` : `Minimum ${floor}`;
 }
 
-function rowOf(build: V20Build, report: AllotmentReport, ref: FixedTraitRef): RowView {
-  const max = creationMaximum(build, ref);
+/** One trait's row in a pool. `max` is the top creation dots reach, which a screen may lower (Generation). */
+export function rowOf(build: V20Build, report: AllotmentReport, ref: BuildTraitRef, max: number = creationMaximum(build, ref)): RowView {
   const limit = limitOf(build, report, ref, max);
   const min = creationFloor(build, ref);
   const lowerLimit = lowerLimitOf(build, ref, min);
@@ -171,8 +176,9 @@ function rowOf(build: V20Build, report: AllotmentReport, ref: FixedTraitRef): Ro
   };
 }
 
-function calloutOf(report: AllotmentReport, rows: RowView[], additional: boolean): Callout | null {
-  if (report.rank === '' || report.remaining <= 0) return null;
+/** The callout for a pool not fully placed; none while unranked, complete or overspent. */
+export function calloutOf(report: AllotmentReport, rows: RowView[], additional: boolean): Callout | null {
+  if (isUnranked(report) || report.remaining <= 0) return null;
   const traits = rows.filter((row) => row.canRaise).map((row) => row.label);
   const noun = `${additional ? 'additional ' : ''}${dotNoun(report)}`;
   return {
