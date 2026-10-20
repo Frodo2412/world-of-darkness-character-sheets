@@ -5,6 +5,7 @@
 // or uses a pronoun. The pool, row and callout pieces also serve the Advantages screen's flat pools
 // (advantageViews.ts), which have no rank.
 
+import { isUnranked, poolStateOf, type PoolState } from './allotments';
 import { allotmentReports, type AllotmentReport } from './progress';
 import type { BuildTraitRef, FixedTraitRef, V20Build } from './build';
 import { creationMaximum } from './limits';
@@ -34,9 +35,6 @@ export interface RankOption {
 
 /** 'placed' is a dot in the group, 'open' one still to place, 'over' one past the rank's dots. */
 export type Segment = 'placed' | 'open' | 'over';
-
-/** Said in words as well as colour: the state is never carried by the meter's colour alone. */
-export type PoolState = 'unranked' | 'open' | 'complete' | 'overspent';
 
 export interface PoolView {
   state: PoolState;
@@ -114,14 +112,11 @@ export const rankOptions = (allotment: RankedAllotment): RankOption[] =>
     text: `${titleCase(rank)} · ${plural(allotment.rankDots[rank], 'dot')}`,
   }));
 
-/** A ranked group with no rank holds no dots to place; a flat pool is never unranked. */
-const isUnranked = (report: AllotmentReport): boolean => report.kind === 'ranked' && report.rank === '';
-
 /** A pool's meter and words, for a ranked group or a flat pool. */
 export function poolOf(report: AllotmentReport): PoolView {
   const { label, placed, remaining, dots } = report;
+  const state = poolStateOf(report);
   const unranked = isUnranked(report);
-  const state: PoolState = remaining < 0 ? 'overspent' : unranked ? 'unranked' : remaining === 0 ? 'complete' : 'open';
   const remainingText =
     state === 'overspent' ? `Overspent by ${-remaining}` : state === 'unranked' ? 'Not allocated' : `${remaining} remaining`;
   const segments: Segment[] = Array.from({ length: Math.max(dots, placed) }, (_, index) =>

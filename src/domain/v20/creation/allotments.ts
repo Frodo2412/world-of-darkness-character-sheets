@@ -35,6 +35,22 @@ export interface AllotmentState {
   traits: readonly BuildTraitRef[];
 }
 
+/** Said in words as well as colour: the state is never carried by a meter's colour alone. */
+export type PoolState = 'unranked' | 'open' | 'complete' | 'overspent';
+
+/** A ranked group with no rank holds no dots to place; a flat pool is never unranked. */
+export const isUnranked = (state: AllotmentState): boolean => state.kind === 'ranked' && state.rank === '';
+
+/** Overspent outranks unranked: an unranked group holding dots is overspent by all of them. */
+export function poolStateOf(state: AllotmentState): PoolState {
+  if (state.remaining < 0) return 'overspent';
+  if (isUnranked(state)) return 'unranked';
+  return state.remaining === 0 ? 'complete' : 'open';
+}
+
+/** A pool is placed when it has a rank (if it takes one) and no dots left over or missing. */
+export const isPlaced = (state: AllotmentState): boolean => poolStateOf(state) === 'complete';
+
 const prefixOf = (allotment: RankedAllotment) => allotment.traitKind;
 
 export function groupTraits(allotment: RankedAllotment, groupKey: string): FixedTraitRef[] {

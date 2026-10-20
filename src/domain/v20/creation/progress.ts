@@ -1,7 +1,7 @@
 // What the builder page shows: everything it renders comes from `report`, so
 // the page never compares numbers against budgets or maximums itself.
 
-import { allotmentStates, type AllotmentState } from './allotments';
+import { allotmentStates, isUnranked, poolStateOf, type AllotmentState } from './allotments';
 import { CONCEPT_FIELDS, FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
 import { freebieBudget, freebiesRemaining, freebiesSpent } from './freebies';
 import { effectiveGeneration, limits, maximumFor, ordinal, violations } from './limits';
@@ -208,63 +208,83 @@ export function disciplineRows(build: V20Build): BuildReport['disciplines'] {
   };
 }
 
+/** How a player says an overspent pool's traits: a ranked group's are named for the group. */
+const overspentTraits = (state: AllotmentState): string => (state.kind === 'ranked' ? `${state.label} traits` : state.label);
+
 function allotmentStatus(state: AllotmentState): string {
-  if (state.remaining < 0) {
-    const over = -state.remaining;
-    const what = state.kind === 'ranked' ? `${state.label} traits` : state.label;
-    return `Overspent by ${over} — lower ${what} by ${over}`;
+  switch (poolStateOf(state)) {
+    case 'overspent':
+      return `Overspent by ${-state.remaining} — lower ${overspentTraits(state)} by ${-state.remaining}`;
+    case 'unranked':
+      return 'Rank this group to place dots';
+    default:
+      return `${plural(state.remaining, 'dot')} remaining`;
   }
-  if (state.kind === 'ranked' && state.rank === '') return 'Rank this group to place dots';
-  return `${plural(state.remaining, 'dot')} remaining`;
 }
 
 export function allotmentReports(build: V20Build): Record<string, AllotmentReport> {
   return Object.fromEntries(
     allotmentStates(build).map((state) => [
       state.key,
-      { ...state, overspent: state.remaining < 0, status: allotmentStatus(state) },
+      { ...state, overspent: poolStateOf(state) === 'overspent', status: allotmentStatus(state) },
     ]),
   );
 }
 
 const stepIndex = (step: BuildStep): number => SCREENS.findIndex((entry) => entry.id === step);
 
-/** What still stands between the build and a finished character, in step order. */
-export function outstanding(build: V20Build): OutstandingItem[] {
-  const items: OutstandingItem[] = [];
-  if (build.clan === '') items.push({ step: 'clan', message: 'Choose a clan' });
+/** What a pool still asks of the player: dots to place, or dots to lower. An unranked group asks for its rank first. */
+function dotItem(state: AllotmentState): OutstandingItem | undefined {
+  switch (poolStateOf(state)) {
+    case 'open':
+      return { step: state.step, message: `Place ${plural(state.remaining, `${state.noun} dot`)}` };
+    case 'overspent':
+      return { step: state.step, message: `Lower ${overspentTraits(state)} by ${plural(-state.remaining, 'dot')}` };
+    default:
+      return undefined;
+  }
+}
 
-  const states = allotmentStates(build);
-  for (const allotment of RANKED_ALLOTMENTS) {
-    const { step } = allotment;
-    const keys = allotment.groups.map((group) => group.key);
-    const groups = states.filter((state) => keys.includes(state.key));
-    if (groups.some((group) => group.rank === '')) {
-      items.push({ step, message: `Rank the ${allotment.noun} groups` });
-    }
-    for (const group of groups.filter((entry) => entry.rank !== '')) {
-      if (group.remaining > 0) {
-        items.push({ step, message: `Place ${plural(group.remaining, `${group.label} dot`)}` });
-      } else if (group.remaining < 0) {
-        items.push({ step, message: `Lower ${group.label} traits by ${plural(-group.remaining, 'dot')}` });
-      }
-    }
-  }
-  for (const state of states.filter((entry) => entry.kind === 'flat')) {
-    if (state.remaining > 0) {
-      items.push({ step: state.step, message: `Place ${plural(state.remaining, `${state.noun} dot`)}` });
-    } else if (state.remaining < 0) {
-      items.push({ step: state.step, message: `Lower ${state.label} by ${plural(-state.remaining, 'dot')}` });
-    }
-  }
-  if (build.bloodPool === null) items.push({ step: 'finishing', message: 'Record a starting Blood Pool' });
-  for (const violation of violations(build)) {
-    items.push({ step: violation.step, message: violation.message });
-  }
-  return items
+const dotItems = (states: AllotmentState[]): OutstandingItem[] =>
+  states.map(dotItem).filter((item): item is OutstandingItem => item !== undefined);
+
+const clanItem = (build: V20Build): OutstandingItem[] => (build.clan === '' ? [{ step: 'clan', message: 'Choose a clan' }] : []);
+
+function rankedItems(states: AllotmentState[]): OutstandingItem[] {
+  return RANKED_ALLOTMENTS.flatMap((allotment) => {
+    const groups = states.filter((state) => allotment.groups.some((group) => group.key === state.key));
+    const rank: OutstandingItem[] = groups.some(isUnranked)
+      ? [{ step: allotment.step, message: `Rank the ${allotment.noun} groups` }]
+      : [];
+    return [...rank, ...dotItems(groups.filter((group) => !isUnranked(group)))];
+  });
+}
+
+const flatItems = (states: AllotmentState[]): OutstandingItem[] => dotItems(states.filter((state) => state.kind === 'flat'));
+
+const bloodPoolItem = (build: V20Build): OutstandingItem[] =>
+  build.bloodPool === null ? [{ step: 'finishing', message: 'Record a starting Blood Pool' }] : [];
+
+const violationItems = (build: V20Build): OutstandingItem[] =>
+  violations(build).map((violation) => ({ step: violation.step, message: violation.message }));
+
+/** The items in step order, those on one step in the order given. */
+const sortByStep = (items: OutstandingItem[]): OutstandingItem[] =>
+  items
     .map((item, index) => ({ item, index }))
     .sort((a, b) => stepIndex(a.item.step) - stepIndex(b.item.step) || a.index - b.index)
     .map(({ item }) => item);
+
+/** What still stands between the build and a finished character, in step order. */
+export function outstanding(build: V20Build): OutstandingItem[] {
+  const states = allotmentStates(build);
+  return sortByStep([
+    ...clanItem(build),
+    ...rankedItems(states),
+    ...flatItems(states),
+    ...bloodPoolItem(build),
+    ...violationItems(build),
+  ]);
 }
 
 export const unspentFreebies = (build: V20Build): number => Math.max(0, freebiesRemaining(build));

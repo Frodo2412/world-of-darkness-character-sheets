@@ -2,7 +2,7 @@
 // done, and what stops Continue. Everything is derived from the build alone, so
 // there is no "visited" state to keep.
 
-import { allotmentStates, type AllotmentState } from './allotments';
+import { allotmentStates, isPlaced, isUnranked, poolStateOf, type AllotmentState } from './allotments';
 import type { V20Build } from './build';
 import { outstanding } from './progress';
 import { PHASES, SCREENS, type ScreenId } from './rules';
@@ -18,10 +18,6 @@ export function phaseEyebrow(screen: ScreenId): string {
 }
 
 const blank = (text: string): boolean => text.trim() === '';
-
-/** A pool is placed when it has a rank (if it takes one) and no dots left over or missing. */
-const isPlaced = (state: AllotmentState): boolean =>
-  (state.kind === 'flat' || state.rank !== '') && state.remaining === 0;
 
 const poolsOn = (build: V20Build, screen: ScreenId): AllotmentState[] =>
   allotmentStates(build).filter((state) => state.step === screen);
@@ -75,13 +71,13 @@ const overBy = (state: AllotmentState): string =>
 
 /** What stops Continue on a pool screen: unranked groups, then overspent pools, then dots still to place. */
 function poolReason(pools: AllotmentState[]): GateReason | undefined {
-  const unranked = pools.filter((state) => state.kind === 'ranked' && state.rank === '');
+  const unranked = pools.filter(isUnranked);
   if (unranked.length > 0) return { text: `Rank ${list(unranked.map((state) => state.label))} to continue` };
 
-  const over = pools.filter((state) => state.remaining < 0);
+  const over = pools.filter((state) => poolStateOf(state) === 'overspent');
   if (over.length > 0) return { text: `${list(over.map(overBy))} · Lower ${over.length === 1 ? 'it' : 'them'} to continue` };
 
-  const left = pools.filter((state) => state.remaining > 0);
+  const left = pools.filter((state) => poolStateOf(state) === 'open');
   if (left.length === 0) return undefined;
   const one = left.length === 1 && left[0].remaining === 1;
   const dots = list(left.map((state) => plural(state.remaining, `${dotNoun(state)} dot`)));

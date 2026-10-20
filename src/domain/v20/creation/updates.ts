@@ -2,7 +2,7 @@
 // input: a refusal hands back the same build, an applied change a new one.
 
 import type { Range } from '../traits';
-import { allotmentStateFor, allotmentStates, rankedGroupOf, type AllotmentState } from './allotments';
+import { allotmentStateFor, allotmentStates, isUnranked, rankedGroupOf, type AllotmentState } from './allotments';
 import type {
   BuildSettings,
   BuildTraitRef,
@@ -419,7 +419,7 @@ function poolShortMessage(state: AllotmentState): string {
 function poolRefusal(build: V20Build, ref: BuildTraitRef, target: number, added: number): Refusal | undefined {
   if (added <= 0) return undefined;
   const state = allotmentStateFor(build, ref)!;
-  if (state.kind === 'ranked' && state.rank === '') {
+  if (isUnranked(state)) {
     return because(`Rank the ${state.label} group before placing dots in it.`);
   }
   if (target > creationMaximum(build, ref)) {
