@@ -16,6 +16,17 @@ export const list = (items: readonly string[]): string =>
 /** "1 item left", "3 items left": how many outstanding items stand between a build and Finish. */
 export const itemsLeftText = (count: number): string => `${plural(count, 'item')} left`;
 
+/**
+ * The words around a searchable list: "All Clans · 14" for its heading, and what is said to assistive
+ * technology each time the search changes it, "14 clans listed" or `No clan matches "x".`.
+ */
+export function searchListWords(noun: string, pluralNoun: string, count: number, query: string): { heading: string; results: string } {
+  return {
+    heading: `All ${titleCase(pluralNoun)} · ${count}`,
+    results: count === 0 ? `No ${noun} matches "${query.trim()}".` : `${plural(count, noun, pluralNoun)} listed`,
+  };
+}
+
 /** What a value the player has not chosen yet reads. */
 export const NOT_CHOSEN = 'Not chosen';
 

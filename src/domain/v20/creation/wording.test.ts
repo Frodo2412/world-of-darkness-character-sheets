@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { itemsLeftText, list, plural, screenIndex, screenTitle } from './wording';
+import { itemsLeftText, list, plural, screenIndex, screenTitle, searchListWords } from './wording';
 import { SCREENS } from './rules';
 
 describe('list', () => {
@@ -31,4 +31,18 @@ describe('screens', () => {
 
 test('plural keeps its noun in the right number', () => {
   expect([plural(1, 'dot'), plural(2, 'dot')]).toEqual(['1 dot', '2 dots']);
+});
+
+describe('searchListWords', () => {
+  test('heads the list with its count and says how many are listed', () => {
+    expect(searchListWords('clan', 'clans', 14, '')).toEqual({ heading: 'All Clans · 14', results: '14 clans listed' });
+    expect(searchListWords('clan', 'clans', 1, 'gang')).toEqual({ heading: 'All Clans · 1', results: '1 clan listed' });
+  });
+
+  test('names the search that kept nothing, trimmed, in the noun as written', () => {
+    expect(searchListWords('Background', 'Backgrounds', 0, '  zz ')).toEqual({
+      heading: 'All Backgrounds · 0',
+      results: 'No Background matches "zz".',
+    });
+  });
 });

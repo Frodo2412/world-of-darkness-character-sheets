@@ -6,7 +6,7 @@
 import type { V20Build } from './build';
 import { matchByName } from './catalogue';
 import { ARCHETYPES } from './rules';
-import { NOT_CHOSEN, plural } from './wording';
+import { NOT_CHOSEN, searchListWords } from './wording';
 
 export type ArchetypeRole = 'nature' | 'demeanor';
 
@@ -79,12 +79,7 @@ export function archetypeListView(query: string, concept: Temperament, active: A
       pressed: filled.some(({ role }) => role === active),
     };
   });
-  const count = entries.length;
-  return {
-    entries,
-    heading: `All Archetypes · ${count}`,
-    results: count === 0 ? `No archetype matches "${query.trim()}".` : `${plural(count, 'archetype')} listed`,
-  };
+  return { entries, ...searchListWords('archetype', 'archetypes', entries.length, query) };
 }
 
 export interface RoleCard {

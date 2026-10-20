@@ -5,7 +5,7 @@
 import { matchByName } from './catalogue';
 import { clanDisciplinesOf, traitLabel } from './ratings';
 import { CLAN_FIXED_TRAITS, CLAN_NAMES, type ClanName } from './rules';
-import { list } from './wording';
+import { list, searchListWords } from './wording';
 
 export interface ClanCard {
   name: ClanName;
@@ -112,11 +112,9 @@ export interface ClanListView {
 /** The list for a search `query`, with the clan `chosen` ('' for none). */
 export function clanListView(query: string, chosen: string): ClanListView {
   const cards = clanCards(query);
-  const count = cards.length;
   return {
     cards,
-    heading: `All Clans · ${count}`,
     selected: `Selected · ${chosen === '' ? 0 : 1}/1`,
-    results: count === 0 ? `No clan matches "${query.trim()}".` : `${count} ${count === 1 ? 'clan' : 'clans'} listed`,
+    ...searchListWords('clan', 'clans', cards.length, query),
   };
 }

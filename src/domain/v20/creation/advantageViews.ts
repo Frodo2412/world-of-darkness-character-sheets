@@ -24,7 +24,7 @@ import {
   type BackgroundName,
 } from './rules';
 import { DISCIPLINES_NEED_CLAN, type GateReason } from './screens';
-import { list, plural } from './wording';
+import { list, plural, searchListWords } from './wording';
 
 /** Said beside the Background chips once six are chosen: the other chips cannot be pressed. */
 export const SIX_IS_THE_MOST = 'Six is the most';
@@ -177,8 +177,7 @@ export function backgroundsView(build: V20Build, picked: ReadonlySet<BackgroundN
       const selected = chosen.includes(stored);
       return { name: stored, label, selected, unavailable: full && !selected };
     }),
-    heading: `All Backgrounds · ${kept.length}`,
-    results: kept.length === 0 ? `No Background matches "${query.trim()}".` : `${plural(kept.length, 'Background')} listed`,
+    ...searchListWords('Background', 'Backgrounds', kept.length, query),
     selected: `Selected · ${chosen.length}/${MAX_HELD}`,
     limit: full ? SIX_IS_THE_MOST : null,
     rows: chosen.map((name) => backgroundRow(build, report, name)),
