@@ -10,12 +10,27 @@ import {
   type V20Character,
 } from '../character';
 import type { TraitRef } from '../traits';
-import { CONCEPT_FIELDS, FIXED_TRAIT_REFS, type BuildTraitRef, type V20Build } from './build';
+import { CONCEPT_FIELDS, FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
 import { effectiveGeneration, limits, ordinal } from './limits';
 import { clanDisciplines, keyOf, kindOf, rating } from './ratings';
 import { BACKGROUNDS } from './rules';
 
 type Change = (character: V20Character) => V20Character;
+
+/**
+ * The sheet's one Concept line: the sample concept and the player's own words, whichever are set,
+ * trimmed and joined with " · ".
+ */
+export function composeConcept(kind: string, text: string): string {
+  return [kind, text]
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+    .join(' · ');
+}
+
+/** What a concept field becomes on the sheet: as entered, except Concept, which joins the sample concept. */
+const headerText = (build: V20Build, field: ConceptField): string =>
+  field === 'concept' ? composeConcept(build.concept.conceptKind, build.concept.concept) : build.concept[field];
 
 /** The sheet's address for a fixed build trait: `attribute:strength` → `attributes.strength`. */
 function sheetTrait(ref: BuildTraitRef): TraitRef {
@@ -48,7 +63,9 @@ export function toCharacter(build: V20Build): V20Character {
   const { bloodPerTurn } = limits(build);
   const willpower = rating(build, 'willpower');
   const changes: Change[] = [
-    ...CONCEPT_FIELDS.map((field): Change => (character) => setHeaderField(character, field, build.concept[field])),
+    ...CONCEPT_FIELDS.map((field): Change => (character) => setHeaderField(character, field, headerText(build, field))),
+    // "What keeps you going?" has no field of its own on the sheet; its free-text notes hold it.
+    (character) => setText(character, 'notes', build.concept.drive.trim()),
     (character) => setHeaderField(character, 'clan', build.clan),
     (character) => setHeaderField(character, 'generation', ordinal(effectiveGeneration(build))),
     ...FIXED_TRAIT_REFS.filter((ref) => ['attribute', 'ability', 'virtue'].includes(kindOf(ref))).map(

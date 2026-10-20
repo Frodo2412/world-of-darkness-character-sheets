@@ -47,6 +47,7 @@ describe('creation module layers', () => {
     rules: [],
     wording: [],
     catalogue: [],
+    sampleConcepts: ['rules'],
     build: ['rules'],
     ratings: ['rules', 'build'],
     allotments: ['rules', 'build', 'ratings'],
