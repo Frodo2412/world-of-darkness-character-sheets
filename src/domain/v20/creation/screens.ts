@@ -5,11 +5,17 @@
 import { allotmentStates, type AllotmentState } from './allotments';
 import type { V20Build } from './build';
 import { outstanding } from './progress';
-import { SCREENS, type ScreenId } from './rules';
+import { PHASES, SCREENS, type ScreenId } from './rules';
 import { plural } from './wording';
 
 /** The word the sidebar shows beside a screen. */
 export type ScreenStatus = 'Done' | 'To do' | 'Optional';
+
+/** The line above a screen's heading: its phase, numbered, as in "Phase 02 / Attributes". */
+export function phaseEyebrow(screen: ScreenId): string {
+  const { phase } = SCREENS.find((entry) => entry.id === screen)!;
+  return `Phase ${String(PHASES.indexOf(phase) + 1).padStart(2, '0')} / ${phase}`;
+}
 
 const blank = (text: string): boolean => text.trim() === '';
 

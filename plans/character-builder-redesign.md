@@ -101,7 +101,7 @@ Full wording is in the spec; ids match. Ticked at PR review, not during build.
 | [ ] RD-20 | Base rules and refusals visible | Slices 2, 8, 9, 11 (refusal scenarios) |
 | [ ] RD-21 | Old builds open, new fields round-trip | Slices 1, 5 |
 | [ ] RD-22 | Roster and blank sheet unchanged | Slice 14 (explicit scenarios) + existing `features/roster-redesign/`, `features/v20-character-sheet/` |
-| [ ] RD-23 | Look of the frames, contrast and class tests | Slice 3.2 extends the test globs; every slice runs them |
+| [ ] RD-23 | Look of the frames, contrast and class tests | Slice 3.2 extends the test globs; every slice runs them. Phase eyebrows: `phaseEyebrow` (screens.test.ts) and the `builder-screen-standards.feature` scenario "Each screen names its phase above the heading"; the eyebrow reads "Phase NN / <PHASES title>" (e.g. "Phase 02 / Attributes", not the frame's "SELECT ATTRIBUTES"), capitals by CSS |
 | [ ] RD-24 | Outstanding items exactly | Slices 1, 12 |
 | [ ] RD-25 | Keyboard, names, headings, focus, AA | Each screen/dialog slice (DoD below); Slice 14 sweep |
 | [ ] RD-26 | Search fields, shortcut hint, counts | Slices 6, 7, 9 |

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild, type BuildTraitRef, type V20Build } from './build';
 import type { ScreenId } from './rules';
-import { gateReason, hint, isComplete, itemsLeft, screenStatus, screenStatuses } from './screens';
+import { gateReason, hint, isComplete, itemsLeft, phaseEyebrow, screenStatus, screenStatuses } from './screens';
 import { abilitiesRanked, attributesRanked, clan, completeBuild, creation, fresh, play, rank } from './testing/play';
 import { setConceptText } from './updates';
 
@@ -355,4 +355,20 @@ describe('hint', () => {
       expect(hint(fresh(), screen)).toBeUndefined();
     },
   );
+});
+
+describe('phase eyebrow', () => {
+  test.each([
+    ['concept', 'Phase 01 / Character concept'],
+    ['clan', 'Phase 01 / Character concept'],
+    ['natureDemeanor', 'Phase 01 / Character concept'],
+    ['attributes', 'Phase 02 / Attributes'],
+    ['abilities', 'Phase 03 / Abilities'],
+    ['advantages', 'Phase 04 / Advantages'],
+    ['finishing', 'Phase 05 / Finishing touches'],
+    ['review', 'Phase 05 / Finishing touches'],
+    ['summary', 'Phase 05 / Finishing touches'],
+  ] as const)('reads %s as "%s"', (screen, eyebrow) => {
+    expect(phaseEyebrow(screen)).toBe(eyebrow);
+  });
 });

@@ -74,3 +74,17 @@ Feature: Every builder screen meets the screen standards
     And they are told characters cannot be saved in this browser
     And axe reports no violations at 1512 px and 375 px
     And the page does not scroll horizontally at 375 px
+
+  Scenario Outline: Each screen names its phase above the heading
+    Given a build named "Lucita" of clan "Lasombra"
+    When I choose <screen> in the sidebar
+    Then the <screen> screen is headed by the phase "<eyebrow>"
+    And there is exactly one h1
+
+    Examples:
+      | screen            | eyebrow                      |
+      | Character concept | Phase 01 / Character concept |
+      | Attributes        | Phase 02 / Attributes        |
+      | Abilities         | Phase 03 / Abilities         |
+      | Advantages        | Phase 04 / Advantages        |
+      | Finishing touches | Phase 05 / Finishing touches |

@@ -1,7 +1,9 @@
 ---
 // One builder screen: a heading-led region. The router shows one panel at a time and moves focus to
-// its heading; a screen that is not built yet is this heading alone.
+// its heading; a screen that is not built yet is this heading alone. The eyebrow above the heading is
+// the phase in words, set in capitals by the stylesheet; it is a paragraph, not a heading.
 import { SCREENS, type ScreenId } from '../../domain/v20/creation/rules';
+import { phaseEyebrow } from '../../domain/v20/creation/screens';
 
 interface Props {
 	screen: ScreenId;
@@ -12,6 +14,7 @@ const { title } = SCREENS.find((entry) => entry.id === screen)!;
 ---
 
 <section class="builder-step" data-step={screen} aria-labelledby={`step-${screen}-heading`} hidden>
+	<p class="builder-eyebrow">{phaseEyebrow(screen)}</p>
 	<h2 id={`step-${screen}-heading`} tabindex="-1">{title}</h2>
 	<slot />
 </section>

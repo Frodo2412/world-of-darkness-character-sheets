@@ -5,7 +5,7 @@ import { expect } from '@playwright/test';
 import { SCREENS } from '../../src/domain/v20/creation/rules';
 import { Then } from './fixtures';
 import { expectUniqueControlNames } from './support/accessibility';
-import { stepHeading } from './support/builder';
+import { screenTitle, shownStep, stepHeading } from './support/builder';
 import { escaped } from './support/text';
 import { expectNoSidewaysScrollAt, expectNoViolationsAt, expectOneH1, DESKTOP, PHONE } from './support/standards';
 
@@ -30,3 +30,12 @@ Then('the page does not scroll horizontally at {int} px', async ({ page }, width
 Then(new RegExp(`^focus is on the (${SCREENS.map((screen) => escaped(screen.title)).join('|')}) heading$`), async ({ page }, title: string) => {
   await expect(stepHeading(page, title)).toBeFocused();
 });
+
+// The eyebrow is real text ("Phase 02 / Attributes"; the capitals are only CSS) set directly above the screen's heading.
+Then(
+  new RegExp(`^the (${SCREENS.map((screen) => escaped(screen.title)).join('|')}) screen is headed by the phase "([^"]+)"$`),
+  async ({ page }, title: string, eyebrow: string) => {
+    await expect(shownStep(page).locator('.builder-eyebrow')).toHaveText(eyebrow);
+    await expect(shownStep(page).locator('.builder-eyebrow + h2')).toHaveText(screenTitle(title));
+  },
+);

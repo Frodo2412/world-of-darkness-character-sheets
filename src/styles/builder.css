@@ -356,6 +356,15 @@
 	cursor: not-allowed;
 }
 
+/* The phase above a screen's heading: the text reads "Phase 02 / Attributes"; the capitals are only the look. */
+.builder-eyebrow {
+	margin: 0 0 var(--space-1);
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
 .builder-step h2:focus {
 	outline: none;
 }
