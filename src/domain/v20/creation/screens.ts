@@ -2,11 +2,11 @@
 // done, and what stops Continue. Everything is derived from the build alone, so
 // there is no "visited" state to keep.
 
-import { allotmentStates, isPlaced, isUnranked, poolStateOf, type AllotmentState } from './allotments';
+import { isPlaced, isUnranked, poolsOn, poolStateOf, type AllotmentState } from './allotments';
 import type { V20Build } from './build';
-import { outstanding } from './progress';
+import { isFinishable, outstanding } from './progress';
 import { PHASES, SCREENS, type ScreenId } from './rules';
-import { plural } from './wording';
+import { itemsLeftText, list, plural } from './wording';
 
 /** The word the sidebar shows beside a screen. */
 export type ScreenStatus = 'Done' | 'To do' | 'Optional';
@@ -18,9 +18,6 @@ export function phaseEyebrow(screen: ScreenId): string {
 }
 
 const blank = (text: string): boolean => text.trim() === '';
-
-const poolsOn = (build: V20Build, screen: ScreenId): AllotmentState[] =>
-  allotmentStates(build).filter((state) => state.step === screen);
 
 /** Whether the screen's own rule is met. The Character sheet is never complete: a finished build is no longer a build. */
 export function isComplete(build: V20Build, screen: ScreenId): boolean {
@@ -38,7 +35,7 @@ export function isComplete(build: V20Build, screen: ScreenId): boolean {
     case 'finishing':
       return build.bloodPool !== null;
     case 'review':
-      return outstanding(build).length === 0;
+      return isFinishable(build);
     case 'summary':
       return false;
   }
@@ -58,10 +55,6 @@ export interface GateReason {
   text: string;
   goTo?: ScreenId;
 }
-
-/** "Physical", "Physical and Social", "Physical, Social and Mental". */
-export const list = (items: string[]): string =>
-  items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 
 /** A Skills group's dots are Skill dots; a Physical group's are Physical dots. */
 export const dotNoun = (state: AllotmentState): string => (state.kind === 'ranked' ? state.label.replace(/s$/, '') : state.noun);
@@ -103,12 +96,9 @@ export function gateReason(build: V20Build, screen: ScreenId): GateReason | unde
   }
 }
 
-/** "1 item left", "3 items left": how many outstanding items stand between a build and Finish. */
-export const itemsLeft = (count: number): string => `${plural(count, 'item')} left`;
-
 /** The line beside Continue where it is not gated but something is left: "1 item left · Review it next". */
 export function hint(build: V20Build, screen: ScreenId): string | undefined {
   if (screen !== 'finishing') return undefined;
   const count = outstanding(build).length;
-  return count === 0 ? undefined : `${itemsLeft(count)} · Review ${count === 1 ? 'it' : 'them'} next`;
+  return count === 0 ? undefined : `${itemsLeftText(count)} · Review ${count === 1 ? 'it' : 'them'} next`;
 }

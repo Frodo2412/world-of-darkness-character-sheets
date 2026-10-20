@@ -5,6 +5,7 @@
 import { matchByName } from './catalogue';
 import { clanDisciplinesOf, traitLabel } from './ratings';
 import { CLAN_FIXED_TRAITS, CLAN_NAMES, type ClanName } from './rules';
+import { list } from './wording';
 
 export interface ClanCard {
   name: ClanName;
@@ -46,18 +47,16 @@ type FixedTraits = Readonly<Partial<Record<ClanName, Readonly<Record<string, num
 
 const labelsOf = (traits: Readonly<Record<string, number>>): string[] => Object.keys(traits).map((ref) => traitLabel(ref as TraitRef));
 
-const joinAnd = (parts: readonly string[]): string => (parts.length < 2 ? parts.join('') : `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`);
-
 /** What a clan's fixed traits say in its detail: "Appearance is fixed at 0." */
 export const fixedTraitRule = (traits: Readonly<Record<string, number>>): string =>
-  `${joinAnd(Object.entries(traits).map(([ref, rating]) => `${traitLabel(ref as TraitRef)} is fixed at ${rating}`))}.`;
+  `${list(Object.entries(traits).map(([ref, rating]) => `${traitLabel(ref as TraitRef)} is fixed at ${rating}`))}.`;
 
 /** The note every clan's detail carries: only the clans that fix a trait touch the creation numbers. */
 export function creationRuleNote(fixed: FixedTraits): string {
   const rules = Object.entries(fixed)
     .filter(([, traits]) => Object.keys(traits).length > 0)
-    .map(([clan, traits]) => `${clan}'s ${joinAnd(labelsOf(traits))} rule`);
-  return `Only ${joinAnd(rules)} ${rules.length === 1 ? 'changes' : 'change'} creation arithmetic.`;
+    .map(([clan, traits]) => `${clan}'s ${list(labelsOf(traits))} rule`);
+  return `Only ${list(rules)} ${rules.length === 1 ? 'changes' : 'change'} creation arithmetic.`;
 }
 
 /** Said in the detail of every chosen clan. */

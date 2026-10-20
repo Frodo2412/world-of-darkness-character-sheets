@@ -17,8 +17,8 @@ import {
   rating,
   traitLabel,
 } from './ratings';
-import { FREEBIE_COSTS, RANKED_ALLOTMENTS, SCREENS, type BuildStep, type Rank } from './rules';
-import { plural } from './wording';
+import { FREEBIE_COSTS, RANKED_ALLOTMENTS, type BuildStep, type Rank } from './rules';
+import { plural, screenIndex } from './wording';
 
 export interface SettingsReport {
   baseGeneration: number;
@@ -83,7 +83,7 @@ export interface FreebieReport {
 export interface FinishReport {
   /** Something is outstanding, so Finish does nothing yet. */
   blocked: boolean;
-  itemsLeft: number;
+  outstandingCount: number;
   unspentFreebies: number;
   /** The Finish control's label: "Finish character · 2 items left" while blocked, "Finish character" otherwise. */
   label: string;
@@ -231,8 +231,6 @@ export function allotmentReports(build: V20Build): Record<string, AllotmentRepor
   );
 }
 
-const stepIndex = (step: BuildStep): number => SCREENS.findIndex((entry) => entry.id === step);
-
 /** What a pool still asks of the player: dots to place, or dots to lower. An unranked group asks for its rank first. */
 function dotItem(state: AllotmentState): OutstandingItem | undefined {
   switch (poolStateOf(state)) {
@@ -272,7 +270,7 @@ const violationItems = (build: V20Build): OutstandingItem[] =>
 const sortByStep = (items: OutstandingItem[]): OutstandingItem[] =>
   items
     .map((item, index) => ({ item, index }))
-    .sort((a, b) => stepIndex(a.item.step) - stepIndex(b.item.step) || a.index - b.index)
+    .sort((a, b) => screenIndex(a.item.step) - screenIndex(b.item.step) || a.index - b.index)
     .map(({ item }) => item);
 
 /** What still stands between the build and a finished character, in step order. */
@@ -305,7 +303,7 @@ export function finishReport(build: V20Build, items: OutstandingItem[] = outstan
   const left = `${plural(items.length, 'item')} left`;
   return {
     blocked,
-    itemsLeft: items.length,
+    outstandingCount: items.length,
     unspentFreebies: unspentFreebies(build),
     label: blocked ? `Finish character · ${left}` : 'Finish character',
     refusalMessage: FINISH_REFUSAL,

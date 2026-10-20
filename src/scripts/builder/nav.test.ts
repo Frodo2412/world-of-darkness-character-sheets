@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { blankBuild } from '../../domain/v20/creation/build';
 import { SCREENS } from '../../domain/v20/creation/rules';
+import { screenTitle } from '../../domain/v20/creation/wording';
 import { attributesRanked, clan, completeBuild, creation, fresh, play } from '../../domain/v20/creation/testing/play';
 import {
   announceKey,
@@ -11,7 +12,6 @@ import {
   popAction,
   screenCounter,
   screenFromHash,
-  screenTitle,
 } from './nav';
 
 describe('screenCounter', () => {

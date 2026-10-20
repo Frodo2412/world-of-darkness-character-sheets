@@ -1,14 +1,13 @@
 // What the builder's shell says about the build: the identity bar and the "Your character" panel.
 // Pure reads over the build; the page draws what these return and judges nothing itself.
 
-import { allotmentStates, type AllotmentState } from './allotments';
+import { UNNAMED_CHARACTER } from '../character';
+import { poolsOn, type AllotmentState } from './allotments';
 import { composeConcept, type V20Build } from './build';
 import { freebieReport, traitReport } from './progress';
-import { RANKS, SCREENS, type Rank, type ScreenId } from './rules';
-import { NOT_CHOSEN } from './wording';
+import { RANKS, type Rank, type ScreenId } from './rules';
+import { NOT_ALLOCATED, NOT_CHOSEN, screenIndex } from './wording';
 
-const UNNAMED = 'Unnamed character';
-const NOT_ALLOCATED = 'Not allocated';
 const SEPARATOR = ' · ';
 
 /** The product's name beside the chronicle in the top bar. */
@@ -60,7 +59,7 @@ export function identityOf(build: V20Build): Identity {
     .filter((part) => part !== '')
     .join(SEPARATOR);
   return {
-    name: name || UNNAMED,
+    name: name || UNNAMED_CHARACTER,
     initials: initialsOf(name),
     subtitle,
     chronicle,
@@ -102,11 +101,6 @@ function poolsText(pools: AllotmentState[]): string {
     .map((pool) => `${pool.label} ${pool.placed}`)
     .join(SEPARATOR);
 }
-
-const poolsOn = (build: V20Build, screen: ScreenId): AllotmentState[] =>
-  allotmentStates(build).filter((state) => state.step === screen);
-
-const screenIndex = (screen: ScreenId): number => SCREENS.findIndex((entry) => entry.id === screen);
 
 /** Humanity and Willpower join the panel from Finishing touches on. */
 const showsVirtueTotals = (screen: ScreenId): boolean => screenIndex(screen) >= screenIndex('finishing');

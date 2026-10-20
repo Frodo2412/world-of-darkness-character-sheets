@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild, type BuildTraitRef, type V20Build } from './build';
 import type { ScreenId } from './rules';
-import { gateReason, hint, isComplete, itemsLeft, phaseEyebrow, screenStatus, screenStatuses } from './screens';
+import { gateReason, hint, isComplete, phaseEyebrow, screenStatus, screenStatuses } from './screens';
+import { itemsLeftText } from './wording';
 import { abilitiesRanked, attributesRanked, clan, completeBuild, creation, fresh, play, rank } from './testing/play';
 import { setConceptText } from './updates';
 
@@ -326,13 +327,13 @@ describe('gateReason', () => {
   );
 });
 
-describe('itemsLeft', () => {
+describe('itemsLeftText', () => {
   test.each([
     [0, '0 items left'],
     [1, '1 item left'],
     [3, '3 items left'],
   ])('%i reads "%s"', (count, text) => {
-    expect(itemsLeft(count)).toBe(text);
+    expect(itemsLeftText(count)).toBe(text);
   });
 });
 

@@ -3,18 +3,18 @@
 
 import type { V20Build } from '../../domain/v20/creation/build';
 import { SCREENS, type ScreenId } from '../../domain/v20/creation/rules';
+import { UNNAMED_CHARACTER } from '../../domain/v20/character';
 import { gateReason, type GateReason } from '../../domain/v20/creation/screens';
+import { screenIndex, screenTitle } from '../../domain/v20/creation/wording';
 
 const FIRST: ScreenId = SCREENS[0].id;
-
-export const screenTitle = (id: ScreenId): string => SCREENS.find((screen) => screen.id === id)!.title;
 
 /** The Character sheet is reached by finishing, never by navigating. */
 export const isNavigable = (id: ScreenId): boolean => id !== 'summary';
 
 /** "3 of 9 screens". */
 export const screenCounter = (id: ScreenId): string =>
-  `${SCREENS.findIndex((screen) => screen.id === id) + 1} of ${SCREENS.length} screens`;
+  `${screenIndex(id) + 1} of ${SCREENS.length} screens`;
 
 /** The screen an address names; one that is unknown or not yet available shows the first. */
 export function screenFromHash(hash: string): ScreenId {
@@ -24,7 +24,7 @@ export function screenFromHash(hash: string): ScreenId {
 
 /** "Clan – Éloïse Voss". */
 export const documentTitle = (id: ScreenId, characterName: string): string =>
-  `${screenTitle(id)} – ${characterName.trim() || 'Unnamed character'}`;
+  `${screenTitle(id)} – ${characterName.trim() || UNNAMED_CHARACTER}`;
 
 /** What a gated Continue's polite announcement was about; another screen or another reason makes it stale. */
 export const announceKey = (screen: ScreenId, gate: string | undefined): string => `${screen}\n${gate ?? ''}`;
@@ -64,7 +64,7 @@ export interface Footer {
 }
 
 export function footerFor(build: V20Build, screen: ScreenId): Footer {
-  const index = SCREENS.findIndex((entry) => entry.id === screen);
+  const index = screenIndex(screen);
   const previous = SCREENS[index - 1];
   const following = SCREENS[index + 1];
   const back: BackAction = previous === undefined ? { label: 'All drafts' } : { label: 'Back', to: previous.id };

@@ -5,7 +5,8 @@
 import type { V20Build } from '../../domain/v20/creation/build';
 import type { ScreenId } from '../../domain/v20/creation/rules';
 import { screenStatuses } from '../../domain/v20/creation/screens';
-import { announceKey, footerFor, screenCounter, screenTitle } from './nav';
+import { screenTitle } from '../../domain/v20/creation/wording';
+import { announceKey, footerFor, screenCounter } from './nav';
 import { showReadout } from './messages';
 
 function renderSidebar(root: HTMLElement, build: V20Build, screen: ScreenId): void {

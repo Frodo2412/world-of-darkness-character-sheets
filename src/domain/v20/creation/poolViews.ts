@@ -10,9 +10,9 @@ import { allotmentReports, type AllotmentReport } from './progress';
 import type { BuildTraitRef, FixedTraitRef, V20Build } from './build';
 import { creationMaximum } from './limits';
 import { creationFloor, dotsOf, freeDots, isLocked, rating, traitLabel } from './ratings';
-import { dotNoun, list } from './screens';
+import { dotNoun } from './screens';
 import { FIXED_MAXIMUMS, RANKED_ALLOTMENTS, RANKS, type Rank, type RankedAllotment } from './rules';
-import { plural, titleCase } from './wording';
+import { NOT_ALLOCATED, list, plural, titleCase } from './wording';
 
 export type RankedKey = RankedAllotment['key'];
 
@@ -118,7 +118,7 @@ export function poolOf(report: AllotmentReport): PoolView {
   const state = poolStateOf(report);
   const unranked = isUnranked(report);
   const remainingText =
-    state === 'overspent' ? `Overspent by ${-remaining}` : state === 'unranked' ? 'Not allocated' : `${remaining} remaining`;
+    state === 'overspent' ? `Overspent by ${-remaining}` : state === 'unranked' ? NOT_ALLOCATED : `${remaining} remaining`;
   const segments: Segment[] = Array.from({ length: Math.max(dots, placed) }, (_, index) =>
     index >= dots ? 'over' : index < placed ? 'placed' : 'open',
   );

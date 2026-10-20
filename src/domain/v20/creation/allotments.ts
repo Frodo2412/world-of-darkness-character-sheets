@@ -111,6 +111,10 @@ function flatState(build: V20Build, allotment: FlatAllotment): AllotmentState {
   };
 }
 
+/** The pools whose dots a screen places. */
+export const poolsOn = (build: V20Build, screen: BuildStep): AllotmentState[] =>
+  allotmentStates(build).filter((state) => state.step === screen);
+
 /** Every pool in step order: the ranked groups, then the flat allotments. */
 export function allotmentStates(build: V20Build): AllotmentState[] {
   return [

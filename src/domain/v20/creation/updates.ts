@@ -13,7 +13,7 @@ import type {
   V20Build,
 } from './build';
 import { freebieCost, freebiesRemaining } from './freebies';
-import { plural, titleCase } from './wording';
+import { list, plural, screenTitle, titleCase } from './wording';
 import {
   GENERATION_REF,
   PAST_BEST_GENERATION,
@@ -60,7 +60,6 @@ import {
   type ClanName,
   type Rank,
   type RankedAllotment,
-  SCREENS,
 } from './rules';
 
 /** How a rating change is paid for: the creation steps' dots, or freebie points. */
@@ -84,14 +83,6 @@ function wholeNumber(text: string, range: Range): number | undefined {
   const entry = text.trim();
   const value = /^\d+$/.test(entry) ? Number(entry) : Number.NaN;
   return value >= range.min && value <= range.max ? value : undefined;
-}
-
-const stepTitle = (step: string): string =>
-  SCREENS.find((entry) => entry.id === step)?.title ?? step;
-
-function joined(names: readonly string[]): string {
-  if (names.length <= 1) return names.join('');
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
 // Settings
@@ -185,23 +176,23 @@ const was = (count: number): string => (count === 1 ? 'was' : 'were');
 /** What `effect` will do, for the player to confirm. */
 function willSentence(effect: ClanEffect): string {
   if (effect.kind === 'removal') {
-    return `The ${joined(effect.names)} ${effect.dots === 1 ? 'dot' : 'dots'} will be removed ${removalReason(effect)}.`;
+    return `The ${list(effect.names)} ${effect.dots === 1 ? 'dot' : 'dots'} will be removed ${removalReason(effect)}.`;
   }
   const parts = [`${effect.label} will be set to 0`];
   if (effect.dots > 0) parts.push(`${plural(effect.dots, 'dot')} returned to ${effect.group}`);
   if (effect.points > 0) parts.push(`${plural(effect.points, 'freebie point')} refunded`);
-  return `${joined(parts)}.`;
+  return `${list(parts)}.`;
 }
 
 /** The same, said after it was done. */
 function wasSentence(effect: ClanEffect): string {
   if (effect.kind === 'removal') {
-    return `The ${joined(effect.names)} ${effect.dots === 1 ? 'dot' : 'dots'} ${was(effect.dots)} removed ${removalReason(effect)}.`;
+    return `The ${list(effect.names)} ${effect.dots === 1 ? 'dot' : 'dots'} ${was(effect.dots)} removed ${removalReason(effect)}.`;
   }
   const parts = [`${effect.label} was set to 0`];
   if (effect.dots > 0) parts.push(`${plural(effect.dots, 'dot')} ${was(effect.dots)} returned to ${effect.group}`);
   if (effect.points > 0) parts.push(`${plural(effect.points, 'freebie point')} ${was(effect.points)} refunded`);
-  return `${joined(parts)}.`;
+  return `${list(parts)}.`;
 }
 
 const removalReason = (removal: DisciplineRemoval): string =>
@@ -514,7 +505,7 @@ function freebieFloorRefusal(build: V20Build, ref: BuildTraitRef, target: number
   const floor = freebieFloor(build, ref);
   if (target >= floor) return undefined;
   if (target >= freeDots(build, ref) && dotsOf(build, ref).creation > 0) {
-    return because(`Creation dots are changed on the ${stepTitle(creationStepOf(ref))} step.`, creationStepOf(ref));
+    return because(`Creation dots are changed on the ${screenTitle(creationStepOf(ref))} step.`, creationStepOf(ref));
   }
   if (ref === 'humanity' || ref === 'willpower') {
     return because(`${traitLabel(ref)} from the Virtues is changed on the Advantages step.`, 'advantages');

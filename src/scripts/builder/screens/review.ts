@@ -2,12 +2,10 @@
 
 import '../../../styles/builder/review.css';
 import { finishReport, outstanding, type OutstandingItem } from '../../../domain/v20/creation/progress';
-import { SCREENS } from '../../../domain/v20/creation/rules';
+import { screenTitle } from '../../../domain/v20/creation/wording';
 import { wireFinish } from '../finish';
 import { showReadout } from '../messages';
 import type { ScreenModule } from './index';
-
-const stepTitle = (step: string): string => SCREENS.find((entry) => entry.id === step)?.title ?? step;
 
 function renderOutstanding(root: HTMLElement, items: OutstandingItem[]): void {
   for (const intro of root.querySelectorAll<HTMLElement>('[data-outstanding-intro]')) {
@@ -26,7 +24,7 @@ function renderOutstanding(root: HTMLElement, items: OutstandingItem[]): void {
         const where = document.createElement('span');
         where.className = 'outstanding-step';
         where.dataset.outstandingStep = item.step;
-        where.textContent = ` (${stepTitle(item.step)})`;
+        where.textContent = ` (${screenTitle(item.step)})`;
         const entry = document.createElement('li');
         entry.append(link, where);
         return entry;

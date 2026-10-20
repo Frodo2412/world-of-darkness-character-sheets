@@ -106,10 +106,10 @@ describe('creation module layers', () => {
   const BELOW_UPDATES = ['rules', 'build', 'ratings', 'allotments', 'freebies', 'limits', 'result', 'wording'];
   const ALLOWED: Record<string, string[]> = {
     rules: [],
-    wording: [],
+    wording: ['rules'],
     catalogue: [],
     sampleConcepts: ['rules'],
-    clanCards: ['rules', 'ratings', 'catalogue'],
+    clanCards: ['rules', 'ratings', 'catalogue', 'wording'],
     archetypes: ['rules', 'build', 'catalogue', 'wording'],
     build: ['rules'],
     ratings: ['rules', 'build'],
@@ -124,6 +124,13 @@ describe('creation module layers', () => {
     poolViews: [...BELOW_UPDATES, 'progress', 'screens'],
     advantageViews: [...BELOW_UPDATES, 'catalogue', 'progress', 'screens', 'poolViews'],
     toCharacter: BELOW_UPDATES,
+  };
+
+  // The base-domain files a creation file may reach beyond ../traits.
+  const OUTSIDE: Record<string, string[]> = {
+    toCharacter: ['../character'],
+    shellView: ['../character'],
+    limits: ['../identity'],
   };
 
   const directory = fileURLToPath(new URL('.', import.meta.url));
@@ -146,11 +153,7 @@ describe('creation module layers', () => {
 
   test.each(sources.map((source) => [source.name, source.text]))('%s imports nothing outside the domain', (name, text) => {
     const outside = importsOf(text).filter(
-      (specifier) =>
-        !specifier.startsWith('./') &&
-        specifier !== '../traits' &&
-        !(name === 'toCharacter' && specifier === '../character') &&
-        !(name === 'limits' && specifier === '../identity'),
+      (specifier) => !specifier.startsWith('./') && specifier !== '../traits' && !(OUTSIDE[name] ?? []).includes(specifier),
     );
     expect(outside).toEqual([]);
   });

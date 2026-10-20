@@ -71,7 +71,7 @@ describe('finishReport', () => {
   test('a complete build is not blocked and says nothing', () => {
     expect(finishReport(completeBuild('Brujah'))).toEqual({
       blocked: false,
-      itemsLeft: 0,
+      outstandingCount: 0,
       unspentFreebies: 15,
       label: 'Finish character',
       refusalMessage: 'This build is not finished: resolve the outstanding items first.',
@@ -82,7 +82,7 @@ describe('finishReport', () => {
     const build = { ...completeBuild('Brujah'), bloodPool: null };
     expect(finishReport(build)).toMatchObject({
       blocked: true,
-      itemsLeft: 1,
+      outstandingCount: 1,
       label: 'Finish character · 1 item left',
       refusalMessage: 'This build is not finished: resolve the outstanding items first.',
     });
@@ -92,7 +92,7 @@ describe('finishReport', () => {
     // A new build owes a clan, both rank sets, three allotments and the Blood Pool.
     expect(finishReport(blankBuild('abc'))).toMatchObject({
       blocked: true,
-      itemsLeft: 7,
+      outstandingCount: 7,
       label: 'Finish character · 7 items left',
     });
   });
