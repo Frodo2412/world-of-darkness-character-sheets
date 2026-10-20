@@ -2245,9 +2245,9 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
 - [x] Slice 5: Character concept screen
   - [x] Step 5.1: Sample concepts and the finished Concept text
   - [x] Step 5.2: The Character concept screen
-- [ ] Slice 6: Clan screen
-  - [ ] Step 6.1: Clan cards, search and detail
-  - [ ] Step 6.2: The Clan screen
+- [x] Slice 6: Clan screen
+  - [x] Step 6.1: Clan cards, search and detail
+  - [x] Step 6.2: The Clan screen
 - [ ] Slice 7: Nature & Demeanor screen
   - [ ] Step 7.1: Archetype search and marks
   - [ ] Step 7.2: The Nature & Demeanor screen
