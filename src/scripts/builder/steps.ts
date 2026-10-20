@@ -2,7 +2,7 @@
 // history entry (pushState), so the browser's Back steps back through the screens the player visited.
 
 import type { ScreenId } from '../../domain/v20/creation/rules';
-import { documentTitle, isNavigable, screenFromHash } from './nav';
+import { documentTitle, isNavigable, isPlainClick, popAction, screenFromHash } from './nav';
 
 export interface ScreenRouter {
   /** The screen shown now. */
@@ -49,6 +49,8 @@ export function startSteps(
   root.addEventListener('click', (event) => {
     const target = (event.target as Element).closest<HTMLElement>('[data-screen-link], [data-step-go]');
     if (!target) return;
+    // A link opened in a new tab or window is the browser's to open; a button has no such meaning.
+    if (target.tagName === 'A' && !isPlainClick(event)) return;
     event.preventDefault();
     const screen = (target.dataset.screenLink ?? target.dataset.stepGo) as ScreenId;
     if (isNavigable(screen)) show(screen, { history: 'push', focus: 'heading' });
@@ -56,7 +58,10 @@ export function startSteps(
 
   // The browser's Back and Forward, and an address typed in.
   window.addEventListener('popstate', () => {
-    show(screenFromHash(window.location.hash), { history: 'replace', focus: 'heading' });
+    const action = popAction({ shown: !root.hidden, modalOpen: root.querySelector('dialog:modal') !== null });
+    // A modal dialog holds the page still: the screen behind it stays, and the address is put back to it.
+    if (action === 'restore') window.history.pushState(null, '', `#${current}`);
+    else if (action === 'show') show(screenFromHash(window.location.hash), { history: 'replace', focus: 'heading' });
   });
 
   show(current, { history: 'replace' });

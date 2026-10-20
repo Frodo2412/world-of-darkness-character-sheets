@@ -5,7 +5,7 @@
 import type { V20Build } from '../../domain/v20/creation/build';
 import type { ScreenId } from '../../domain/v20/creation/rules';
 import { screenStatuses } from '../../domain/v20/creation/screens';
-import { footerFor, screenCounter, screenTitle } from './nav';
+import { announceKey, footerFor, screenCounter, screenTitle } from './nav';
 import { showReadout } from './messages';
 
 function renderSidebar(root: HTMLElement, build: V20Build, screen: ScreenId): void {
@@ -43,8 +43,13 @@ function renderFooter(root: HTMLElement, build: V20Build, screen: ScreenId): voi
     // Only an open Continue is routed; a gated one is answered by `wireNavigation`.
     if (gate === undefined) button.dataset.stepGo = next.to;
   }
-  // What a gated Continue said when it was tried is not left behind once the gate lifts.
-  if (gate === undefined) root.querySelector<HTMLElement>('[data-continue-announce]')!.textContent = '';
+  // What a gated Continue said when it was tried is not left behind once the screen or its reason changes.
+  const announce = root.querySelector<HTMLElement>('[data-continue-announce]')!;
+  const key = announceKey(screen, gate?.text);
+  if (announce.dataset.about !== key) {
+    announce.textContent = '';
+    announce.dataset.about = key;
+  }
   showReadout(reason, gate?.text ?? '');
   reason.hidden = gate === undefined;
   goTo.hidden = gate?.goTo === undefined;

@@ -2,7 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { blankBuild } from '../../domain/v20/creation/build';
 import { SCREENS } from '../../domain/v20/creation/rules';
 import { attributesRanked, clan, completeBuild, creation, fresh, play } from '../../domain/v20/creation/testing/play';
-import { documentTitle, footerFor, isNavigable, screenCounter, screenFromHash, screenTitle } from './nav';
+import {
+  announceKey,
+  documentTitle,
+  footerFor,
+  isNavigable,
+  isPlainClick,
+  popAction,
+  screenCounter,
+  screenFromHash,
+  screenTitle,
+} from './nav';
 
 describe('screenCounter', () => {
   it.each([
@@ -94,5 +104,53 @@ describe('footerFor', () => {
 describe('screenTitle', () => {
   it('is the sidebar word for each screen', () => {
     expect(SCREENS.map(({ id }) => screenTitle(id))).toEqual(SCREENS.map(({ title }) => title));
+  });
+});
+
+describe('announceKey', () => {
+  it('is the same while the screen and the reason are the same', () => {
+    expect(announceKey('clan', 'Choose a clan to continue')).toBe(announceKey('clan', 'Choose a clan to continue'));
+  });
+
+  it('changes with the screen, so another screen never keeps the last one\'s reason', () => {
+    expect(announceKey('clan', 'Choose a clan to continue')).not.toBe(announceKey('advantages', 'Choose a clan to continue'));
+  });
+
+  it('changes with the reason, and when the gate lifts', () => {
+    const said = announceKey('attributes', '2 Physical dots remain · Allocate them to continue');
+    expect(announceKey('attributes', '1 Physical dot remains · Allocate it to continue')).not.toBe(said);
+    expect(announceKey('attributes', undefined)).not.toBe(said);
+  });
+});
+
+describe('isPlainClick', () => {
+  const plain = { button: 0, ctrlKey: false, metaKey: false, shiftKey: false, altKey: false };
+
+  it('is a primary-button click with no modifier', () => {
+    expect(isPlainClick(plain)).toBe(true);
+  });
+
+  it.each([
+    ['another button', { button: 1 }],
+    ['Ctrl held', { ctrlKey: true }],
+    ['Meta held', { metaKey: true }],
+    ['Shift held', { shiftKey: true }],
+    ['Alt held', { altKey: true }],
+  ])('is left to the browser with %s', (_, change) => {
+    expect(isPlainClick({ ...plain, ...change })).toBe(false);
+  });
+});
+
+describe('popAction', () => {
+  it('shows the screen the address names when the builder is shown and nothing is modal', () => {
+    expect(popAction({ shown: true, modalOpen: false })).toBe('show');
+  });
+
+  it('puts the address back to the screen shown while a modal dialog is open', () => {
+    expect(popAction({ shown: true, modalOpen: true })).toBe('restore');
+  });
+
+  it.each([true, false])('does nothing once another view has replaced the builder (modal open: %s)', (modalOpen) => {
+    expect(popAction({ shown: false, modalOpen })).toBe('ignore');
   });
 });

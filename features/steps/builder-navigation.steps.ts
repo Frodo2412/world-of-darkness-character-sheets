@@ -21,6 +21,7 @@ import {
   openStep,
   rateTrait,
   screenTitle,
+  settingsDialog,
   stepHeading,
   stepLink,
   stepNav,
@@ -32,6 +33,8 @@ import { escaped } from './support/text';
 /** What the "I choose it" step chooses: the control an earlier step in the scenario pointed at. */
 interface Pointed {
   chosen?: Locator;
+  /** The window a modified click on a link opened. */
+  opened?: Page;
 }
 const pointed = (world: { memory: ScenarioMemory }): Pointed => memoryFor(world, 'navigation', (): Pointed => ({}));
 
@@ -164,6 +167,12 @@ When(saying('I choose ', ' in the sidebar and then ', ''), async ({ page }, firs
 
 When('I use the browser Back button', async ({ page }) => {
   await page.goBack();
+});
+
+When(saying('I choose ', ' in the sidebar holding Shift'), async ({ page, context, memory }, title: string) => {
+  // Shift-clicking a link opens it in a new window, which is the browser's to do.
+  const [opened] = await Promise.all([context.waitForEvent('page'), stepLink(page, title).click({ modifiers: ['Shift'] })]);
+  pointed({ memory }).opened = opened;
 });
 
 When('I choose Back', async ({ page }) => {
@@ -334,4 +343,29 @@ Then('the shell has exactly one level 1 heading', async ({ page }) => {
 
 Then('every shell control has a unique accessible name', async ({ page }) => {
   await expectUniqueControlNames(page.locator('main'));
+});
+
+// Navigation edges (features/character-builder/builder-navigation-edges.feature)
+
+Then('Continue has said its reason', async ({ page }) => {
+  await expect(footer(page).locator('[data-continue-announce]')).toHaveText((await reasonText(page).textContent())!);
+});
+
+Then('nothing is said politely about Continue', async ({ page }) => {
+  await expect(footer(page).locator('[data-continue-announce]')).toBeEmpty();
+});
+
+Then('the link opened in a window of its own', async ({ memory }) => {
+  const { opened } = pointed({ memory });
+  if (opened === undefined) throw new Error('No window was opened');
+  expect(opened.url()).toMatch(/#clan$/);
+});
+
+Then('the Creation settings dialog is still open', async ({ page }) => {
+  await expect(settingsDialog(page)).toBeVisible();
+});
+
+Then(saying('the address names ', ''), async ({ page }, title: string) => {
+  const id = SCREENS.find((screen) => screen.title === screenTitle(title))?.id;
+  await expect(page).toHaveURL(new RegExp(`#${id}$`));
 });
