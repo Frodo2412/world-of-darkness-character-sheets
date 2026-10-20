@@ -1014,11 +1014,13 @@ Feature: The Clan screen
   Scenario: Searching the clans
     When I search the clans for "ven"
     Then only Ventrue is listed
+    And the clan count heading reads "All Clans · 1"
+    And the clan result count "1 clan listed" is announced
 
   Scenario: A search with no match
     When I search the clans for "zzz"
     Then no clans are listed
-    And I am told no clan matches
+    And I am told no clan matches and it is announced
 
   Scenario: Choosing a clan shows its Disciplines
     When I choose Toreador
@@ -1033,11 +1035,12 @@ Feature: The Clan screen
   Scenario: Caitiff has no fixed Disciplines
     When I choose Caitiff
     Then the detail panel says any Discipline is available
-    And I am told Caitiff is a choice distinct from leaving the clan unchosen
+    And the "Not sure yet?" note says Caitiff is a clan choice distinct from leaving the clan unchosen
 
   Scenario: Nosferatu's rule is stated
     When I choose Nosferatu
     Then the detail panel says Appearance is fixed at 0
+    And the detail panel notes that only Nosferatu's Appearance rule changes creation arithmetic
 
   Scenario: Changing clan with nothing to remove does not prompt
     Given a Brujah build with no Discipline dots
@@ -1072,7 +1075,7 @@ Feature: The Clan screen
     Given the platform is "<platform>"
     When I press <keys>
     Then focus is in the clan search field
-    And the hint reads "<hint>"
+    And the clan search hint reads "<hint>"
 
     Examples:
       | platform | keys      | hint   |
@@ -1080,8 +1083,22 @@ Feature: The Clan screen
       | other    | Control+K | Ctrl K |
 
   Scenario: Screen standards
-    Then axe reports no violations at 1512 px and 375 px, also with a clan selected and a confirmation shown
+    When I choose Character concept in the sidebar and then Clan
+    Then focus is on the Clan heading
     And there is exactly one h1
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Screen standards with a clan selected and a confirmation shown
+    Given a Brujah build with creation dots in Celerity, Potence and Presence
+    When I choose Toreador
+    Then the switch confirmation is shown
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
 ```
 
 **Steps:**

@@ -56,9 +56,9 @@ Feature: Advantages step
 
   Scenario: Browsing the clan list with the keyboard removes nothing
     Given a build of clan "Brujah" with Celerity rated 2 and Potence rated 1
-    When using only the keyboard they move the clan choice past "Toreador" and "Tremere" and back to "Brujah"
+    When using only the keyboard they move through the clans past "Toreador" and "Tremere" and back to "Brujah"
     Then the clan is "Brujah" with Celerity rated 2 and Potence rated 1
-    And keyboard focus never left the clan choice
+    And keyboard focus never left the clan list
 
   Scenario: A clan change names every Discipline it removes
     Given a build of clan "Caitiff" with Protean rated 2 and the write-in Discipline "Flight" rated 1

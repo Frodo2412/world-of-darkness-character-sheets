@@ -3,7 +3,7 @@ import { ATTRIBUTE_GROUPS } from '../../src/domain/v20/traits';
 import { attributesRanked, creation, rank } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When } from './fixtures';
 import { openPlayed, openStep, shownStep, startBuild } from './support/builder';
-import { chooseClan, clanNotice, clanPanel, clanSelect } from './support/clan';
+import { chooseClan, clanNotice, clanPanel, clanRadio, expectClanChosen } from './support/clan';
 import {
   expectRated,
   groupNotice,
@@ -196,8 +196,8 @@ Then(
   async ({ page }, name: string, trait: string, rating: string) => {
     await clanPanel(page).getByRole('button', { name: `Keep ${name}` }).click();
     await expect(clanPanel(page)).toBeHidden();
-    await expect(clanSelect(page).locator('option:checked')).toHaveText(name);
-    await expect(clanSelect(page)).toBeFocused();
+    await expectClanChosen(page, name);
+    await expect(clanRadio(page, name)).toBeFocused();
     await expectRated(await traitRating(page, trait), Number(rating));
   },
 );

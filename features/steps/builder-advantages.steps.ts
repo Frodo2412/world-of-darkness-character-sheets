@@ -12,7 +12,7 @@ import {
   shownStep,
 } from './support/builder';
 import { addDiscipline, disciplineNames } from './support/advantages';
-import { CLAN_SELECT_ID, clanNotice, clanPanel, clanSelect, openClanScreen } from './support/clan';
+import { clanNotice, clanPanel, clanRadio, expectClanChosen, focusedClan, openClanScreen } from './support/clan';
 import { expectRated, groupBox, groupReadout, rateTrait, ratingsIn, traitRating } from './support/ranked';
 import { seedSteps } from './builder-seeding.steps';
 import { addCreationDiscipline, creation } from '../../src/domain/v20/creation/testing/play';
@@ -80,17 +80,21 @@ When('they try to set the base generation to {string}', async ({ page }, label: 
 });
 
 When(
-  /^using only the keyboard they move the clan choice past "([^"]+)" and "([^"]+)" and back to "([^"]+)"$/,
+  /^using only the keyboard they move through the clans past "([^"]+)" and "([^"]+)" and back to "([^"]+)"$/,
   async ({ page, memory }, first: string, second: string, back: string) => {
     await openClanScreen(page);
-    const select = clanSelect(page);
-    await select.focus();
-    const options = await select.locator('option').allTextContents();
-    const start = options.indexOf(back);
-    const far = Math.max(options.indexOf(first), options.indexOf(second));
-    for (let index = start; index < far; index += 1) await page.keyboard.press('ArrowDown');
-    for (let index = far; index > start; index -= 1) await page.keyboard.press('ArrowUp');
-    memory.entered.set('focus', await page.evaluate(() => document.activeElement?.id ?? ''));
+    await clanRadio(page, back).focus();
+    const names = await page.locator('[data-clan-card]').evaluateAll((cards) => cards.map((card) => card.getAttribute('data-clan-card')!));
+    const start = names.indexOf(back);
+    const far = Math.max(names.indexOf(first), names.indexOf(second));
+    const keys = [...Array<string>(far - start).fill('ArrowDown'), ...Array<string>(far - start).fill('ArrowUp')];
+    let inList = true;
+    for (const key of keys) {
+      await page.keyboard.press(key);
+      inList &&= (await focusedClan(page)) !== '';
+    }
+    // Walked there and back: focus is on the clan it started from, and was on a clan the whole way.
+    memory.entered.set('focus', inList && (await focusedClan(page)) === back ? 'clan list' : 'elsewhere');
   },
 );
 
@@ -134,14 +138,14 @@ Then(/^they are told (a Discipline needs a name|the build already has \w+)$/, as
 });
 
 Then(/^the clan is "([^"]+)" with (\w+) rated (\d+) and (\w+) rated (\d+)$/, async ({ page }, name: string, a: string, ra: string, b: string, rb: string) => {
-  await expect(clanSelect(page).locator('option:checked')).toHaveText(name);
+  await expectClanChosen(page, name);
   await expect(clanPanel(page)).toBeHidden();
   await expectRated(await traitRating(page, a), Number(ra));
   await expectRated(await traitRating(page, b), Number(rb));
 });
 
-Then('keyboard focus never left the clan choice', async ({ memory }) => {
-  expect(memory.entered.get('focus')).toBe(CLAN_SELECT_ID);
+Then('keyboard focus never left the clan list', async ({ memory }) => {
+  expect(memory.entered.get('focus')).toBe('clan list');
 });
 
 Then('no clan-change notice is shown', async ({ page }) => {

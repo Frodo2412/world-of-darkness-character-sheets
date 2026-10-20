@@ -29,7 +29,7 @@ import {
   screenTitle,
   stepLink,
 } from './support/builder';
-import { chooseClan, clanNotice, clanPanel, clanSelect, openClanScreen } from './support/clan';
+import { chooseClan, clanNotice, clanPanel, clanRadio, expectClanChosen } from './support/clan';
 import { conceptField } from './support/concept';
 import { groupNotice, placeDots, rankGroup, rankSelect, rateTrait, ratingOf, ratingRow, requestRating, stepButton, traitRating } from './support/ranked';
 import { buildEntries, openRoster } from './support/pages';
@@ -151,8 +151,7 @@ Then('the ranks, the clan and the freebie points remaining are as they left them
   await expect(await rankSelect(page, 'Physical')).toHaveValue('primary');
   await expect(await rankSelect(page, 'Social')).toHaveValue('secondary');
   await expect(await rankSelect(page, 'Mental')).toHaveValue('tertiary');
-  await openClanScreen(page);
-  await expect(clanSelect(page).locator('option:checked')).toHaveText('Gangrel');
+  await expectClanChosen(page, 'Gangrel');
   await expect(freebiePointsRemaining(page)).toHaveText('14 remaining');
 });
 
@@ -273,8 +272,11 @@ const KEYBOARD: Record<string, (page: Page, stops: { control: string; visible: b
   },
   'choose the clan "Brujah"': async (page, stops) => {
     await keyboardOpen(page, 'Clan', stops);
-    await tabTo(page, clanSelect(page), stops);
-    await page.keyboard.type('Bru');
+    // The tab stop is the chosen clan; the arrow keys only move focus, and a press chooses.
+    await tabTo(page, clanRadio(page, 'Caitiff'), stops);
+    await page.keyboard.press('Home');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Space');
   },
   'rank Physical primary and raise Strength to 3': async (page, stops) => {
     await keyboardOpen(page, 'Attributes', stops);
@@ -310,7 +312,7 @@ const KEYBOARD: Record<string, (page: Page, stops: { control: string; visible: b
   },
 };
 
-When(/^using only the keyboard they ((?!focus .+ and press)(?!move the clan choice).+)$/, async ({ page, memory }, action: string) => {
+When(/^using only the keyboard they ((?!focus .+ and press)(?!move through the clans).+)$/, async ({ page, memory }, action: string) => {
   if (action === 'activate Finish and press Escape') {
     await keyboardOpen(page, 'Review & resolve', memory.focusStops);
     await tabTo(page, finishButton(page), memory.focusStops);
