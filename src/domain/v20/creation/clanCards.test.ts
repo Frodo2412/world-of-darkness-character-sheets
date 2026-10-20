@@ -10,6 +10,8 @@ import {
   creationRuleNote,
   fixedTraitRule,
   keepLabel,
+  switchLabel,
+  switchQuestion,
 } from './clanCards';
 import { CLANS, CLAN_FIXED_TRAITS, CLAN_NAMES } from './rules';
 
@@ -123,6 +125,13 @@ describe('the label of the button that keeps the current clan', () => {
 
   test('says so when no clan is chosen, rather than ending on a space', () => {
     expect(keepLabel('')).toBe('Keep no clan');
+  });
+});
+
+describe('the words of a clan switch question', () => {
+  test('ask about the clan switched to and offer to switch to it', () => {
+    expect(switchQuestion('Gangrel')).toBe('Switching to Gangrel:');
+    expect(switchLabel('Gangrel')).toBe('Switch to Gangrel');
   });
 });
 

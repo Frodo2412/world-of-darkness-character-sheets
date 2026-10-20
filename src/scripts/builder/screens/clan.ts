@@ -4,7 +4,7 @@
 
 import '../../../styles/builder/clan.css';
 import type { V20Build } from '../../../domain/v20/creation/build';
-import { ANY_DISCIPLINE, clanDetail, clanListView, keepLabel } from '../../../domain/v20/creation/clanCards';
+import { ANY_DISCIPLINE, clanDetail, clanListView, keepLabel, switchLabel, switchQuestion } from '../../../domain/v20/creation/clanCards';
 import { clanChangeEffects, setClan } from '../../../domain/v20/creation/updates';
 import { movedTo } from '../parts/listKeys';
 import { findSearch, wireSearchField } from '../parts/search';
@@ -127,9 +127,9 @@ function askQuestion(root: HTMLElement, build: V20Build, clan: string, effects: 
   const itemList = document.createElement('ul');
   itemList.append(...items);
   const question = document.createElement('p');
-  question.textContent = `Switching to ${clan}:`;
+  question.textContent = switchQuestion(clan);
   text.replaceChildren(question, itemList);
-  switchButton.textContent = `Switch to ${clan}`;
+  switchButton.textContent = switchLabel(clan);
   keepButton.textContent = keepLabel(build.clan);
   actions.hidden = false;
   panel.toggleAttribute('data-open', true);

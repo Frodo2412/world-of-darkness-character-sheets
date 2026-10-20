@@ -68,6 +68,12 @@ export const CAITIFF_NOTE = {
   text: 'Caitiff is a clan choice distinct from leaving the clan unchosen.',
 } as const;
 
+/** The question's opening line when a switch to `clan` would remove something. */
+export const switchQuestion = (clan: string): string => `Switching to ${clan}:`;
+
+/** The button that answers a switch question by switching to `clan`. */
+export const switchLabel = (clan: string): string => `Switch to ${clan}`;
+
 /** The button that answers a switch question by keeping the chosen clan; '' is no clan chosen yet. */
 export const keepLabel = (chosen: string): string => `Keep ${chosen === '' ? 'no clan' : chosen}`;
 
