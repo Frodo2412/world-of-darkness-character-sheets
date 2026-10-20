@@ -1,12 +1,13 @@
 // What still blocks finishing, each item a link to its step, and the Finish button.
 
 import '../../../styles/builder/review.css';
-import { BUILD_STEPS, finishReport, outstanding, type OutstandingItem } from '../../../domain/v20/creation/progress';
+import { finishReport, outstanding, type OutstandingItem } from '../../../domain/v20/creation/progress';
+import { SCREENS } from '../../../domain/v20/creation/rules';
 import { wireFinish } from '../finish';
 import { showReadout } from '../messages';
 import type { ScreenModule } from './index';
 
-const stepTitle = (step: string): string => BUILD_STEPS.find((entry) => entry.step === step)?.title ?? step;
+const stepTitle = (step: string): string => SCREENS.find((entry) => entry.id === step)?.title ?? step;
 
 function renderOutstanding(root: HTMLElement, items: OutstandingItem[]): void {
   for (const intro of root.querySelectorAll<HTMLElement>('[data-outstanding-intro]')) {

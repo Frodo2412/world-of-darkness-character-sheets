@@ -2,18 +2,6 @@ import { describe, expect, test } from 'vitest';
 import * as rules from './rules';
 import { ARCHETYPES, CLANS, CLAN_NAMES, GENERATION_TABLE, STANDARD_FREEBIE_BUDGET } from './rules';
 
-describe('build steps', () => {
-  test('are the five that place dots and text, in order, with no step for the creation settings', () => {
-    expect(rules.BUILD_STEPS.map((entry) => entry.step)).toEqual([
-      'concept',
-      'attributes',
-      'abilities',
-      'advantages',
-      'finishing',
-    ]);
-  });
-});
-
 describe('screens', () => {
   test('are the nine, in order, under their titles', () => {
     expect(rules.SCREENS.map((entry) => [entry.id, entry.title])).toEqual([
@@ -33,11 +21,6 @@ describe('screens', () => {
     expect(rules.PHASES).toEqual(['Character concept', 'Attributes', 'Abilities', 'Advantages', 'Finishing touches']);
     const counts = rules.PHASES.map((phase) => rules.SCREENS.filter((entry) => entry.phase === phase).length);
     expect(counts).toEqual([3, 1, 1, 1, 3]);
-  });
-
-  test('every legacy step is one of the screens', () => {
-    const ids: string[] = rules.SCREENS.map((entry) => entry.id);
-    expect(rules.BUILD_STEPS.filter((entry) => !ids.includes(entry.step))).toEqual([]);
   });
 });
 

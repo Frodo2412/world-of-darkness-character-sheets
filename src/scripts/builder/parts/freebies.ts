@@ -1,4 +1,4 @@
-// The freebie budget's words: what is left, kept in view by the bar on every step, and the dots each
+// The freebie budget's words: what is left, kept in view by its row on every screen, and the dots each
 // collapsible section holds.
 
 import { freebieReport } from '../../../domain/v20/creation/progress';

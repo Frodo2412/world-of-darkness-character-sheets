@@ -4,10 +4,10 @@ import Advantages from '../components/builder/Advantages.astro';
 import Attributes from '../components/builder/Attributes.astro';
 import Concept from '../components/builder/Concept.astro';
 import FinishingTouches from '../components/builder/FinishingTouches.astro';
-import FreebieBar from '../components/builder/FreebieBar.astro';
+import ScreenNav from '../components/builder/ScreenNav.astro';
+import ScreenPanel from '../components/builder/ScreenPanel.astro';
 import SettingsDialog from '../components/builder/SettingsDialog.astro';
-import StepNav from '../components/builder/StepNav.astro';
-import StepPanel from '../components/builder/StepPanel.astro';
+import Sidebar from '../components/builder/Sidebar.astro';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
 import '../styles/builder.css';
@@ -22,13 +22,23 @@ import '../styles/builder.css';
 				<h1>Build a character</h1>
 				<button type="button" data-settings-open>Creation settings</button>
 			</div>
-			<StepNav />
-			<FreebieBar />
-			<StepPanel step="concept"><Concept /></StepPanel>
-			<StepPanel step="attributes"><Attributes /></StepPanel>
-			<StepPanel step="abilities"><Abilities /></StepPanel>
-			<StepPanel step="advantages"><Advantages /></StepPanel>
-			<StepPanel step="finishing"><FinishingTouches /></StepPanel>
+			<div class="builder-shell">
+				<Sidebar />
+				<div class="builder-main">
+					<!-- The freebie points remaining, kept in view on every screen until the "Your character" panel takes them. -->
+					<p class="builder-freebies" role="status" aria-atomic="true" data-freebie-remaining data-freebie-bar></p>
+					<ScreenPanel screen="concept"><Concept /></ScreenPanel>
+					<ScreenPanel screen="clan" />
+					<ScreenPanel screen="natureDemeanor" />
+					<ScreenPanel screen="attributes"><Attributes /></ScreenPanel>
+					<ScreenPanel screen="abilities"><Abilities /></ScreenPanel>
+					<ScreenPanel screen="advantages"><Advantages /></ScreenPanel>
+					<ScreenPanel screen="finishing"><FinishingTouches /></ScreenPanel>
+					<ScreenPanel screen="review" />
+					<ScreenPanel screen="summary" />
+					<ScreenNav />
+				</div>
+			</div>
 			<SettingsDialog />
 			<dialog id="finish-dialog" aria-labelledby="finish-dialog-title" aria-describedby="finish-dialog-message" data-finish-dialog>
 				<h2 id="finish-dialog-title">Finish with unspent freebie points?</h2>

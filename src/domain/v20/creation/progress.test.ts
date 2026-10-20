@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
 import { completeBuild, creation, generation, play } from './testing/play';
-import { BACKGROUNDS, BUILD_STEPS } from './rules';
-import { bloodPoolHint, conceptReport, finishReport, isFinishable, report, settingsReport, stepStatuses } from './progress';
+import { BACKGROUNDS } from './rules';
+import { bloodPoolHint, conceptReport, finishReport, isFinishable, report, settingsReport } from './progress';
 import { setBaseGeneration, setClan, setConceptText, setExtraFreebies } from './updates';
 
 function played(generation: number, extra: string) {
@@ -51,7 +51,6 @@ describe('report', () => {
     expect(report(build)).toMatchObject({
       settings: settingsReport(build),
       concept: conceptReport(build),
-      steps: stepStatuses(build),
     });
   });
 });
@@ -117,18 +116,6 @@ describe('conceptReport', () => {
       fields: { name: 'Lucita', player: '', chronicle: '', nature: '', demeanor: '', concept: '', sire: '' },
       clan: 'Lasombra',
     });
-  });
-});
-
-describe('stepStatuses', () => {
-  test('has a status entry for exactly the builder steps', () => {
-    expect(Object.keys(stepStatuses(blankBuild('abc')))).toEqual(BUILD_STEPS.map((entry) => entry.step));
-  });
-
-  test('the concept step needs a clan until one is chosen', () => {
-    const build = blankBuild('abc');
-    expect(stepStatuses(build).concept).toBe('clan needed');
-    expect(stepStatuses(setClan(build, 'Toreador').build).concept).toBe('');
   });
 });
 

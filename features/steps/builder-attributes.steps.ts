@@ -3,6 +3,7 @@ import { ATTRIBUTE_GROUPS } from '../../src/domain/v20/traits';
 import { attributesRanked, creation, rank } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When } from './fixtures';
 import {
+  builderField,
   expectRated,
   groupNotice,
   groupReadout,
@@ -114,7 +115,7 @@ Given('a build with ranked Attribute groups, an overspent group and a refusal sh
 
 When(/^they choose the clan "([^"]+)" and confirm$/, async ({ page }, name: string) => {
   await openStep(page, 'Concept');
-  await page.getByLabel('Clan', { exact: true }).selectOption({ label: name });
+  await builderField(page, 'Clan').selectOption({ label: name });
   await clanPanel(page).getByRole('button', { name: `Switch to ${name}` }).click();
 });
 
@@ -201,8 +202,8 @@ Then(
   async ({ page }, name: string, trait: string, rating: string) => {
     await clanPanel(page).getByRole('button', { name: `Keep ${name}` }).click();
     await expect(clanPanel(page)).toBeHidden();
-    await expect(page.getByLabel('Clan', { exact: true }).locator('option:checked')).toHaveText(name);
-    await expect(page.getByLabel('Clan', { exact: true })).toBeFocused();
+    await expect(builderField(page, 'Clan').locator('option:checked')).toHaveText(name);
+    await expect(builderField(page, 'Clan')).toBeFocused();
     await expectRated(await traitRating(page, trait), Number(rating));
   },
 );

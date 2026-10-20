@@ -48,7 +48,7 @@ import {
   RANKS,
   type ClanName,
   type Rank,
-  BUILD_STEPS,
+  SCREENS,
 } from './rules';
 
 /** How a rating change is paid for: the creation steps' dots, or freebie points. */
@@ -68,7 +68,7 @@ function wholeNumber(text: string, range: Range): number | undefined {
 }
 
 const stepTitle = (step: string): string =>
-  BUILD_STEPS.find((entry) => entry.step === step)?.title ?? step;
+  SCREENS.find((entry) => entry.id === step)?.title ?? step;
 
 function joined(names: readonly string[]): string {
   if (names.length <= 1) return names.join('');

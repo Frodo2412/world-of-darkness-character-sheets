@@ -1,0 +1,17 @@
+---
+// Back and Continue, once for whichever screen is shown. The shell fills the labels and, while a
+// pool is unfinished, the reason; a gated Continue stays focusable (aria-disabled) and says why.
+---
+
+<div class="builder-footer" data-screen-nav>
+	<div class="builder-reason-line">
+		<p id="continue-reason" class="builder-reason" data-continue-reason hidden></p>
+		<button type="button" data-continue-go hidden></button>
+	</div>
+	<p class="visually-hidden" role="status" data-continue-announce></p>
+	<div class="builder-footer-actions">
+		<button type="button" data-back></button>
+		<button type="button" class="builder-continue" data-continue aria-describedby="continue-reason" hidden></button>
+	</div>
+	<a href="#finishing" class="review-link" data-review>Review and finish</a>
+</div>

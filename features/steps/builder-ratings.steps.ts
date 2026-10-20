@@ -12,7 +12,6 @@ import {
   rankSelect,
   rateTrait,
   requestRating,
-  stepNav,
   traitName,
   traitRating,
 } from './support/builder';
@@ -119,10 +118,6 @@ Then(/^(\w+) and (\w+) have no rank$/, async ({ page }, a: string, b: string) =>
 
 Then(/^no message is shown beside the (\w+) group$/, async ({ page }, group: string) => {
   await expect(await groupNotice(page, group)).toHaveText('');
-});
-
-Then(/^the step navigation marks the (\w+) step "([^"]+)"$/, async ({ page }, step: string, status: string) => {
-  await expect(stepNav(page).getByRole('link', { name: step, exact: true })).toHaveAccessibleDescription(status);
 });
 
 When(

@@ -32,7 +32,8 @@ import {
   settingsDialog,
   shownStep,
   startBuild,
-  stepNav,
+  screenTitle,
+  stepLink,
   traitRating,
 } from './support/builder';
 import { buildEntries, openRoster } from './support/pages';
@@ -266,9 +267,9 @@ async function tabTo(page: Page, target: Locator, stops: { control: string; visi
 
 /** Opens a step from the navigation with the keyboard alone. */
 async function keyboardOpen(page: Page, step: string, stops: { control: string; visible: boolean }[]): Promise<void> {
-  await tabTo(page, stepNav(page).getByRole('link', { name: step, exact: true }), stops);
+  await tabTo(page, stepLink(page, step), stops);
   await page.keyboard.press('Enter');
-  await expect(shownStep(page).getByRole('heading', { name: step, level: 2 })).toBeFocused();
+  await expect(shownStep(page).getByRole('heading', { name: screenTitle(step), level: 2 })).toBeFocused();
 }
 
 const KEYBOARD: Record<string, (page: Page, stops: { control: string; visible: boolean }[]) => Promise<void>> = {

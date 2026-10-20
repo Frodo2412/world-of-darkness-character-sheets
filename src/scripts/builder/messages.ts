@@ -5,7 +5,7 @@
 //     named by the refused control's `aria-describedby`;
 //  3. budgets — each readout is its own live region, written only when it changes.
 
-import { BUILD_STEPS, type BuildStep } from '../../domain/v20/creation/rules';
+import { SCREENS, type BuildStep } from '../../domain/v20/creation/rules';
 import { clearStatus, showStatus } from '../status';
 
 export const NOT_SAVED =
@@ -58,7 +58,7 @@ function noticeSlotFor(control: HTMLElement): HTMLElement | undefined {
 }
 
 const stepTitle = (step: BuildStep): string =>
-  BUILD_STEPS.find((entry) => entry.step === step)!.title;
+  SCREENS.find((entry) => entry.id === step)!.title;
 
 /** A link that opens `step`, for a message that names where to fix something. */
 function stepLink(step: BuildStep): HTMLAnchorElement {

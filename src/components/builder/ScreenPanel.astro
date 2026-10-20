@@ -1,0 +1,17 @@
+---
+// One builder screen: a heading-led region. The router shows one panel at a time and moves focus to
+// its heading; a screen that is not built yet is this heading alone.
+import { SCREENS, type ScreenId } from '../../domain/v20/creation/rules';
+
+interface Props {
+	screen: ScreenId;
+}
+
+const { screen } = Astro.props;
+const { title } = SCREENS.find((entry) => entry.id === screen)!;
+---
+
+<section class="builder-step" data-step={screen} aria-labelledby={`step-${screen}-heading`} hidden>
+	<h2 id={`step-${screen}-heading`} tabindex="-1">{title}</h2>
+	<slot />
+</section>

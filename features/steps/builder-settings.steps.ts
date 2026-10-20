@@ -29,6 +29,7 @@ import {
   settingsDialog,
   startBuild,
   stepHeading,
+  stepLink,
   stepNav,
   storedBuild,
   traitRating,
@@ -642,7 +643,7 @@ Then('the step navigation has no Settings step', async ({ page }) => {
 
 Then('the builder opens on the concept step', async ({ page }) => {
   await expect(stepHeading(page, 'Concept')).toBeVisible();
-  await expect(stepNav(page).getByRole('link', { name: 'Concept', exact: true })).toHaveAttribute('aria-current', 'step');
+  await expect(stepLink(page, 'Concept')).toHaveAttribute('aria-current', 'step');
 });
 
 When(

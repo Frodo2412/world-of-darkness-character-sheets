@@ -6,7 +6,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 import { Then, When } from './fixtures';
 import { expectUniqueControlNames } from './support/accessibility';
-import { openFreebieSections, openStep, shownStep } from './support/builder';
+import { openFreebieSections, openStep, shownStep, stepNav } from './support/builder';
 import { openRoster } from './support/pages';
 import { putRosterInState } from './support/library-states';
 
@@ -27,10 +27,7 @@ async function wcagViolations(page: Page): Promise<string[]> {
 When(/^the "?([^"]+?)"? step is checked$/, async ({ page, memory }, step: string) => {
   const heading = page.getByRole('heading', { name: step, level: 2, exact: false });
   if (!(await heading.isVisible())) {
-    await page
-      .getByRole('navigation', { name: 'Build steps' })
-      .getByRole('link', { name: new RegExp(`^${step}`, 'i') })
-      .click();
+    await stepNav(page).getByRole('link', { name: new RegExp(`^(Character )?${step}`, 'i') }).click();
   }
   await expect(heading).toBeVisible();
   memory.violations = await wcagViolations(page);

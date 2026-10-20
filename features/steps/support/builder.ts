@@ -172,17 +172,30 @@ export async function openSavedBuild(page: Page, build: V20Build): Promise<void>
   await watchAnnouncements(page);
 }
 
+/** The screen list (the sidebar), whose items are the old steps' navigation. */
 export const stepNav = (page: Page): Locator =>
-  page.getByRole('navigation', { name: 'Build steps' });
+  page.getByRole('navigation', { name: 'Build screens' });
+
+/**
+ * The sidebar's name for a screen. The scenarios that predate the sidebar say "Concept" for the screen
+ * the sidebar calls "Character concept"; every other name is the same, whatever its case.
+ */
+export function screenTitle(title: string): string {
+  return /^concept$/i.test(title) ? 'Character concept' : title;
+}
+
+/** A screen's link in the sidebar. */
+export const stepLink = (page: Page, title: string): Locator =>
+  stepNav(page).getByRole('link', { name: screenTitle(title), exact: true });
 
 export const stepHeading = (page: Page, title: string): Locator =>
-  page.getByRole('heading', { name: title, level: 2, exact: true });
+  page.getByRole('heading', { name: screenTitle(title), level: 2, exact: true });
 
-/** Opens a step from the step navigation, unless it is already shown. */
+/** Opens a screen from the sidebar, unless it is already shown. */
 export async function openStep(page: Page, title: string): Promise<void> {
   await closeCreationSettings(page);
   if (!(await stepHeading(page, title).isVisible())) {
-    await stepNav(page).getByRole('link', { name: title, exact: true }).click();
+    await stepLink(page, title).click();
   }
   await expect(stepHeading(page, title)).toBeVisible();
 }

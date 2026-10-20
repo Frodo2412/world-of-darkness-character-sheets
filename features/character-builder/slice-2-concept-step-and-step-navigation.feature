@@ -64,17 +64,6 @@ Feature: Concept step and step navigation
       | Concept           | Abilities         |
       | Abilities         | Concept           |
 
-  Scenario: Next and Previous walk the steps in order
-    Given a player on the "Concept" step of a new build
-    When they use Next
-    Then the "Attributes" step is shown
-    And using Previous shows the "Concept" step
-
-  Scenario: The step navigation says what a step still needs
-    Given a player who has started building a character
-    When they look at the step navigation
-    Then the Concept step is marked "clan needed"
-
   Scenario: A reload returns to the step that was open
     Given a player on the "Concept" step of a new build
     When they reload the builder
@@ -88,7 +77,7 @@ Feature: Concept step and step navigation
   Scenario: The page title names the step and the build
     Given a build named "Lucita"
     When they open the "Concept" step
-    Then the page title is "Concept – Lucita"
+    Then the page title is "Character concept – Lucita"
 
   Scenario: The concept step is accessible and fits a phone
     Given a build named "Lucita" of clan "Lasombra"

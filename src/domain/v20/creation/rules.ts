@@ -130,20 +130,6 @@ export type ScreenId = (typeof SCREENS)[number]['id'];
 /** The screen an allotment, a violation or an outstanding item points at. */
 export type BuildStep = ScreenId;
 
-/**
- * The five steps the builder shows until the sidebar replaces them, with the
- * title each is shown under. Legacy: removed with the step router.
- */
-export const BUILD_STEPS = [
-  { step: 'concept', title: 'Concept' },
-  { step: 'attributes', title: 'Attributes' },
-  { step: 'abilities', title: 'Abilities' },
-  { step: 'advantages', title: 'Advantages' },
-  { step: 'finishing', title: 'Finishing touches' },
-] as const satisfies readonly { step: BuildStep; title: string }[];
-
-export type LegacyStep = (typeof BUILD_STEPS)[number]['step'];
-
 /** Every Discipline a clan in the catalogue has, alphabetically. */
 export const DISCIPLINES = [
   'Animalism',

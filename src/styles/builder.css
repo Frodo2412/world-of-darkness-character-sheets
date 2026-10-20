@@ -1,4 +1,4 @@
-/* The builder: one step at a time under a step navigation that wraps on a
+/* The builder: one screen at a time beside the screen list, which stacks above on a
    phone. Fields stack; every control is at least 24 px with room around it. */
 
 /* The title with the settings button beside it; the button drops below on a phone. */
@@ -19,43 +19,189 @@
 	gap: var(--space-2);
 }
 
-.step-nav ol {
-	list-style: none;
-	padding: 0;
-	margin: 0;
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--space-2);
+/* The shell: the screen list beside the screen. On a phone the list stacks above it (from the shared breakpoint down). */
+.builder-shell {
+	display: grid;
+	grid-template-columns: 15rem minmax(0, 1fr);
+	align-items: start;
+	gap: var(--space-4);
+	margin-block-start: var(--space-3);
 }
 
-.step-nav li {
-	display: flex;
-	flex-direction: column;
+.builder-main {
+	min-inline-size: 0;
+}
+
+.builder-sidebar {
+	position: sticky;
+	inset-block-start: var(--space-3);
 	border: var(--stroke) solid var(--color-line);
-	border-radius: var(--radius-badge);
+	border-radius: var(--radius-card);
 	background: var(--color-surface);
-	padding: var(--space-1) var(--space-2);
+	padding: var(--space-card) var(--space-3);
 }
 
-.step-nav a {
+.builder-counter {
+	margin: 0 0 var(--space-2);
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+}
+
+.builder-phases,
+.builder-screens {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+/* A phase: its number, then (for a phase of several screens) its name, then its screens indented beneath. */
+.builder-phase {
+	display: grid;
+	grid-template-columns: 1.75rem minmax(0, 1fr);
+	margin-block-end: var(--space-2);
+}
+
+.builder-phase-number {
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+	padding-block-start: var(--space-1);
+}
+
+.builder-phase-title,
+.builder-screens {
+	grid-column: 2;
+}
+
+.builder-phase-title {
+	margin: 0;
+	padding-block: var(--space-1);
+	color: var(--color-muted);
+	font-weight: 600;
+}
+
+.builder-phase-title + .builder-screens {
+	padding-inline-start: var(--space-3);
+}
+
+.builder-screen {
+	display: flex;
+	gap: var(--space-2);
+	align-items: flex-start;
+	padding-block: var(--space-1);
+}
+
+/* The state as an icon too; the words beside it say the same, so the icon is only a mark. */
+.builder-screen-icon {
+	flex: none;
+	inline-size: 1rem;
+	text-align: center;
+	line-height: 1.5rem;
+}
+
+.builder-screen[data-state='Done'] .builder-screen-icon::before {
+	content: '✓';
+}
+
+.builder-screen[data-state='To do'] .builder-screen-icon::before {
+	content: '○';
+}
+
+.builder-screen[data-state='Optional'] .builder-screen-icon::before {
+	content: '◇';
+}
+
+.builder-screen-body {
+	display: grid;
+	min-inline-size: 0;
+}
+
+.builder-screen a {
 	min-block-size: 1.5rem;
 	display: inline-flex;
 	align-items: center;
 	text-decoration: none;
 }
 
-.step-nav a[aria-current='step'] {
+.builder-screen a[aria-current='step'] {
 	font-weight: 700;
 	text-decoration: underline;
 }
 
-.step-status {
+.builder-screen-title {
+	min-block-size: 1.5rem;
+	display: inline-flex;
+	align-items: center;
 	color: var(--color-muted);
+}
+
+.builder-screen-note {
+	color: var(--color-text-status);
 	font-size: var(--text-small);
 }
 
-.step-status:empty {
-	display: none;
+/* "Current" and the state read as one phrase: Current · Done. */
+.builder-screen-note [data-screen-current]:not([hidden])::after {
+	content: ' · ';
+}
+
+/* The freebie points remaining stay in view above every screen. */
+.builder-freebies {
+	position: sticky;
+	inset-block-start: 0;
+	z-index: 2;
+	background: var(--color-page);
+	border-block-end: var(--stroke) solid var(--color-line);
+	margin: 0;
+	padding-block: var(--space-2);
+	font-weight: 600;
+}
+
+/* Back and Continue, with why Continue is not yet available beside them. */
+.builder-footer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-4);
+	margin-block-start: var(--space-5);
+}
+
+.builder-reason-line {
+	order: 1;
+	flex: 1 1 14rem;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1) var(--space-2);
+}
+
+.builder-reason-line .builder-reason {
+	margin: 0;
+}
+
+.builder-footer-actions {
+	order: 2;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	margin-inline-start: auto;
+}
+
+.builder-footer .review-link {
+	order: 3;
+	flex-basis: 100%;
+}
+
+/* The footer's way to the outstanding list from every other screen. */
+.review-link {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--control-size);
+}
+
+.builder-continue[aria-disabled='true'] {
+	color: var(--color-muted);
+	cursor: not-allowed;
 }
 
 .builder-step h2:focus {
@@ -175,14 +321,6 @@
 	font-size: var(--text-h2);
 }
 
-.step-pager {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-between;
-	gap: var(--space-2);
-	margin-block-start: var(--space-5);
-}
-
 /* Ranked groups: side by side when there is room, stacked on a phone. */
 .builder-columns {
 	display: grid;
@@ -234,7 +372,7 @@
 	justify-content: flex-end;
 }
 
-/* The freebie bar stays at the top; group headings stick below it, and a
+/* The freebie row stays at the top; group headings stick below it, and a
    focused control scrolls clear of both. */
 html {
 	scroll-padding-block-start: 7rem;
@@ -319,6 +457,14 @@ html {
 
 /* The breakpoint every screen shares: from here down (a phone, 375 px and 320 px included) the pieces tighten and stack. */
 @media (max-width: 40rem) {
+	.builder-shell {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.builder-sidebar {
+		position: static;
+	}
+
 	.builder-card {
 		padding-inline: var(--space-2);
 	}

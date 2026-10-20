@@ -5,7 +5,7 @@ Feature: Finishing a build
     When they open the finishing touches step
     Then the outstanding list shows exactly
       | item                         | step              |
-      | Choose a clan                | Concept           |
+      | Choose a clan                | Character concept |
       | Rank the Attribute groups    | Attributes        |
       | Rank the Ability groups      | Abilities         |
       | Place 3 Discipline dots      | Advantages        |

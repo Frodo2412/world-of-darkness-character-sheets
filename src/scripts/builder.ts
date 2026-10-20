@@ -6,6 +6,7 @@ import { buildKeyFor, type BuildStore } from '../storage/buildStore';
 import type { CharacterStore } from '../storage/characterStore';
 import { clearNotices, reportSave, showNotices, showRefusal } from './builder/messages';
 import { pageState, showView } from './builder/pageState';
+import { renderNavigation, wireNavigation } from './builder/navigation';
 import { wireDialog } from './builder/parts/dialog';
 import { screenModules } from './builder/screens';
 import { startSteps } from './builder/steps';
@@ -16,13 +17,17 @@ const root = document.querySelector<HTMLElement>('#builder')!;
 
 function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterStore): void {
   let build = loaded;
-  const router = startSteps(root, () => build.concept.name.trim() || 'Unnamed build');
+  const router = startSteps(
+    root,
+    () => build.concept.name,
+    (screen) => renderNavigation(root, build, screen),
+  );
 
   function render(): void {
     const current = report(build);
     for (const screen of screenModules) screen.render(build, root);
     renderControls(root, current);
-    router.renderStatuses(current);
+    renderNavigation(root, build, router.current());
     router.updateTitle();
   }
 
@@ -51,6 +56,7 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
 
   const wiring: Wiring = { commit, current: () => build, builds: store, characters, render };
   wireControls(root, wiring);
+  wireNavigation(root);
   for (const screen of screenModules) screen.wire(root, wiring);
   wireDialog(
     root.querySelector<HTMLDialogElement>('[data-settings-dialog]')!,

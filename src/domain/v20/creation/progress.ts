@@ -16,10 +16,8 @@ import {
   rating,
   traitLabel,
 } from './ratings';
-import { FREEBIE_COSTS, RANKED_ALLOTMENTS, SCREENS, type BuildStep, type LegacyStep, type Rank } from './rules';
+import { FREEBIE_COSTS, RANKED_ALLOTMENTS, SCREENS, type BuildStep, type Rank } from './rules';
 import { plural } from './wording';
-
-export { BUILD_STEPS, type BuildStep, type LegacyStep } from './rules';
 
 export interface SettingsReport {
   baseGeneration: number;
@@ -114,8 +112,6 @@ export interface BuildReport {
   bloodPoolHint: string;
   outstanding: OutstandingItem[];
   finish: FinishReport;
-  /** A short text status per legacy step, '' when there is nothing to say. */
-  steps: Record<LegacyStep, string>;
 }
 
 export function settingsReport(build: V20Build): SettingsReport {
@@ -273,27 +269,6 @@ export function outstanding(build: V20Build): OutstandingItem[] {
 
 export const unspentFreebies = (build: V20Build): number => Math.max(0, freebiesRemaining(build));
 
-/** The step navigation's word on each step, from the same reads as the outstanding list. */
-export function stepStatuses(build: V20Build, items: OutstandingItem[] = outstanding(build)): Record<LegacyStep, string> {
-  const states = allotmentStates(build);
-  const statusOf = (step: BuildStep): string => {
-    const own = states.filter((state) => state.step === step);
-    if (own.some((state) => state.remaining < 0)) return 'overspent';
-    if (own.some((state) => state.kind === 'ranked' && state.rank === '')) return 'ranks needed';
-    const left = own.reduce((sum, state) => sum + Math.max(0, state.remaining), 0);
-    if (left > 0) return `${plural(left, 'dot')} left`;
-    if (items.some((item) => item.step === step)) return 'check limits';
-    return '';
-  };
-  return {
-    concept: build.clan === '' ? 'clan needed' : '',
-    attributes: statusOf('attributes'),
-    abilities: statusOf('abilities'),
-    advantages: statusOf('advantages'),
-    finishing: items.some((item) => item.step === 'finishing') ? 'check limits' : '',
-  };
-}
-
 /** The range shown beside the Blood Pool field, which follows the effective generation. */
 export function bloodPoolHint(build: V20Build): string {
   return `0 to ${limits(build).bloodPoolMax} at ${ordinal(effectiveGeneration(build))} generation`;
@@ -333,6 +308,5 @@ export function report(build: V20Build): BuildReport {
     bloodPoolHint: bloodPoolHint(build),
     outstanding: items,
     finish: finishReport(build, items),
-    steps: stepStatuses(build, items),
   };
 }

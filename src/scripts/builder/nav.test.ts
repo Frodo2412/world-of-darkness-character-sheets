@@ -1,0 +1,98 @@
+import { describe, expect, it } from 'vitest';
+import { blankBuild } from '../../domain/v20/creation/build';
+import { SCREENS } from '../../domain/v20/creation/rules';
+import { attributesRanked, clan, completeBuild, creation, fresh, play } from '../../domain/v20/creation/testing/play';
+import { documentTitle, footerFor, isNavigable, screenCounter, screenFromHash, screenTitle } from './nav';
+
+describe('screenCounter', () => {
+  it.each([
+    ['concept', '1 of 9 screens'],
+    ['natureDemeanor', '3 of 9 screens'],
+    ['review', '8 of 9 screens'],
+    ['summary', '9 of 9 screens'],
+  ] as const)('reads %s as %s', (screen, text) => {
+    expect(screenCounter(screen)).toBe(text);
+  });
+});
+
+describe('screenFromHash', () => {
+  it.each(SCREENS.filter(({ id }) => id !== 'summary').map(({ id }) => id))('names %s with or without the #', (id) => {
+    expect(screenFromHash(`#${id}`)).toBe(id);
+    expect(screenFromHash(id)).toBe(id);
+  });
+
+  it.each(['', '#', '#nonsense', '#summary', '#Clan', '#clan/', '#__proto__'])('shows the first screen for %j', (hash) => {
+    expect(screenFromHash(hash)).toBe('concept');
+  });
+});
+
+describe('isNavigable', () => {
+  it('is every screen but the Character sheet, which finishing reaches', () => {
+    expect(SCREENS.filter(({ id }) => !isNavigable(id)).map(({ id }) => id)).toEqual(['summary']);
+  });
+});
+
+describe('documentTitle', () => {
+  it('names the screen and the character', () => {
+    expect(documentTitle('clan', 'Éloïse Voss')).toBe('Clan – Éloïse Voss');
+  });
+
+  it.each(['', '   '])('calls a build with the name %j "Unnamed character"', (name) => {
+    expect(documentTitle('natureDemeanor', name)).toBe('Nature & Demeanor – Unnamed character');
+  });
+
+  it('ignores spaces round the name', () => {
+    expect(documentTitle('concept', '  Lucita ')).toBe('Character concept – Lucita');
+  });
+});
+
+describe('footerFor', () => {
+  const build = blankBuild('abc');
+
+  it('sends Back from the first screen to the roster, as "All drafts"', () => {
+    expect(footerFor(build, 'concept').back).toEqual({ label: 'All drafts' });
+  });
+
+  it.each(SCREENS.slice(1).map((screen, index) => [screen.id, SCREENS[index].id] as const))(
+    'sends Back from %s to %s',
+    (screen, previous) => {
+      expect(footerFor(build, screen).back).toEqual({ label: 'Back', to: previous });
+    },
+  );
+
+  it('names the next screen on Continue', () => {
+    expect(footerFor(build, 'concept').next).toMatchObject({ label: 'Continue to Clan', to: 'clan' });
+    expect(footerFor(build, 'finishing').next).toMatchObject({ label: 'Continue to Review & resolve', to: 'review' });
+  });
+
+  it('has no Continue on Review & resolve (it finishes) or the Character sheet', () => {
+    expect(footerFor(build, 'review').next).toBeUndefined();
+    expect(footerFor(build, 'summary').next).toBeUndefined();
+  });
+
+  it('carries the gate the domain states, and its go-to', () => {
+    expect(footerFor(build, 'clan').next?.reason).toEqual({ text: 'Choose a clan to continue' });
+    expect(footerFor(build, 'advantages').next?.reason).toEqual({
+      text: 'Choose a clan to place Discipline dots',
+      goTo: 'clan',
+    });
+  });
+
+  it('lifts the gate once the pool is placed', () => {
+    const ranked = play(fresh(), clan('Brujah'), ...attributesRanked);
+    expect(footerFor(ranked, 'attributes').next?.reason).toBeDefined();
+    expect(footerFor(completeBuild('Brujah'), 'attributes').next?.reason).toBeUndefined();
+  });
+
+  it('gates only the screens the domain gates', () => {
+    const unplaced = play(completeBuild('Brujah'), creation('attribute:strength', 2));
+    const gated = SCREENS.filter(({ id }) => footerFor(unplaced, id).next?.reason !== undefined).map(({ id }) => id);
+    expect(gated).toEqual(['attributes']);
+  });
+});
+
+describe('screenTitle', () => {
+  it('is the sidebar word for each screen', () => {
+    expect(SCREENS.map(({ id }) => screenTitle(id))).toEqual(SCREENS.map(({ title }) => title));
+  });
+});

@@ -8,7 +8,7 @@ import {
   openStep,
   startBuild,
   stepHeading,
-  stepNav,
+  stepLink,
 } from './support/builder';
 
 const clanSelect = (page: Page) => builderField(page, 'Clan');
@@ -64,15 +64,7 @@ When('they choose the clan {string}', async ({ page }, clan: string) => {
 });
 
 When('they open the {string} step from the step navigation', async ({ page }, title: string) => {
-  await stepNav(page).getByRole('link', { name: title, exact: true }).click();
-});
-
-When('they use Next', async ({ page }) => {
-  await page.getByRole('button', { name: /^Next: / }).click();
-});
-
-When('they look at the step navigation', async ({ page }) => {
-  await expect(stepNav(page)).toBeVisible();
+  await stepLink(page, title).click();
 });
 
 When('they open the builder with a step address that does not exist', async ({ page }) => {
@@ -139,10 +131,7 @@ Then(
 
 Then('the {string} step is shown and marked as the current step', async ({ page }, title: string) => {
   await expect(stepHeading(page, title)).toBeVisible();
-  await expect(stepNav(page).getByRole('link', { name: title, exact: true })).toHaveAttribute(
-    'aria-current',
-    'step',
-  );
+  await expect(stepLink(page, title)).toHaveAttribute('aria-current', 'step');
   await expect(page.locator('#builder [data-step]:visible')).toHaveCount(1);
 });
 
@@ -153,20 +142,6 @@ Then('keyboard focus is on the {string} heading', async ({ page }, title: string
 Then('the {string} step is shown', async ({ page }, title: string) => {
   await expect(stepHeading(page, title)).toBeVisible();
   await expect(page.locator('#builder [data-step]:visible')).toHaveCount(1);
-});
-
-Then('using Previous shows the {string} step', async ({ page }, title: string) => {
-  await page.getByRole('button', { name: /^Previous: / }).click();
-  await expect(stepHeading(page, title)).toBeVisible();
-});
-
-Then('the Concept step is marked {string}', async ({ page }, status: string) => {
-  const link = stepNav(page).getByRole('link', { name: 'Concept', exact: true });
-  await expect(link).toHaveAccessibleDescription(status);
-  const item = stepNav(page)
-    .getByRole('listitem')
-    .filter({ has: page.getByRole('link', { name: 'Concept', exact: true }) });
-  await expect(item).toContainText(status);
 });
 
 Then('the page title is {string}', async ({ page }, title: string) => {

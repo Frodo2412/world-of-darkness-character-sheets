@@ -84,7 +84,6 @@ Feature: Attributes step
     When they rank Physical tertiary
     Then Physical is reported in words as overspent by 4 dots, with the instruction to lower Physical traits by 4
     And the Physical ratings are unchanged
-    And the step navigation marks the Attributes step "overspent"
 
   Scenario: Lowering an overspent group clears the report
     Given a build whose Physical group is overspent by 1 dot

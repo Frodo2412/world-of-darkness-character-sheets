@@ -6,7 +6,7 @@ import { allotmentStates } from './allotments';
 import type { BuildTraitRef, V20Build } from './build';
 import { freebiesRemaining, freebiesSpent } from './freebies';
 import { effectiveGeneration, limits, maximumFor, violations } from './limits';
-import { outstanding, report, stepStatuses, unspentFreebies } from './progress';
+import { outstanding, report, unspentFreebies } from './progress';
 import { rating } from './ratings';
 import type { UpdateResult } from './result';
 import {
@@ -104,7 +104,6 @@ describe('ranked groups', () => {
     build = play(build, creation('attribute:dexterity', 3), rank('physical', 'tertiary'));
     expect(remaining(build, 'physical')).toBe(-2);
     expect(rating(build, 'attribute:strength')).toBe(4);
-    expect(stepStatuses(build).attributes).toBe('overspent');
   });
 
   test('lowering an overspent group is allowed', () => {

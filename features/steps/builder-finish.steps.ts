@@ -30,7 +30,6 @@ import {
   openStep,
   rateTrait,
   saveBuilds,
-  shownStep,
   stepHeading,
 } from './support/builder';
 import {
@@ -205,7 +204,7 @@ When('they place the last Virtue dot and return to the finishing touches step', 
 });
 
 When('they use {string}', async ({ page }, name: string) => {
-  await shownStep(page).getByRole('link', { name, exact: true }).click();
+  await page.locator('#builder').getByRole('link', { name, exact: true }).click();
 });
 
 When('they finish the build', async ({ page }) => {
