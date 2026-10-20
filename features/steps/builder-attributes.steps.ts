@@ -1,22 +1,41 @@
 import { expect } from '@playwright/test';
 import { ATTRIBUTE_GROUPS } from '../../src/domain/v20/traits';
-import { attributesRanked, creation, rank } from '../../src/domain/v20/creation/testing/play';
+import { RANKED_ALLOTMENTS } from '../../src/domain/v20/creation/rules';
+import { creation, rank } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When } from './fixtures';
-import { openPlayed, openStep, shownStep, startBuild } from './support/builder';
+import { ANNOUNCEMENT_WINDOW_MS, announcements, waitOnPageClock } from './support/announcements';
+import { freebiePointsRemaining, openPlayed, openStep, startBuild } from './support/builder';
 import { chooseClan, clanNotice, clanPanel, clanRadio, expectClanChosen } from './support/clan';
 import {
+  ANY_SCREEN,
+  GROUP,
+  SCREEN,
+  TITLE_RANK,
+  TRAIT,
+  arrange,
+  dotsOfRank,
   expectRated,
+  groupBox,
   groupNotice,
   groupPoolRemaining,
   groupPoolSpent,
+  lower,
+  lowerOne,
   placeDots,
+  placeOne,
+  poolStatus,
   rankGroup,
   rankSelect,
+  ranked,
   rateTrait,
   ratingNameOf,
   ratingOf,
   ratingsIn,
   requestRating,
+  shownCallouts,
+  shownRanked,
+  stepButton,
+  totalOf,
   traitRating,
 } from './support/ranked';
 import { escaped } from './support/text';
@@ -94,21 +113,6 @@ Given(/^a build whose Physical group is overspent by 1 dot$/, async ({ page }) =
   await openStep(page, 'Attributes');
 });
 
-Given('a build with ranked Attribute groups, an overspent group and a refusal showing', async ({ page }) => {
-  await openPlayed(
-    page,
-    ...attributesRanked,
-    creation('attribute:strength', 4),
-    creation('attribute:dexterity', 4),
-    creation('attribute:stamina', 2),
-    rank('physical', 'tertiary'),
-  );
-  await openStep(page, 'Attributes');
-  await requestRating(await traitRating(page, 'Charisma'), 5);
-  await requestRating(await traitRating(page, 'Strength'), 5);
-  await expect(await groupNotice(page, 'Physical')).toContainText('Physical has no dots remaining');
-});
-
 // When
 
 When(/^they choose the clan "([^"]+)" and confirm$/, async ({ page }, name: string) => {
@@ -151,13 +155,6 @@ Then(/^they are told, beside the (\w+) group, that \w+ has no dots remaining$/, 
 });
 
 Then(
-  /^they are told both changes: (\w+) is now (\w+) and (\w+) is now (\w+)$/,
-  async ({ page }, a: string, ra: string, b: string, rb: string) => {
-    await expect(await groupNotice(page, a)).toHaveText(`${a} is now ${ra} and ${b} is now ${rb}.`);
-  },
-);
-
-Then(
   /^they are told (\w+) is now (\w+) and (\w+) now has no rank, so (\d+) \w+ dots are overspent until \w+ is ranked$/,
   async ({ page }, a: string, ra: string, b: string, dots: string) => {
     await expect(await groupNotice(page, a)).toHaveText(
@@ -165,17 +162,6 @@ Then(
     );
   },
 );
-
-Then(/^(\w+) is reported in words as overspent by (\d+) dots$/, async ({ page }, group: string, by: string) => {
-  await expect(await groupPoolRemaining(page, group)).toHaveText(`Overspent by ${by}`);
-});
-
-Then(/^the (\w+) ratings are unchanged$/, async ({ page, memory }, group: string) => {
-  expect(memory.ratings.size).toBe(3);
-  for (const row of await ratingsIn(shownStep(page).getByRole('group', { name: group, exact: true })).all()) {
-    await expect(row).toHaveAttribute('data-value', String(memory.ratings.get(await ratingNameOf(row))));
-  }
-});
 
 Then(/^(\w+) is no longer reported as overspent$/, async ({ page }, group: string) => {
   await expect(await groupPoolRemaining(page, group)).not.toContainText('Overspent');
@@ -206,4 +192,267 @@ Then(/^they are told (?:that )?(Appearance was set to 0.*|the .+ dots? (?:was|we
 
 Then('no confirmation was asked', async ({ page }) => {
   await expect(clanPanel(page)).toBeHidden();
+});
+
+// The redesigned screens (shared by Abilities)
+
+Given('I am on the Attributes screen of a new build', async ({ page }) => {
+  await startBuild(page);
+  await openStep(page, 'Attributes');
+});
+
+Given(new RegExp(`^${GROUP} is ${TITLE_RANK} and ${GROUP} is ${TITLE_RANK}$`), async ({ page }, a: string, ra: string, b: string, rb: string) => {
+  await rankGroup(page, a, lower(ra));
+  await rankGroup(page, b, lower(rb));
+});
+
+Given(
+  new RegExp(`^${GROUP} is ${TITLE_RANK}, ${GROUP} ${TITLE_RANK} and ${GROUP} ${TITLE_RANK}$`),
+  async ({ page }, a: string, ra: string, b: string, rb: string, c: string, rc: string) => {
+    await rankGroup(page, a, lower(ra));
+    await rankGroup(page, b, lower(rb));
+    await rankGroup(page, c, lower(rc));
+  },
+);
+
+Given(new RegExp(`^${GROUP} is ${TITLE_RANK} on the ${ANY_SCREEN} screen$`), async ({ page }, group: string, rank: string) => {
+  await rankGroup(page, group, lower(rank));
+});
+
+Given(
+  new RegExp(`^${GROUP} is ${TITLE_RANK} with (\\d+)(?: of (\\d+))?(?: additional)? dots placed$`),
+  async ({ page, memory }, group: string, rank: string, placed: string, of?: string) => {
+    if (of) expect(dotsOfRank(group, rank)).toBe(Number(of));
+    ranked({ memory }).freebies = (await freebiePointsRemaining(page).textContent()) ?? '';
+    await arrange(page, group, rank, Number(placed));
+    ranked({ memory }).totals.set(group, await totalOf(page, group));
+  },
+);
+
+Given('every Attribute group is fully placed', async ({ page }) => {
+  await arrange(page, 'Physical', 'Primary', 7);
+  await arrange(page, 'Social', 'Secondary', 5);
+  await arrange(page, 'Mental', 'Tertiary', 3);
+});
+
+Given(new RegExp(`^${TRAIT} is at (\\d+)$`), async ({ page }, trait: string, value: string) => {
+  await rateTrait(page, trait, Number(value));
+});
+
+// When
+
+When(new RegExp(`^I open the ${GROUP} priority select$`), async ({ page, memory }, group: string) => {
+  ranked({ memory }).trait = group;
+  await expect(await rankSelect(page, group)).toBeVisible();
+});
+
+When(new RegExp(`^I set ${GROUP} to ${TITLE_RANK}(?: on the ${ANY_SCREEN} screen)?$`), async ({ page, memory }, group: string, rank: string) => {
+  ranked({ memory }).mark = (await announcements(page)).length;
+  await rankGroup(page, group, lower(rank));
+});
+
+When(
+  new RegExp(`^I rank ${GROUP} Primary, ${GROUP} Secondary and ${GROUP} Tertiary$`),
+  async ({ page, memory }, first: string, second: string, third: string) => {
+    ranked({ memory }).ranked = [first, second, third];
+    await rankGroup(page, first, 'primary');
+    await rankGroup(page, second, 'secondary');
+    await rankGroup(page, third, 'tertiary');
+  },
+);
+
+When(new RegExp(`^I try to raise another ${GROUP} Attribute$`), async ({ page, memory }, group: string) => {
+  ranked({ memory }).totals.set(group, await totalOf(page, group));
+  const rows = await ratingsIn(await groupBox(page, group)).all();
+  const row = rows.at(-1)!;
+  await stepButton(row, 'Increase').click({ force: true });
+});
+
+When(new RegExp(`^I try to lower ${TRAIT}$`), async ({ page, memory }, trait: string) => {
+  ranked({ memory }).trait = trait;
+  const row = await traitRating(page, trait);
+  await requestRating(row, (await ratingOf(row)) - 1);
+});
+
+When(new RegExp(`^I try to raise ${TRAIT}$`), async ({ page, memory }, trait: string) => {
+  ranked({ memory }).trait = trait;
+  const row = await traitRating(page, trait);
+  await stepButton(row, 'Increase').click({ force: true });
+});
+
+When(new RegExp(`^I raise ${TRAIT} to (\\d+)$`), async ({ page, memory }, trait: string, value: string) => {
+  ranked({ memory }).trait = trait;
+  await requestRating(await traitRating(page, trait), Number(value));
+});
+
+When(new RegExp(`^I place one more ${GROUP} dot$`), async ({ page }, group: string) => {
+  await placeOne(page, group);
+});
+
+When(new RegExp(`^the last ${GROUP} dot is placed$`), async ({ page }, group: string) => {
+  for (let guard = 0; guard < 20 && !/^0 remaining$/.test((await (await groupPoolRemaining(page, group)).textContent()) ?? ''); guard += 1) {
+    await placeOne(page, group);
+  }
+});
+
+When(new RegExp(`^I place the last ${GROUP} dot$`), async ({ page }, group: string) => {
+  await placeOne(page, group);
+});
+
+When(new RegExp(`^I lower one ${GROUP} Attribute$`), async ({ page }, group: string) => {
+  await lowerOne(page, group);
+});
+
+Then('Primary, Secondary and Tertiary are all offered', async ({ page, memory }) => {
+  const select = await rankSelect(page, ranked({ memory }).trait);
+  const offered = await select.locator('option:not([value=""])').evaluateAll((all) =>
+    all.map((option) => ({ text: option.textContent ?? '', disabled: (option as HTMLOptionElement).disabled })),
+  );
+  expect(offered.map((option) => option.text.split(' ')[0])).toEqual(['Primary', 'Secondary', 'Tertiary']);
+  expect(offered.some((option) => option.disabled)).toBe(false);
+});
+
+Then(new RegExp(`^${GROUP} is ${TITLE_RANK} and ${GROUP} is ${TITLE_RANK}$`), async ({ page }, a: string, ra: string, b: string, rb: string) => {
+  await expect(await rankSelect(page, a)).toHaveValue(lower(ra));
+  await expect(await rankSelect(page, b)).toHaveValue(lower(rb));
+});
+
+Then(new RegExp(`^${GROUP} is still ${TITLE_RANK}$`), async ({ page }, group: string, rank: string) => {
+  await expect(await rankSelect(page, group)).toHaveValue(lower(rank));
+});
+
+Then(/^it is announced that (.+)$/, async ({ page, memory }, text: string) => {
+  await expect.poll(async () => (await announcements(page)).slice(ranked({ memory }).mark).some((entry) => entry.includes(text))).toBe(true);
+});
+
+Then('exactly one message is announced and it names both groups', async ({ page, memory }) => {
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  const said = (await announcements(page)).slice(ranked({ memory }).mark);
+  expect(said).toHaveLength(1);
+  const named = RANKED_ALLOTMENTS.flatMap((allotment) => allotment.groups.map((group) => group.label)).filter((label) => said[0].includes(label));
+  expect(named.length).toBeGreaterThanOrEqual(2);
+});
+
+Then(/^the status reads "([^"]+)"$/, async ({ page }, text: string) => {
+  await expect(shownRanked(page).locator('[data-ranked-priority]')).toHaveText(text);
+});
+
+Then(new RegExp(`^the ${SCREEN} status reads "([^"]+)"$`), async ({ page }, screen: string, text: string) => {
+  await openStep(page, screen);
+  await expect(shownRanked(page).locator('[data-ranked-priority]')).toHaveText(text);
+});
+
+Then(new RegExp(`^the ${GROUP} pool reads "([^"]+)"$`), async ({ page }, group: string, text: string) => {
+  await expect(await groupPoolRemaining(page, group)).toHaveText(text);
+});
+
+Then(new RegExp(`^the ${GROUP} pool reads "([^"]+)" and "([^"]+)"$`), async ({ page }, group: string, remaining: string, spent: string) => {
+  await expect(await groupPoolRemaining(page, group)).toHaveText(remaining);
+  await expect(await groupPoolSpent(page, group)).toHaveText(spent);
+});
+
+Then('each pool reads "Complete"', async ({ page }) => {
+  const pools = shownRanked(page).locator('[data-pool-spent]');
+  await expect(pools).toHaveCount(3);
+  for (const pool of await pools.all()) await expect(pool).toContainText('Complete');
+});
+
+Then('no callout is shown', async ({ page }) => {
+  await expect(shownCallouts(page)).toHaveCount(0);
+});
+
+Then(new RegExp(`^no ${GROUP} dot was removed$`), async ({ page, memory }, group: string) => {
+  expect(await totalOf(page, group)).toBe(ranked({ memory }).totals.get(group));
+});
+
+Then(new RegExp(`^the ${GROUP} total is unchanged$`), async ({ page, memory }, group: string) => {
+  expect(await totalOf(page, group)).toBe(ranked({ memory }).totals.get(group));
+});
+
+Then(/^the text beside Continue reads "([^"]+)"$/, async ({ page }, text: string) => {
+  await expect(page.locator('[data-continue-reason]')).toHaveText(text);
+});
+
+Then('every Attribute shows at least one dot', async ({ page }) => {
+  for (const group of ATTRIBUTE_GROUPS) {
+    for (const trait of group.traits) await expect((await traitRating(page, trait.label)).locator('.rating-mark.is-filled')).not.toHaveCount(0);
+  }
+});
+
+Then('the card says dot counts include 1 automatic dot in each trait', async ({ page }) => {
+  await openStep(page, 'Attributes');
+  await expect(shownRanked(page).locator('[data-ranked-intro]')).toHaveText('Dot counts include 1 automatic dot in each trait.');
+});
+
+Then(/^a callout reads "([^"]+)"$/, async ({ page }, text: string) => {
+  await expect(shownCallouts(page)).toHaveCount(1);
+  await expect(shownCallouts(page).locator('[data-callout-heading]')).toHaveText(text);
+});
+
+Then(/^a callout says (.+)$/, async ({ page }, text: string) => {
+  await expect(shownCallouts(page)).toHaveCount(1);
+  await expect(shownCallouts(page).locator('[data-callout-summary]')).toHaveText(text);
+});
+
+Then(/^it says (\d+ of \d+ [\w ]+ dots are placed and \d+ remains?)$/, async ({ page }, text: string) => {
+  await expect(shownCallouts(page).locator('[data-callout-summary]')).toHaveText(text);
+});
+
+Then(/^it names ([A-Z].+)$/, async ({ page }, names: string) => {
+  await expect(shownCallouts(page).locator('[data-callout-traits]')).toHaveText(`Dots can go on ${names}.`);
+});
+
+Then(new RegExp(`^I am told the ${GROUP} group has no dots left$`), async ({ page }, group: string) => {
+  await expect(await groupNotice(page, group)).toContainText(`${group} has no dots remaining`);
+});
+
+Then(/^it stays at (\d+)$/, async ({ page, memory }, value: string) => {
+  await expectRated(await traitRating(page, ranked({ memory }).trait), Number(value));
+});
+
+Then(new RegExp(`^the ${GROUP} status region reads the new remaining count$`), async ({ page }, group: string) => {
+  const remaining = await groupPoolRemaining(page, group);
+  const text = ((await remaining.textContent()) ?? '').trim();
+  await expect(await poolStatus(page, group)).toHaveText(`${group}: ${text}`);
+});
+
+Then(new RegExp(`^the ${GROUP} status region reads "([^"]+)"$`), async ({ page }, group: string, text: string) => {
+  await expect(await poolStatus(page, group)).toContainText(text);
+});
+
+Then('Appearance shows 0 as fixed, with the reason', async ({ page }) => {
+  const row = await traitRating(page, 'Appearance');
+  await expectRated(row, 0);
+  await expect(row.locator('[data-rating-limit]')).toHaveText('Fixed for Nosferatu');
+});
+
+Then('its plus and minus controls are unavailable but focusable', async ({ page }) => {
+  const row = await traitRating(page, 'Appearance');
+  for (const direction of ['Increase', 'Decrease'] as const) {
+    const button = stepButton(row, direction);
+    await expect(button).toHaveAttribute('aria-disabled', 'true');
+    await button.focus();
+    await expect(button).toBeFocused();
+  }
+});
+
+Then('a summary names Social as strongest and Physical as tertiary', async ({ page }) => {
+  await openStep(page, 'Attributes');
+  const lines = shownRanked(page).locator('[data-ranked-summary] li');
+  await expect(lines).toContainText(['Strongest: Social', 'Tertiary: Physical']);
+});
+
+Then('it contains none of the words he, she, his, her, him', async ({ page }) => {
+  const text = (await shownRanked(page).locator('[data-ranked-summary]').textContent()) ?? '';
+  expect(text.trim()).not.toBe('');
+  expect(text).not.toMatch(/\b(?:he|she|his|her|him)\b/i);
+});
+
+Then(new RegExp(`^the plus controls in ${GROUP} are unavailable$`), async ({ page }, group: string) => {
+  const rows = await ratingsIn(await groupBox(page, group)).all();
+  for (const row of rows) await expect(stepButton(row, 'Increase')).toHaveAttribute('aria-disabled', 'true');
+});
+
+Then('the freebie points remaining on the panel are unchanged', async ({ page, memory }) => {
+  await expect(freebiePointsRemaining(page)).toHaveText(ranked({ memory }).freebies);
 });

@@ -1,17 +1,5 @@
 Feature: Abilities step
 
-  Scenario: Abilities start with no dots
-    Given a player who has started building a character
-    When they open the abilities step
-    Then all thirty Abilities are rated 0
-
-  Scenario: Ranking the groups sets their allotments
-    Given a player on the abilities step
-    When they rank Talents primary, Skills secondary and Knowledges tertiary
-    Then Talents has 13 dots remaining
-    And Skills has 9 dots remaining
-    And Knowledges has 5 dots remaining
-
   Scenario: An Ability can be raised to 3 with creation dots
     Given a player who has ranked Talents primary
     When they raise Brawl to 3
@@ -42,11 +30,3 @@ Feature: Abilities step
     When they reload the builder
     Then Skills is primary
     And Firearms is rated 2
-
-  Scenario: The abilities step is accessible and fits a phone
-    Given a build with ranked Ability groups and dots placed
-    When the abilities step is checked
-    Then no WCAG 2.1 AA violations are reported
-    And every control has a unique, non-empty accessible name
-    And at 375 pixels wide the page does not scroll horizontally
-    And with a group's last row scrolled into view, that group's remaining-dots readout is inside the viewport

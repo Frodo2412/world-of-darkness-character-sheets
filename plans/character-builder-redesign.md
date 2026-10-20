@@ -1267,7 +1267,7 @@ Feature: The Nature & Demeanor screen
 ### Slice 8: Attributes and Abilities screens
 
 **Depends-on:** 5, 6, 7
-**Files:** `src/domain/v20/creation/poolViews.ts`, `src/domain/v20/creation/poolViews.test.ts`, `src/domain/v20/creation/updates.ts`, `src/domain/v20/creation/updates.test.ts`, `src/components/builder/Attributes.astro`, `src/components/builder/Abilities.astro`, `src/components/builder/RankedGroup.astro`, `src/scripts/builder/screens/attributes.ts`, `src/scripts/builder/screens/abilities.ts`, `src/scripts/builder/parts/ranked.ts`, `src/styles/builder/ranked.css`, `features/steps/builder-attributes.steps.ts`, `features/steps/builder-abilities.steps.ts`, `features/steps/support/ranked.ts`, `features/character-builder/slice-4-attributes-step.feature`, `features/character-builder/slice-5-abilities-step.feature`
+**Files:** `src/domain/v20/creation/poolViews.ts`, `src/domain/v20/creation/poolViews.test.ts`, `src/domain/v20/creation/updates.ts`, `src/domain/v20/creation/updates.test.ts`, `src/components/builder/Attributes.astro`, `src/components/builder/Abilities.astro`, `src/components/builder/RankedGroup.astro`, `src/components/builder/RankedScreen.astro`, `src/scripts/builder/screens/attributes.ts`, `src/scripts/builder/screens/abilities.ts`, `src/scripts/builder/parts/ranked.ts`, `src/styles/builder/ranked.css`, `features/steps/builder-attributes.steps.ts`, `features/steps/builder-abilities.steps.ts`, `features/steps/support/ranked.ts`, `features/character-builder/slice-4-attributes-step.feature`, `features/character-builder/slice-5-abilities-step.feature`
 
 *(Serialised after Slices 5–7 only to cap concurrent worktrees at three; no code dependency. `TraitRow.astro` and `RatingStepper.astro` were finished in Step 3.5 and are **frozen**: Slices 8 and 9 only consume them. Freebie controls live only in `FinishingTouches.astro` (`FreebieSection`) today and stay there until Slice 11.3, so the creation screens never host them.)*
 
@@ -1323,6 +1323,7 @@ Feature: Attributes and Abilities screens
 
   Scenario: An overspent group blocks Continue with its reason
     Given Social is Tertiary with 7 dots placed
+    And Physical is Primary and Mental is Secondary
     Then the Social pool reads "Overspent by 4"
     And the text beside Continue reads "Social is 4 dots over · Lower it to continue"
 
@@ -1358,6 +1359,7 @@ Feature: Attributes and Abilities screens
     Then it stays at 1
 
   Scenario: Remaining counts are announced
+    Given Physical is Secondary with 3 of 5 additional dots placed
     When I place one more Physical dot
     Then the Physical status region reads the new remaining count
     When the last Physical dot is placed
@@ -1395,17 +1397,18 @@ Feature: Attributes and Abilities screens
   Scenario: Spending more than the creation dots is not possible here
     Given Social is Primary with 7 of 7 additional dots placed
     Then the plus controls in Social are unavailable
-    And the freebie pool is unchanged
+    And the freebie points remaining on the panel are unchanged
 
   Scenario: Abilities are capped at 3 at creation
     Given I am on the Abilities screen with Skills ranked Secondary
     When I raise Crafts to 3
     Then the plus control on Crafts is unavailable but still focused
-    And it shows "Maximum 3"
-    And the Skills group says "All ratings 0–3"
+    And "Maximum 3" is shown beside Increase Crafts
+    And the Skills group is tagged "All ratings 0–3"
 
   Scenario: An unfinished Abilities group raises a callout
-    Given Skills has 1 dot remaining and Crafts is at 3
+    Given Skills is Secondary with 8 of 9 dots placed
+    And Crafts is at 3
     Then a callout says 8 of 9 Skill dots are placed and 1 remains
     And it names the Skills below 3 and not Crafts
 
@@ -1415,9 +1418,50 @@ Feature: Attributes and Abilities screens
     Then the pools read "13 remaining", "9 remaining" and "5 remaining"
     And every Ability reads 0
 
-  Scenario: Screen standards
-    Then on each of the Attributes and Abilities screens axe reports no violations at 1512 px and 375 px, also with a callout shown
-    And each has exactly one h1
+  Scenario Outline: Screen standards
+    When I choose Character concept in the sidebar and then <screen>
+    Then focus is on the <screen> heading
+    And there is exactly one h1
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+    Examples:
+      | screen     |
+      | Attributes |
+      | Abilities  |
+
+  Scenario: Attribute screen standards with a callout and a refusal shown
+    Given Physical is Tertiary with 2 of 3 additional dots placed
+    And Social is Primary with 7 of 7 additional dots placed
+    When I try to raise another Social Attribute
+    Then a callout reads "Finish Physical before moving on"
+    And I am told the Social group has no dots left
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Attribute screen standards with an overspent group shown
+    Given Social is Tertiary with 7 dots placed
+    And Physical is Primary and Mental is Secondary
+    Then the Social pool reads "Overspent by 4"
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Abilities screen standards with a callout and the cap shown
+    Given Skills is Secondary with 8 of 9 dots placed
+    And Crafts is at 3
+    When I try to raise Crafts
+    Then a callout says 8 of 9 Skill dots are placed and 1 remains
+    And the plus control on Crafts is unavailable but still focused
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
 ```
 
 **Steps:**
@@ -1437,7 +1481,7 @@ Feature: Attributes and Abilities screens
 **IMPLEMENT**: Intro card, three group cards with the priority select (all ranks offered), meter, rows with named "Increase/Decrease <trait>" controls, callout, summary card, Nosferatu lock text; remaining values in per-group status regions; a "+" at its maximum stays focusable with "Maximum N" beside it.
 **TEST**: Scenarios above; replace the old slice 4 scenarios the new feature covers; screen DoD; full suites green.
 **REFACTOR**: One `parts/ranked.ts` serves both screens.
-**Files**: `src/components/builder/Attributes.astro`, `src/components/builder/RankedGroup.astro`, `src/scripts/builder/screens/attributes.ts`, `src/scripts/builder/parts/ranked.ts`, `src/styles/builder/ranked.css`, `features/steps/builder-attributes.steps.ts`, `features/steps/support/ranked.ts`, `features/character-builder/slice-4-attributes-step.feature`
+**Files**: `src/components/builder/Attributes.astro`, `src/components/builder/RankedGroup.astro`, `src/components/builder/RankedScreen.astro`, `src/scripts/builder/screens/attributes.ts`, `src/scripts/builder/parts/ranked.ts`, `src/styles/builder/ranked.css`, `features/steps/builder-attributes.steps.ts`, `features/steps/support/ranked.ts`, `features/character-builder/slice-4-attributes-step.feature`
 **Commit**: `feat(builder): attributes screen`
 
 #### Step 8.3: Abilities screen

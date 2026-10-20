@@ -20,7 +20,7 @@ const { primary, secondary, tertiary } = allotment.rankDots;
 		<p class="builder-status ranked-text" data-ranked-priority hidden></p>
 	</div>
 	<div class="builder-columns">
-		{allotment.groups.map((group) => <RankedGroup allotment={allotment} group={group} mode="creation" step={allotment.step} card />)}
+		{allotment.groups.map((group) => <RankedGroup allotment={allotment} group={group} mode="creation" step={allotment.step} />)}
 	</div>
 	<div class="builder-card ranked-summary">
 		<h3 class="ranked-heading">What the choices say</h3>

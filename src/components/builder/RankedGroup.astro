@@ -5,7 +5,7 @@
 // same group is shown without any of that, for buying freebie dots.
 import type { BuildTraitRef } from '../../domain/v20/creation/build';
 import { rankOptions } from '../../domain/v20/creation/poolViews';
-import { RANKS, type RankedAllotment } from '../../domain/v20/creation/rules';
+import type { RankedAllotment } from '../../domain/v20/creation/rules';
 import TraitRow from './TraitRow.astro';
 
 interface Props {
@@ -13,18 +13,16 @@ interface Props {
 	group: RankedAllotment['groups'][number];
 	mode: 'creation' | 'freebie';
 	step: string;
-	/** The card of the redesigned creation screens; Abilities keeps the plain group until its own step. */
-	card?: boolean;
 }
 
-const { allotment, group, mode, step, card = false } = Astro.props;
+const { allotment, group, mode, step } = Astro.props;
 const id = `${step}-${group.key}`;
 const traits = group.traits.map((trait) => `${allotment.traitKind}:${trait}` as BuildTraitRef);
 const options = rankOptions(allotment);
 ---
 
 {
-	card ? (
+	mode === 'creation' ? (
 		<div class="builder-card ranked-group" role="group" aria-labelledby={`${id}-label`} data-ranked-group={group.key}>
 			<h3 id={`${id}-label`} class="ranked-heading">
 				{group.label}
@@ -63,28 +61,7 @@ const options = rankOptions(allotment);
 		<div class="trait-group builder-group" role="group" aria-labelledby={`${id}-label`}>
 			<h3>
 				<span id={`${id}-label`}>{group.label}</span>
-				{mode === 'creation' && (
-					<span class="allotment-readout" role="status" aria-atomic="true" data-allotment-status={group.key}>
-						<span class="visually-hidden">{group.label}: </span>
-						<span data-readout-text />
-					</span>
-				)}
 			</h3>
-			{mode === 'creation' && (
-				<div class="rank-field">
-					<label for={`${id}-rank`}>{group.label} rank</label>
-					<select id={`${id}-rank`} data-rank={group.key} aria-describedby={`${id}-notice`}>
-						<option value="" disabled>
-							Not ranked
-						</option>
-						{RANKS.map((rank) => (
-							<option value={rank}>
-								{rank} ({allotment.rankDots[rank]} dots)
-							</option>
-						))}
-					</select>
-				</div>
-			)}
 			{traits.map((trait) => <TraitRow trait={trait} mode={mode} step={step} noticeId={`${id}-notice`} />)}
 			<p id={`${id}-notice`} class="field-notice" role="status" data-notice />
 		</div>

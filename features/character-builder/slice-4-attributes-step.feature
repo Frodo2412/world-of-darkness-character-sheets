@@ -20,11 +20,6 @@ Feature: Attributes step
     Then they are told, beside the Physical group, to rank the group first
     And Strength is rated 1
 
-  Scenario: Placing dots uses up the allotment
-    Given a player who has ranked Physical primary
-    When they raise Strength to 4
-    Then Physical has 4 dots remaining
-
   Scenario: A group cannot exceed its allotment
     Given a player who has ranked Mental tertiary
     And Perception is rated 3 and Intelligence is rated 2
@@ -48,12 +43,6 @@ Feature: Attributes step
     When they lower Perception by 1
     Then no message is shown beside the Mental group
 
-  Scenario: Taking a rank another group holds swaps the two groups
-    Given a player who has ranked Physical primary, Social secondary and Mental tertiary
-    When they rank Mental primary
-    Then Mental is primary and Physical is tertiary
-    And they are told both changes: Mental is now Primary and Physical is now Tertiary
-
   Scenario: Ranking one group leaves unranked groups alone
     Given a player on the attributes step with no ranks chosen
     When they rank Social primary
@@ -73,35 +62,11 @@ Feature: Attributes step
     Then Stamina is rated 1
     And Stamina reports 1 as its lowest rating
 
-  Scenario: Re-ranking keeps dots that still fit
-    Given a player who has ranked Physical primary and raised Strength to 4
-    When they rank Physical secondary
-    Then Strength is rated 4
-    And Physical has 2 dots remaining
-
-  Scenario: Re-ranking a group below what it holds reports it as overspent
-    Given a player who has ranked Physical primary and placed all 7 Physical dots
-    When they rank Physical tertiary
-    Then Physical is reported in words as overspent by 4 dots
-    And the Physical ratings are unchanged
-
   Scenario: Lowering an overspent group clears the report
     Given a build whose Physical group is overspent by 1 dot
     When they lower Strength by 1
     Then Physical has 0 dots remaining
     And Physical is no longer reported as overspent
-
-  Scenario: The free dot cannot be removed
-    Given a player who has ranked Physical primary
-    When they try to lower Stamina to 0
-    Then Stamina is rated 1
-    And Stamina reports 1 as its lowest rating
-
-  Scenario: A Nosferatu has no Appearance
-    Given a build of clan "Nosferatu" with Social ranked primary
-    When they open the attributes step
-    Then Appearance is rated 0 and is announced as fixed for Nosferatu
-    And Social has 7 dots remaining
 
   Scenario: Becoming a Nosferatu asks before removing Appearance dots
     Given a build of clan "Toreador" with Social ranked primary and Appearance rated 4
@@ -126,10 +91,3 @@ Feature: Attributes step
     When they reload the builder
     Then Physical is primary
     And Dexterity is rated 3
-
-  Scenario: The attributes step is accessible and fits a phone
-    Given a build with ranked Attribute groups, an overspent group and a refusal showing
-    When the attributes step is checked
-    Then no WCAG 2.1 AA violations are reported
-    And every control has a unique, non-empty accessible name
-    And at 375 pixels wide the page does not scroll horizontally
