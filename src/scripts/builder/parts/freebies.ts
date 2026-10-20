@@ -1,5 +1,5 @@
-// The freebie budget's words: what is left, kept in view by its row on every screen, and the dots each
-// collapsible section holds.
+// The freebie budget's words: the dots each collapsible section holds. What is left is the "Your character"
+// panel's Freebie points row, drawn with the rest of the chrome.
 
 import { freebieReport } from '../../../domain/v20/creation/progress';
 import type { V20Build } from '../../../domain/v20/creation/build';
@@ -8,9 +8,6 @@ import { showReadout } from '../messages';
 
 export function renderFreebies(root: HTMLElement, build: V20Build): void {
   const freebies = freebieReport(build);
-  for (const status of root.querySelectorAll<HTMLElement>('[data-freebie-remaining]')) {
-    showReadout(status, freebies.status);
-  }
   for (const count of root.querySelectorAll<HTMLElement>('[data-freebie-dots]')) {
     const { dots } = freebies.sections[count.dataset.freebieDots as keyof typeof freebies.sections];
     showReadout(count, `${plural(dots, 'dot')} bought`);

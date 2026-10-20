@@ -243,13 +243,13 @@ Feature: Finishing touches
     Then there are 10 freebie points remaining
     And the starting blood pool is 4
 
-  Scenario Outline: Earlier steps stay accessible with freebie dots and the freebie bar
+  Scenario Outline: Earlier steps stay accessible with freebie dots
     Given a build with freebie dots in every section, a freebie Discipline and a blood pool
     When the "<step>" step is checked
     Then no WCAG 2.1 AA violations are reported
     And every control has a unique, non-empty accessible name
     And at 375 pixels wide the page does not scroll horizontally
-    And at 375 pixels wide no focused control is covered by the freebie bar or a group readout
+    And at 375 pixels wide no focused control is covered by a group readout
 
     Examples:
       | step       |
@@ -264,4 +264,3 @@ Feature: Finishing touches
     Then no WCAG 2.1 AA violations are reported
     And every control has a unique, non-empty accessible name
     And at 375 pixels wide the page does not scroll horizontally
-    And the freebie points remaining bar does not cover the focused control

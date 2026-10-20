@@ -48,9 +48,9 @@ type Box = { x: number; y: number; width: number; height: number };
 
 /**
  * Tabs through the shown step at phone width and checks every stop is clear
- * of the freebie bar and of any group heading stuck to the top.
+ * of any group heading stuck to the top.
  */
-async function focusStopsClearOfStickyParts(page: Page, includeHeadings: boolean): Promise<void> {
+async function focusStopsClearOfStickyParts(page: Page): Promise<void> {
   await page.setViewportSize(PHONE);
   const controls = shownStep(page).locator('a, button, input, select, summary').filter({ visible: true });
   const total = await controls.count();
@@ -61,33 +61,25 @@ async function focusStopsClearOfStickyParts(page: Page, includeHeadings: boolean
     const control = controls.nth(index);
     await control.focus();
     const box = (await control.boundingBox())!;
-    const covering: Box[] = await page.evaluate((withHeadings) => {
-      const stuck = [...document.querySelectorAll<HTMLElement>('[data-freebie-bar]')];
-      if (withHeadings) {
-        for (const heading of document.querySelectorAll<HTMLElement>('.builder-group h3')) {
-          const top = heading.getBoundingClientRect().top;
-          if (heading.offsetParent && Math.abs(top - parseFloat(getComputedStyle(heading).top)) < 1) stuck.push(heading);
-        }
+    const covering: Box[] = await page.evaluate(() => {
+      const stuck: HTMLElement[] = [];
+      for (const heading of document.querySelectorAll<HTMLElement>('.builder-group h3')) {
+        const top = heading.getBoundingClientRect().top;
+        if (heading.offsetParent && Math.abs(top - parseFloat(getComputedStyle(heading).top)) < 1) stuck.push(heading);
       }
-      return stuck
-        .filter((element) => !element.hidden)
-        .map((element) => {
-          const rect = element.getBoundingClientRect();
-          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
-        });
-    }, includeHeadings);
+      return stuck.map((element) => {
+        const rect = element.getBoundingClientRect();
+        return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+      });
+    });
     const heading = await control.evaluate((element) => element.closest('h3') !== null);
     if (heading) continue;
     expect(covering.filter((cover) => overlaps(cover, box))).toEqual([]);
   }
 }
 
-Then('at 375 pixels wide no focused control is covered by the freebie bar or a group readout', async ({ page }) => {
-  await focusStopsClearOfStickyParts(page, true);
-});
-
-Then('the freebie points remaining bar does not cover the focused control', async ({ page }) => {
-  await focusStopsClearOfStickyParts(page, false);
+Then('at 375 pixels wide no focused control is covered by a group readout', async ({ page }) => {
+  await focusStopsClearOfStickyParts(page);
 });
 
 When('the roster is checked', async ({ page, memory }) => {

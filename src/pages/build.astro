@@ -2,9 +2,11 @@
 import Abilities from '../components/builder/Abilities.astro';
 import Advantages from '../components/builder/Advantages.astro';
 import Attributes from '../components/builder/Attributes.astro';
+import CharacterPanel from '../components/builder/CharacterPanel.astro';
 import Clan from '../components/builder/Clan.astro';
 import Concept from '../components/builder/Concept.astro';
 import FinishingTouches from '../components/builder/FinishingTouches.astro';
+import IdentityBar from '../components/builder/IdentityBar.astro';
 import NatureDemeanor from '../components/builder/NatureDemeanor.astro';
 import Review from '../components/builder/Review.astro';
 import ScreenNav from '../components/builder/ScreenNav.astro';
@@ -12,25 +14,21 @@ import ScreenPanel from '../components/builder/ScreenPanel.astro';
 import SettingsDialog from '../components/builder/SettingsDialog.astro';
 import Sidebar from '../components/builder/Sidebar.astro';
 import Summary from '../components/builder/Summary.astro';
+import TopBar from '../components/builder/TopBar.astro';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
 import '../styles/builder.css';
 ---
 
 <Layout title="Build a character">
-	<main>
-		<p><a href="/">Back to characters</a></p>
+	<main class="builder-page">
 		<StatusMessage />
 		<div id="builder" class="builder" hidden>
-			<div class="builder-header">
-				<h1>Build a character</h1>
-				<button type="button" data-settings-open>Creation settings</button>
-			</div>
+			<TopBar />
+			<IdentityBar />
 			<div class="builder-shell">
 				<Sidebar />
 				<div class="builder-main">
-					<!-- The freebie points remaining, kept in view on every screen until the "Your character" panel takes them. -->
-					<p class="builder-freebies" role="status" aria-atomic="true" data-freebie-remaining data-freebie-bar></p>
 					<ScreenPanel screen="concept"><Concept /></ScreenPanel>
 					<ScreenPanel screen="clan"><Clan /></ScreenPanel>
 					<ScreenPanel screen="natureDemeanor"><NatureDemeanor /></ScreenPanel>
@@ -42,6 +40,7 @@ import '../styles/builder.css';
 					<ScreenPanel screen="summary"><Summary /></ScreenPanel>
 					<ScreenNav />
 				</div>
+				<CharacterPanel />
 			</div>
 			<SettingsDialog />
 			<dialog id="finish-dialog" aria-labelledby="finish-dialog-title" aria-describedby="finish-dialog-message" data-finish-dialog>

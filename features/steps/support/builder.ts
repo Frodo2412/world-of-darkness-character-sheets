@@ -17,12 +17,16 @@ export const builderAddress = (id: string): string => `/build/?id=${encodeURICom
 export const openBuildId = (page: Page): string =>
   new URL(page.url()).searchParams.get('id') ?? '';
 
+/** The builder's title: the one level 1 heading it shows, whatever the chronicle before it says. */
+export const builderHeading = (page: Page): Locator =>
+  page.getByRole('heading', { name: 'Character builder', level: 1 });
+
 /** Starts a build from the roster and ends on the builder. */
 export async function startBuild(page: Page): Promise<void> {
   await openRoster(page);
   await createAction(page, 'Start character creator').click();
   await expect(page).toHaveURL(BUILDER_ADDRESS);
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await expect(builderHeading(page)).toBeVisible();
   await watchAnnouncements(page);
 }
 
@@ -147,13 +151,13 @@ export async function expectFinishDoesNothing(page: Page): Promise<void> {
 /** Opens a build already in storage, without saving anything first; one that cannot be read is opened too. */
 export async function openStored(page: Page, id: string): Promise<void> {
   await page.goto(builderAddress(id));
-  await expect(page.getByRole('heading', { name: /^Build (a character|could not be read)$/ })).toBeVisible();
+  await expect(builderHeading(page).or(page.getByRole('heading', { name: 'Build could not be read' }))).toBeVisible();
   await watchAnnouncements(page);
 }
 
 export async function reloadBuilder(page: Page): Promise<void> {
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await expect(builderHeading(page)).toBeVisible();
   await watchAnnouncements(page);
 }
 
@@ -167,7 +171,7 @@ export async function storeRawBuild(page: Page, id: string, record: unknown): Pr
 export async function openSavedBuild(page: Page, build: V20Build): Promise<void> {
   await saveBuilds(page, [build]);
   await page.goto(builderAddress(build.id));
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await expect(builderHeading(page)).toBeVisible();
   await watchAnnouncements(page);
 }
 
@@ -241,5 +245,5 @@ export async function openPlayedFrom(page: Page, start: V20Build, ...steps: Step
   return build;
 }
 
-/** The freebie points remaining bar, shown on every step. */
-export const freebieBar = (page: Page): Locator => page.locator('[data-freebie-remaining]');
+/** The freebie points remaining, a row of the "Your character" panel shown on every screen: "15 remaining". */
+export const freebiePointsRemaining = (page: Page): Locator => page.locator('[data-freebie-remaining]');

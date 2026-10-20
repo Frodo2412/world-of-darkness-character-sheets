@@ -21,6 +21,7 @@ import {
   activateFinish,
   buildWith,
   builderAddress,
+  builderHeading,
   finishButton,
   finishDialog,
   finishOpenBuild,
@@ -362,7 +363,7 @@ Then('the builder is still shown with keyboard focus on the Finish button', asyn
 
 Then('the builder is still shown', async ({ page }) => {
   await expect(page).toHaveURL(BUILDER_ADDRESS);
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await expect(builderHeading(page)).toBeVisible();
 });
 
 Then(

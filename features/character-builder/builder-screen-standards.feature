@@ -1,7 +1,7 @@
 Feature: Every builder screen meets the screen standards
 
-  The sidebar, the Back and Continue footer and the freebie row are on every screen, so each screen
-  is held to the same standards with them in place. The steps are the generic ones every screen's own
+  The top bar, the identity bar, the sidebar, the "Your character" panel and the Back and Continue
+  footer are on every screen, so each screen is held to the same standards with them in place. The steps are the generic ones every screen's own
   feature ends in (builder-standards.steps.ts); a screen's own states are held to them by the slice
   that builds it.
 
@@ -47,5 +47,22 @@ Feature: Every builder screen meets the screen standards
     Then the reason has a button "Go to Clan"
     And axe reports no violations at 1512 px and 375 px
     And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: The shell with a refused save is accessible and fits a phone
+    Given a build named "Lucita" of clan "Lasombra"
+    And the browser refuses to store data
+    When I change my character's name
+    Then axe reports no violations at 1512 px and 375 px
+    And there is exactly one h1
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: A long name, clan, concept and chronicle fit a phone
+    Given a build named "Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" with Follower of Set chosen, concept "Bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" and chronicle "Cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    Then axe reports no violations at 1512 px and 375 px
+    And there is exactly one h1
     And the page does not scroll horizontally at 375 px
     And the page does not scroll horizontally at 320 px

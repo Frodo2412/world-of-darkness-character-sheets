@@ -1,13 +1,131 @@
 /* The builder: one screen at a time beside the screen list, which stacks above on a
    phone. Fields stack; every control is at least 24 px with room around it. */
 
-/* The title with the settings button beside it; the button drops below on a phone. */
-.builder-header {
+/* The builder is drawn as wide as the design's frame, with room for the screen list and the panel either side. */
+.builder-page {
+	max-inline-size: var(--frame-width);
+}
+
+/* The top bar: where the build belongs, its autosave status and the settings button. They wrap on a phone. */
+.builder-topbar {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--space-2) var(--space-4);
+}
+
+.builder-title {
+	margin: 0;
+	min-inline-size: 0;
+	font-size: var(--text-h3);
+	letter-spacing: 0.04em;
+	overflow-wrap: anywhere;
+}
+
+/* The chronicle before "Character builder", set back from it. */
+.builder-title [data-top-chronicle] {
+	color: var(--color-text-status);
+	font-weight: 400;
+}
+
+.builder-save-status {
+	margin: 0 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+}
+
+/* A round mark when saved, a square one when not: the words say it too, so colour is never the only signal. */
+.builder-save-status:not(:empty)::before {
+	content: '';
+	flex: none;
+	inline-size: 0.4rem;
+	block-size: 0.4rem;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.builder-save-status[data-state='not-saved']::before {
+	border-radius: 0;
+}
+
+/* A refused save: what to do, on a line of its own, with the way to try again beside it. */
+.builder-failure {
+	flex: 1 1 100%;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2) var(--space-3);
+	border: var(--stroke) solid var(--color-danger);
+	border-inline-start-width: 0.3rem;
+	border-radius: var(--radius-badge);
+	background: var(--color-surface);
+	color: var(--color-text);
+	padding: var(--space-2) var(--space-3);
+}
+
+.builder-failure p {
+	flex: 1 1 20rem;
+	margin: 0;
+}
+
+/* The identity bar: who is being built, and the way out. */
+.builder-identity {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2) var(--space-4);
+	margin-block-start: var(--space-3);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+	background: var(--color-surface);
+	padding: var(--space-card) var(--space-3);
+}
+
+.builder-avatar {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 3rem;
+	block-size: 3rem;
+	border-radius: 50%;
+	background: var(--color-selected);
+	color: var(--color-text-strong);
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	font-weight: 600;
+}
+
+.builder-identity-text {
+	flex: 1 1 12rem;
+	min-inline-size: 0;
+}
+
+.builder-identity-text p,
+.builder-identity-natdem {
+	margin: 0;
+}
+
+.builder-identity-name {
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	font-weight: 600;
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.builder-identity-subtitle {
+	color: var(--color-text-status);
+	overflow-wrap: anywhere;
+}
+
+.builder-identity-natdem {
+	display: grid;
+	overflow-wrap: anywhere;
 }
 
 /* A dialog's title with its close button. */
@@ -19,10 +137,11 @@
 	gap: var(--space-2);
 }
 
-/* The shell: the screen list beside the screen. On a phone the list stacks above it (from the shared breakpoint down). */
+/* The shell: the screen list, the screen and the "Your character" panel. Below the shared breakpoint the
+   list stacks above the screen and the panel below it; between, the panel sits under the screen. */
 .builder-shell {
 	display: grid;
-	grid-template-columns: 15rem minmax(0, 1fr);
+	grid-template-columns: 15rem minmax(0, 1fr) 17rem;
 	align-items: start;
 	gap: var(--space-4);
 	margin-block-start: var(--space-3);
@@ -144,16 +263,49 @@
 	content: ' · ';
 }
 
-/* The freebie points remaining stay in view above every screen. */
-.builder-freebies {
+/* The "Your character" panel: a label and its value for each part of the build. */
+.builder-panel {
 	position: sticky;
-	inset-block-start: 0;
-	z-index: 2;
-	background: var(--color-page);
-	border-block-end: var(--stroke) solid var(--color-line);
+	inset-block-start: var(--space-3);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+	background: var(--color-surface);
+	padding: var(--space-card) var(--space-3);
+}
+
+.builder-panel h2 {
+	margin-block-start: 0;
+	font-size: var(--text-h3);
+}
+
+.builder-panel-rows {
 	margin: 0;
+}
+
+.builder-panel-row {
 	padding-block: var(--space-2);
+	border-block-end: var(--stroke) solid var(--color-divider);
+}
+
+.builder-panel-row:last-child {
+	border-block-end: 0;
+}
+
+.builder-panel-row dt {
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+}
+
+.builder-panel-row dd {
+	margin: 0;
+	overflow-wrap: anywhere;
 	font-weight: 600;
+}
+
+.builder-panel-dots {
+	margin-inline-start: var(--space-2);
+	letter-spacing: 0.1em;
+	color: var(--color-accent-text);
 }
 
 /* Back and Continue, with why Continue is not yet available beside them. */
@@ -331,7 +483,7 @@
 /* The heading, with what is left to place, stays in view down a long group. */
 .builder-group h3 {
 	position: sticky;
-	inset-block-start: var(--sticky-top, 0);
+	inset-block-start: 0;
 	z-index: 1;
 	background: var(--color-page);
 	padding-block: var(--space-1);
@@ -428,14 +580,9 @@
 	font-size: var(--text-small);
 }
 
-/* The freebie row stays at the top; group headings stick below it, and a
-   focused control scrolls clear of both. */
+/* Group headings stick to the top, and a focused control scrolls clear of them. */
 html {
-	scroll-padding-block-start: 7rem;
-}
-
-.builder {
-	--sticky-top: 2.6rem;
+	scroll-padding-block-start: 4.5rem;
 }
 
 /* Pieces the screens share. A screen's own rules live in styles/builder/<screen>.css. */
@@ -511,6 +658,18 @@ html {
 	font-size: var(--text-small);
 }
 
+/* Too narrow for three columns: the panel sits under the screen, in the screen's column. */
+@media (max-width: 64rem) {
+	.builder-shell {
+		grid-template-columns: 15rem minmax(0, 1fr);
+	}
+
+	.builder-panel {
+		grid-column: 2;
+		position: static;
+	}
+}
+
 /* The breakpoint every screen shares: from here down (a phone, 375 px and 320 px included) the pieces tighten and stack. */
 @media (max-width: 40rem) {
 	.builder-shell {
@@ -519,6 +678,10 @@ html {
 
 	.builder-sidebar {
 		position: static;
+	}
+
+	.builder-panel {
+		grid-column: auto;
 	}
 
 	.builder-card {

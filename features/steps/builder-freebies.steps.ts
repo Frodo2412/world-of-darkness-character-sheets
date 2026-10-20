@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { buyDiscipline, creation, extra, fresh, generation, rank } from '../../src/domain/v20/creation/testing/play';
 import { buyDots, leaveFreebies, refFor, seedSteps } from './builder-seeding.steps';
 import { Given, Then, When } from './fixtures';
-import { freebieBar, openPlayedFrom, openStep, shownStep } from './support/builder';
+import { freebiePointsRemaining, openPlayedFrom, openStep, shownStep } from './support/builder';
 import {
   expectRated,
   groupBox,
@@ -26,7 +26,7 @@ async function onFinishing(page: Page): Promise<void> {
 }
 
 async function rememberFreebies(page: Page, memory: { entered: Map<string, string> }): Promise<void> {
-  memory.entered.set('freebies', (await freebieBar(page).textContent()) ?? '');
+  memory.entered.set('freebies', (await freebiePointsRemaining(page).textContent()) ?? '');
 }
 
 /** Buys one dot of a trait on Finishing touches; a Discipline not shown yet is bought by name. */
@@ -165,13 +165,13 @@ When('they buy a sixth with freebie points', async ({ page, memory }) => {
 // Then
 
 Then(/^(?:the step shows|there are) (\d+) freebie points? remaining$/, async ({ page }, points: string) => {
-  const bar = freebieBar(page);
-  await expect(bar).toBeVisible();
-  await expect(bar).toHaveText(`${points} freebie ${Number(points) === 1 ? 'point' : 'points'} remaining`);
+  const remaining = freebiePointsRemaining(page);
+  await expect(remaining).toBeVisible();
+  await expect(remaining).toHaveText(`${points} remaining`);
 });
 
 Then(/^the freebie points remaining are unchanged(?: by the refusal)?$/, async ({ page, memory }) => {
-  await expect(freebieBar(page)).toHaveText(memory.entered.get('freebies')!);
+  await expect(freebiePointsRemaining(page)).toHaveText(memory.entered.get('freebies')!);
 });
 
 Then(

@@ -13,6 +13,7 @@ import {
   BUILD_KEY_PREFIX,
   baseGeneration,
   builderAddress,
+  builderHeading,
   closeCreationSettings,
   creationSettingsButton,
   enterExtraFreebies,
@@ -41,9 +42,9 @@ import {
   withholdStorage,
 } from './support/storage';
 
-// The page's own alert; while the settings dialog is open it has an alert of its own as well.
+// The top bar's alert; while the settings dialog is open it has an alert of its own as well.
 const notSaved = (page: Page) =>
-  page.locator('#status-message').filter({ hasText: 'Changes are not being saved' });
+  page.locator('[data-autosave-alert]').filter({ hasText: 'Changes are not being saved' });
 
 // Given
 
@@ -167,7 +168,7 @@ Then('they see a way to build a character', async ({ page }) => {
 
 Then('they see a "build not found" message with a link to the roster', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Build not found' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeHidden();
+  await expect(builderHeading(page)).toBeHidden();
   await expect(page.getByRole('link', { name: 'Go to your characters' })).toBeVisible();
   // A modal dialog left open behind the message would make the link unreachable.
   await page.getByRole('link', { name: 'Go to your characters' }).click({ trial: true });
@@ -180,7 +181,7 @@ Then('no build has been saved', async ({ page }) => {
 Then('they are told the build could not be read and has not been changed', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Build could not be read' })).toBeVisible();
   await expect(page.getByText('It has not been changed.')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeHidden();
+  await expect(builderHeading(page)).toBeHidden();
 });
 
 Then(

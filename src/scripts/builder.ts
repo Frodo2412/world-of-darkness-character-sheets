@@ -3,8 +3,10 @@ import '../components/controls/dot-rating';
 import type { V20Build } from '../domain/v20/creation/build';
 import { report } from '../domain/v20/creation/progress';
 import type { UpdateResult } from '../domain/v20/creation/result';
+import type { ScreenId } from '../domain/v20/creation/rules';
 import { buildKeyFor, type BuildStore } from '../storage/buildStore';
 import type { CharacterStore } from '../storage/characterStore';
+import { renderChrome, wireChrome } from './builder/chrome';
 import { clearNotices, reportSave, showNotices, showRefusal } from './builder/messages';
 import { pageState, showView } from './builder/pageState';
 import { renderNavigation, wireNavigation } from './builder/navigation';
@@ -18,17 +20,18 @@ const root = document.querySelector<HTMLElement>('#builder')!;
 
 function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterStore): void {
   let build = loaded;
-  const router = startSteps(
-    root,
-    () => build.concept.name,
-    (screen) => renderNavigation(root, build, screen),
-  );
+  /** What the shell shows around a screen: the sidebar, Back and Continue, and the chrome. */
+  function drawShell(screen: ScreenId): void {
+    renderNavigation(root, build, screen);
+    renderChrome(root, build, screen);
+  }
+  const router = startSteps(root, () => build.concept.name, drawShell);
 
   function render(): void {
     const current = report(build);
     for (const screen of screenModules) screen.render(build, root);
     renderControls(root, current);
-    renderNavigation(root, build, router.current());
+    drawShell(router.current());
     router.updateTitle();
   }
 
@@ -55,9 +58,29 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
     return 'applied';
   }
 
+  /** The build as it is, stored again; 'gone' when it was finished or deleted elsewhere, which the page then shows. */
+  function saveNow(exiting = false): 'saved' | 'failed' | 'gone' {
+    if (store.load(build.id).status === 'not-found') {
+      showView('not-found');
+      return 'gone';
+    }
+    const { status } = store.save(build);
+    reportSave(status, exiting);
+    return status;
+  }
+
   const wiring: Wiring = { commit, current: () => build, builds: store, characters, render };
   wireControls(root, wiring);
   wireNavigation(root);
+  wireChrome(root, {
+    retrySave() {
+      // The retry button goes away once a save lands; focus moves to the status that now says so.
+      if (saveNow() === 'saved') root.querySelector<HTMLElement>('[data-autosave-status]')!.focus();
+    },
+    saveAndExit() {
+      if (saveNow(true) === 'saved') window.location.assign('/');
+    },
+  });
   for (const screen of screenModules) screen.wire(root, wiring);
   wireDialog(
     root.querySelector<HTMLDialogElement>('[data-settings-dialog]')!,

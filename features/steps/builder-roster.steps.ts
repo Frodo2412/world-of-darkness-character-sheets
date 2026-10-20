@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import { Given, Then, When } from './fixtures';
 import { accessibleNames } from './support/accessibility';
-import { buildWith, saveBuilds } from './support/builder';
+import { buildWith, builderHeading, saveBuilds } from './support/builder';
 import {
   actionName,
   buildEntries,
@@ -73,7 +73,7 @@ Then('the roster lists the text {string}', async ({ page }, text: string) => {
 });
 
 Then('the builder is shown', async ({ page }) => {
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await expect(builderHeading(page)).toBeVisible();
 });
 
 Then('the continue controls have different accessible names', async ({ page }) => {

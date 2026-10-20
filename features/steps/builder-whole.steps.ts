@@ -17,7 +17,7 @@ import {
   extraFreebies,
   finishButton,
   finishDialog,
-  freebieBar,
+  freebiePointsRemaining,
   openPlayed,
   openPlayedFrom,
   openStep,
@@ -38,7 +38,7 @@ import { seedSteps } from './builder-seeding.steps';
 
 /** Spends what is left: Willpower first, then one point at a time on Backgrounds. */
 async function spendEverything(page: Page): Promise<void> {
-  const left = async () => Number(/^(\d+)/.exec((await freebieBar(page).textContent()) ?? '0')![1]);
+  const left = async () => Number(/^(\d+)/.exec((await freebiePointsRemaining(page).textContent()) ?? '0')![1]);
   await openStep(page, 'Finishing touches');
   const willpower = await traitRating(page, 'Willpower');
   const current = await ratingOf(willpower);
@@ -51,7 +51,7 @@ async function spendEverything(page: Page): Promise<void> {
     const value = await ratingOf(control);
     await rateTrait(page, name, Math.min(5, value + remaining));
   }
-  await expect(freebieBar(page)).toHaveText('0 freebie points remaining');
+  await expect(freebiePointsRemaining(page)).toHaveText('0 remaining');
 }
 
 async function placeAttributes(page: Page): Promise<void> {
@@ -104,7 +104,7 @@ When(
 );
 
 When('they spend all 20 freebie points \\(none on Generation)', async ({ page }) => {
-  await expect(freebieBar(page)).toHaveText('20 freebie points remaining');
+  await expect(freebiePointsRemaining(page)).toHaveText('20 remaining');
   await spendEverything(page);
 });
 
@@ -152,7 +152,7 @@ Then('the ranks, the clan and the freebie points remaining are as they left them
   await expect(await rankSelect(page, 'Mental')).toHaveValue('tertiary');
   await openClanScreen(page);
   await expect(clanSelect(page).locator('option:checked')).toHaveText('Gangrel');
-  await expect(freebieBar(page)).toHaveText('14 freebie points remaining');
+  await expect(freebiePointsRemaining(page)).toHaveText('14 remaining');
 });
 
 // States
@@ -172,7 +172,7 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await openPlayed(page);
     await refuseWrites(page);
     await setBaseGeneration(page, '10th');
-    await expect(page.locator('#status-message')).toBeVisible();
+    await expect(page.locator('[data-autosave-alert]')).toBeVisible();
   },
   'the clan-change confirmation': async (page) => {
     await openPlayed(page, ...seedSteps(undefined, undefined, 'Brujah', 'Celerity rated 2 and Potence rated 1'));

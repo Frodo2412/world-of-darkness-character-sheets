@@ -15,6 +15,7 @@ import { PHASES, SCREENS } from '../../src/domain/v20/creation/rules';
 import { Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
 import {
   buildWith,
+  builderHeading,
   openPlayed,
   openPlayedFrom,
   openStep,
@@ -195,7 +196,7 @@ When('I open the builder with {string} as its screen', async ({ page }, address:
   // From a blank page, so the builder starts on that address rather than being moved to it.
   await page.goto('about:blank');
   await page.goto(url.toString());
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await expect(builderHeading(page)).toBeVisible();
 });
 
 // Then

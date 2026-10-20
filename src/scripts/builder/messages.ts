@@ -1,18 +1,25 @@
 // The builder's three message channels:
-//  1. save status — the page's `#status-message`, written from here and from `../status`
-//     (which the sheet uses too);
+//  1. save status — the top bar's autosave status, which says in text how long ago the build was stored,
+//     and its alert, which says what to do when a write is refused;
 //  2. refusals and notices — a polite `[data-notice]` slot beside the controls,
 //     named by the refused control's `aria-describedby`;
 //  3. budgets — each readout is its own live region, written only when it changes.
 
 import { SCREENS, type BuildStep } from '../../domain/v20/creation/rules';
-import { clearStatus, showStatus } from '../status';
+import { AGE_REFRESH_MS, savedLabel } from './autosave';
 
 export const NOT_SAVED =
-  'Changes are not being saved. This browser refused to store them. Do not close or reload this page until this message goes away, or your latest changes will be lost.';
+  'Changes are not being saved. Your browser could not store this. Free up space, then choose Try saving again. Do not close or reload this page until this message goes away, or changes since the last save are lost.';
+
+/** What a refused Save & exit says: the page stays open, and why. */
+export const NOT_SAVED_ON_EXIT =
+  'These changes were not saved, so you are still on the builder. Your browser could not store this. Free up space, then choose Try saving again.';
 
 /** Whether the last save failed, for a dialog opened while the message is up. */
 let saveFailed = false;
+/** When the build was last stored by this page, in the page clock's milliseconds. */
+let savedAt: number | undefined;
+let ageTimer: number | undefined;
 
 /** Says the not-saved message in a dialog's own alert, which the page's alert behind a modal cannot do. */
 function showDialogAlert(alert: HTMLElement): void {
@@ -34,19 +41,61 @@ export function restoreDialogAlert(dialog: HTMLElement): void {
   for (const alert of dialog.querySelectorAll<HTMLElement>('[data-dialog-alert]')) showDialogAlert(alert);
 }
 
+const autosave = <T extends HTMLElement>(part: string): T => document.querySelector<T>(`[data-autosave-${part}]`)!;
+
+/** The status line: "Saved 2 min ago" or "Changes not saved", with a mark that echoes it. */
+function drawStatus(text: string, state: 'saved' | 'not-saved'): void {
+  const status = autosave('status');
+  showReadout(status, text);
+  status.dataset.state = state;
+}
+
+/** "Saved just now" ages by itself; the clock is read when it is drawn, so a fake page clock moves it. */
+function drawAge(): void {
+  if (saveFailed || savedAt === undefined) return;
+  drawStatus(savedLabel(Date.now() - savedAt), 'saved');
+}
+
+/** Writes the failure alert. `again` says it anew even if it already reads the same, as when the player tries to leave. */
+function drawFailure(text: string, again: boolean): void {
+  const failure = autosave('failure');
+  const alert = autosave('alert');
+  if (!failure.hidden && alert.textContent === text) {
+    if (!again) return;
+    // Cleared now and written on the next frame: the same text written over itself in one task is not announced.
+    alert.textContent = '';
+    requestAnimationFrame(() => {
+      if (!failure.hidden) alert.textContent = text;
+    });
+    return;
+  }
+  alert.textContent = text;
+  failure.hidden = false;
+}
+
+function clearFailure(): void {
+  autosave('failure').hidden = true;
+  autosave('alert').textContent = '';
+}
+
 /**
- * Channel 1. The not-saved message stays until a save succeeds. A dialog that is open has it in its
- * own alert as well, because the page's is inert behind it.
+ * Channel 1. A stored change is shown quietly as text; a refused one is an alert that stays until a
+ * save succeeds. A dialog that is open has the message in its own alert as well, because the page's is
+ * inert behind it.
  */
-export function reportSave(status: 'saved' | 'failed'): void {
+export function reportSave(status: 'saved' | 'failed', exiting = false): void {
   saveFailed = status === 'failed';
   if (saveFailed) {
-    showStatus(NOT_SAVED);
+    drawStatus('Changes not saved', 'not-saved');
+    drawFailure(exiting ? NOT_SAVED_ON_EXIT : NOT_SAVED, exiting);
     for (const alert of document.querySelectorAll<HTMLElement>('dialog[open] [data-dialog-alert]')) showDialogAlert(alert);
-  } else {
-    clearStatus();
-    for (const dialog of document.querySelectorAll<HTMLElement>('dialog')) clearDialogAlert(dialog);
+    return;
   }
+  savedAt = Date.now();
+  clearFailure();
+  drawAge();
+  ageTimer ??= window.setInterval(drawAge, AGE_REFRESH_MS);
+  for (const dialog of document.querySelectorAll<HTMLElement>('dialog')) clearDialogAlert(dialog);
 }
 
 /** The notice slot among the elements that describe `control`. */
