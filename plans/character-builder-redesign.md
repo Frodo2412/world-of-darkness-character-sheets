@@ -2193,12 +2193,12 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
   - [x] Step 2.2: Remove the Settings step
 
 #### Wave 3
-- [ ] Slice 3: Nine screens and navigation
-  - [ ] Step 3.1: Screens, completeness, statuses and gate reasons as data
-  - [ ] Step 3.2: Screen contract, behaviour-preserving split of wiring, shared styles and test globs
-  - [ ] Step 3.3: Sidebar, router, Back and Continue
-  - [ ] Step 3.4: Split the concept step; move Finish into Review; split the old feature files
-  - [ ] Step 3.5: Rating rows with minus/plus buttons
+- [x] Slice 3: Nine screens and navigation
+  - [x] Step 3.1: Screens, completeness, statuses and gate reasons as data
+  - [x] Step 3.2: Screen contract, behaviour-preserving split of wiring, shared styles and test globs
+  - [x] Step 3.3: Sidebar, router, Back and Continue
+  - [x] Step 3.4: Split the concept step; move Finish into Review; split the old feature files
+  - [x] Step 3.5: Rating rows with minus/plus buttons
 
 #### Wave 4
 - [ ] Slice 4: Shell chrome — identity bar, autosave status, character panel
