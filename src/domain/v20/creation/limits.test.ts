@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
-import { creationMaximum, freebieBudget, limits, maximumFor, violations } from './limits';
+import { PAST_BEST_GENERATION, creationMaximum, freebieBudget, generationBackgroundTop, limits, maximumFor, violations } from './limits';
 import { dotsOf } from './ratings';
 import { clan, creation, freebie, fresh, play, rank } from './testing/play';
 
@@ -95,5 +95,21 @@ describe('creationMaximum', () => {
   test('keeps a fixed trait at its value', () => {
     const nosferatu = play(fresh(), clan('Nosferatu'));
     expect(creationMaximum(nosferatu, 'attribute:appearance')).toBe(0);
+  });
+});
+
+describe('the Generation background top', () => {
+  const at = (baseGeneration: number) => ({ ...blankBuild('abc'), settings: { baseGeneration, extraFreebies: 0 } });
+
+  test.each([
+    [13, 9],
+    [10, 6],
+    [4, 0],
+  ])('at base %ith generation it is %i dots', (base, top) => {
+    expect(generationBackgroundTop(at(base))).toBe(top);
+  });
+
+  test('is said once, as the best generation there is', () => {
+    expect(PAST_BEST_GENERATION).toBe('The effective generation cannot be better than 4th.');
   });
 });

@@ -14,7 +14,17 @@ import type {
 } from './build';
 import { freebieCost, freebiesRemaining } from './freebies';
 import { plural, titleCase } from './wording';
-import { GENERATION_REF, bloodPoolRangeMessage, creationMaximum, effectiveGeneration, limits, maximumFor, ordinal } from './limits';
+import {
+  GENERATION_REF,
+  PAST_BEST_GENERATION,
+  bloodPoolRangeMessage,
+  creationMaximum,
+  effectiveGeneration,
+  generationBackgroundTop,
+  limits,
+  maximumFor,
+  ordinal,
+} from './limits';
 import {
   catalogueDiscipline,
   clanDisciplines,
@@ -67,7 +77,6 @@ interface Refusal {
 const because = (reason: string, step?: BuildStep): Refusal => ({ reason, step });
 
 const MORE_WITH_FREEBIES = 'More can be bought with freebie points on Finishing touches.';
-const PAST_FOURTH = `The effective generation cannot be better than ${ordinal(FIRST_GENERATION)}.`;
 
 /** A whole number from the player's text, or undefined. Surrounding spaces are ignored. */
 function wholeNumber(text: string, range: Range): number | undefined {
@@ -98,7 +107,7 @@ export function setBaseGeneration(build: V20Build, generation: number): UpdateRe
   if (!GENERATION_TABLE.some((row) => row.generation === generation)) {
     return refuse(
       build,
-      `Base generation must be a whole number from ${FIRST_GENERATION}th to ${LAST_GENERATION}th.`,
+      `Base generation must be a whole number from ${ordinal(FIRST_GENERATION)} to ${ordinal(LAST_GENERATION)}.`,
     );
   }
   return commit(build, withSettings(build, { baseGeneration: generation }), []);
@@ -365,7 +374,7 @@ function ceilingRefusal(build: V20Build, ref: BuildTraitRef, target: number): Re
 }
 
 function generationRefusal(build: V20Build, ref: BuildTraitRef, target: number): Refusal | undefined {
-  return ref === GENERATION_REF && build.settings.baseGeneration - target < FIRST_GENERATION ? because(PAST_FOURTH) : undefined;
+  return ref === GENERATION_REF && target > generationBackgroundTop(build) ? because(PAST_BEST_GENERATION) : undefined;
 }
 
 // The rules creation dots alone are held to.

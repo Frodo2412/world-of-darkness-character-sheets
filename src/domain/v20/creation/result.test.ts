@@ -146,7 +146,11 @@ describe('creation module layers', () => {
 
   test.each(sources.map((source) => [source.name, source.text]))('%s imports nothing outside the domain', (name, text) => {
     const outside = importsOf(text).filter(
-      (specifier) => !specifier.startsWith('./') && specifier !== '../traits' && !(name === 'toCharacter' && specifier === '../character'),
+      (specifier) =>
+        !specifier.startsWith('./') &&
+        specifier !== '../traits' &&
+        !(name === 'toCharacter' && specifier === '../character') &&
+        !(name === 'limits' && specifier === '../identity'),
     );
     expect(outside).toEqual([]);
   });

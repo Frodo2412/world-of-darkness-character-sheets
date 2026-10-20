@@ -1,6 +1,7 @@
 // What a build may not exceed: the generation's ceilings, the fixed ceilings
 // and the freebie budget. `violations` is the one list of hard rule breaks.
 
+import { ordinal } from '../identity';
 import type { BuildTraitRef, V20Build } from './build';
 import { FIXED_TRAIT_REFS } from './build';
 import { freebieBudget, freebiesSpent } from './freebies';
@@ -23,12 +24,20 @@ import {
 
 export { freebieBudget } from './freebies';
 
-const MOST_POTENT = GENERATION_TABLE[0].generation;
+/** The best generation there is: Generation dots cannot push the effective generation past it. */
+export const MOST_POTENT = GENERATION_TABLE[0].generation;
 const LEAST_POTENT = GENERATION_TABLE[GENERATION_TABLE.length - 1].generation;
 
 export const GENERATION_REF: BuildTraitRef = `background:${GENERATION_BACKGROUND}`;
 
-export { ordinal } from '../identity';
+export { ordinal };
+
+/** What a Generation dot past the top is refused with. */
+export const PAST_BEST_GENERATION = `The effective generation cannot be better than ${ordinal(MOST_POTENT)}.`;
+
+/** The most Generation dots the base generation can use before the effective generation passes the best there is. */
+export const generationBackgroundTop = (build: V20Build): number =>
+  Math.max(0, build.settings.baseGeneration - MOST_POTENT);
 
 /** The base generation improved by one per Generation dot. A stored build past 4th reads as 4th. */
 export function effectiveGeneration(build: V20Build): number {
@@ -111,12 +120,13 @@ export function violations(build: V20Build): Violation[] {
   const found: Violation[] = [];
 
   const generationDots = rating(build, GENERATION_REF);
-  const improved = build.settings.baseGeneration - generationDots;
-  if (improved < MOST_POTENT) {
+  const generationTop = generationBackgroundTop(build);
+  const pastBest = generationDots > generationTop;
+  if (pastBest) {
     found.push({
       key: 'generation',
-      amount: MOST_POTENT - improved,
-      message: `Lower the Generation background to ${build.settings.baseGeneration - MOST_POTENT} first.`,
+      amount: generationDots - generationTop,
+      message: `Lower the Generation background to ${generationTop} first.`,
       step: 'advantages',
     });
   }
@@ -126,7 +136,7 @@ export function violations(build: V20Build): Violation[] {
     ...build.disciplines.map((entry): BuildTraitRef => `discipline:${entry.name}`),
   ];
   for (const ref of traits) {
-    if (ref === GENERATION_REF && improved < MOST_POTENT) continue;
+    if (ref === GENERATION_REF && pastBest) continue;
     const violation = traitViolation(build, ref);
     if (violation) found.push(violation);
   }

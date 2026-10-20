@@ -9,7 +9,7 @@
 
 import type { BuildTraitRef, V20Build } from './build';
 import { matchByName } from './catalogue';
-import { GENERATION_REF, maximumFor } from './limits';
+import { GENERATION_REF, MOST_POTENT, generationBackgroundTop, maximumFor, ordinal } from './limits';
 import { calloutOf, poolOf, rowOf, type Callout, type PoolView, type RowView } from './poolViews';
 import { allotmentReports, disciplineRows, type AllotmentReport } from './progress';
 import { dotsOf, rating } from './ratings';
@@ -19,7 +19,6 @@ import {
   BUILD_VIRTUES,
   DISCIPLINE_ALLOTMENT,
   FIXED_MAXIMUMS,
-  GENERATION_TABLE,
   MAX_HELD,
   VIRTUE_ALLOTMENT,
   type BackgroundName,
@@ -143,7 +142,7 @@ export function reconcilePicked(build: V20Build, picked: ReadonlySet<BackgroundN
  * generation to the best there is. A stored build already past it keeps what it holds.
  */
 function generationTop(build: V20Build): number {
-  return Math.max(0, Math.min(maximumFor(build, GENERATION_REF), build.settings.baseGeneration - GENERATION_TABLE[0].generation));
+  return Math.min(maximumFor(build, GENERATION_REF), generationBackgroundTop(build));
 }
 
 function backgroundRow(build: V20Build, report: AllotmentReport, name: BackgroundName): BackgroundRow {
@@ -154,7 +153,7 @@ function backgroundRow(build: V20Build, report: AllotmentReport, name: Backgroun
   const bound = top !== undefined && top < FIXED_MAXIMUMS.generationBackground && row.limit === `Maximum ${top}`;
   return {
     ...row,
-    limit: bound ? `Maximum ${top}, ${GENERATION_TABLE[0].generation}th generation is the best` : row.limit,
+    limit: bound ? `Maximum ${top}, ${ordinal(MOST_POTENT)} generation is the best` : row.limit,
     name,
     label: backgroundLabel(name),
     removable: row.rating === 0,
