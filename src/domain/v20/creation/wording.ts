@@ -9,6 +9,11 @@ export const plural = (count: number, one: string, many = `${one}s`): string =>
 /** "primary" as "Primary". */
 export const titleCase = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 
+const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+
+/** 5 as "five": a small count in a sentence. A count with no word reads as digits. */
+export const numberWord = (count: number): string => NUMBER_WORDS[count] ?? String(count);
+
 /** "Physical", "Physical and Social", "Physical, Social and Mental". */
 export const list = (items: readonly string[]): string =>
   items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;

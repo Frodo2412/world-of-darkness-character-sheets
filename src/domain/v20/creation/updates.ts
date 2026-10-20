@@ -13,7 +13,7 @@ import type {
   V20Build,
 } from './build';
 import { freebieCost, freebiesRemaining } from './freebies';
-import { DISCIPLINES_NEED_CLAN, list, plural, screenTitle, titleCase } from './wording';
+import { DISCIPLINES_NEED_CLAN, list, numberWord, plural, screenTitle, titleCase } from './wording';
 import {
   GENERATION_REF,
   PAST_BEST_GENERATION,
@@ -357,7 +357,7 @@ function heldCapRefusal(build: V20Build, ref: BuildTraitRef, target: number): Re
   if (kind !== 'discipline' && kind !== 'background') return undefined;
   if (rating(build, ref) > 0 || target === 0) return undefined;
   if (heldCount(build, ref) < MAX_HELD) return undefined;
-  return because(`A character holds at most six ${kind === 'discipline' ? 'Disciplines' : 'Backgrounds'}.`);
+  return because(`A character holds at most ${numberWord(MAX_HELD)} ${kind === 'discipline' ? 'Disciplines' : 'Backgrounds'}.`);
 }
 
 function generationNotice(before: V20Build, after: V20Build): string[] {

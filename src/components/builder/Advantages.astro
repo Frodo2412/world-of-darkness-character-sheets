@@ -7,7 +7,7 @@
 import type { BuildTraitRef } from '../../domain/v20/creation/build';
 import { backgroundLabel } from '../../domain/v20/creation/advantageViews';
 import { BACKGROUND_KEYS_HELP } from '../../scripts/builder/parts/keyHelp';
-import { BACKGROUNDS, BUILD_VIRTUES } from '../../domain/v20/creation/rules';
+import { BACKGROUNDS, BUILD_VIRTUES, MAX_HELD } from '../../domain/v20/creation/rules';
 import DisciplineRows from './DisciplineRows.astro';
 import Pool from './Pool.astro';
 import SearchField from './SearchField.astro';
@@ -36,7 +36,7 @@ import TraitRow from './TraitRow.astro';
 			<SearchField id="bg-search" label="Search Backgrounds" prefix="bg" />
 			<div class="advantages-counts">
 				<h4 class="advantages-subheading" data-bg-heading>All Backgrounds · {BACKGROUNDS.length}</h4>
-				<span class="builder-status" data-bg-selected>Selected · 0/6</span>
+				<span class="builder-status" data-bg-selected>Selected · 0/{MAX_HELD}</span>
 			</div>
 			<p id="bg-keys-help" class="builder-helper advantages-line">{BACKGROUND_KEYS_HELP}</p>
 			<div class="advantages-chips" role="group" aria-label="Background choices" aria-describedby="bg-keys-help" data-bg-chips>

@@ -24,20 +24,21 @@ import {
   type BackgroundName,
 } from './rules';
 import type { GateReason } from './screens';
-import { DISCIPLINES_NEED_CLAN, list, plural, searchListWords } from './wording';
+import { DISCIPLINES_NEED_CLAN, list, numberWord, plural, searchListWords, titleCase } from './wording';
 
-/** Said beside the Background chips once six are chosen: the other chips cannot be pressed. */
-export const SIX_IS_THE_MOST = 'Six is the most';
+/** Said beside the Background chips once the most are chosen: the other chips cannot be pressed. */
+export const BACKGROUNDS_FULL = `${titleCase(numberWord(MAX_HELD))} is the most`;
 
 /** The line under the Virtues: Humanity and Willpower follow them. */
 export const VIRTUES_DERIVATION = 'Humanity and Willpower are derived from the Virtues.';
 
-const BACKGROUNDS_LINE = 'Five dots across at most six Backgrounds.';
+// The numbers in these lines are the rules': the allotments' dots and the most a character holds.
+const BACKGROUNDS_LINE = `${titleCase(numberWord(BACKGROUND_ALLOTMENT.dots))} dots across at most ${numberWord(MAX_HELD)} Backgrounds.`;
 const NO_BACKGROUND_ROWS = 'Choose a chip to add its row.';
-const VIRTUES_LINE = 'Seven dots over the free dot each Virtue has.';
+const VIRTUES_LINE = `${titleCase(numberWord(VIRTUE_ALLOTMENT.dots))} dots over the free dot each Virtue has.`;
 const DISCIPLINES_LINE = {
-  clan: "Three dots across the clan's Disciplines.",
-  caitiff: 'Caitiff may place three dots on any Discipline.',
+  clan: `${titleCase(numberWord(DISCIPLINE_ALLOTMENT.dots))} dots across the clan's Disciplines.`,
+  caitiff: `Caitiff may place ${numberWord(DISCIPLINE_ALLOTMENT.dots)} dots on any Discipline.`,
   none: 'Disciplines appear once a clan is chosen.',
 } as const;
 
@@ -176,7 +177,7 @@ export function backgroundsView(build: V20Build, picked: ReadonlySet<BackgroundN
     }),
     ...searchListWords('Background', 'Backgrounds', kept.length, query),
     selected: `Selected · ${chosen.length}/${MAX_HELD}`,
-    limit: full ? SIX_IS_THE_MOST : null,
+    limit: full ? BACKGROUNDS_FULL : null,
     rows: chosen.map((name) => backgroundRow(build, report, name)),
     empty: chosen.length === 0 ? NO_BACKGROUND_ROWS : null,
   };
@@ -187,7 +188,7 @@ export type BackgroundPress = { kind: 'choose' } | { kind: 'clear' } | { kind: '
 
 export function pressBackground(build: V20Build, picked: ReadonlySet<BackgroundName>, name: BackgroundName): BackgroundPress {
   const chosen = selectedBackgrounds(build, picked);
-  if (!chosen.includes(name)) return chosen.length >= MAX_HELD ? { kind: 'refuse', reason: SIX_IS_THE_MOST } : { kind: 'choose' };
+  if (!chosen.includes(name)) return chosen.length >= MAX_HELD ? { kind: 'refuse', reason: BACKGROUNDS_FULL } : { kind: 'choose' };
   if (rating(build, backgroundRef(name)) === 0) return { kind: 'clear' };
   // Freebie dots come off on Finishing touches; creation dots where they were placed.
   return dotsOf(build, backgroundRef(name)).freebie > 0

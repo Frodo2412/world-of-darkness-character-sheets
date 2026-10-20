@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { itemsLeftText, list, plural, screenIndex, screenTitle, searchListWords } from './wording';
+import { itemsLeftText, list, numberWord, plural, screenIndex, screenTitle, searchListWords } from './wording';
 import { SCREENS } from './rules';
 
 describe('list', () => {
@@ -27,6 +27,15 @@ describe('screens', () => {
     expect(SCREENS.map(({ id }) => screenIndex(id))).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
     expect(SCREENS.map(({ id }) => screenTitle(id))).toEqual(SCREENS.map(({ title }) => title));
   });
+});
+
+test.each([
+  [3, 'three'],
+  [6, 'six'],
+  [12, 'twelve'],
+  [13, '13'],
+])('numberWord reads %i as %j', (count, word) => {
+  expect(numberWord(count)).toBe(word);
 });
 
 test('plural keeps its noun in the right number', () => {

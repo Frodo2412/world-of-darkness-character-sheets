@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
-  SIX_IS_THE_MOST,
+  BACKGROUNDS_FULL,
   VIRTUES_DERIVATION,
   advantagesView,
   backgroundLabel,
@@ -160,7 +160,7 @@ describe('the six Backgrounds', () => {
     expect(view.chips.filter((chip) => chip.unavailable)).toHaveLength(8);
     expect(view.chips.filter((chip) => chip.selected).every((chip) => !chip.unavailable)).toBe(true);
     expect(view.limit).toBe('Six is the most');
-    expect(view.limit).toBe(SIX_IS_THE_MOST);
+    expect(view.limit).toBe(BACKGROUNDS_FULL);
     expect(view.selected).toBe('Selected · 6/6');
   });
 
@@ -525,7 +525,7 @@ describe('the screen', () => {
       backgrounds(fresh()).empty!,
       virtuesView(fresh()).line,
       virtuesView(fresh()).derivation,
-      SIX_IS_THE_MOST,
+      BACKGROUNDS_FULL,
     ];
     for (const line of lines) expect(line.split(/\s+/).length, line).toBeLessThanOrEqual(12);
   });
