@@ -890,7 +890,7 @@ Feature: The Character concept screen
   Scenario: Entering the opening details
     When I enter the name "Éloïse Voss" and the concept "Antiquarian searching for lost voices"
     And I enter "I preserve the stories others would erase" under "What keeps you going?"
-    Then the identity bar and the character panel show "Éloïse Voss"
+    Then the identity bar reads "Éloïse Voss" with the initials "ÉV"
     And after reloading the builder all three entries are unchanged
 
   Scenario: Multi-line text is kept
@@ -910,6 +910,13 @@ Feature: The Character concept screen
     Then "Intellectual" reads "Selected"
     And a short description of Intellectual is shown
     And the character panel's Concept row reads "Intellectual"
+
+  Scenario: Choosing a second sample concept replaces the first
+    Given the sample concept "Intellectual" is selected
+    When I choose the sample concept "Soldier"
+    Then "Soldier" reads "Selected"
+    And "Intellectual" does not read "Selected"
+    And the character panel's Concept row reads "Soldier"
 
   Scenario: A sample concept can be deselected
     Given the sample concept "Intellectual" is selected
@@ -950,8 +957,20 @@ Feature: The Character concept screen
     Then the character's notes are empty
 
   Scenario: Screen standards
-    Then axe reports no violations at 1512 px and 375 px
+    When I choose Clan in the sidebar and then Character concept
+    Then focus is on the Character concept heading
     And there is exactly one h1
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Screen standards with a sample concept selected
+    Given the sample concept "Intellectual" is selected
+    Then axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
 ```
 
 **Steps:**

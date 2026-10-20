@@ -30,6 +30,7 @@ import {
   stepLink,
 } from './support/builder';
 import { chooseClan, clanNotice, clanPanel, clanSelect, openClanScreen } from './support/clan';
+import { conceptField } from './support/concept';
 import { groupNotice, placeDots, rankGroup, rankSelect, rateTrait, ratingOf, ratingRow, requestRating, stepButton, traitRating } from './support/ranked';
 import { buildEntries, openRoster } from './support/pages';
 import { identityName, identitySummary } from './support/sheet';
@@ -82,7 +83,7 @@ When('they set the base generation to {string} and the extra freebie points to {
 
 When('they enter the name {string} and choose the clan {string}', async ({ page }, name: string, clan: string) => {
   await openStep(page, 'Concept');
-  await page.locator('#builder').getByRole('textbox', { name: 'Name', exact: true }).fill(name);
+  await conceptField(page, 'Name').fill(name);
   await chooseClan(page, clan);
 });
 
