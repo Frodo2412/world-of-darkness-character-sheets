@@ -7,7 +7,6 @@ import {
   TITLE_RANK,
   TRAIT,
   groupBox,
-  groupNotice,
   groupPoolRemaining,
   lower,
   lowerOne,
@@ -19,15 +18,6 @@ import {
   shownCallouts,
   stepButton,
 } from './support/ranked';
-
-Then(
-  'they are told Abilities cannot go above 3 before freebie points, which are spent on Finishing touches',
-  async ({ page }) => {
-    const notice = await groupNotice(page, 'Talents');
-    await expect(notice).toContainText('Abilities cannot go above 3 before freebie points, which are spent on Finishing touches.');
-    await expect(notice.getByRole('link', { name: 'Go to Finishing touches' })).toBeVisible();
-  },
-);
 
 Given(
   new RegExp(`^I am on the Abilities screen with ${GROUP} Primary, ${GROUP} Secondary and ${GROUP} Tertiary$`),

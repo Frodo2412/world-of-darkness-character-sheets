@@ -1,7 +1,8 @@
 ---
 // A ranked creation screen (Attributes, Abilities): the intro card, a card for each group and the "What the
 // choices say" card. The screen module (scripts/builder/parts/ranked.ts) writes the intro, the priority line
-// and the summary, and everything inside the groups, from `rankedView`.
+// (a status region that is always on the page, so a change to it is said) and the summary, and everything inside
+// the groups, from `rankedView`.
 import type { RankedAllotment } from '../../domain/v20/creation/rules';
 import RankedGroup from './RankedGroup.astro';
 
@@ -17,7 +18,7 @@ const { primary, secondary, tertiary } = allotment.rankDots;
 	<div class="builder-card ranked-intro">
 		<p class="ranked-text">Rank the groups primary, secondary and tertiary for {primary}, {secondary} and {tertiary} dots.</p>
 		<p class="builder-helper ranked-text" data-ranked-intro></p>
-		<p class="builder-status ranked-text" data-ranked-priority hidden></p>
+		<p class="builder-status ranked-text" role="status" data-ranked-priority></p>
 	</div>
 	<div class="builder-columns">
 		{allotment.groups.map((group) => <RankedGroup allotment={allotment} group={group} mode="creation" step={allotment.step} />)}

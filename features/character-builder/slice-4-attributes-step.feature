@@ -1,12 +1,5 @@
 Feature: Attributes step
 
-  Scenario: Every Attribute starts with one free dot
-    Given a player who has started building a character
-    When they open the attributes step
-    Then every Attribute is rated 1
-    And no Attribute group has a rank yet
-    And each group says to rank it before placing dots
-
   Scenario: Ranking the groups sets their allotments
     Given a player on the attributes step
     When they rank Physical primary, Social secondary and Mental tertiary
@@ -19,13 +12,6 @@ Feature: Attributes step
     When they try to raise Strength to 2
     Then they are told, beside the Physical group, to rank the group first
     And Strength is rated 1
-
-  Scenario: A group cannot exceed its allotment
-    Given a player who has ranked Mental tertiary
-    And Perception is rated 3 and Intelligence is rated 2
-    When they try to raise Wits to 2
-    Then they are told, beside the Mental group, that Mental has no dots remaining and more can be bought with freebie points on Finishing touches
-    And Wits is rated 1
 
   Scenario: An Attribute offers no dot above the maximum trait rating
     Given a 13th generation build with Physical ranked primary

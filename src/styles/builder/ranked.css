@@ -16,6 +16,11 @@
 	margin-block-start: var(--space-1);
 }
 
+/* The priority line is a status region that is always on the page; empty, it takes no room. */
+.ranked-text:empty {
+	margin: 0;
+}
+
 .ranked-group {
 	display: grid;
 	gap: var(--space-2);
@@ -87,11 +92,12 @@
 	display: none;
 }
 
-.ranked-callout p {
+.ranked-callout :is(p, h4) {
 	margin: 0;
 }
 
 .ranked-callout-heading {
+	font: inherit;
 	font-weight: 600;
 	color: var(--color-text-strong);
 }

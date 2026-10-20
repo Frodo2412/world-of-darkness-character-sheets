@@ -212,6 +212,11 @@ describe('setRank swaps within one allotment', () => {
     expect(setRank(build, 'skills', 'secondary')).toEqual({ status: 'applied', build, notices: [] });
   });
 
+  test('a rank taken by no other group is told too, naming only the group that changed', () => {
+    expect(noticesOf(setRank(fresh(), 'physical', 'primary'))).toEqual(['Physical is now Primary.']);
+    expect(noticesOf(setRank(play(fresh(), rank('skills', 'primary')), 'skills', 'secondary'))).toEqual(['Skills is now Secondary.']);
+  });
+
   test('a swap keeps the dots placed in both groups', () => {
     const build = play(abilities(), creation('ability:crafts', 3), creation('ability:law', 2));
     const result = setRank(build, 'knowledges', 'primary');

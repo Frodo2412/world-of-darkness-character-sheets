@@ -115,7 +115,6 @@ export function createRankedScreen(key: RankedKey): Pick<ScreenModule, 'wire' | 
       showReadout(part(screen, 'ranked-intro'), view.intro);
       const priority = part(screen, 'ranked-priority');
       showReadout(priority, view.priority.text);
-      priority.hidden = view.priority.text === '';
       drawLines(part(screen, 'ranked-summary'), view.summary);
       for (const group of view.groups) {
         drawGroup(screen.querySelector<HTMLElement>(`[data-ranked-group="${group.key}"]`)!, group, current);

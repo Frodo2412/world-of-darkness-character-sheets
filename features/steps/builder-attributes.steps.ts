@@ -1,10 +1,11 @@
 import { expect } from '@playwright/test';
 import { ATTRIBUTE_GROUPS } from '../../src/domain/v20/traits';
+import type { BuildTraitRef } from '../../src/domain/v20/creation/build';
 import { RANKED_ALLOTMENTS } from '../../src/domain/v20/creation/rules';
-import { creation, rank } from '../../src/domain/v20/creation/testing/play';
+import { creation, freebie, rank } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When } from './fixtures';
 import { ANNOUNCEMENT_WINDOW_MS, announcements, waitOnPageClock } from './support/announcements';
-import { freebiePointsRemaining, openPlayed, openStep, startBuild } from './support/builder';
+import { buildWith, freebiePointsRemaining, openPlayed, openSavedBuild, openStep, startBuild } from './support/builder';
 import { chooseClan, clanNotice, clanPanel, clanRadio, expectClanChosen } from './support/clan';
 import {
   ANY_SCREEN,
@@ -41,8 +42,6 @@ import {
 import { escaped } from './support/text';
 
 const RANK = '(primary|secondary|tertiary)';
-
-const EXHAUSTED = 'More can be bought with freebie points on Finishing touches.';
 
 // Given
 
@@ -122,36 +121,8 @@ When(/^they choose the clan "([^"]+)" and confirm$/, async ({ page }, name: stri
 
 // Then
 
-Then('every Attribute is rated 1', async ({ page }) => {
-  const labels: string[] = ATTRIBUTE_GROUPS.flatMap((group) => group.traits.map((trait) => trait.label));
-  for (const label of labels) await expectRated(await traitRating(page, label), 1);
-});
-
-Then('no Attribute group has a rank yet', async ({ page }) => {
-  for (const group of ATTRIBUTE_GROUPS) await expect(await rankSelect(page, group.label)).toHaveValue('');
-});
-
-Then('each group says to rank it before placing dots', async ({ page }) => {
-  for (const group of ATTRIBUTE_GROUPS) {
-    await expect(await groupPoolSpent(page, group.label)).toHaveText('Rank the group to place dots');
-  }
-});
-
 Then(/^they are told, beside the (\w+) group, to rank the group first$/, async ({ page }, group: string) => {
   await expect(await groupNotice(page, group)).toHaveText(`Rank the ${group} group before placing dots in it.`);
-});
-
-Then(
-  /^they are told, beside the (\w+) group, that \w+ has no dots remaining and more can be bought with freebie points on Finishing touches$/,
-  async ({ page }, group: string) => {
-    const notice = await groupNotice(page, group);
-    await expect(notice).toContainText(`${group} has no dots remaining. ${EXHAUSTED}`);
-    await expect(notice.getByRole('link', { name: 'Go to Finishing touches' })).toBeVisible();
-  },
-);
-
-Then(/^they are told, beside the (\w+) group, that \w+ has no dots remaining$/, async ({ page }, group: string) => {
-  await expect(await groupNotice(page, group)).toContainText(`${group} has no dots remaining.`);
 });
 
 Then(
@@ -226,6 +197,32 @@ Given(
     ranked({ memory }).freebies = (await freebiePointsRemaining(page).textContent()) ?? '';
     await arrange(page, group, rank, Number(placed));
     ranked({ memory }).totals.set(group, await totalOf(page, group));
+  },
+);
+
+Given(new RegExp(`^${GROUP} is ${TITLE_RANK}$`), async ({ page }, group: string, value: string) => {
+  await rankGroup(page, group, lower(value));
+});
+
+Given(
+  new RegExp(`^a saved build holds Primary for both ${GROUP} and ${GROUP}$`),
+  async ({ page }, first: string, second: string) => {
+    const build = buildWith();
+    for (const group of [first, second]) {
+      const key = RANKED_ALLOTMENTS.flatMap((allotment) => allotment.groups).find((entry) => entry.label === group)!.key;
+      build.ranks = { ...build.ranks, [key]: 'primary' };
+    }
+    await openSavedBuild(page, build);
+  },
+);
+
+Given(
+  new RegExp(`^${GROUP} is ${TITLE_RANK} with a freebie dot on ${TRAIT}$`),
+  async ({ page }, group: string, value: string, trait: string) => {
+    const key = ATTRIBUTE_GROUPS.find((entry) => entry.label === group)!.key;
+    // An Attribute's key is its label in lower case.
+    await openPlayed(page, rank(key, lower(value)), freebie(`attribute:${lower(trait)}` as BuildTraitRef, 2));
+    await openStep(page, 'Attributes');
   },
 );
 
@@ -312,6 +309,14 @@ Then('Primary, Secondary and Tertiary are all offered', async ({ page, memory })
   expect(offered.some((option) => option.disabled)).toBe(false);
 });
 
+Then(
+  /^the options read "([^"]+)", "([^"]+)" and "([^"]+)"$/,
+  async ({ page, memory }, first: string, second: string, third: string) => {
+    const select = await rankSelect(page, ranked({ memory }).trait);
+    await expect(select.locator('option:not([value=""])')).toHaveText([first, second, third]);
+  },
+);
+
 Then(new RegExp(`^${GROUP} is ${TITLE_RANK} and ${GROUP} is ${TITLE_RANK}$`), async ({ page }, a: string, ra: string, b: string, rb: string) => {
   await expect(await rankSelect(page, a)).toHaveValue(lower(ra));
   await expect(await rankSelect(page, b)).toHaveValue(lower(rb));
@@ -331,6 +336,19 @@ Then('exactly one message is announced and it names both groups', async ({ page,
   expect(said).toHaveLength(1);
   const named = RANKED_ALLOTMENTS.flatMap((allotment) => allotment.groups.map((group) => group.label)).filter((label) => said[0].includes(label));
   expect(named.length).toBeGreaterThanOrEqual(2);
+});
+
+Then(/^exactly one message is announced and it reads "([^"]+)"$/, async ({ page, memory }, text: string) => {
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  expect((await announcements(page)).slice(ranked({ memory }).mark)).toEqual([text]);
+});
+
+Then('the priority status is a live region', async ({ page }) => {
+  await expect(shownRanked(page).locator('[data-ranked-priority]')).toHaveAttribute('role', 'status');
+});
+
+Then('the callout title is a level 4 heading', async ({ page }) => {
+  await expect(shownCallouts(page).getByRole('heading', { level: 4, name: /^Finish .+ before moving on$/ })).toHaveCount(1);
 });
 
 Then(/^the status reads "([^"]+)"$/, async ({ page }, text: string) => {

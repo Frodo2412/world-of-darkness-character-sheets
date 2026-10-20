@@ -17,6 +17,9 @@ export type RankedKey = RankedAllotment['key'];
 /** Said while no rank is held twice. */
 export const PRIORITY_UNIQUE = 'Priority order is unique';
 
+/** Said while a rank is held twice, which only a stored build can: the screen's own choices swap instead. */
+export const PRIORITY_DUPLICATE = 'Priority order is not unique · Give each group a different rank';
+
 /** One entry of a group's priority select. Every rank is always offered. */
 export interface RankOption {
   rank: Rank;
@@ -24,7 +27,7 @@ export interface RankOption {
   label: string;
   /** The dots that rank grants. */
   dots: number;
-  /** "Primary · 7". */
+  /** "Primary · 7 dots". */
   text: string;
 }
 
@@ -59,6 +62,8 @@ export interface RowView {
   canRaise: boolean;
   /** "Maximum 3", "Fixed for Nosferatu", "No dots left in Social", "Rank Social first"; null when the plus can act. */
   limit: string | null;
+  /** The lowest rating creation dots can set: free and freebie dots already give it. */
+  min: number;
   /** Whether the minus can take a creation dot off now. */
   canLower: boolean;
   /** "Minimum 1, free dot", "Minimum 0", "Fixed for Nosferatu"; null when the minus can act. */
@@ -93,7 +98,8 @@ export interface RankedScreenView {
   /** The select's entries, the same for every group. */
   options: RankOption[];
   groups: RankedGroupView[];
-  /** True while no rank is held twice and at least one is held; `text` is then PRIORITY_UNIQUE, else empty. */
+  /** `unique` is true while no rank is held twice and at least one is held. `text` is then PRIORITY_UNIQUE; PRIORITY_DUPLICATE
+   * while a rank is held twice; empty while none is held. */
   priority: { unique: boolean; text: string };
   /** "Strongest: Social", "Tertiary: Physical": neutral lines for the summary card. */
   summary: string[];
@@ -104,7 +110,7 @@ export const rankOptions = (allotment: RankedAllotment): RankOption[] =>
     rank,
     label: titleCase(rank),
     dots: allotment.rankDots[rank],
-    text: `${titleCase(rank)} · ${allotment.rankDots[rank]}`,
+    text: `${titleCase(rank)} · ${plural(allotment.rankDots[rank], 'dot')}`,
   }));
 
 function poolOf(report: AllotmentReport): PoolView {
@@ -139,9 +145,8 @@ function limitOf(build: V20Build, report: AllotmentReport, ref: FixedTraitRef, m
 }
 
 /** Why the minus on `ref` cannot take a dot off, or null when it can: fixed, or at the floor free and freebie dots set. */
-function lowerLimitOf(build: V20Build, ref: FixedTraitRef): string | null {
+function lowerLimitOf(build: V20Build, ref: FixedTraitRef, floor: number): string | null {
   if (isLocked(build, ref)) return `Fixed for ${build.clan}`;
-  const floor = creationFloor(build, ref);
   if (rating(build, ref) > floor) return null;
   if (dotsOf(build, ref).freebie > 0) return `Minimum ${floor}, freebie dots are removed on Finishing touches`;
   const free = freeDots(build, ref);
@@ -151,7 +156,8 @@ function lowerLimitOf(build: V20Build, ref: FixedTraitRef): string | null {
 function rowOf(build: V20Build, report: AllotmentReport, ref: FixedTraitRef): RowView {
   const max = creationMaximum(build, ref);
   const limit = limitOf(build, report, ref, max);
-  const lowerLimit = lowerLimitOf(build, ref);
+  const min = creationFloor(build, ref);
+  const lowerLimit = lowerLimitOf(build, ref, min);
   return {
     ref,
     label: traitLabel(ref),
@@ -159,6 +165,7 @@ function rowOf(build: V20Build, report: AllotmentReport, ref: FixedTraitRef): Ro
     max,
     canRaise: limit === null,
     limit,
+    min,
     canLower: lowerLimit === null,
     lowerLimit,
   };
@@ -220,7 +227,7 @@ export function rankedView(build: V20Build, key: RankedKey): RankedScreenView {
     intro: introOf(allotment),
     options: rankOptions(allotment),
     groups,
-    priority: { unique, text: unique ? PRIORITY_UNIQUE : '' },
+    priority: { unique, text: held.length === 0 ? '' : unique ? PRIORITY_UNIQUE : PRIORITY_DUPLICATE },
     summary: summaryOf(groups),
   };
 }

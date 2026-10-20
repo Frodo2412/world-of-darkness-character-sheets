@@ -1282,6 +1282,7 @@ Feature: Attributes and Abilities screens
   Scenario: Every priority is always offered
     When I open the Social priority select
     Then Primary, Secondary and Tertiary are all offered
+    And the options read "Primary · 7 dots", "Secondary · 5 dots" and "Tertiary · 3 dots"
 
   Scenario: Choosing a rank another group holds swaps the two
     Given Physical is Primary and Social is Tertiary
@@ -1289,6 +1290,23 @@ Feature: Attributes and Abilities screens
     Then Social is Primary and Physical is Tertiary
     And it is announced that Social is now Primary and Physical is now Tertiary
     And the status reads "Priority order is unique"
+
+  Scenario: A rank nobody else holds is announced once
+    Given Social is Primary
+    When I set Mental to Secondary
+    Then exactly one message is announced and it reads "Mental is now Secondary."
+    And the status reads "Priority order is unique"
+
+  Scenario: Moving a group to a rank nobody holds is announced once
+    Given Social is Primary
+    When I set Social to Secondary
+    Then exactly one message is announced and it reads "Social is now Secondary."
+
+  Scenario: A rank held twice is said by the priority status, which is a live region
+    Given a saved build holds Primary for both Physical and Social
+    When I open the Attributes screen
+    Then the status reads "Priority order is not unique · Give each group a different rank"
+    And the priority status is a live region
 
   Scenario: Re-ranking keeps the dots that still fit
     Given Social is Primary with 7 of 7 dots placed
@@ -1308,6 +1326,7 @@ Feature: Attributes and Abilities screens
     Given I am on the Abilities screen
     When I open the Skills priority select
     Then Primary, Secondary and Tertiary are all offered
+    And the options read "Primary · 13 dots", "Secondary · 9 dots" and "Tertiary · 5 dots"
 
   Scenario: Attribute priorities and Ability priorities are independent
     Given Physical is Primary on the Attributes screen
@@ -1344,6 +1363,7 @@ Feature: Attributes and Abilities screens
   Scenario: An unfinished group raises a callout
     Given Physical is Tertiary with 2 of 3 additional dots placed
     Then a callout reads "Finish Physical before moving on"
+    And the callout title is a level 4 heading
     And it says 2 of 3 additional Physical dots are placed and 1 remains
     And it names Strength, Dexterity and Stamina
 
@@ -1357,6 +1377,12 @@ Feature: Attributes and Abilities screens
     Given Stamina is at 1
     When I try to lower Stamina
     Then it stays at 1
+    And "Minimum 1, free dot" is shown beside Decrease Stamina
+
+  Scenario: A row with a freebie dot reports its real lowest rating
+    Given Physical is Primary with a freebie dot on Dexterity
+    Then Dexterity reports 2 as its lowest rating
+    And "Minimum 2, freebie dots are removed on Finishing touches" is shown beside Decrease Dexterity
 
   Scenario: Remaining counts are announced
     Given Physical is Secondary with 3 of 5 additional dots placed
@@ -1447,6 +1473,14 @@ Feature: Attributes and Abilities screens
     Given Social is Tertiary with 7 dots placed
     And Physical is Primary and Mental is Secondary
     Then the Social pool reads "Overspent by 4"
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Attribute screen standards with the longest minimum shown
+    Given Physical is Primary with a freebie dot on Dexterity
+    Then "Minimum 2, freebie dots are removed on Finishing touches" is shown beside Decrease Dexterity
     And axe reports no violations at 1512 px and 375 px
     And every control has a unique accessible name
     And the page does not scroll horizontally at 375 px

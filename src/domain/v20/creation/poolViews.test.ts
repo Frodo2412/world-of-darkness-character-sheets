@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import type { V20Build } from './build';
 import { allotmentStates } from './allotments';
-import { PRIORITY_UNIQUE, rankedView, type RankedGroupView, type RankedScreenView } from './poolViews';
-import { rating } from './ratings';
+import { PRIORITY_DUPLICATE, PRIORITY_UNIQUE, rankedView, type RankedGroupView, type RankedScreenView } from './poolViews';
+import { creationFloor, rating } from './ratings';
 import { abilitiesRanked, attributesRanked, clan, completeBuild, creation, freebie, fresh, play, rank } from './testing/play';
 import { setRank, setRating } from './updates';
 
@@ -25,7 +25,7 @@ const socialPrimary = (placed: number): V20Build =>
 describe('the priority select', () => {
   test('offers every rank with its dots, for every group, whoever holds a rank', () => {
     const view = attributes(play(fresh(), ...attributesRanked));
-    expect(view.options.map((option) => option.text)).toEqual(['Primary · 7', 'Secondary · 5', 'Tertiary · 3']);
+    expect(view.options.map((option) => option.text)).toEqual(['Primary · 7 dots', 'Secondary · 5 dots', 'Tertiary · 3 dots']);
     expect(abilities(fresh()).options.map((option) => [option.rank, option.dots])).toEqual([
       ['primary', 13],
       ['secondary', 9],
@@ -47,9 +47,14 @@ describe('the priority select', () => {
     expect(group(abilities(swapped), 'talents').rank).toBe('tertiary');
   });
 
-  test('is not unique for a stored build that holds a rank twice', () => {
+  test('says a rank is held twice, so an invalid order is never signalled by absence', () => {
     const stored: V20Build = { ...fresh(), ranks: { ...fresh().ranks, physical: 'primary', social: 'primary' } };
-    expect(attributes(stored).priority).toEqual({ unique: false, text: '' });
+    expect(attributes(stored).priority).toEqual({ unique: false, text: PRIORITY_DUPLICATE });
+    expect(PRIORITY_DUPLICATE).toBe('Priority order is not unique · Give each group a different rank');
+  });
+
+  test('the duplicate message names no one and uses no pronoun', () => {
+    expect(PRIORITY_DUPLICATE).not.toMatch(PRONOUN);
   });
 });
 
@@ -232,6 +237,19 @@ describe('the plus limits and the callout', () => {
     }
   });
 
+  test.each(builds)('a row\'s min is the lowest rating the build lets creation dots reach (%s)', (_name, build) => {
+    for (const view of [attributes(build), abilities(build)]) {
+      for (const row of view.groups.flatMap((entry) => entry.rows)) {
+        const now = rating(build, row.ref);
+        const reachable = Array.from({ length: now + 1 }, (_, target) => target).filter(
+          (target) => target === now || setRating(build, row.ref, target, 'creation').status === 'applied',
+        );
+        expect(row.min, row.ref).toBe(Math.min(...reachable));
+        expect(row.min, row.ref).toBe(creationFloor(build, row.ref));
+      }
+    }
+  });
+
   test.each(builds)('a plus is available exactly when the build would place the dot (%s)', (_name, build) => {
     for (const view of [attributes(build), abilities(build)]) {
       for (const row of view.groups.flatMap((entry) => entry.rows)) {
@@ -294,6 +312,7 @@ describe('the summary and the copy', () => {
       play(socialPrimary(7), rank('social', 'tertiary')),
       completeBuild(),
       setRank(play(named, ...attributesRanked), 'mental', 'primary').build,
+      { ...named, ranks: { ...named.ranks, physical: 'primary', social: 'primary' } } as V20Build,
     ];
     for (const build of states) {
       for (const view of [attributes(build), abilities(build)]) {

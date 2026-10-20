@@ -241,6 +241,8 @@ export function setRank(build: V20Build, groupKey: string, rank: string): Update
   }
   const candidate = { ...build, ranks };
 
+  // A rank nobody held is told by the group alone; a swap names both groups, so the choice is said once either way.
+  if (holders.length === 0) return commit(build, candidate, [`${label(groupKey)} is now ${titleCase(rank)}.`]);
   const notices = holders.map((holder, index) => {
     const name = label(holder.key);
     const now = ranks[holder.key];

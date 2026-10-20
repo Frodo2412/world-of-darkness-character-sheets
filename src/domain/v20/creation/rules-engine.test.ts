@@ -86,9 +86,9 @@ describe('ranked groups', () => {
     expect(rating(result.build, 'attribute:strength')).toBe(4);
   });
 
-  test('ranking a free rank gives no notice and leaves other groups alone', () => {
+  test('ranking a free rank tells the choice and leaves other groups alone', () => {
     const result = setRank(fresh(), 'social', 'primary');
-    expect(result).toMatchObject({ status: 'applied', notices: [] });
+    expect(result).toMatchObject({ status: 'applied', notices: ['Social is now Primary.'] });
     expect(result.build.ranks).toMatchObject({ social: 'primary', physical: '', mental: '' });
   });
 

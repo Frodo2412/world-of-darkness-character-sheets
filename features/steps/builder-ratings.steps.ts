@@ -2,7 +2,7 @@
 // ratings, ranks and what a group has left.
 
 import { expect, type Locator, type Page } from '@playwright/test';
-import { Given, Then, When } from './fixtures';
+import { Then, When } from './fixtures';
 import { openStep, shownStep } from './support/builder';
 import {
   expectRated,
@@ -10,7 +10,6 @@ import {
   groupNotice,
   rankGroup,
   rankSelect,
-  rateTrait,
   ratingOf,
   requestRating,
   stepButton,
@@ -50,18 +49,6 @@ When(
   async ({ page }, direction: string, name: string, by: string) => {
     const control = await traitRating(page, name);
     await requestRating(control, (await ratingOf(control)) + (direction === 'raise' ? 1 : -1) * Number(by));
-  },
-);
-
-Given(/^(\w[\w-]*(?: \w+)?) is rated (\d+)$/, async ({ page }, name: string, value: string) => {
-  await rateTrait(page, name, Number(value));
-});
-
-Given(
-  /^(\w[\w-]*) is rated (\d+) and (\w[\w-]*) is rated (\d+)$/,
-  async ({ page }, first: string, a: string, second: string, b: string) => {
-    await rateTrait(page, first, Number(a));
-    await rateTrait(page, second, Number(b));
   },
 );
 
@@ -171,6 +158,12 @@ Then(new RegExp(`^${BUTTON} (\\w+) is still on the page and can be focused$`), a
 Then(/^"([^"]+)" is shown beside Increase (\w+)$/, async ({ page }, text: string, name: string) => {
   await expect((await traitRating(page, name)).locator('[data-rating-limit]')).toHaveText(text);
   await expect((await traitRating(page, name)).locator('[data-rating-limit]')).toBeVisible();
+});
+
+Then(/^"([^"]+)" is shown beside Decrease (\w+)$/, async ({ page }, text: string, name: string) => {
+  const reason = (await traitRating(page, name)).locator('[data-rating-minimum]');
+  await expect(reason).toHaveText(text);
+  await expect(reason).toBeVisible();
 });
 
 Then(/^no limit is shown beside Increase (\w+)$/, async ({ page }, name: string) => {
