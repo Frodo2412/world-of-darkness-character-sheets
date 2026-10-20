@@ -3,7 +3,8 @@ import { blankCharacter } from '../character';
 import { createCharacterStore } from '../../../storage/characterStore';
 import { bloodPool, clan, completeBuild, creation, extra, freebie, generation, play, rank } from './testing/play';
 import { rating } from './ratings';
-import { composeConcept, toCharacter } from './toCharacter';
+import { composeConcept } from './build';
+import { toCharacter } from './toCharacter';
 import { addDiscipline } from './updates';
 
 function lucita() {

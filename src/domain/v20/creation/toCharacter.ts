@@ -10,23 +10,12 @@ import {
   type V20Character,
 } from '../character';
 import type { TraitRef } from '../traits';
-import { CONCEPT_FIELDS, FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
+import { CONCEPT_FIELDS, composeConcept, FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
 import { effectiveGeneration, limits, ordinal } from './limits';
 import { clanDisciplines, keyOf, kindOf, rating } from './ratings';
 import { BACKGROUNDS } from './rules';
 
 type Change = (character: V20Character) => V20Character;
-
-/**
- * The sheet's one Concept line: the sample concept and the player's own words, whichever are set,
- * trimmed and joined with " · ".
- */
-export function composeConcept(kind: string, text: string): string {
-  return [kind, text]
-    .map((part) => part.trim())
-    .filter((part) => part !== '')
-    .join(' · ');
-}
 
 /** What a concept field becomes on the sheet: as entered, except Concept, which joins the sample concept. */
 const headerText = (build: V20Build, field: ConceptField): string =>

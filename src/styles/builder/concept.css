@@ -64,3 +64,7 @@
 .concept-line {
 	margin: var(--space-2) 0 0;
 }
+
+.concept-line:empty {
+	display: none;
+}

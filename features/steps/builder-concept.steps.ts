@@ -177,6 +177,25 @@ Then('no sample concept is selected', async ({ page }) => {
   await expect(sampleLine(page)).toBeHidden();
 });
 
+Then("the Player field asks the browser for the player's name", async ({ page }) => {
+  await expect(conceptField(page, 'Player')).toHaveAttribute('autocomplete', 'name');
+});
+
+Then('the Chronicle and Sire fields ask the browser for no autofill', async ({ page }) => {
+  for (const label of ['Chronicle', 'Sire']) await expect(conceptField(page, label)).toHaveAttribute('autocomplete', 'off');
+});
+
+Then(/^the description of (\w+) is announced as a status$/, async ({ page }, name: string) => {
+  const line = sampleConceptLine(name);
+  expect(line, `${name} is a sample concept`).toBeDefined();
+  await expect(page.getByRole('status').filter({ hasText: line! })).toHaveCount(1);
+});
+
+Then('the sample concept status is empty', async ({ page }) => {
+  await expect(sampleLine(page)).toHaveAttribute('role', 'status');
+  await expect(sampleLine(page)).toBeEmpty();
+});
+
 Then('the concept field holds {string}', async ({ page }, text: string) => {
   await expect(conceptField(page, 'Concept')).toHaveValue(text);
 });

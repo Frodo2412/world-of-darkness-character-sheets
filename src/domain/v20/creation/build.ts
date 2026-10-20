@@ -98,6 +98,17 @@ export interface V20Build {
   bloodPool: number | null;
 }
 
+/**
+ * The one Concept line: the sample concept and the player's own words, whichever are set,
+ * trimmed and joined with " · ". The sheet carries it, and so does the builder's own shell.
+ */
+export function composeConcept(kind: string, text: string): string {
+  return [kind, text]
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+    .join(' · ');
+}
+
 const DEFAULT_BASE_GENERATION = 13;
 const DEFAULT_EXTRA_FREEBIES = 0;
 

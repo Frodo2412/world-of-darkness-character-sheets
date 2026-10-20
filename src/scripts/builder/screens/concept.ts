@@ -41,8 +41,7 @@ export default {
       chip.setAttribute('aria-pressed', String(pressed));
       chip.querySelector<HTMLElement>('[data-sample-state]')!.hidden = !pressed;
     }
-    const line = root.querySelector<HTMLElement>('[data-sample-line]')!;
-    line.textContent = sampleConceptLine(chosen) ?? '';
-    line.hidden = line.textContent === '';
+    // A status region, so the line is announced as it arrives; CSS hides it while it is empty.
+    root.querySelector<HTMLElement>('[data-sample-line]')!.textContent = sampleConceptLine(chosen) ?? '';
   },
 } satisfies ScreenModule;

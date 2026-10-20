@@ -85,6 +85,23 @@ describe('identityOf', () => {
     expect(identityOf(build).subtitle).toBe(subtitle);
   });
 
+  test.each([
+    ['Intellectual', '', 'Toreador · Intellectual · The Glass City'],
+    ['', 'Antiquarian', 'Toreador · Antiquarian · The Glass City'],
+    ['Intellectual', 'Antiquarian', 'Toreador · Intellectual · Antiquarian · The Glass City'],
+    ['Intellectual', '  ', 'Toreador · Intellectual · The Glass City'],
+  ] as const)('the subtitle for sample concept %j and concept text %j is %j', (conceptKind, conceptText, subtitle) => {
+    const build = concept(
+      { ...blank(), clan: 'Toreador' },
+      { conceptKind, concept: conceptText, chronicle: 'The Glass City' },
+    );
+    expect(identityOf(build).subtitle).toBe(subtitle);
+  });
+
+  test('a sample concept alone is the whole subtitle', () => {
+    expect(identityOf(concept(blank(), { conceptKind: 'Intellectual' })).subtitle).toBe('Intellectual');
+  });
+
   test('values that are only whitespace count as not set', () => {
     const build = concept(
       { ...blank(), clan: ' ' },

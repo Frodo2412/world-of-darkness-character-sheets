@@ -2,7 +2,7 @@
 // Pure reads over the build; the page draws what these return and judges nothing itself.
 
 import { allotmentStates, type AllotmentState } from './allotments';
-import type { V20Build } from './build';
+import { composeConcept, type V20Build } from './build';
 import { freebieReport, traitReport } from './progress';
 import { RANKS, SCREENS, type Rank, type ScreenId } from './rules';
 
@@ -55,7 +55,7 @@ function natureDemeanorOf(build: V20Build): string {
 export function identityOf(build: V20Build): Identity {
   const name = trimmed(build.concept.name);
   const chronicle = trimmed(build.concept.chronicle);
-  const subtitle = [build.clan, build.concept.concept, build.concept.chronicle]
+  const subtitle = [build.clan, composeConcept(build.concept.conceptKind, build.concept.concept), build.concept.chronicle]
     .map(trimmed)
     .filter((part) => part !== '')
     .join(SEPARATOR);
@@ -119,9 +119,8 @@ function dotsRow(build: V20Build, key: 'humanity' | 'willpower', label: string):
 /** The panel's rows for the build, as seen from `screen`. */
 export function characterRows(build: V20Build, screen: ScreenId): CharacterRow[] {
   const { remaining } = freebieReport(build);
-  const concept = [build.concept.conceptKind, build.concept.concept].map(trimmed).filter((part) => part !== '');
   const values: Record<Exclude<PanelRowKey, 'humanity' | 'willpower'>, string> = {
-    concept: concept.join(SEPARATOR) || NOT_CHOSEN,
+    concept: composeConcept(build.concept.conceptKind, build.concept.concept) || NOT_CHOSEN,
     clan: build.clan || NOT_CHOSEN,
     natureDemeanor: natureDemeanorOf(build),
     attributes: poolsText(poolsOn(build, 'attributes')),

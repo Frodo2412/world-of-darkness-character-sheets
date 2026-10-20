@@ -42,7 +42,12 @@ const details = fields.filter((field) => !(field.key in ASKED));
 				details.map((field) => (
 					<div class="builder-field">
 						<label for={`concept-${field.key}`}>{field.label}</label>
-						<input type="text" id={`concept-${field.key}`} data-concept={field.key} autocomplete="off" />
+						<input
+							type="text"
+							id={`concept-${field.key}`}
+							data-concept={field.key}
+							autocomplete={field.key === 'player' ? 'name' : 'off'}
+						/>
 					</div>
 				))
 			}
@@ -64,6 +69,6 @@ const details = fields.filter((field) => !(field.key in ASKED));
 				))
 			}
 		</div>
-		<p class="builder-helper concept-line" data-sample-line hidden></p>
+		<p class="builder-helper concept-line" data-sample-line role="status"></p>
 	</div>
 </div>
