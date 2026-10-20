@@ -7,6 +7,7 @@ import { freebieBudget, freebiesSpent } from './freebies';
 import {
   creationRating,
   creationStepOf,
+  dotsOf,
   fixedRating,
   kindOf,
   rating,
@@ -60,6 +61,16 @@ export function maximumFor(build: V20Build, ref: BuildTraitRef): number {
     default:
       return limits(build).maxTrait;
   }
+}
+
+/**
+ * The highest rating creation dots alone can give `ref`: `maximumFor`, except that an Ability
+ * stops at 3 before freebie points (dots already bought sit on top of that).
+ */
+export function creationMaximum(build: V20Build, ref: BuildTraitRef): number {
+  const max = maximumFor(build, ref);
+  if (kindOf(ref) !== 'ability') return max;
+  return Math.min(max, FIXED_MAXIMUMS.abilityCreation + dotsOf(build, ref).freebie);
 }
 
 /** What a refused Blood Pool entry says: the range the generation allows. */

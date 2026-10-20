@@ -58,11 +58,11 @@ export interface GateReason {
 }
 
 /** "Physical", "Physical and Social", "Physical, Social and Mental". */
-const list = (items: string[]): string =>
+export const list = (items: string[]): string =>
   items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 
 /** A Skills group's dots are Skill dots; a Physical group's are Physical dots. */
-const dotNoun = (state: AllotmentState): string => (state.kind === 'ranked' ? state.label.replace(/s$/, '') : state.noun);
+export const dotNoun = (state: AllotmentState): string => (state.kind === 'ranked' ? state.label.replace(/s$/, '') : state.noun);
 
 const overBy = (state: AllotmentState): string =>
   `${state.label} ${state.label.endsWith('s') ? 'are' : 'is'} ${plural(-state.remaining, 'dot')} over`;

@@ -1296,6 +1296,31 @@ Feature: Attributes and Abilities screens
     Then the Social pool reads "Overspent by 2"
     And no Social dot was removed
 
+  Scenario: Choosing a rank another Abilities group holds swaps the two
+    Given I am on the Abilities screen with Talents Primary, Skills Secondary and Knowledges Tertiary
+    When I set Knowledges to Primary
+    Then Knowledges is Primary and Talents is Tertiary
+    And Skills is still Secondary
+    And it is announced that Knowledges is now Primary and Talents is now Tertiary
+    And the status reads "Priority order is unique"
+
+  Scenario: Every Abilities priority is always offered
+    Given I am on the Abilities screen
+    When I open the Skills priority select
+    Then Primary, Secondary and Tertiary are all offered
+
+  Scenario: Attribute priorities and Ability priorities are independent
+    Given Physical is Primary on the Attributes screen
+    When I set Talents to Primary on the Abilities screen
+    Then Physical is still Primary
+    And the Attributes status reads "Priority order is unique"
+
+  Scenario: Re-ranking an Abilities group keeps the dots that still fit
+    Given Skills is Primary with 13 of 13 dots placed
+    When I set Skills to Secondary
+    Then the Skills pool reads "Overspent by 4"
+    And no Skills dot was removed
+
   Scenario: An overspent group blocks Continue with its reason
     Given Social is Tertiary with 7 dots placed
     Then the Social pool reads "Overspent by 4"
@@ -1313,7 +1338,7 @@ Feature: Attributes and Abilities screens
   Scenario: Dots include the automatic dot
     Given a Toreador build
     Then every Attribute shows at least one dot
-    And the card says it includes 1 automatic dot in each trait
+    And the card says dot counts include 1 automatic dot in each trait
 
   Scenario: An unfinished group raises a callout
     Given Physical is Tertiary with 2 of 3 additional dots placed
@@ -1337,6 +1362,25 @@ Feature: Attributes and Abilities screens
     Then the Physical status region reads the new remaining count
     When the last Physical dot is placed
     Then the Physical status region reads "Complete"
+
+  Scenario: Remaining counts are announced for an Attribute group other than Physical
+    Given Social is Primary with 6 of 7 additional dots placed
+    When I place the last Social dot
+    Then the Social status region reads "Complete"
+    When I lower one Social Attribute
+    Then the Social status region reads "1 remaining"
+
+  Scenario: Remaining counts are announced for an Abilities group
+    Given Skills is Secondary with 8 of 9 dots placed
+    When I place the last Skills dot
+    Then the Skills status region reads "Complete"
+    When I lower one Skill
+    Then the Skills status region reads "1 remaining"
+
+  Scenario: A rank swap is announced once
+    Given Physical is Primary and Social is Tertiary
+    When I set Social to Primary
+    Then exactly one message is announced and it names both groups
 
   Scenario: Nosferatu Appearance is fixed
     Given a Nosferatu build
@@ -1362,13 +1406,13 @@ Feature: Attributes and Abilities screens
 
   Scenario: An unfinished Abilities group raises a callout
     Given Skills has 1 dot remaining and Crafts is at 3
-    Then a callout says 1 Skill dot remains
+    Then a callout says 8 of 9 Skill dots are placed and 1 remains
     And it names the Skills below 3 and not Crafts
 
   Scenario: Abilities start at zero in 13 / 9 / 5
     Given I am on the Abilities screen
     When I rank Knowledges Primary, Skills Secondary and Talents Tertiary
-    Then the pools read 13, 9 and 5 dots to place
+    Then the pools read "13 remaining", "9 remaining" and "5 remaining"
     And every Ability reads 0
 
   Scenario: Screen standards
@@ -1384,7 +1428,7 @@ Feature: Attributes and Abilities screens
 **IMPLEMENT**: `setRank` swaps when the chosen rank is held by another group (returns `applied` with a notice naming both); `poolViews.ts` per ranked group: meter segments, status text ("N remaining", "x / y spent · Complete | Allocation needed", "Overspent by N"), the callout (group, placed/total, remaining, traits that can still take dots), and `categorySummary` as neutral lines.
 **TEST**: Unit tests: swap with two and three ranked groups, no-op when unchanged, overspent after re-rank with dots kept, every status string, callout trait lists (excluding traits at their cap and the Nosferatu lock), no pronouns in any output, ties/unranked.
 **REFACTOR**: Build on `allotmentReports`; no recount of dots.
-**Files**: `src/domain/v20/creation/poolViews.ts`, `src/domain/v20/creation/poolViews.test.ts`, `src/domain/v20/creation/updates.ts`, `src/domain/v20/creation/updates.test.ts`
+**Files**: `src/domain/v20/creation/poolViews.ts`, `src/domain/v20/creation/poolViews.test.ts`, `src/domain/v20/creation/updates.ts`, `src/domain/v20/creation/updates.test.ts`, `src/domain/v20/creation/limits.ts` (`creationMaximum`, shared with `setRating`), `src/domain/v20/creation/limits.test.ts`, `src/domain/v20/creation/screens.ts` (exports `list`, `dotNoun`), `src/domain/v20/creation/result.test.ts` (layer map), `plans/character-builder-redesign.md` (Slice 8 Gherkin: Abilities swap and announcement scenarios)
 **Commit**: `feat(builder): rank swap, pool meters and callouts as view models`
 
 #### Step 8.2: Attributes screen

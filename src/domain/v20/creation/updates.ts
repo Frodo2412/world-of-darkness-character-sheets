@@ -14,7 +14,7 @@ import type {
 } from './build';
 import { freebieCost, freebiesRemaining } from './freebies';
 import { plural } from './wording';
-import { GENERATION_REF, bloodPoolRangeMessage, effectiveGeneration, limits, maximumFor, ordinal } from './limits';
+import { GENERATION_REF, bloodPoolRangeMessage, creationMaximum, effectiveGeneration, limits, maximumFor, ordinal } from './limits';
 import {
   catalogueDiscipline,
   clanDisciplines,
@@ -380,7 +380,7 @@ function setCreationRating(build: V20Build, ref: BuildTraitRef, target: number):
     if (state.kind === 'ranked' && state.rank === '') {
       return refuse(build, `Rank the ${state.label} group before placing dots in it.`);
     }
-    if (kindOf(ref) === 'ability' && freeDots(build, ref) + creation > FIXED_MAXIMUMS.abilityCreation) {
+    if (target > creationMaximum(build, ref)) {
       return refuse(
         build,
         `Abilities cannot go above ${FIXED_MAXIMUMS.abilityCreation} before freebie points, which are spent on Finishing touches.`,

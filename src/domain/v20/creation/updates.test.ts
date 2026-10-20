@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
 import { CONCEPT_FIELDS } from './build';
+import { rating } from './ratings';
 import { CONCEPT_KINDS } from './rules';
-import { setBaseGeneration, setClan, setConceptKind, setConceptText, setDrive, setExtraFreebies } from './updates';
+import { creation, fresh, play, rank } from './testing/play';
+import { setBaseGeneration, setClan, setConceptKind, setConceptText, setDrive, setExtraFreebies, setRank } from './updates';
 
 describe('setBaseGeneration', () => {
   const build = blankBuild('abc');
@@ -168,5 +170,41 @@ describe('setClan', () => {
     const snapshot = structuredClone(build);
     setClan(build, 'Ventrue');
     expect(build).toEqual(snapshot);
+  });
+});
+
+describe('setRank swaps within one allotment', () => {
+  const abilities = () => play(fresh(), rank('talents', 'primary'), rank('skills', 'secondary'), rank('knowledges', 'tertiary'));
+
+  test('an Abilities group taking a held rank swaps with its holder and names both', () => {
+    const result = setRank(abilities(), 'knowledges', 'primary');
+    expect(result).toMatchObject({ status: 'applied', notices: ['Knowledges is now primary and Talents is now tertiary.'] });
+    expect(result.build.ranks).toMatchObject({ knowledges: 'primary', talents: 'tertiary', skills: 'secondary' });
+  });
+
+  test('the ranks of the three Abilities groups stay a permutation after every swap', () => {
+    let build = abilities();
+    for (const [group, value] of [['knowledges', 'primary'], ['skills', 'primary'], ['talents', 'secondary'], ['skills', 'tertiary']] as const) {
+      build = play(build, rank(group, value));
+      expect(['talents', 'skills', 'knowledges'].map((key) => build.ranks[key]).sort()).toEqual(['primary', 'secondary', 'tertiary']);
+    }
+  });
+
+  test('a rank an Attribute group holds does not move an Abilities group', () => {
+    const build = play(abilities(), rank('physical', 'primary'));
+    const result = setRank(build, 'social', 'primary');
+    expect(result.build.ranks).toMatchObject({ social: 'primary', physical: '', talents: 'primary' });
+  });
+
+  test('choosing the rank a group already has changes nothing and says nothing', () => {
+    const build = abilities();
+    expect(setRank(build, 'skills', 'secondary')).toEqual({ status: 'applied', build, notices: [] });
+  });
+
+  test('a swap keeps the dots placed in both groups', () => {
+    const build = play(abilities(), creation('ability:crafts', 3), creation('ability:law', 2));
+    const result = setRank(build, 'knowledges', 'primary');
+    expect(rating(result.build, 'ability:crafts')).toBe(3);
+    expect(rating(result.build, 'ability:law')).toBe(2);
   });
 });
