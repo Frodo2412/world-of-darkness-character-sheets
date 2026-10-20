@@ -1,6 +1,7 @@
 // Clan choice: a clan that removes nothing applies at once; one that would remove dots only asks,
 // beside the select, so browsing the list never loses anything.
 
+import '../../../styles/builder/clan.css';
 import { clanChangeEffects, setClan } from '../../../domain/v20/creation/updates';
 import type { Wiring } from '../wiring';
 import type { ScreenModule } from './index';

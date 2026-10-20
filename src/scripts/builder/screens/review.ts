@@ -1,5 +1,6 @@
 // What still blocks finishing, each item a link to its step, and the Finish button.
 
+import '../../../styles/builder/review.css';
 import { BUILD_STEPS, finishReport, outstanding, type OutstandingItem } from '../../../domain/v20/creation/progress';
 import { wireFinish } from '../finish';
 import { showReadout } from '../messages';

@@ -1,3 +1,4 @@
+import '../../../styles/builder/finishing.css';
 import { bloodPoolHint, report } from '../../../domain/v20/creation/progress';
 import { showReadout } from '../messages';
 import { renderFreebies } from '../parts/freebies';
