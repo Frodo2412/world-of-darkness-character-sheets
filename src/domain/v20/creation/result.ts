@@ -24,12 +24,13 @@ export function refuse(build: V20Build, reason: string, step?: BuildStep): Updat
 }
 
 /**
- * Accepts the candidate unless it breaks a rule `before` did not already break.
+ * Accepts the candidate unless it breaks a rule `before` did not already break, or breaks one `before`
+ * already broke by more. A repair that only shrinks an existing excess is accepted, whatever the sentence says.
  * The one place a candidate is checked against `violations`.
  */
 export function commit(before: V20Build, candidate: V20Build, notices: string[]): UpdateResult {
-  const alreadyBroken = new Set(violations(before).map((violation) => violation.message));
-  const added = violations(candidate).filter((violation) => !alreadyBroken.has(violation.message));
+  const excessBefore = new Map(violations(before).map((violation) => [violation.key, violation.amount]));
+  const added = violations(candidate).filter((violation) => violation.amount > (excessBefore.get(violation.key) ?? 0));
   if (added.length === 0) return applied(candidate, ...notices);
   return refuse(before, added.map((violation) => violation.message).join(' '), added[0].step);
 }

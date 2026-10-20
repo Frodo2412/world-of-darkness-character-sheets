@@ -567,7 +567,9 @@ describe('blood pool', () => {
 
   test('a stored pool above its maximum is a violation and can be cleared or lowered', () => {
     const build = { ...fresh(), bloodPool: 12 };
-    expect(violations(build)).toEqual([{ message: 'Lower the starting Blood Pool to 10 first.', step: 'finishing' }]);
+    expect(violations(build)).toEqual([
+      { key: 'bloodPool', amount: 2, message: 'Lower the starting Blood Pool to 10 first.', step: 'finishing' },
+    ]);
     expect(appliedBuild(setBloodPool(build, '')).bloodPool).toBeNull();
     expect(appliedBuild(setBloodPool(build, '10')).bloodPool).toBe(10);
   });
@@ -581,7 +583,9 @@ describe('violations of a stored build', () => {
   test('a trait above its maximum is reported', () => {
     const build = fresh();
     build.traits['attribute:strength'] = { creation: 5, freebie: 0 };
-    expect(violations(build)).toEqual([{ message: 'Lower Strength to 5 first.', step: 'attributes' }]);
+    expect(violations(build)).toEqual([
+      { key: 'trait:attribute:strength', amount: 1, message: 'Lower Strength to 5 first.', step: 'attributes' },
+    ]);
   });
 
   test('an update that keeps an existing violation is not refused for it', () => {

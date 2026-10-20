@@ -78,8 +78,14 @@ export function bloodPoolRangeMessage(build: V20Build): string {
   return `The Blood Pool must be a whole number from 0 to ${limits(build).bloodPoolMax}.`;
 }
 
-/** A hard rule break, as a sentence naming what to lower and the step to do it on. */
+/**
+ * A hard rule break, as a sentence naming what to lower and the step to do it on. `key` names the rule
+ * broken and `amount` how far past it the build is, so a repair that only shrinks the excess can be told
+ * from a new break even when the sentence carries the excess ("at least 5 points").
+ */
 export interface Violation {
+  key: string;
+  amount: number;
   message: string;
   step: BuildStep;
 }
@@ -93,11 +99,11 @@ function traitViolation(build: V20Build, ref: BuildTraitRef): Violation | undefi
   const label = traitLabel(ref);
   // Humanity and Willpower follow the Virtues; only their freebie dots can be lowered.
   if (ref === 'humanity' || ref === 'willpower') {
-    return { message: `Remove ${dotWord(value - max)} of ${label} first.`, step: 'finishing' };
+    return { key: `trait:${ref}`, amount: value - max, message: `Remove ${dotWord(value - max)} of ${label} first.`, step: 'finishing' };
   }
   // A bought dot is removed on Finishing touches; creation dots where they were placed.
   const step = creationRating(build, ref) > max ? creationStepOf(ref) : 'finishing';
-  return { message: `Lower ${label} to ${max} first.`, step };
+  return { key: `trait:${ref}`, amount: value - max, message: `Lower ${label} to ${max} first.`, step };
 }
 
 /** Every hard violation the build has. None blocks an update the build already had. */
@@ -108,6 +114,8 @@ export function violations(build: V20Build): Violation[] {
   const improved = build.settings.baseGeneration - generationDots;
   if (improved < MOST_POTENT) {
     found.push({
+      key: 'generation',
+      amount: MOST_POTENT - improved,
       message: `Lower the Generation background to ${build.settings.baseGeneration - MOST_POTENT} first.`,
       step: 'advantages',
     });
@@ -125,13 +133,20 @@ export function violations(build: V20Build): Violation[] {
 
   const { bloodPoolMax } = limits(build);
   if (build.bloodPool !== null && build.bloodPool > bloodPoolMax) {
-    found.push({ message: `Lower the starting Blood Pool to ${bloodPoolMax} first.`, step: 'finishing' });
+    found.push({
+      key: 'bloodPool',
+      amount: build.bloodPool - bloodPoolMax,
+      message: `Lower the starting Blood Pool to ${bloodPoolMax} first.`,
+      step: 'finishing',
+    });
   }
 
   const spent = freebiesSpent(build);
   const budget = freebieBudget(build);
   if (spent > budget) {
     found.push({
+      key: 'freebies',
+      amount: spent - budget,
       message: `${spent} freebie points are spent, so at least ${spent - budget} points of purchases must be removed first.`,
       step: 'finishing',
     });
