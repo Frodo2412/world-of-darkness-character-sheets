@@ -66,3 +66,11 @@ Feature: Every builder screen meets the screen standards
     And there is exactly one h1
     And the page does not scroll horizontally at 375 px
     And the page does not scroll horizontally at 320 px
+
+  Scenario: The builder in a browser that withholds storage is accessible and has one h1
+    Given a browser that does not allow stored data
+    When they open the builder address with no build id
+    Then there is exactly one h1
+    And they are told characters cannot be saved in this browser
+    And axe reports no violations at 1512 px and 375 px
+    And the page does not scroll horizontally at 375 px

@@ -33,12 +33,13 @@ export function pageState(): PageState {
 
 const views = {
   builder: document.querySelector<HTMLElement>('#builder')!,
+  unavailable: document.querySelector<HTMLElement>('#build-unavailable')!,
   'not-found': document.querySelector<HTMLElement>('#build-not-found')!,
   unreadable: document.querySelector<HTMLElement>('#build-unreadable')!,
 };
 
-/** Shows one view and hides the others; `none` leaves only the save status visible. */
-export function showView(view: keyof typeof views | 'none'): void {
+/** Shows one view and hides the others. */
+export function showView(view: keyof typeof views): void {
   // A modal dialog left open would keep the page that replaces the builder out of reach.
   if (view !== 'builder') {
     for (const dialog of views.builder.querySelectorAll('dialog[open]')) (dialog as HTMLDialogElement).close();

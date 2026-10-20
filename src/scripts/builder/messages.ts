@@ -79,15 +79,22 @@ function clearFailure(): void {
 }
 
 /**
+ * What asked for a save. A change is saved on its own, so a failure that goes on is not said again;
+ * a player who chose "Try saving again" or "Save & exit" asked, and is told the answer even if it is
+ * the same one.
+ */
+export type SaveAsk = 'change' | 'retry' | 'exit';
+
+/**
  * Channel 1. A stored change is shown quietly as text; a refused one is an alert that stays until a
  * save succeeds. A dialog that is open has the message in its own alert as well, because the page's is
  * inert behind it.
  */
-export function reportSave(status: 'saved' | 'failed', exiting = false): void {
+export function reportSave(status: 'saved' | 'failed', ask: SaveAsk = 'change'): void {
   saveFailed = status === 'failed';
   if (saveFailed) {
     drawStatus('Changes not saved', 'not-saved');
-    drawFailure(exiting ? NOT_SAVED_ON_EXIT : NOT_SAVED, exiting);
+    drawFailure(ask === 'exit' ? NOT_SAVED_ON_EXIT : NOT_SAVED, ask !== 'change');
     for (const alert of document.querySelectorAll<HTMLElement>('dialog[open] [data-dialog-alert]')) showDialogAlert(alert);
     return;
   }

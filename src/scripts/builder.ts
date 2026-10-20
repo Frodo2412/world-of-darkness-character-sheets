@@ -7,7 +7,7 @@ import type { ScreenId } from '../domain/v20/creation/rules';
 import { buildKeyFor, type BuildStore } from '../storage/buildStore';
 import type { CharacterStore } from '../storage/characterStore';
 import { renderChrome, wireChrome } from './builder/chrome';
-import { clearNotices, reportSave, showNotices, showRefusal } from './builder/messages';
+import { clearNotices, reportSave, showNotices, showRefusal, type SaveAsk } from './builder/messages';
 import { pageState, showView } from './builder/pageState';
 import { renderNavigation, wireNavigation } from './builder/navigation';
 import { wireDialog } from './builder/parts/dialog';
@@ -59,13 +59,13 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
   }
 
   /** The build as it is, stored again; 'gone' when it was finished or deleted elsewhere, which the page then shows. */
-  function saveNow(exiting = false): 'saved' | 'failed' | 'gone' {
+  function saveNow(ask: Exclude<SaveAsk, 'change'>): 'saved' | 'failed' | 'gone' {
     if (store.load(build.id).status === 'not-found') {
       showView('not-found');
       return 'gone';
     }
     const { status } = store.save(build);
-    reportSave(status, exiting);
+    reportSave(status, ask);
     return status;
   }
 
@@ -75,10 +75,10 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
   wireChrome(root, {
     retrySave() {
       // The retry button goes away once a save lands; focus moves to the status that now says so.
-      if (saveNow() === 'saved') root.querySelector<HTMLElement>('[data-autosave-status]')!.focus();
+      if (saveNow('retry') === 'saved') root.querySelector<HTMLElement>('[data-autosave-status]')!.focus();
     },
     saveAndExit() {
-      if (saveNow(true) === 'saved') window.location.assign('/');
+      if (saveNow('exit') === 'saved') window.location.assign('/');
     },
   });
   for (const screen of screenModules) screen.wire(root, wiring);
@@ -119,7 +119,7 @@ switch (state.kind) {
     showBuilder(state.build, state.store, state.characters);
     break;
   case 'unavailable':
-    showView('none');
+    showView('unavailable');
     showStatus(STORAGE_UNAVAILABLE);
     break;
   case 'not-found':

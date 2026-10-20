@@ -4,7 +4,7 @@
 import { expect, type Page } from '@playwright/test';
 import { CLAN_NAMES, type ConceptKind } from '../../src/domain/v20/creation/rules';
 import { creation, rank, type Step } from '../../src/domain/v20/creation/testing/play';
-import { Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
+import { Any, Given, Then, When, memoryFor, type ScenarioMemory } from './fixtures';
 import { announcements } from './support/announcements';
 import { BUILDER_ADDRESS, builderHeading, buildWith, openPlayedFrom, openSavedBuild } from './support/builder';
 import { enterConceptField } from './support/concept';
@@ -131,11 +131,6 @@ Given('the autosave status read {string}', async ({ page, memory }, text: string
   await expect(autosaveStatus(page)).toHaveText(text);
 });
 
-// The same words say the status as an arrangement, in the middle of a scenario that went on from a failed save.
-Given('the autosave status reads {string}', async ({ page }, text: string) => {
-  await expect(autosaveStatus(page)).toHaveText(text);
-});
-
 // When
 
 When("I change my character's name", async ({ page, memory }) => {
@@ -188,7 +183,8 @@ Then('the panel shows Humanity and Willpower with their dots', async ({ page }) 
 
 // Then: the autosave status
 
-Then('the autosave status reads {string}', async ({ page }, text: string) => {
+// The same words check the status as an outcome and, after a failed save, as an arrangement: one definition.
+Any('the autosave status reads {string}', async ({ page }, text: string) => {
   await expect(autosaveStatus(page)).toHaveText(text);
 });
 
@@ -203,6 +199,13 @@ Then('nothing is announced to assistive technology', async ({ page }) => {
 Then('the autosave status reads {string} and says what to do', async ({ page }, text: string) => {
   await expect(autosaveStatus(page)).toHaveText(text);
   await expect(autosaveAlert(page)).toContainText('Free up space, then choose Try saving again');
+});
+
+Then(/^the failure alert has been announced (\d+) times?$/, async ({ page }, count: string) => {
+  // A repeat is written on the frame after it is cleared, so it is waited for rather than read once.
+  await expect
+    .poll(async () => (await announcements(page)).filter((text) => text.includes('Changes are not being saved')).length)
+    .toBe(Number(count));
 });
 
 Then('it is announced as an alert', async ({ page }) => {
