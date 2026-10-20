@@ -2377,7 +2377,7 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
 
 #### Wave 6
 - [ ] Slice 8: Attributes and Abilities screens
-  - [ ] Step 8.1: Rank swap, pool views, callouts and summary
+  - [x] Step 8.1: Rank swap, pool views, callouts and summary
   - [ ] Step 8.2: Attributes screen
   - [ ] Step 8.3: Abilities screen
 - [ ] Slice 9: Advantages screen
