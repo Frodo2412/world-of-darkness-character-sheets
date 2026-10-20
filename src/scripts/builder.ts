@@ -4,12 +4,12 @@ import { report } from '../domain/v20/creation/progress';
 import type { UpdateResult } from '../domain/v20/creation/result';
 import { buildKeyFor, type BuildStore } from '../storage/buildStore';
 import type { CharacterStore } from '../storage/characterStore';
-import { wireFinish } from './builder/finish';
 import { clearNotices, reportSave, showNotices, showRefusal } from './builder/messages';
 import { pageState, showView } from './builder/pageState';
 import { wireDialog } from './builder/parts/dialog';
+import { screenModules } from './builder/screens';
 import { startSteps } from './builder/steps';
-import { renderControls, wireControls, type Update } from './builder/wiring';
+import { renderControls, wireControls, type Update, type Wiring } from './builder/wiring';
 import { STORAGE_UNAVAILABLE, showStatus } from './status';
 
 const root = document.querySelector<HTMLElement>('#builder')!;
@@ -20,6 +20,7 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
 
   function render(): void {
     const current = report(build);
+    for (const screen of screenModules) screen.render(build, root);
     renderControls(root, current);
     router.renderStatuses(current);
     router.updateTitle();
@@ -48,8 +49,9 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
     return 'applied';
   }
 
-  wireControls(root, { commit, current: () => build });
-  wireFinish(root, () => build, store, characters, render);
+  const wiring: Wiring = { commit, current: () => build, builds: store, characters, render };
+  wireControls(root, wiring);
+  for (const screen of screenModules) screen.wire(root, wiring);
   wireDialog(
     root.querySelector<HTMLDialogElement>('[data-settings-dialog]')!,
     root.querySelector<HTMLElement>('[data-settings-open]')!,
