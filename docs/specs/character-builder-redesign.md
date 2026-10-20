@@ -103,7 +103,7 @@ phrasing.
   or "Character builder" when no chronicle is set, an autosave status, a Creation
   settings button); an identity bar (initials avatar, character name or "Unnamed
   character", a subtitle of clan · concept · chronicle for whichever are set, a
-  "Nature / Demeanor" readout — "Still to choose" until at least one is chosen — and a
+  "Nature / Demeanor" readout — "Not chosen" until at least one is chosen — and a
   **Save & exit** button); a phase sidebar; a "N of 9 screens" counter; and a "Your
   character" panel summarising concept, clan, nature/demeanor, Attributes, Abilities,
   Advantages, the freebie points remaining (base AC-24), and, from Finishing touches on,
@@ -327,6 +327,8 @@ trail.
 | RD-1 | "Your character" panel gains a freebie-points-remaining row | The old always-visible freebie bar is removed; base AC-24 still has to hold |
 | RD-4 | Failure alert offers "Try saving again" | The player had no way to retry without a dummy edit |
 | RD-19 | After Finish, other sidebar items are inert, Back never reaches a build screen, "Saved to your roster" line | A finished build no longer exists to edit |
+| RD-4 | Save & exit while a save is failing stays on the builder and says the changes were not saved | Leaving would silently lose them; success still goes to the roster |
+| RD-1 | Nature / Demeanor readout reads "Not chosen" (was "Still to choose") | One empty-value word everywhere |
 | RD-5 | Dialog says changes apply immediately; Escape keeps them | Done/Escape semantics were unclear |
 
 ## Ambiguity Log

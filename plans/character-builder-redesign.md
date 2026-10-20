@@ -834,6 +834,13 @@ Feature: The builder shell reflects the build and its save state
     When I change my character's name
     Then the autosave status reads "Saved just now"
 
+  Scenario: Try saving again after a failed save
+    Given the browser refused the last save and now accepts storage
+    And the autosave status reads "Changes not saved"
+    When I choose "Try saving again"
+    Then the autosave status reads "Saved just now"
+    And the failure alert is gone
+
   Scenario: Save & exit
     Given a build named "Éloïse Voss"
     When I choose "Save & exit"
@@ -925,8 +932,12 @@ Feature: The Character concept screen
       | Intellectual | Antiquarian | Intellectual · Antiquarian |
       | Intellectual |             | Intellectual               |
       |              | Antiquarian | Antiquarian                |
-      | Intellectual | "  "        | Intellectual               |
       |              |             |                            |
+
+  Scenario: A whitespace-only concept text is ignored
+    Given a finishable build with sample concept "Intellectual" and the concept text set to spaces only
+    When I finish the build
+    Then the sheet's Concept reads "Intellectual"
 
   Scenario: What keeps you going reaches the character's notes
     Given a finishable build with "I preserve the stories others would erase" under "What keeps you going?"
@@ -1315,7 +1326,7 @@ Feature: The Advantages screen
 
   Scenario: No clan chosen yet
     Given a build with no clan on the Advantages screen
-    Then I am told a clan must be chosen before Discipline dots are placed
+    Then the reason reads "Choose a clan to place Discipline dots"
     And a button "Go to Clan" is offered
 
   Scenario: A Caitiff places dots on any Discipline
