@@ -4,8 +4,9 @@
 
 import '../../../styles/builder/clan.css';
 import type { V20Build } from '../../../domain/v20/creation/build';
-import { ANY_DISCIPLINE, clanDetail, clanListView } from '../../../domain/v20/creation/clanCards';
+import { ANY_DISCIPLINE, clanDetail, clanListView, keepLabel } from '../../../domain/v20/creation/clanCards';
 import { clanChangeEffects, setClan } from '../../../domain/v20/creation/updates';
+import { movedTo } from '../parts/listKeys';
 import { isMacPlatform, shortcutHint, wireSearchShortcut } from '../parts/search';
 import type { Wiring } from '../wiring';
 import type { ScreenModule } from './index';
@@ -16,6 +17,8 @@ const state = {
   query: '',
   /** The clan a switch is waiting on, or null when no question is open. The panel only shows it. */
   pendingClan: null as string | null,
+  /** What the open question says now, so a redraw that changes nothing writes nothing and announces nothing. */
+  asked: '',
   /** The clan card that holds the tab stop; the chosen clan, or the first listed, when it is not listed. */
   stop: '',
 };
@@ -73,62 +76,101 @@ function draw(build: V20Build, root: HTMLElement): void {
   say(root.querySelector<HTMLElement>('[data-clan-selected]')!, view.selected);
   say(root.querySelector<HTMLElement>('[data-clan-results]')!, view.results);
   drawDetail(root, build.clan);
+  recheckQuestion(root, build);
+}
+
+/** Puts focus on a clan's card, or on the search when a search has hidden it. */
+function focusCard(root: HTMLElement, clan: string): void {
+  const card = cardFor(root, clan);
+  (card && !card.hidden ? card : root.querySelector<HTMLElement>('[data-clan-search]')!).focus();
+}
+
+/**
+ * The question's pieces: the panel, the status region the question is written into, and the two answers.
+ * The status region is always on the page and the question is written into it, so it is announced when it
+ * appears; only the buttons are hidden while no question is open.
+ */
+function questionParts(root: HTMLElement) {
+  const panel = root.querySelector<HTMLElement>('[data-clan-change]')!;
+  return {
+    panel,
+    text: panel.querySelector<HTMLElement>('[data-clan-change-text]')!,
+    actions: panel.querySelector<HTMLElement>('[data-clan-change-actions]')!,
+    switchButton: panel.querySelector<HTMLButtonElement>('[data-clan-switch]')!,
+    keepButton: panel.querySelector<HTMLButtonElement>('[data-clan-keep]')!,
+  };
+}
+
+function closeQuestion(root: HTMLElement): void {
+  const { panel, text, actions } = questionParts(root);
+  state.pendingClan = null;
+  state.asked = '';
+  panel.toggleAttribute('data-open', false);
+  actions.hidden = true;
+  text.replaceChildren();
+}
+
+/** Writes the question for `clan` and what the switch would remove (`effects`), unless it already says so. */
+function askQuestion(root: HTMLElement, build: V20Build, clan: string, effects: string[]): void {
+  state.pendingClan = clan;
+  const asked = [clan, build.clan, ...effects].join('\n');
+  if (asked === state.asked) return;
+  state.asked = asked;
+  const { panel, text, actions, switchButton, keepButton } = questionParts(root);
+  const items = effects.map((effect) => {
+    const item = document.createElement('li');
+    item.textContent = effect;
+    return item;
+  });
+  const itemList = document.createElement('ul');
+  itemList.append(...items);
+  const question = document.createElement('p');
+  question.textContent = `Switching to ${clan}:`;
+  text.replaceChildren(question, itemList);
+  switchButton.textContent = `Switch to ${clan}`;
+  keepButton.textContent = keepLabel(build.clan);
+  actions.hidden = false;
+  panel.toggleAttribute('data-open', true);
+}
+
+/**
+ * An open question is judged again against the build as it is now, which may have changed since it was asked
+ * (dots added on another screen): it names what would be removed now, and closes when nothing would be.
+ */
+function recheckQuestion(root: HTMLElement, build: V20Build): void {
+  const clan = state.pendingClan;
+  if (clan === null) return;
+  const effects = clanChangeEffects(build, clan);
+  if (effects.length > 0) {
+    askQuestion(root, build, clan, effects);
+    return;
+  }
+  const { panel } = questionParts(root);
+  const heldFocus = panel.contains(document.activeElement);
+  closeQuestion(root);
+  if (heldFocus) focusCard(root, build.clan || clan);
 }
 
 /** The question beside the list: what the switch would remove, and the two ways to answer. */
 function wireQuestion(root: HTMLElement, { commit, current }: Wiring): void {
   const list = root.querySelector<HTMLElement>('[data-clan-list]')!;
-  const search = root.querySelector<HTMLInputElement>('[data-clan-search]')!;
-  const panel = root.querySelector<HTMLElement>('[data-clan-change]')!;
-  // The status region is always on the page and the question is written into it, so it is announced when it
-  // appears; only the buttons are hidden while no question is open.
-  const text = panel.querySelector<HTMLElement>('[data-clan-change-text]')!;
-  const actions = panel.querySelector<HTMLElement>('[data-clan-change-actions]')!;
-  const switchButton = panel.querySelector<HTMLButtonElement>('[data-clan-switch]')!;
-  const keepButton = panel.querySelector<HTMLButtonElement>('[data-clan-keep]')!;
-
-  function hidePanel(): void {
-    state.pendingClan = null;
-    panel.toggleAttribute('data-open', false);
-    actions.hidden = true;
-    text.replaceChildren();
-  }
-
-  /** Puts focus on a clan's card, or on the search when a search has hidden it. */
-  function focusCard(clan: string): void {
-    const card = cardFor(root, clan);
-    (card && !card.hidden ? card : search).focus();
-  }
+  const { switchButton, keepButton } = questionParts(root);
 
   function choose(clan: string): void {
     const build = current();
     if (clan === build.clan) {
-      hidePanel();
+      closeQuestion(root);
       return;
     }
     const effects = clanChangeEffects(build, clan);
     if (effects.length === 0) {
-      hidePanel();
+      closeQuestion(root);
       state.stop = clan;
       commit((latest) => setClan(latest, clan), list);
-      focusCard(clan);
+      focusCard(root, clan);
       return;
     }
-    const items = effects.map((effect) => {
-      const item = document.createElement('li');
-      item.textContent = effect;
-      return item;
-    });
-    const itemList = document.createElement('ul');
-    itemList.append(...items);
-    const question = document.createElement('p');
-    question.textContent = `Switching to ${clan}:`;
-    text.replaceChildren(question, itemList);
-    switchButton.textContent = `Switch to ${clan}`;
-    keepButton.textContent = `Keep ${build.clan}`;
-    state.pendingClan = clan;
-    actions.hidden = false;
-    panel.toggleAttribute('data-open', true);
+    askQuestion(root, build, clan, effects);
     switchButton.focus();
   }
 
@@ -139,37 +181,19 @@ function wireQuestion(root: HTMLElement, { commit, current }: Wiring): void {
 
   switchButton.addEventListener('click', () => {
     const clan = state.pendingClan!;
-    hidePanel();
+    closeQuestion(root);
     state.stop = clan;
     commit((latest) => setClan(latest, clan), list);
-    focusCard(clan);
+    focusCard(root, clan);
   });
 
   keepButton.addEventListener('click', () => {
     const pending = state.pendingClan!;
-    hidePanel();
+    closeQuestion(root);
     // Back to the chosen clan, or to the one that was pressed when a search has hidden the chosen one.
     const kept = cardFor(root, current().clan);
-    focusCard(kept?.hidden === false ? current().clan : pending);
+    focusCard(root, kept?.hidden === false ? current().clan : pending);
   });
-}
-
-/** Where an arrow key, Home or End takes focus among `count` listed clans, wrapping at the ends; undefined for any other key. */
-function movedTo(key: string, at: number, count: number): number | undefined {
-  switch (key) {
-    case 'ArrowDown':
-    case 'ArrowRight':
-      return (at + 1) % count;
-    case 'ArrowUp':
-    case 'ArrowLeft':
-      return (at - 1 + count) % count;
-    case 'Home':
-      return 0;
-    case 'End':
-      return count - 1;
-    default:
-      return undefined;
-  }
 }
 
 /** Arrow keys, Home and End move focus through the listed clans; choosing is a separate press. */
@@ -178,7 +202,7 @@ function wireArrowKeys(root: HTMLElement, { current }: Wiring): void {
   list.addEventListener('keydown', (event) => {
     const listed = listedCards(root);
     const at = listed.findIndex((card) => card === document.activeElement);
-    const target = at === -1 ? undefined : movedTo(event.key, at, listed.length);
+    const target = at === -1 ? undefined : movedTo(event, at, listed.length);
     if (target === undefined) return;
     event.preventDefault();
     listed[target].focus();
@@ -204,8 +228,9 @@ function wireSearch(root: HTMLElement, { current }: Wiring): void {
     state.query = search.value;
     draw(current(), root);
   });
-  // The shortcut goes to this field only while the Clan screen is the one shown.
-  wireSearchShortcut(document, () => (search.closest<HTMLElement>('[data-step]')!.hidden ? undefined : search), mac);
+  // The shortcut goes to this field only while the Clan screen is the one shown: neither it nor the builder
+  // around it is hidden.
+  wireSearchShortcut(document, () => (search.closest('[hidden]') ? undefined : search), mac);
 }
 
 export default {

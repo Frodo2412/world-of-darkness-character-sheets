@@ -2,7 +2,7 @@
 // The Clan screen: a search over the clans, one card for each, the detail of the chosen clan and, beside
 // it, the question a switch that would remove dots asks. The cards are a radiogroup the screen module
 // shows, hides and marks; the text that changes with the build is written there from clanCards.ts.
-import { CAITIFF_NOTE, CLAN_CARDS } from '../../domain/v20/creation/clanCards';
+import { CAITIFF_NOTE, CLAN_CARDS, CLAN_LIST_HELP } from '../../domain/v20/creation/clanCards';
 
 const slug = (name: string): string => name.toLowerCase().replaceAll(' ', '-');
 ---
@@ -23,7 +23,9 @@ const slug = (name: string): string => name.toLowerCase().replaceAll(' ', '-');
 			<span class="builder-status" data-clan-selected>Selected · 0/1</span>
 		</div>
 
-		<div class="clan-list" role="radiogroup" aria-label="Clans" aria-describedby="clan-choice-notice" data-clan-list>
+		<p id="clan-list-help" class="builder-helper clan-list-help">{CLAN_LIST_HELP}</p>
+
+		<div class="clan-list" role="radiogroup" aria-label="Clans" aria-describedby="clan-list-help clan-choice-notice" data-clan-list>
 			{
 				CLAN_CARDS.map((card) => (
 					<button
@@ -64,17 +66,17 @@ const slug = (name: string): string => name.toLowerCase().replaceAll(' ', '-');
 		</div>
 		<p id="clan-choice-notice" class="field-notice" role="status" data-notice></p>
 
-		<div class="builder-card clan-detail" data-clan-detail>
-			<h3 class="clan-heading">Chosen clan</h3>
+		<section class="builder-card clan-detail" aria-labelledby="clan-detail-label" data-clan-detail>
+			<p id="clan-detail-label" class="clan-heading">Chosen clan</p>
 			<p class="builder-helper clan-text" data-clan-detail-empty>Choose a clan to see its Disciplines.</p>
 			<div data-clan-detail-body hidden>
-				<p class="clan-detail-name" data-clan-detail-name></p>
+				<h3 class="clan-detail-name" data-clan-detail-name></h3>
 				<p class="clan-text" data-clan-detail-line></p>
 				<h4 class="clan-subheading">Disciplines</h4>
 				<ul class="clan-disciplines" data-clan-detail-disciplines></ul>
 				<p class="clan-text" data-clan-detail-rule></p>
 				<p class="builder-helper clan-text" data-clan-detail-note></p>
 			</div>
-		</div>
+		</section>
 	</div>
 </div>

@@ -2,7 +2,7 @@
 // detail of the chosen clan, and the question a switch that would remove dots asks. Screen standards are
 // the shared steps (builder-standards.steps.ts) and are not restated here.
 
-import { expect } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { CAITIFF_NOTE, CLAN_CARDS } from '../../src/domain/v20/creation/clanCards';
 import { isLocked, rating } from '../../src/domain/v20/creation/ratings';
 import { CLAN_NAMES } from '../../src/domain/v20/creation/rules';
@@ -16,6 +16,7 @@ import {
   clanDetailPanel,
   clanHeading,
   clanHelp,
+  clanList,
   clanNotice,
   clanPanel,
   clanQuestionStatus,
@@ -253,6 +254,53 @@ Then('focus is in the clan search field', async ({ page }) => {
 
 Then('the clan search hint reads {string}', async ({ page }, hint: string) => {
   await expect(page.locator('[data-clan-search-hint]')).toHaveText(hint);
+});
+
+// The edges: the question after the build changes, the keys the browser owns, the detail's outline
+
+Then('the clan question offers {string} and {string}', async ({ page }, answer: string, other: string) => {
+  await expect(clanPanel(page).getByRole('button')).toHaveText([answer, other]);
+});
+
+Then('no clan question is open', async ({ page }) => {
+  await expect(clanPanel(page)).toBeHidden();
+  await expect(clanQuestionStatus(page)).toBeEmpty();
+  await expect(clanPanel(page).getByRole('button')).toHaveCount(0);
+});
+
+When('I focus the first clan and press {word}', async ({ page }, keys: string) => {
+  await openClanScreen(page);
+  await clanRadio(page, CLAN_CARDS[0].name).focus();
+  await page.keyboard.press(keys);
+});
+
+Then('focus is still on the first clan', async ({ page }) => {
+  expect(await focusedClan(page)).toBe(CLAN_CARDS[0].name);
+});
+
+Then('the clan list is described as moving with the arrow keys and choosing with Space or Enter', async ({ page }) => {
+  await expect(clanList(page)).toHaveAccessibleDescription(/Arrow keys move between clans; Space or Enter chooses\./);
+});
+
+Then('the chosen clan region is headed {string} at level 3', async ({ page }, clan: string) => {
+  const region = page.locator('#builder').getByRole('region', { name: 'Chosen clan', exact: true });
+  await expect(region.getByRole('heading', { level: 3, name: clan, exact: true })).toBeVisible();
+});
+
+/** Whether Control+K, pressed where focus is now, was taken by the page (default prevented). */
+const pressedKeyWasTaken = (page: Page): Promise<boolean> =>
+  page.evaluate(() => {
+    const press = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true, cancelable: true });
+    (document.activeElement ?? document.body).dispatchEvent(press);
+    return press.defaultPrevented;
+  });
+
+Then('Control+K is taken by the page', async ({ page }) => {
+  expect(await pressedKeyWasTaken(page)).toBe(true);
+});
+
+Then('Control+K is left to the browser', async ({ page }) => {
+  expect(await pressedKeyWasTaken(page)).toBe(false);
 });
 
 // The scenarios that predate the radiogroup

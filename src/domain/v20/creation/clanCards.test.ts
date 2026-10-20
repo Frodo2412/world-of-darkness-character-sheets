@@ -1,5 +1,15 @@
 import { describe, expect, test } from 'vitest';
-import { ANY_DISCIPLINE, CAITIFF_NOTE, CLAN_CARDS, CREATION_RULE_NOTE, clanCards, clanDetail, clanListView } from './clanCards';
+import {
+  ANY_DISCIPLINE,
+  CAITIFF_NOTE,
+  CLAN_CARDS,
+  CLAN_LIST_HELP,
+  CREATION_RULE_NOTE,
+  clanCards,
+  clanDetail,
+  clanListView,
+  keepLabel,
+} from './clanCards';
 import { CLANS, CLAN_NAMES } from './rules';
 
 const words = (line: string): string[] => line.split(/\s+/).filter(Boolean);
@@ -93,5 +103,22 @@ describe('the clan detail', () => {
 
   test.each(['', 'Vampire', 'toreador'])('has no detail for %j', (name) => {
     expect(clanDetail(name)).toBeUndefined();
+  });
+});
+
+describe('the label of the button that keeps the current clan', () => {
+  test('names the clan kept', () => {
+    expect(keepLabel('Toreador')).toBe('Keep Toreador');
+  });
+
+  test('says so when no clan is chosen, rather than ending on a space', () => {
+    expect(keepLabel('')).toBe('Keep no clan');
+  });
+});
+
+describe('the description of the clan list', () => {
+  test('says how the keys move and choose, and names no person', () => {
+    expect(CLAN_LIST_HELP).toBe('Arrow keys move between clans; Space or Enter chooses.');
+    expect(PRONOUN.test(CLAN_LIST_HELP)).toBe(false);
   });
 });

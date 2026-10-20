@@ -78,6 +78,10 @@
 	color: var(--color-text-strong);
 }
 
+.clan-list-help {
+	margin: 0;
+}
+
 .clan-list {
 	display: grid;
 	gap: var(--space-2);

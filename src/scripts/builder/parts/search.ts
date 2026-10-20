@@ -6,13 +6,23 @@ export const isMacPlatform = (platform: string = navigator.platform): boolean =>
 /** The key as the hint writes it: "⌘K" on macOS, "Ctrl K" elsewhere. */
 export const shortcutHint = (mac: boolean): string => (mac ? '⌘K' : 'Ctrl K');
 
-/** Whether a key press is the shortcut: ⌘+K on macOS, Ctrl+K elsewhere, and never the other platform's modifier. */
-export const isSearchShortcut = (event: Pick<KeyboardEvent, 'key' | 'metaKey' | 'ctrlKey'>, mac: boolean): boolean =>
-  event.key.toLowerCase() === 'k' && (mac ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey);
+/**
+ * Whether a key press is the shortcut: ⌘+K on macOS, Ctrl+K elsewhere, never the other platform's modifier,
+ * and never with Shift or Alt held, which are other shortcuts the browser may own.
+ */
+export const isSearchShortcut = (
+  event: Pick<KeyboardEvent, 'key' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>,
+  mac: boolean,
+): boolean =>
+  event.key.toLowerCase() === 'k' &&
+  !event.shiftKey &&
+  !event.altKey &&
+  (mac ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey);
 
 /**
  * Focuses the field `currentField` names when the shortcut is pressed anywhere in `target`. A screen with no
- * search field (`undefined`) leaves the key to the browser.
+ * search field (`undefined`) leaves the key to the browser, as does a page with a modal dialog open: the
+ * field is out of reach behind it.
  */
 export function wireSearchShortcut(
   target: Document | HTMLElement,
@@ -21,6 +31,7 @@ export function wireSearchShortcut(
 ): void {
   target.addEventListener('keydown', (event) => {
     if (!isSearchShortcut(event as KeyboardEvent, mac)) return;
+    if (document.querySelector('dialog:modal') !== null) return;
     const field = currentField();
     if (field === undefined) return;
     event.preventDefault();

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { isMacPlatform, isSearchShortcut, shortcutHint } from './search';
 
-const press = (key: string, modifiers: { metaKey?: boolean; ctrlKey?: boolean } = {}) => ({
+const press = (key: string, modifiers: { metaKey?: boolean; ctrlKey?: boolean; shiftKey?: boolean; altKey?: boolean } = {}) => ({
   key,
   metaKey: false,
   ctrlKey: false,
+  shiftKey: false,
+  altKey: false,
   ...modifiers,
 });
 
@@ -45,5 +47,12 @@ describe('isSearchShortcut', () => {
   it('needs the modifier and the K', () => {
     expect(isSearchShortcut(press('k'), true)).toBe(false);
     expect(isSearchShortcut(press('j', { metaKey: true }), true)).toBe(false);
+  });
+
+  it('is left to the browser when Shift or Alt is held as well', () => {
+    expect(isSearchShortcut(press('k', { metaKey: true, shiftKey: true }), true)).toBe(false);
+    expect(isSearchShortcut(press('k', { metaKey: true, altKey: true }), true)).toBe(false);
+    expect(isSearchShortcut(press('k', { ctrlKey: true, shiftKey: true }), false)).toBe(false);
+    expect(isSearchShortcut(press('k', { ctrlKey: true, altKey: true }), false)).toBe(false);
   });
 });
