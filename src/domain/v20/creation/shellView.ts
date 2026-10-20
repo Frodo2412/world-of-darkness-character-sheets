@@ -5,9 +5,9 @@ import { allotmentStates, type AllotmentState } from './allotments';
 import { composeConcept, type V20Build } from './build';
 import { freebieReport, traitReport } from './progress';
 import { RANKS, SCREENS, type Rank, type ScreenId } from './rules';
+import { NOT_CHOSEN } from './wording';
 
 const UNNAMED = 'Unnamed character';
-const NOT_CHOSEN = 'Not chosen';
 const NOT_ALLOCATED = 'Not allocated';
 const SEPARATOR = ' · ';
 

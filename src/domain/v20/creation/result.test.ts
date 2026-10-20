@@ -49,6 +49,7 @@ describe('creation module layers', () => {
     catalogue: [],
     sampleConcepts: ['rules'],
     clanCards: ['rules', 'ratings', 'catalogue'],
+    archetypes: ['rules', 'build', 'catalogue', 'wording'],
     build: ['rules'],
     ratings: ['rules', 'build'],
     allotments: ['rules', 'build', 'ratings'],
