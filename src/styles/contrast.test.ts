@@ -156,12 +156,63 @@ function surfacesOf(): string[] {
 
 const surfaces = surfacesOf();
 
+/** The builder's stylesheets: the shell with the pieces screens share, and one partial per screen. */
+function builderStylesheets(): URL[] {
+  const folder = new URL('builder/', styles);
+  const partials = existsSync(folder)
+    ? readdirSync(folder)
+        .filter((file) => file.endsWith('.css'))
+        .map((file) => new URL(file, folder))
+    : [];
+  return [new URL('builder.css', styles), ...partials];
+}
+
 describe('the new tabs\' stylesheets', () => {
   for (const sheet of tabStylesheets()) {
     it(`${sheet.pathname.split('/src/')[1]} keeps to the contrast and size limits`, () => {
       expect(problemsIn(read(sheet), tokens, surfaces)).toEqual([]);
     });
   }
+});
+
+describe("the builder's stylesheets", () => {
+  for (const sheet of builderStylesheets()) {
+    it(`${sheet.pathname.split('/src/')[1]} keeps to the contrast and size limits`, () => {
+      expect(problemsIn(read(sheet), tokens, surfaces)).toEqual([]);
+    });
+  }
+});
+
+/** The text colours the builder adds, each with the surfaces it is read on. Error text is the existing danger colour, now also on a callout. */
+const BUILDER_TEXT = ['--color-text-helper', '--color-text-reason', '--color-text-status', '--color-danger'];
+const BUILDER_SURFACES = ['--color-page', '--color-surface', '--color-selected', '--color-callout'];
+
+describe("the builder's colour pairs", () => {
+  for (const text of BUILDER_TEXT) {
+    for (const surface of BUILDER_SURFACES) {
+      it(`${text} reads on ${surface} at 4.5:1`, () => {
+        const ratio = contrastRatio(colourOf(`var(${text})`, tokens)!, colourOf(`var(${surface})`, tokens)!);
+        expect(ratio).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+  }
+});
+
+/** What marks a selected control (an edge or a dot, not text), each with the fills it is drawn on: 3:1, WCAG 1.4.11. */
+describe("the builder's selection indicators", () => {
+  for (const [indicator, fill] of [['--color-accent-text', '--color-selected']]) {
+    it(`${indicator} marks a selection on ${fill} at 3:1`, () => {
+      expect(contrastRatio(colourOf(`var(${indicator})`, tokens)!, colourOf(`var(${fill})`, tokens)!)).toBeGreaterThanOrEqual(3);
+    });
+  }
+
+  it('the selected role of the Nature & Demeanor switch is edged in an indicator that holds 3:1 on its fill', () => {
+    const rules = rulesOf(read(new URL('builder/natureDemeanor.css', styles)));
+    const selected = rules.find((rule) => rule.selector === '.nd-role:has(input:checked)')!;
+    const edge = colourOf(selected.declarations.get('border-color')!, tokens)!;
+    const fill = colourOf(selected.declarations.get('background')!, tokens)!;
+    expect(contrastRatio(edge, fill)).toBeGreaterThanOrEqual(3);
+  });
 });
 
 describe('the guard itself', () => {
@@ -172,6 +223,12 @@ describe('the guard itself', () => {
     expect(problemsIn(dossier.replaceAll('var(--color-border-control)', 'var(--color-line)'), tokens, surfaces)).not.toEqual([]);
     expect(tabStylesheets().map((sheet) => sheet.pathname)).toEqual(
       expect.arrayContaining([expect.stringMatching(/styles\/dossier\.css$/), expect.stringMatching(/styles\/tabs\.css$/)]),
+    );
+  });
+
+  it('reads the builder shell and its partials, so a pass is not an empty parse', () => {
+    expect(builderStylesheets().map((sheet) => sheet.pathname)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/styles\/builder\.css$/), expect.stringMatching(/styles\/builder\/[\w-]+\.css$/)]),
     );
   });
 

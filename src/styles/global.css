@@ -21,6 +21,11 @@
 	--color-control: #202125;
 	--color-selected: #302024;
 	--color-divider: #343438;
+	/* The builder: a callout's surface, and the text read on it and on the page and cards (4.5:1 on each, tested). */
+	--color-callout: #2a1c20;
+	--color-text-helper: #b3b0aa;
+	--color-text-reason: #e9c79b;
+	--color-text-status: #c9c4b8;
 
 	--space-1: 0.25rem;
 	--space-2: 0.5rem;

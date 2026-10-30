@@ -1,13 +1,16 @@
 // What a build may not exceed: the generation's ceilings, the fixed ceilings
 // and the freebie budget. `violations` is the one list of hard rule breaks.
 
+import { ordinal } from '../identity';
 import type { BuildTraitRef, V20Build } from './build';
-import { FIXED_TRAIT_REFS } from './build';
+import { allTraitRefs, backgroundRef } from './build';
 import { freebieBudget, freebiesSpent } from './freebies';
 import {
   creationRating,
   creationStepOf,
+  dotsOf,
   fixedRating,
+  isVirtueDerived,
   kindOf,
   rating,
   traitLabel,
@@ -22,12 +25,20 @@ import {
 
 export { freebieBudget } from './freebies';
 
-const MOST_POTENT = GENERATION_TABLE[0].generation;
+/** The best generation there is: Generation dots cannot push the effective generation past it. */
+export const MOST_POTENT = GENERATION_TABLE[0].generation;
 const LEAST_POTENT = GENERATION_TABLE[GENERATION_TABLE.length - 1].generation;
 
-export const GENERATION_REF: BuildTraitRef = `background:${GENERATION_BACKGROUND}`;
+export const GENERATION_REF: BuildTraitRef = backgroundRef(GENERATION_BACKGROUND);
 
-export { ordinal } from '../identity';
+export { ordinal };
+
+/** What a Generation dot past the top is refused with. */
+export const PAST_BEST_GENERATION = `The effective generation cannot be better than ${ordinal(MOST_POTENT)}.`;
+
+/** The most Generation dots the base generation can use before the effective generation passes the best there is. */
+export const generationBackgroundTop = (build: V20Build): number =>
+  Math.max(0, build.settings.baseGeneration - MOST_POTENT);
 
 /** The base generation improved by one per Generation dot. A stored build past 4th reads as 4th. */
 export function effectiveGeneration(build: V20Build): number {
@@ -62,13 +73,29 @@ export function maximumFor(build: V20Build, ref: BuildTraitRef): number {
   }
 }
 
+/**
+ * The highest rating creation dots alone can give `ref`: `maximumFor`, except that an Ability
+ * stops at 3 before freebie points (dots already bought sit on top of that).
+ */
+export function creationMaximum(build: V20Build, ref: BuildTraitRef): number {
+  const max = maximumFor(build, ref);
+  if (kindOf(ref) !== 'ability') return max;
+  return Math.min(max, FIXED_MAXIMUMS.abilityCreation + dotsOf(build, ref).freebie);
+}
+
 /** What a refused Blood Pool entry says: the range the generation allows. */
 export function bloodPoolRangeMessage(build: V20Build): string {
   return `The Blood Pool must be a whole number from 0 to ${limits(build).bloodPoolMax}.`;
 }
 
-/** A hard rule break, as a sentence naming what to lower and the step to do it on. */
+/**
+ * A hard rule break, as a sentence naming what to lower and the step to do it on. `key` names the rule
+ * broken and `amount` how far past it the build is, so a repair that only shrinks the excess can be told
+ * from a new break even when the sentence carries the excess ("at least 5 points").
+ */
 export interface Violation {
+  key: string;
+  amount: number;
   message: string;
   step: BuildStep;
 }
@@ -81,12 +108,12 @@ function traitViolation(build: V20Build, ref: BuildTraitRef): Violation | undefi
   if (value <= max) return undefined;
   const label = traitLabel(ref);
   // Humanity and Willpower follow the Virtues; only their freebie dots can be lowered.
-  if (ref === 'humanity' || ref === 'willpower') {
-    return { message: `Remove ${dotWord(value - max)} of ${label} first.`, step: 'finishing' };
+  if (isVirtueDerived(ref)) {
+    return { key: `trait:${ref}`, amount: value - max, message: `Remove ${dotWord(value - max)} of ${label} first.`, step: 'finishing' };
   }
   // A bought dot is removed on Finishing touches; creation dots where they were placed.
   const step = creationRating(build, ref) > max ? creationStepOf(ref) : 'finishing';
-  return { message: `Lower ${label} to ${max} first.`, step };
+  return { key: `trait:${ref}`, amount: value - max, message: `Lower ${label} to ${max} first.`, step };
 }
 
 /** Every hard violation the build has. None blocks an update the build already had. */
@@ -94,33 +121,39 @@ export function violations(build: V20Build): Violation[] {
   const found: Violation[] = [];
 
   const generationDots = rating(build, GENERATION_REF);
-  const improved = build.settings.baseGeneration - generationDots;
-  if (improved < MOST_POTENT) {
+  const generationTop = generationBackgroundTop(build);
+  const pastBest = generationDots > generationTop;
+  if (pastBest) {
     found.push({
-      message: `Lower the Generation background to ${build.settings.baseGeneration - MOST_POTENT} first.`,
+      key: 'generation',
+      amount: generationDots - generationTop,
+      message: `Lower the Generation background to ${generationTop} first.`,
       step: 'advantages',
     });
   }
 
-  const traits: BuildTraitRef[] = [
-    ...FIXED_TRAIT_REFS,
-    ...build.disciplines.map((entry): BuildTraitRef => `discipline:${entry.name}`),
-  ];
-  for (const ref of traits) {
-    if (ref === GENERATION_REF && improved < MOST_POTENT) continue;
+  for (const ref of allTraitRefs(build)) {
+    if (ref === GENERATION_REF && pastBest) continue;
     const violation = traitViolation(build, ref);
     if (violation) found.push(violation);
   }
 
   const { bloodPoolMax } = limits(build);
   if (build.bloodPool !== null && build.bloodPool > bloodPoolMax) {
-    found.push({ message: `Lower the starting Blood Pool to ${bloodPoolMax} first.`, step: 'finishing' });
+    found.push({
+      key: 'bloodPool',
+      amount: build.bloodPool - bloodPoolMax,
+      message: `Lower the starting Blood Pool to ${bloodPoolMax} first.`,
+      step: 'finishing',
+    });
   }
 
   const spent = freebiesSpent(build);
   const budget = freebieBudget(build);
   if (spent > budget) {
     found.push({
+      key: 'freebies',
+      amount: spent - budget,
       message: `${spent} freebie points are spent, so at least ${spent - budget} points of purchases must be removed first.`,
       step: 'finishing',
     });

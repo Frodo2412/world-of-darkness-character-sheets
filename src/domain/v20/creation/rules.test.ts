@@ -2,15 +2,25 @@ import { describe, expect, test } from 'vitest';
 import * as rules from './rules';
 import { ARCHETYPES, CLANS, CLAN_NAMES, GENERATION_TABLE, STANDARD_FREEBIE_BUDGET } from './rules';
 
-describe('build steps', () => {
-  test('are the five that place dots and text, in order, with no step for the creation settings', () => {
-    expect(rules.BUILD_STEPS.map((entry) => entry.step)).toEqual([
-      'concept',
-      'attributes',
-      'abilities',
-      'advantages',
-      'finishing',
+describe('screens', () => {
+  test('are the nine, in order, under their titles', () => {
+    expect(rules.SCREENS.map((entry) => [entry.id, entry.title])).toEqual([
+      ['concept', 'Character concept'],
+      ['clan', 'Clan'],
+      ['natureDemeanor', 'Nature & Demeanor'],
+      ['attributes', 'Attributes'],
+      ['abilities', 'Abilities'],
+      ['advantages', 'Advantages'],
+      ['finishing', 'Finishing touches'],
+      ['review', 'Review & resolve'],
+      ['summary', 'Character sheet'],
     ]);
+  });
+
+  test('sit in five phases, with Character concept and Finishing touches holding three screens each', () => {
+    expect(rules.PHASES).toEqual(['Character concept', 'Attributes', 'Abilities', 'Advantages', 'Finishing touches']);
+    const counts = rules.PHASES.map((phase) => rules.SCREENS.filter((entry) => entry.phase === phase).length);
+    expect(counts).toEqual([3, 1, 1, 1, 3]);
   });
 });
 
@@ -89,7 +99,19 @@ describe('clans', () => {
   });
 });
 
-test('Archetypes are unique and include Architect and Visionary', () => {
-  expect(new Set(ARCHETYPES).size).toBe(ARCHETYPES.length);
-  expect(ARCHETYPES).toEqual(expect.arrayContaining(['Architect', 'Visionary']));
+describe('Archetypes', () => {
+  test('are the 42 the builder offers, in alphabetical order', () => {
+    expect([...ARCHETYPES]).toEqual([
+      'Architect', 'Autocrat', 'Bon Vivant', 'Bravo', 'Capitalist', 'Caregiver', 'Celebrant', 'Chameleon',
+      'Child', 'Competitor', 'Conformist', 'Conniver', 'Creep Show', 'Curmudgeon', 'Dabbler', 'Deviant',
+      'Director', 'Enigma', 'Eye of the Storm', 'Fanatic', 'Gallant', 'Guru', 'Idealist', 'Judge', 'Loner',
+      'Martyr', 'Masochist', 'Monster', 'Pedagogue', 'Penitent', 'Perfectionist', 'Rebel', 'Rogue', 'Sadist',
+      'Scientist', 'Sociopath', 'Soldier', 'Survivor', 'Thrill-Seeker', 'Traditionalist', 'Trickster',
+      'Visionary',
+    ]);
+  });
+
+  test('are unique', () => {
+    expect(new Set(ARCHETYPES).size).toBe(42);
+  });
 });

@@ -1,0 +1,21 @@
+---
+// The search field every searchable builder screen draws: a label, the input with the key hint at its right
+// edge, and the status region that says the result count. `prefix` names the screen in its data attributes
+// (`data-<prefix>-search`, `-search-hint`, `-results`), which parts/search.ts finds them by.
+interface Props {
+	id: string;
+	label: string;
+	prefix: string;
+}
+
+const { id, label, prefix } = Astro.props;
+---
+
+<div class="builder-field">
+	<label for={id}>{label}</label>
+	<div class="builder-search-field">
+		<input id={id} type="search" autocomplete="off" {...{ [`data-${prefix}-search`]: '' }} />
+		<span class="builder-search-hint" aria-hidden="true" hidden {...{ [`data-${prefix}-search-hint`]: '' }}></span>
+	</div>
+	<p class="builder-helper builder-search-results" role="status" {...{ [`data-${prefix}-results`]: '' }}></p>
+</div>

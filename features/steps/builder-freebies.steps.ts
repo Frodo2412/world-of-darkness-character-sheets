@@ -2,19 +2,21 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { buyDiscipline, creation, extra, fresh, generation, rank } from '../../src/domain/v20/creation/testing/play';
 import { buyDots, leaveFreebies, refFor, seedSteps } from './builder-seeding.steps';
 import { Given, Then, When } from './fixtures';
+import { freebiePointsRemaining, openPlayedFrom, openStep, shownStep } from './support/builder';
 import {
   expectRated,
-  freebieBar,
+  expectRemaining,
   groupBox,
-  groupReadout,
   openFreebieSections,
-  openPlayedFrom,
-  openStep,
+  ratingOf,
+  ratingRow,
+  ratingsIn,
+  remainingCount,
   requestRating,
-  shownStep,
+  stepButton,
   traitName,
   traitRating,
-} from './support/builder';
+} from './support/ranked';
 import { bloodPoolField } from './support/bloodpool';
 
 const KINDS: Record<string, string> = { Disciplines: 'Disciplines', Backgrounds: 'Backgrounds' };
@@ -25,20 +27,19 @@ async function onFinishing(page: Page): Promise<void> {
 }
 
 async function rememberFreebies(page: Page, memory: { entered: Map<string, string> }): Promise<void> {
-  memory.entered.set('freebies', (await freebieBar(page).textContent()) ?? '');
+  memory.entered.set('freebies', (await freebiePointsRemaining(page).textContent()) ?? '');
 }
 
 /** Buys one dot of a trait on Finishing touches; a Discipline not shown yet is bought by name. */
 async function buyOne(page: Page, name: string): Promise<void> {
   await onFinishing(page);
   const label = traitName(name);
-  const control = shownStep(page).getByRole('slider', { name: label, exact: true });
+  const control = ratingRow(shownStep(page), label);
   if ((await control.count()) === 0 && name.startsWith('the Discipline')) {
     await buyNamedDiscipline(page, label);
     return;
   }
-  const current = Number(await control.getAttribute('aria-valuenow'));
-  await requestRating(control, current + 1);
+  await requestRating(control, (await ratingOf(control)) + 1);
 }
 
 async function buyNamedDiscipline(page: Page, name: string): Promise<void> {
@@ -66,8 +67,7 @@ Given(
     if (freebies?.includes('plus one')) steps.push(buyDots(ref, 1));
     await openPlayedFrom(page, fresh(), ...steps);
     if (ref.startsWith('attribute:')) {
-      const readout = await groupReadout(page, 'Physical');
-      memory.entered.set('physical', (await readout.textContent()) ?? '');
+      memory.entered.set('physical', String(await remainingCount(page, 'Physical')));
     }
   },
 );
@@ -126,9 +126,19 @@ When(/^they (?:try to )?buy one dot of (.+?) with freebie points$/, async ({ pag
 When(/^they remove the freebie dot of (.+)$/, async ({ page }, name: string) => {
   await onFinishing(page);
   const control = await traitRating(page, name);
-  const current = Number(await control.getAttribute('aria-valuenow'));
-  await requestRating(control, current - 1);
+  await requestRating(control, (await ratingOf(control)) - 1);
 });
+
+/** One press of Enter on a row's button, the way a keyboard player lowers it; the row may go with the press. */
+When(
+  /^they press (Increase|Decrease) (\w+) with the Enter key alone$/,
+  async ({ page }, direction: 'Increase' | 'Decrease', name: string) => {
+    await onFinishing(page);
+    const button = stepButton(await traitRating(page, name), direction);
+    await button.focus();
+    await page.keyboard.press('Enter');
+  },
+);
 
 When(/^they look at (.+?) on the (finishing touches|attributes) step$/, async ({ page }, name: string, step: string) => {
   if (step === 'attributes') {
@@ -138,7 +148,7 @@ When(/^they look at (.+?) on the (finishing touches|attributes) step$/, async ({
   await onFinishing(page);
   // A Discipline the build does not hold has no row until one dot of it is bought.
   const label = traitName(name);
-  const shown = await shownStep(page).getByRole('slider', { name: label, exact: true }).count();
+  const shown = await ratingRow(shownStep(page), label).count();
   if (name.startsWith('the Discipline') && shown === 0) await buyNamedDiscipline(page, label);
 });
 
@@ -155,13 +165,13 @@ When('they buy a sixth with freebie points', async ({ page, memory }) => {
 // Then
 
 Then(/^(?:the step shows|there are) (\d+) freebie points? remaining$/, async ({ page }, points: string) => {
-  const bar = freebieBar(page);
-  await expect(bar).toBeVisible();
-  await expect(bar).toHaveText(`${points} freebie ${Number(points) === 1 ? 'point' : 'points'} remaining`);
+  const remaining = freebiePointsRemaining(page);
+  await expect(remaining).toBeVisible();
+  await expect(remaining).toHaveText(`${points} remaining`);
 });
 
 Then(/^the freebie points remaining are unchanged(?: by the refusal)?$/, async ({ page, memory }) => {
-  await expect(freebieBar(page)).toHaveText(memory.entered.get('freebies')!);
+  await expect(freebiePointsRemaining(page)).toHaveText(memory.entered.get('freebies')!);
 });
 
 Then(
@@ -187,9 +197,9 @@ Then(/^they are told a (\w+) dot costs (\d+) freebie points and only (\d+) remai
 });
 
 Then(
-  /^they are told (creation dots are changed on the \w+ step|freebie dots are removed on Finishing touches), with a link to it$/,
+  /^they are told (creation dots are changed on the \w+ screen|freebie dots are removed on Finishing touches), with a link to it$/,
   async ({ page }, what: string) => {
-    const step = /on the (\w+) step/.exec(what)?.[1];
+    const step = /on the (\w+) screen/.exec(what)?.[1];
     const sentence = `${what[0].toUpperCase()}${what.slice(1)}.`;
     const notice = noticeWith(page, sentence);
     await expect(notice).toBeVisible();
@@ -198,33 +208,38 @@ Then(
 );
 
 Then(/^(\w+) is announced as (\d+) from creation and (\d+) from freebie points$/, async ({ page }, name: string, creationDots: string, freebieDots: string) => {
-  await expect(await traitRating(page, name)).toHaveAttribute(
-    'aria-valuetext',
+  await expect((await traitRating(page, name)).locator('[data-rating-text]')).toHaveText(
     new RegExp(`${creationDots} from creation, ${freebieDots} from freebie points`),
   );
 });
 
 Then('the Physical group has one more dot remaining than before', async ({ page, memory }) => {
-  const before = Number(/(\d+) dots? remaining/.exec(memory.entered.get('physical')!)![1]);
-  const dots = before + 1 === 1 ? 'dot' : 'dots';
-  await expect(await groupReadout(page, 'Physical')).toHaveText(`Physical: ${before + 1} ${dots} remaining`);
+  await expectRemaining(page, 'Physical', Number(memory.entered.get('physical')) + 1);
 });
 
 Then(/^(\w+) is rated (\d+), from the freebie dot$/, async ({ page }, name: string, value: string) => {
   await onFinishing(page);
   const control = await traitRating(page, name);
   await expectRated(control, Number(value));
-  await expect(control).toHaveAttribute('aria-valuetext', /0 from creation, 1 from freebie points/);
+  await expect(control.locator('[data-rating-text]')).toHaveText(/0 from creation, 1 from freebie points/);
 });
 
 Then(/^(\w+) is no longer among the build's Disciplines$/, async ({ page }, name: string) => {
   await onFinishing(page);
-  await expect((await groupBox(page, 'Disciplines')).getByRole('slider', { name, exact: true })).toHaveCount(0);
+  await expect(ratingRow(await groupBox(page, 'Disciplines'), name)).toHaveCount(0);
+});
+
+Then('keyboard focus is still inside the Disciplines group', async ({ page }) => {
+  await expect((await groupBox(page, 'Disciplines')).locator(':focus')).toHaveCount(1);
+});
+
+Then('keyboard focus is on the {string} field', async ({ page }, label: string) => {
+  await expect((await groupBox(page, 'Disciplines')).getByLabel(label, { exact: true })).toBeFocused();
 });
 
 Then(/^the build holds six (Disciplines|Backgrounds)$/, async ({ page }, kind: string) => {
-  const sliders = (await groupBox(page, KINDS[kind])).getByRole('slider');
-  const values = await sliders.evaluateAll((all) => all.map((slider) => Number(slider.getAttribute('aria-valuenow'))));
+  const rows = ratingsIn(await groupBox(page, KINDS[kind]));
+  const values = await rows.evaluateAll((all) => all.map((row) => Number(row.getAttribute('data-value'))));
   expect(values.filter((value) => value > 0)).toHaveLength(6);
 });
 

@@ -1,0 +1,59 @@
+---
+// The five phases and nine screens. Which screen is current, each screen's state in words and the
+// counter are written by the shell from the build; this is only the list. Phases that hold a single
+// screen of their own name show that screen alone, so the same words never sit side by side.
+import { PHASES, SCREENS } from '../../domain/v20/creation/rules';
+
+const groups = PHASES.map((phase, index) => ({
+	phase,
+	number: String(index + 1).padStart(2, '0'),
+	screens: SCREENS.filter((screen) => screen.phase === phase),
+}));
+const sheetNote = 'Available after Finish';
+---
+
+<nav class="builder-sidebar" aria-label="Build screens">
+	<p class="builder-counter" data-screen-counter></p>
+	<ol class="builder-phases">
+		{
+			groups.map(({ phase, number, screens }) => {
+				const alone = screens.length === 1 && screens[0].title === phase;
+				const items = screens.map(({ id, title }) => (
+					<li class="builder-screen" data-screen={id}>
+						<span class="builder-screen-icon" aria-hidden="true" />
+						<span class="builder-screen-body">
+							{id === 'summary' ? (
+								<span class="builder-screen-title">{title}</span>
+							) : (
+								<a href={`#${id}`} data-screen-link={id} aria-describedby={`screen-note-${id}`}>
+									{title}
+								</a>
+							)}
+							<span class="builder-status builder-screen-note" id={`screen-note-${id}`}>
+								{id === 'summary' ? sheetNote : (
+									<>
+										<span data-screen-current hidden>Current</span>
+										<span data-screen-state />
+									</>
+								)}
+							</span>
+						</span>
+					</li>
+				));
+				return (
+					<li class="builder-phase" data-phase={phase}>
+						<span class="builder-phase-number" aria-hidden="true">{number}</span>
+						{alone ? (
+							<ol class="builder-screens">{items}</ol>
+						) : (
+							<>
+								<p class="builder-phase-title">{phase}</p>
+								<ol class="builder-screens">{items}</ol>
+							</>
+						)}
+					</li>
+				);
+			})
+		}
+	</ol>
+</nav>

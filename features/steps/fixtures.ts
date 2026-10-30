@@ -71,4 +71,7 @@ export const test = base.extend<{ memory: ScenarioMemory }>({
     });
   },
 });
-export const { Given, When, Then } = createBdd(test);
+const bdd = createBdd(test);
+export const { Given, When, Then } = bdd;
+/** A step whose wording reads the same after Given, When and Then: registered once, matched under any keyword. */
+export const Any = bdd.Step;

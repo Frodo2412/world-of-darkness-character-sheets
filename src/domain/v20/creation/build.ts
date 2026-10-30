@@ -59,6 +59,13 @@ export interface DisciplineEntry extends Dots {
   writeIn: boolean;
 }
 
+/** The address of the Discipline called `name`. */
+export const disciplineRef = (name: string): DisciplineRef => `discipline:${name}`;
+
+export const backgroundRef = (name: BackgroundName): FixedTraitRef => `background:${name}`;
+
+export const virtueRef = (key: VirtueKey): FixedTraitRef => `virtue:${key}`;
+
 export const FIXED_TRAIT_REFS: readonly FixedTraitRef[] = [
   ...ATTRIBUTE_ALLOTMENT.groups.flatMap((group) =>
     group.traits.map((trait) => `attribute:${trait}` as FixedTraitRef),
@@ -66,10 +73,16 @@ export const FIXED_TRAIT_REFS: readonly FixedTraitRef[] = [
   ...ABILITY_ALLOTMENT.groups.flatMap((group) =>
     group.traits.map((trait) => `ability:${trait}` as FixedTraitRef),
   ),
-  ...BUILD_VIRTUES.map((virtue): FixedTraitRef => `virtue:${virtue.key}`),
-  ...BACKGROUNDS.map((name): FixedTraitRef => `background:${name}`),
+  ...BUILD_VIRTUES.map((virtue) => virtueRef(virtue.key)),
+  ...BACKGROUNDS.map(backgroundRef),
   'humanity',
   'willpower',
+];
+
+/** Every trait the build rates: the fixed ones, then each Discipline it holds. */
+export const allTraitRefs = (build: V20Build): BuildTraitRef[] => [
+  ...FIXED_TRAIT_REFS,
+  ...build.disciplines.map((entry) => disciplineRef(entry.name)),
 ];
 
 /** Every group a ranked allotment has, Attributes then Abilities. */
@@ -96,6 +109,17 @@ export interface V20Build {
   disciplines: DisciplineEntry[];
   /** The starting Blood Pool the player recorded, or null until they do (0 is a recorded value). */
   bloodPool: number | null;
+}
+
+/**
+ * The one Concept line: the sample concept and the player's own words, whichever are set,
+ * trimmed and joined with " · ". The sheet carries it, and so does the builder's own shell.
+ */
+export function composeConcept(kind: string, text: string): string {
+  return [kind, text]
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+    .join(' · ');
 }
 
 const DEFAULT_BASE_GENERATION = 13;

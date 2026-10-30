@@ -22,6 +22,8 @@ export function wireFinish(
   characters: CharacterStore,
   /** Redraws every field from the build, giving back what a cleared refusal had left typed. */
   render: () => void,
+  /** Stores the build as it is now: what is finished is what is stored, so the two must be the same. */
+  save: () => 'saved' | 'failed' | 'gone',
 ): void {
   const button = root.querySelector<HTMLButtonElement>('[data-finish]')!;
   const notice = root.querySelector<HTMLElement>('[data-finish-notice]')!;
@@ -36,28 +38,52 @@ export function wireFinish(
     button.focus();
   }
 
+  /** Says `text` followed by a link to the roster. */
+  function showRosterLink(text: string): void {
+    const link = document.createElement('a');
+    link.href = '/';
+    link.textContent = 'Go to your characters';
+    notice.replaceChildren(text, link);
+  }
+
   function finish(): void {
     // Disabled at once, so a second activation cannot start a second finish.
     button.disabled = true;
+    // A refused autosave would leave the stored build behind the page's: the page keeps the build and says so.
+    let saved: ReturnType<typeof save> = 'failed';
+    try {
+      saved = save();
+    } catch {
+      // Storage threw while reading; the button must not be left disabled with nothing said.
+    }
+    if (saved !== 'saved') {
+      button.disabled = false;
+      return;
+    }
     const build = current();
-    switch (finishBuild(builds, characters, build)) {
+    switch (finishBuild(builds, characters, build.id)) {
       case 'finished':
       case 'finished-build-kept':
         clearStatus();
         window.location.assign(sheetUrl(build.id));
         return;
-      case 'already-finished': {
-        const link = document.createElement('a');
-        link.href = '/';
-        link.textContent = 'Go to your characters';
-        notice.replaceChildren('This build was already finished and has been removed. Its character is on your roster. ', link);
+      case 'already-finished':
+        showRosterLink('This build was already finished and has been removed. Its character is on your roster. ');
         return;
-      }
+      case 'already-finished-build-kept':
+        showRosterLink('This build was already finished, but it could not be removed. Its character is on your roster. ');
+        return;
       case 'build-missing':
         showView('not-found');
         return;
       case 'not-finishable':
         keepBuild('This build still has items outstanding, so it was not finished. Your build has been kept.');
+        return;
+      case 'build-unreadable':
+        keepBuild('This build could not be read, so it was not finished. Reload the page to see what is stored.');
+        return;
+      case 'character-unreadable':
+        keepBuild('A saved character under this build could not be read, so the build was not finished. Your build has been kept.');
         return;
       case 'save-failed':
         keepBuild('The character could not be saved. This browser refused to store it. Your build has been kept.');

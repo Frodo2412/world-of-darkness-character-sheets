@@ -1,64 +1,76 @@
-// The step router: one step shown at a time, kept in the address hash with
-// replaceState so Back leaves the builder rather than walking the steps.
+// The screen router: one screen shown at a time, kept in the address hash. Each change of screen is a
+// history entry (pushState), so the browser's Back steps back through the screens the player visited.
 
-import type { BuildReport, BuildStep } from '../../domain/v20/creation/progress';
+import type { ScreenId } from '../../domain/v20/creation/rules';
+import { documentTitle, isNavigable, isPlainClick, popAction, screenFromHash } from './nav';
 
-export interface StepRouter {
+export interface ScreenRouter {
+  /** The screen shown now. */
+  current(): ScreenId;
   /** Rewrites the document title, for when the build's name changes. */
   updateTitle(): void;
-  /** Opens a step and moves focus to its heading, or to `focusTarget` within it. */
-  open(step: string, focusTarget?: HTMLElement): void;
-  /** Shows each step's status from the report in the step navigation. */
-  renderStatuses(report: BuildReport): void;
+  /** Opens a screen and moves focus to its heading, or to `focusTarget` within it. */
+  open(screen: ScreenId, focusTarget?: HTMLElement): void;
 }
 
-export function startSteps(root: HTMLElement, buildName: () => string): StepRouter {
+/**
+ * Shows the screen the address names (the first, if it names none the player can open) and routes every
+ * `[data-step-go]` and `[data-screen-link]` in `root`, including ones written later. `onShow` runs after
+ * each change of screen, once for the first.
+ */
+export function startSteps(
+  root: HTMLElement,
+  buildName: () => string,
+  onShow: (screen: ScreenId) => void,
+): ScreenRouter {
   const panels = [...root.querySelectorAll<HTMLElement>('[data-step]')];
-  const links = [...root.querySelectorAll<HTMLAnchorElement>('[data-step-link]')];
-  const statuses = [...root.querySelectorAll<HTMLElement>('[data-step-status]')];
-  const heading = (panel: HTMLElement) => panel.querySelector<HTMLElement>('h2')!;
+  const panelFor = (screen: ScreenId): HTMLElement => panels.find((panel) => panel.dataset.step === screen)!;
+  const heading = (screen: ScreenId): HTMLElement => panelFor(screen).querySelector<HTMLElement>('h2')!;
 
-  // An unknown or missing step shows the first one.
-  const panelFor = (step: string): HTMLElement =>
-    panels.find((panel) => panel.dataset.step === step) ?? panels[0];
-
-  let current = panelFor(window.location.hash.slice(1));
+  let current = screenFromHash(window.location.hash);
 
   function updateTitle(): void {
-    document.title = `${heading(current).textContent} – ${buildName()}`;
+    const title = documentTitle(current, buildName());
+    if (document.title !== title) document.title = title;
   }
 
-  function show(panel: HTMLElement, moveFocus: boolean, focusTarget?: HTMLElement): void {
-    current = panel;
-    for (const each of panels) each.hidden = each !== panel;
-    for (const link of links) {
-      if (link.dataset.stepLink === panel.dataset.step) link.setAttribute('aria-current', 'step');
-      else link.removeAttribute('aria-current');
-    }
-    window.history.replaceState(null, '', `#${panel.dataset.step}`);
+  function show(screen: ScreenId, how: { history: 'push' | 'replace' | 'none'; focus?: HTMLElement | 'heading' }): void {
+    current = screen;
+    for (const panel of panels) panel.hidden = panel.dataset.step !== screen;
+    const hash = `#${screen}`;
+    if (how.history === 'push' && window.location.hash !== hash) window.history.pushState(null, '', hash);
+    else if (how.history === 'replace') window.history.replaceState(null, '', hash);
     updateTitle();
-    if (moveFocus) (focusTarget ?? heading(panel)).focus();
+    onShow(screen);
+    if (how.focus === 'heading') heading(screen).focus();
+    else if (how.focus) how.focus.focus();
   }
 
-  // Delegated, so links inside messages written later open steps too.
+  // Delegated, so links inside messages written later open screens too.
   root.addEventListener('click', (event) => {
-    const target = (event.target as Element).closest<HTMLElement>('[data-step-link], [data-step-go]');
+    const target = (event.target as Element).closest<HTMLElement>('[data-screen-link], [data-step-go]');
     if (!target) return;
+    // A link opened in a new tab or window is the browser's to open; a button has no such meaning.
+    if (target.tagName === 'A' && !isPlainClick(event)) return;
     event.preventDefault();
-    show(panelFor(target.dataset.stepLink ?? target.dataset.stepGo!), true);
+    const screen = (target.dataset.screenLink ?? target.dataset.stepGo) as ScreenId;
+    if (isNavigable(screen)) show(screen, { history: 'push', focus: 'heading' });
   });
 
-  show(current, false);
+  // The browser's Back and Forward, and an address typed in.
+  window.addEventListener('popstate', () => {
+    const action = popAction({ shown: !root.hidden, modalOpen: root.querySelector('dialog:modal') !== null });
+    // A modal dialog holds the page still: the screen behind it stays, and the address is put back to it.
+    if (action === 'restore') window.history.pushState(null, '', `#${current}`);
+    else if (action === 'show') show(screenFromHash(window.location.hash), { history: 'replace', focus: 'heading' });
+  });
+
+  show(current, { history: 'replace' });
   return {
+    current: () => current,
     updateTitle,
-    open(step, focusTarget) {
-      show(panelFor(step), true, focusTarget);
-    },
-    renderStatuses(report) {
-      for (const status of statuses) {
-        const text = report.steps[status.dataset.stepStatus as BuildStep];
-        if (status.textContent !== text) status.textContent = text;
-      }
+    open(screen, focusTarget) {
+      show(screen, { history: 'push', focus: focusTarget ?? 'heading' });
     },
   };
 }

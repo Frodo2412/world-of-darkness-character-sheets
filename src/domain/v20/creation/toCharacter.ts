@@ -10,12 +10,16 @@ import {
   type V20Character,
 } from '../character';
 import type { TraitRef } from '../traits';
-import { CONCEPT_FIELDS, FIXED_TRAIT_REFS, type BuildTraitRef, type V20Build } from './build';
+import { CONCEPT_FIELDS, backgroundRef, composeConcept, disciplineRef, FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
 import { effectiveGeneration, limits, ordinal } from './limits';
-import { clanDisciplines, keyOf, kindOf, rating } from './ratings';
+import { disciplineOrder, keyOf, kindOf, rating } from './ratings';
 import { BACKGROUNDS } from './rules';
 
 type Change = (character: V20Character) => V20Character;
+
+/** What a concept field becomes on the sheet: as entered, except Concept, which joins the sample concept. */
+const headerText = (build: V20Build, field: ConceptField): string =>
+  field === 'concept' ? composeConcept(build.concept.conceptKind, build.concept.concept) : build.concept[field];
 
 /** The sheet's address for a fixed build trait: `attribute:strength` → `attributes.strength`. */
 function sheetTrait(ref: BuildTraitRef): TraitRef {
@@ -25,18 +29,13 @@ function sheetTrait(ref: BuildTraitRef): TraitRef {
 
 /** Held Disciplines in the builder's order: the clan's, then the rest as added. */
 function heldDisciplines(build: V20Build): { name: string; rating: number }[] {
-  const clan = clanDisciplines(build);
-  const names = [
-    ...clan,
-    ...build.disciplines.map((entry) => entry.name).filter((name) => !clan.includes(name)),
-  ];
-  return names
-    .map((name) => ({ name, rating: rating(build, `discipline:${name}`) }))
+  return disciplineOrder(build)
+    .map((name) => ({ name, rating: rating(build, disciplineRef(name)) }))
     .filter((entry) => entry.rating > 0);
 }
 
 function heldBackgrounds(build: V20Build): { name: string; rating: number }[] {
-  return BACKGROUNDS.map((name) => ({ name, rating: rating(build, `background:${name}`) })).filter(
+  return BACKGROUNDS.map((name) => ({ name, rating: rating(build, backgroundRef(name)) })).filter(
     (entry) => entry.rating > 0,
   );
 }
@@ -48,7 +47,9 @@ export function toCharacter(build: V20Build): V20Character {
   const { bloodPerTurn } = limits(build);
   const willpower = rating(build, 'willpower');
   const changes: Change[] = [
-    ...CONCEPT_FIELDS.map((field): Change => (character) => setHeaderField(character, field, build.concept[field])),
+    ...CONCEPT_FIELDS.map((field): Change => (character) => setHeaderField(character, field, headerText(build, field))),
+    // "What keeps you going?" has no field of its own on the sheet; its free-text notes hold it.
+    (character) => setText(character, 'notes', build.concept.drive.trim()),
     (character) => setHeaderField(character, 'clan', build.clan),
     (character) => setHeaderField(character, 'generation', ordinal(effectiveGeneration(build))),
     ...FIXED_TRAIT_REFS.filter((ref) => ['attribute', 'ability', 'virtue'].includes(kindOf(ref))).map(

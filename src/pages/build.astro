@@ -2,33 +2,46 @@
 import Abilities from '../components/builder/Abilities.astro';
 import Advantages from '../components/builder/Advantages.astro';
 import Attributes from '../components/builder/Attributes.astro';
+import CharacterPanel from '../components/builder/CharacterPanel.astro';
+import Clan from '../components/builder/Clan.astro';
 import Concept from '../components/builder/Concept.astro';
 import FinishingTouches from '../components/builder/FinishingTouches.astro';
-import FreebieBar from '../components/builder/FreebieBar.astro';
+import IdentityBar from '../components/builder/IdentityBar.astro';
+import NatureDemeanor from '../components/builder/NatureDemeanor.astro';
+import Review from '../components/builder/Review.astro';
+import ScreenNav from '../components/builder/ScreenNav.astro';
+import ScreenPanel from '../components/builder/ScreenPanel.astro';
 import SettingsDialog from '../components/builder/SettingsDialog.astro';
-import StepNav from '../components/builder/StepNav.astro';
-import StepPanel from '../components/builder/StepPanel.astro';
+import Sidebar from '../components/builder/Sidebar.astro';
+import Summary from '../components/builder/Summary.astro';
+import TopBar from '../components/builder/TopBar.astro';
 import StatusMessage from '../components/StatusMessage.astro';
 import Layout from '../layouts/Layout.astro';
 import '../styles/builder.css';
 ---
 
 <Layout title="Build a character">
-	<main>
-		<p><a href="/">Back to characters</a></p>
+	<main class="builder-page">
 		<StatusMessage />
 		<div id="builder" class="builder" hidden>
-			<div class="builder-header">
-				<h1>Build a character</h1>
-				<button type="button" data-settings-open>Creation settings</button>
+			<TopBar />
+			<IdentityBar />
+			<div class="builder-shell">
+				<Sidebar />
+				<div class="builder-main">
+					<ScreenPanel screen="concept"><Concept /></ScreenPanel>
+					<ScreenPanel screen="clan"><Clan /></ScreenPanel>
+					<ScreenPanel screen="natureDemeanor"><NatureDemeanor /></ScreenPanel>
+					<ScreenPanel screen="attributes"><Attributes /></ScreenPanel>
+					<ScreenPanel screen="abilities"><Abilities /></ScreenPanel>
+					<ScreenPanel screen="advantages"><Advantages /></ScreenPanel>
+					<ScreenPanel screen="finishing"><FinishingTouches /></ScreenPanel>
+					<ScreenPanel screen="review"><Review /></ScreenPanel>
+					<ScreenPanel screen="summary"><Summary /></ScreenPanel>
+					<ScreenNav />
+				</div>
+				<CharacterPanel />
 			</div>
-			<StepNav />
-			<FreebieBar />
-			<StepPanel step="concept"><Concept /></StepPanel>
-			<StepPanel step="attributes"><Attributes /></StepPanel>
-			<StepPanel step="abilities"><Abilities /></StepPanel>
-			<StepPanel step="advantages"><Advantages /></StepPanel>
-			<StepPanel step="finishing"><FinishingTouches /></StepPanel>
 			<SettingsDialog />
 			<dialog id="finish-dialog" aria-labelledby="finish-dialog-title" aria-describedby="finish-dialog-message" data-finish-dialog>
 				<h2 id="finish-dialog-title">Finish with unspent freebie points?</h2>
@@ -38,6 +51,11 @@ import '../styles/builder.css';
 					<button value="finish" data-finish-confirm></button>
 				</form>
 			</dialog>
+		</div>
+		<div id="build-unavailable" hidden>
+			<h1>Character builder unavailable</h1>
+			<p>The builder needs this browser to store your characters, and it cannot.</p>
+			<p><a href="/">Go to your characters</a></p>
 		</div>
 		<div id="build-unreadable" hidden>
 			<h1>Build could not be read</h1>

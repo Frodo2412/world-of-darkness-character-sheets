@@ -3,6 +3,8 @@ import { blankCharacter } from '../character';
 import { createCharacterStore } from '../../../storage/characterStore';
 import { bloodPool, clan, completeBuild, creation, extra, freebie, generation, play, rank } from './testing/play';
 import { rating } from './ratings';
+import { composeConcept } from './build';
+import { disciplineRows } from './progress';
 import { toCharacter } from './toCharacter';
 import { addDiscipline } from './updates';
 
@@ -83,6 +85,14 @@ describe('toCharacter', () => {
     expect(toCharacter(result.build).disciplines.slice(0, 4).map((row) => row.name)).toEqual(['Celerity', 'Potence', 'Presence', 'Auspex']);
   });
 
+  test('the sheet lists Disciplines in the order the builder lists its rows', () => {
+    const build = addDiscipline(completeBuild('Brujah'), 'Auspex', 'freebie').build;
+    const held = disciplineRows(build)
+      .freebieRows.filter((ref) => rating(build, ref) > 0)
+      .map((ref) => ref.slice('discipline:'.length));
+    expect(toCharacter(build).disciplines.map((row) => row.name).filter((name) => name !== '')).toEqual(held);
+  });
+
   test('a Nosferatu has Appearance 0', () => {
     expect(toCharacter(completeBuild('Nosferatu')).attributes.appearance).toBe(0);
   });
@@ -113,5 +123,49 @@ describe('toCharacter', () => {
     });
     store.save(character);
     expect(store.load('abc')).toEqual({ status: 'found', character });
+  });
+
+  describe('the Concept line', () => {
+    test.each([
+      ['Intellectual', 'Antiquarian', 'Intellectual · Antiquarian'],
+      ['Intellectual', '', 'Intellectual'],
+      ['', 'Antiquarian', 'Antiquarian'],
+      ['', '', ''],
+      ['Intellectual', '   ', 'Intellectual'],
+      ['', ' \t ', ''],
+      ['Intellectual', '  Antiquarian  ', 'Intellectual · Antiquarian'],
+    ])('composes sample concept %j with text %j as %j', (kind, text, expected) => {
+      expect(composeConcept(kind, text)).toBe(expected);
+    });
+
+    test('the finished character carries the composed Concept', () => {
+      const build = completeBuild('Brujah');
+      build.concept = { ...build.concept, conceptKind: 'Intellectual', concept: 'Antiquarian' };
+      expect(toCharacter(build).header.concept).toBe('Intellectual · Antiquarian');
+    });
+
+    test('a whitespace-only concept text leaves the sample concept alone', () => {
+      const build = completeBuild('Brujah');
+      build.concept = { ...build.concept, conceptKind: 'Intellectual', concept: '   ' };
+      expect(toCharacter(build).header.concept).toBe('Intellectual');
+    });
+
+    test('no sample concept and no text leave the Concept empty', () => {
+      expect(toCharacter(completeBuild('Brujah')).header.concept).toBe('');
+    });
+  });
+
+  describe('What keeps you going?', () => {
+    test('reaches the notes, lines and all', () => {
+      const build = completeBuild('Brujah');
+      build.concept = { ...build.concept, drive: 'Keep the stories alive.\nName the one who buried them.' };
+      expect(toCharacter(build).notes).toBe('Keep the stories alive.\nName the one who buried them.');
+    });
+
+    test.each([[''], ['  \n  ']])('an empty drive (%j) leaves the notes empty', (drive) => {
+      const build = completeBuild('Brujah');
+      build.concept = { ...build.concept, drive };
+      expect(toCharacter(build).notes).toBe('');
+    });
   });
 });

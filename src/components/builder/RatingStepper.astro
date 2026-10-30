@@ -1,0 +1,19 @@
+---
+// The empty minus/plus stepper of a rating row. The page draws its dots, number and buttons from
+// `report(build)` (scripts/builder/parts/ratingStepper.ts) and answers them through the rating wiring.
+import type { BuildTraitRef } from '../../domain/v20/creation/build';
+
+interface Props {
+	trait: BuildTraitRef;
+	/** Which dots the row changes: creation dots, or freebie points on Finishing touches. */
+	mode: 'creation' | 'freebie';
+	/** The id of the row's visible name. */
+	labelId: string;
+	/** The message slot the row's refusals appear in. */
+	noticeId: string;
+}
+
+const { trait, mode, labelId, noticeId } = Astro.props;
+---
+
+<div class="rating-stepper" data-build-trait={trait} data-mode={mode} data-label-id={labelId} data-notice-id={noticeId}></div>

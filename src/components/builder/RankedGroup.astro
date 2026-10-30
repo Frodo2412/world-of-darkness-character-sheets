@@ -1,9 +1,12 @@
 ---
-// One group of a ranked allotment (Physical, Talents, …): its rank, what is
-// left to place, a message slot and a row per trait. On Finishing touches the
-// same group is shown without rank or readout, for buying freebie dots.
+// One group of a ranked allotment (Physical, Talents, …). As a card on a creation screen it holds the group's
+// priority select, its pool meter and counts, its callout and a row per trait; the screen module
+// (scripts/builder/parts/ranked.ts) writes everything that changes from `rankedView`. On Finishing touches the
+// same group is shown without any of that, for buying freebie dots.
 import type { BuildTraitRef } from '../../domain/v20/creation/build';
-import { RANKS, type RankedAllotment } from '../../domain/v20/creation/rules';
+import { rankOptions } from '../../domain/v20/creation/poolViews';
+import type { RankedAllotment } from '../../domain/v20/creation/rules';
+import Pool from './Pool.astro';
 import TraitRow from './TraitRow.astro';
 
 interface Props {
@@ -16,35 +19,40 @@ interface Props {
 const { allotment, group, mode, step } = Astro.props;
 const id = `${step}-${group.key}`;
 const traits = group.traits.map((trait) => `${allotment.traitKind}:${trait}` as BuildTraitRef);
+const options = rankOptions(allotment);
 ---
 
-<div class="trait-group builder-group" role="group" aria-labelledby={`${id}-label`}>
-	<h3>
-		<span id={`${id}-label`}>{group.label}</span>
-		{
-			mode === 'creation' && (
-				<span class="allotment-readout" role="status" aria-atomic="true" data-allotment-status={group.key}>
-					<span class="visually-hidden">{group.label}: </span>
-					<span data-readout-text />
-				</span>
-			)
-		}
-	</h3>
-	{
-		mode === 'creation' && (
+{
+	mode === 'creation' ? (
+		<div class="builder-card ranked-group" role="group" aria-labelledby={`${id}-label`} data-ranked-group={group.key}>
+			<h3 id={`${id}-label`} class="ranked-heading">
+				{group.label}
+			</h3>
+			<p class="builder-helper ranked-tag" data-ranked-tag hidden />
 			<div class="rank-field">
 				<label for={`${id}-rank`}>{group.label} rank</label>
 				<select id={`${id}-rank`} data-rank={group.key} aria-describedby={`${id}-notice`}>
-					<option value="" disabled>Not ranked</option>
-					{RANKS.map((rank) => (
-						<option value={rank}>
-							{rank} ({allotment.rankDots[rank]} dots)
-						</option>
+					<option value="" disabled>
+						Not ranked
+					</option>
+					{options.map((option) => (
+						<option value={option.rank}>{option.text}</option>
 					))}
 				</select>
 			</div>
-		)
-	}
-	{traits.map((trait) => <TraitRow trait={trait} mode={mode} step={step} noticeId={`${id}-notice`} />)}
-	<p id={`${id}-notice`} class="field-notice" role="status" data-notice></p>
-</div>
+			<Pool callout />
+			<div class="ranked-rows">
+				{traits.map((trait) => <TraitRow trait={trait} mode={mode} step={step} noticeId={`${id}-notice`} />)}
+			</div>
+			<p id={`${id}-notice`} class="field-notice" role="status" data-notice />
+		</div>
+	) : (
+		<div class="trait-group builder-group" role="group" aria-labelledby={`${id}-label`}>
+			<h3>
+				<span id={`${id}-label`}>{group.label}</span>
+			</h3>
+			{traits.map((trait) => <TraitRow trait={trait} mode={mode} step={step} noticeId={`${id}-notice`} />)}
+			<p id={`${id}-notice`} class="field-notice" role="status" data-notice />
+		</div>
+	)
+}

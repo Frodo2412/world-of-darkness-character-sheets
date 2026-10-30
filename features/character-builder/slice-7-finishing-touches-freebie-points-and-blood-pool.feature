@@ -67,7 +67,7 @@ Feature: Finishing touches
   Scenario: Freebie points cannot remove creation dots
     Given a build where Strength is rated 3 from creation dots and has no freebie dots
     When they try to lower Strength to 2 on the finishing touches step
-    Then they are told creation dots are changed on the Attributes step, with a link to it
+    Then they are told creation dots are changed on the Attributes screen, with a link to it
     And Strength is rated 3
 
   Scenario: Freebie points cannot remove a free dot
@@ -171,6 +171,18 @@ Feature: Finishing touches
     Then there are 15 freebie points remaining
     And Auspex is no longer among the build's Disciplines
 
+  Scenario: Lowering a bought Discipline to nothing keeps keyboard focus among the Disciplines
+    Given a Brujah build with the freebie Discipline "Auspex" rated 1 and 8 freebie points remaining
+    When they press Decrease Auspex with the Enter key alone
+    Then Auspex is no longer among the build's Disciplines
+    And keyboard focus is still inside the Disciplines group
+
+  Scenario: Lowering the only bought Discipline to nothing moves focus to the buy field
+    Given a Caitiff build with the freebie Discipline "Auspex" rated 1 and 8 freebie points remaining
+    When they press Decrease Auspex with the Enter key alone
+    Then Auspex is no longer among the build's Disciplines
+    And keyboard focus is on the "Discipline to buy" field
+
   Scenario: A clan change keeps Disciplines bought with freebie points
     Given a Brujah build with Potence rated 2: 1 from a creation dot and 1 from a freebie dot
     When they choose the clan "Toreador" and confirm
@@ -231,13 +243,13 @@ Feature: Finishing touches
     Then there are 10 freebie points remaining
     And the starting blood pool is 4
 
-  Scenario Outline: Earlier steps stay accessible with freebie dots and the freebie bar
+  Scenario Outline: Earlier steps stay accessible with freebie dots
     Given a build with freebie dots in every section, a freebie Discipline and a blood pool
     When the "<step>" step is checked
     Then no WCAG 2.1 AA violations are reported
     And every control has a unique, non-empty accessible name
     And at 375 pixels wide the page does not scroll horizontally
-    And at 375 pixels wide no focused control is covered by the freebie bar or a group readout
+    And at 375 pixels wide no focused control is covered by a group readout
 
     Examples:
       | step       |
@@ -252,4 +264,3 @@ Feature: Finishing touches
     Then no WCAG 2.1 AA violations are reported
     And every control has a unique, non-empty accessible name
     And at 375 pixels wide the page does not scroll horizontally
-    And the freebie points remaining bar does not cover the focused control

@@ -101,16 +101,34 @@ export const CONCEPT_KINDS = [
 
 export type ConceptKind = (typeof CONCEPT_KINDS)[number];
 
-/** The builder's steps in order, with the title each is shown under. The creation settings are a dialog, not a step. */
-export const BUILD_STEPS = [
-  { step: 'concept', title: 'Concept' },
-  { step: 'attributes', title: 'Attributes' },
-  { step: 'abilities', title: 'Abilities' },
-  { step: 'advantages', title: 'Advantages' },
-  { step: 'finishing', title: 'Finishing touches' },
+/** The five phases the sidebar groups the screens under, in order. */
+export const PHASES = [
+  'Character concept',
+  'Attributes',
+  'Abilities',
+  'Advantages',
+  'Finishing touches',
 ] as const;
 
-export type BuildStep = (typeof BUILD_STEPS)[number]['step'];
+export type Phase = (typeof PHASES)[number];
+
+/** The builder's nine screens in order, with the title each is shown under and the phase it sits in. The creation settings are a dialog, not a screen. */
+export const SCREENS = [
+  { id: 'concept', title: 'Character concept', phase: 'Character concept' },
+  { id: 'clan', title: 'Clan', phase: 'Character concept' },
+  { id: 'natureDemeanor', title: 'Nature & Demeanor', phase: 'Character concept' },
+  { id: 'attributes', title: 'Attributes', phase: 'Attributes' },
+  { id: 'abilities', title: 'Abilities', phase: 'Abilities' },
+  { id: 'advantages', title: 'Advantages', phase: 'Advantages' },
+  { id: 'finishing', title: 'Finishing touches', phase: 'Finishing touches' },
+  { id: 'review', title: 'Review & resolve', phase: 'Finishing touches' },
+  { id: 'summary', title: 'Character sheet', phase: 'Finishing touches' },
+] as const satisfies readonly { id: string; title: string; phase: Phase }[];
+
+export type ScreenId = (typeof SCREENS)[number]['id'];
+
+/** The screen an allotment, a violation or an outstanding item points at. */
+export type BuildStep = ScreenId;
 
 /** Every Discipline a clan in the catalogue has, alphabetically. */
 export const DISCIPLINES = [

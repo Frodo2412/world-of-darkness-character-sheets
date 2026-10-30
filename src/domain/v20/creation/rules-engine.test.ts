@@ -6,7 +6,7 @@ import { allotmentStates } from './allotments';
 import type { BuildTraitRef, V20Build } from './build';
 import { freebiesRemaining, freebiesSpent } from './freebies';
 import { effectiveGeneration, limits, maximumFor, violations } from './limits';
-import { outstanding, report, stepStatuses, unspentFreebies } from './progress';
+import { outstanding, report, unspentFreebies } from './progress';
 import { rating } from './ratings';
 import type { UpdateResult } from './result';
 import {
@@ -70,7 +70,7 @@ describe('ranked groups', () => {
   test('taking a held rank swaps the two groups and names both', () => {
     const build = play(fresh(), ...attributesRanked);
     const result = setRank(build, 'mental', 'primary');
-    expect(result).toMatchObject({ status: 'applied', notices: ['Mental is now primary and Physical is now tertiary.'] });
+    expect(result).toMatchObject({ status: 'applied', notices: ['Mental is now Primary and Physical is now Tertiary.'] });
     expect(result.build.ranks).toMatchObject({ mental: 'primary', physical: 'tertiary', social: 'secondary' });
   });
 
@@ -79,16 +79,16 @@ describe('ranked groups', () => {
     const result = setRank(build, 'social', 'primary');
     expect(result).toMatchObject({
       status: 'applied',
-      notices: ['Social is now primary and Physical now has no rank, so its 3 dots are overspent until it is ranked.'],
+      notices: ['Social is now Primary and Physical now has no rank, so 3 Physical dots are overspent until Physical is ranked.'],
     });
     expect(result.build.ranks.physical).toBe('');
     expect(remaining(result.build, 'physical')).toBe(-3);
     expect(rating(result.build, 'attribute:strength')).toBe(4);
   });
 
-  test('ranking a free rank gives no notice and leaves other groups alone', () => {
+  test('ranking a free rank tells the choice and leaves other groups alone', () => {
     const result = setRank(fresh(), 'social', 'primary');
-    expect(result).toMatchObject({ status: 'applied', notices: [] });
+    expect(result).toMatchObject({ status: 'applied', notices: ['Social is now Primary.'] });
     expect(result.build.ranks).toMatchObject({ social: 'primary', physical: '', mental: '' });
   });
 
@@ -104,7 +104,6 @@ describe('ranked groups', () => {
     build = play(build, creation('attribute:dexterity', 3), rank('physical', 'tertiary'));
     expect(remaining(build, 'physical')).toBe(-2);
     expect(rating(build, 'attribute:strength')).toBe(4);
-    expect(stepStatuses(build).attributes).toBe('overspent');
   });
 
   test('lowering an overspent group is allowed', () => {
@@ -194,8 +193,8 @@ describe('Disciplines', () => {
   test('wait for a clan', () => {
     const build = fresh();
     expect(refused(setRating(build, 'discipline:Celerity', 1, 'creation'), build)).toMatchObject({
-      reason: 'Choose a clan on the Concept step before placing Discipline dots.',
-      step: 'concept',
+      reason: 'Choose a clan to place Discipline dots',
+      step: 'clan',
     });
   });
 
@@ -307,6 +306,7 @@ describe('clan changes', () => {
     expect(remaining(result.build, 'social')).toBe(7);
 
     const bought = play(fresh(), clan('Toreador'), freebie('attribute:appearance', 2));
+    expect(clanChangeEffects(bought, 'Nosferatu')).toEqual(['Appearance will be set to 0 and 5 freebie points refunded.']);
     expect(setClan(bought, 'Nosferatu')).toMatchObject({ notices: ['Appearance was set to 0 and 5 freebie points were refunded.'] });
     expect(freebiesRemaining(appliedBuild(setClan(bought, 'Nosferatu')))).toBe(15);
   });
@@ -426,7 +426,7 @@ describe('freebie points', () => {
   test('cannot remove creation or free dots', () => {
     const build = play(fresh(), rank('physical', 'primary'), creation('attribute:strength', 3));
     expect(refused(setRating(build, 'attribute:strength', 2, 'freebie'), build)).toMatchObject({
-      reason: 'Creation dots are changed on the Attributes step.',
+      reason: 'Creation dots are changed on the Attributes screen.',
       step: 'attributes',
     });
     expect(refused(setRating(build, 'attribute:stamina', 0, 'freebie'), build).reason).toBe('Stamina cannot go below 1.');
@@ -568,7 +568,9 @@ describe('blood pool', () => {
 
   test('a stored pool above its maximum is a violation and can be cleared or lowered', () => {
     const build = { ...fresh(), bloodPool: 12 };
-    expect(violations(build)).toEqual([{ message: 'Lower the starting Blood Pool to 10 first.', step: 'finishing' }]);
+    expect(violations(build)).toEqual([
+      { key: 'bloodPool', amount: 2, message: 'Lower the starting Blood Pool to 10 first.', step: 'finishing' },
+    ]);
     expect(appliedBuild(setBloodPool(build, '')).bloodPool).toBeNull();
     expect(appliedBuild(setBloodPool(build, '10')).bloodPool).toBe(10);
   });
@@ -582,7 +584,9 @@ describe('violations of a stored build', () => {
   test('a trait above its maximum is reported', () => {
     const build = fresh();
     build.traits['attribute:strength'] = { creation: 5, freebie: 0 };
-    expect(violations(build)).toEqual([{ message: 'Lower Strength to 5 first.', step: 'attributes' }]);
+    expect(violations(build)).toEqual([
+      { key: 'trait:attribute:strength', amount: 1, message: 'Lower Strength to 5 first.', step: 'attributes' },
+    ]);
   });
 
   test('an update that keeps an existing violation is not refused for it', () => {
@@ -595,7 +599,7 @@ describe('violations of a stored build', () => {
 describe('outstanding', () => {
   test('a new build lists everything, in step order', () => {
     expect(outstanding(fresh())).toEqual([
-      { step: 'concept', message: 'Choose a clan' },
+      { step: 'clan', message: 'Choose a clan' },
       { step: 'attributes', message: 'Rank the Attribute groups' },
       { step: 'abilities', message: 'Rank the Ability groups' },
       { step: 'advantages', message: 'Place 3 Discipline dots' },

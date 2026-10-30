@@ -5,7 +5,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page } from '@playwright/test';
 import { completeBuild, creation, generation } from '../../src/domain/v20/creation/testing/play';
 import { Given, Then, When } from './fixtures';
-import { announcements } from './support/announcements';
+import { ANNOUNCEMENT_WINDOW_MS, announcements, waitOnPageClock } from './support/announcements';
 import {
   activateFinish,
   builderAddress,
@@ -17,24 +17,22 @@ import {
   extraFreebies,
   finishButton,
   finishDialog,
-  freebieBar,
-  groupNotice,
+  freebiePointsRemaining,
   openPlayed,
   openPlayedFrom,
   openStep,
-  placeDots,
-  rankGroup,
-  rankSelect,
-  rateTrait,
-  requestRating,
   saveBuilds,
   setBaseGeneration,
   settingsDialog,
   shownStep,
   startBuild,
-  stepNav,
-  traitRating,
+  screenTitle,
+  stepLink,
 } from './support/builder';
+import { chooseClan, clanNotice, clanPanel, clanRadio, expectClanChosen } from './support/clan';
+import { conceptField } from './support/concept';
+import { placeBackgroundDots } from './support/advantages';
+import { groupNotice, placeDots, rankGroup, rankSelect, rateTrait, ratingOf, ratingRow, requestRating, stepButton, traitRating } from './support/ranked';
 import { buildEntries, openRoster } from './support/pages';
 import { identityName, identitySummary } from './support/sheet';
 import { overwriteRecord, refuseWrites } from './support/storage';
@@ -42,20 +40,20 @@ import { seedSteps } from './builder-seeding.steps';
 
 /** Spends what is left: Willpower first, then one point at a time on Backgrounds. */
 async function spendEverything(page: Page): Promise<void> {
-  const left = async () => Number(/^(\d+)/.exec((await freebieBar(page).textContent()) ?? '0')![1]);
+  const left = async () => Number(/^(\d+)/.exec((await freebiePointsRemaining(page).textContent()) ?? '0')![1]);
   await openStep(page, 'Finishing touches');
   const willpower = await traitRating(page, 'Willpower');
-  const current = Number(await willpower.getAttribute('aria-valuenow'));
+  const current = await ratingOf(willpower);
   const room = Math.min(await left(), 10 - current);
   if (room > 0) await rateTrait(page, 'Willpower', current + room);
   for (const name of ['Contacts', 'Domain', 'Fame', 'Herd', 'Influence']) {
     const remaining = await left();
     if (remaining === 0) break;
     const control = await traitRating(page, name);
-    const value = Number(await control.getAttribute('aria-valuenow'));
+    const value = await ratingOf(control);
     await rateTrait(page, name, Math.min(5, value + remaining));
   }
-  await expect(freebieBar(page)).toHaveText('0 freebie points remaining');
+  await expect(freebiePointsRemaining(page)).toHaveText('0 remaining');
 }
 
 async function placeAttributes(page: Page): Promise<void> {
@@ -76,11 +74,6 @@ async function placeAbilities(page: Page): Promise<void> {
   await placeDots(page, 'Knowledges', 5, 3);
 }
 
-async function chooseClan(page: Page, clan: string): Promise<void> {
-  await openStep(page, 'Concept');
-  await page.locator('#builder').getByRole('combobox', { name: 'Clan', exact: true }).selectOption({ label: clan });
-}
-
 // Journeys
 
 When('they set the base generation to {string} and the extra freebie points to {int}', async ({ page }, label: string, points: number) => {
@@ -91,7 +84,7 @@ When('they set the base generation to {string} and the extra freebie points to {
 
 When('they enter the name {string} and choose the clan {string}', async ({ page }, name: string, clan: string) => {
   await openStep(page, 'Concept');
-  await page.locator('#builder').getByRole('textbox', { name: 'Name', exact: true }).fill(name);
+  await conceptField(page, 'Name').fill(name);
   await chooseClan(page, clan);
 });
 
@@ -107,19 +100,19 @@ When(
   'they place 3 Discipline dots, 5 Background dots \\(none on Generation) and 7 Virtue dots',
   async ({ page }) => {
     await placeDots(page, 'Disciplines', 3, 3);
-    await placeDots(page, 'Backgrounds', 5, 5);
+    await placeBackgroundDots(page, 5);
     await placeDots(page, 'Virtues', 7, 5);
   },
 );
 
 When('they spend all 20 freebie points \\(none on Generation)', async ({ page }) => {
-  await expect(freebieBar(page)).toHaveText('20 freebie points remaining');
+  await expect(freebiePointsRemaining(page)).toHaveText('20 remaining');
   await spendEverything(page);
 });
 
 When('they place 7 Virtue dots and 5 Background dots before anything else', async ({ page }) => {
   await placeDots(page, 'Virtues', 7, 5);
-  await placeDots(page, 'Backgrounds', 5, 5);
+  await placeBackgroundDots(page, 5);
 });
 
 When('they choose the clan {string} and place 3 Discipline dots', async ({ page }, clan: string) => {
@@ -159,9 +152,8 @@ Then('the ranks, the clan and the freebie points remaining are as they left them
   await expect(await rankSelect(page, 'Physical')).toHaveValue('primary');
   await expect(await rankSelect(page, 'Social')).toHaveValue('secondary');
   await expect(await rankSelect(page, 'Mental')).toHaveValue('tertiary');
-  await openStep(page, 'Concept');
-  await expect(page.locator('#builder').getByRole('combobox', { name: 'Clan' }).locator('option:checked')).toHaveText('Gangrel');
-  await expect(freebieBar(page)).toHaveText('14 freebie points remaining');
+  await expectClanChosen(page, 'Gangrel');
+  await expect(freebiePointsRemaining(page)).toHaveText('14 remaining');
 });
 
 // States
@@ -181,22 +173,22 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await openPlayed(page);
     await refuseWrites(page);
     await setBaseGeneration(page, '10th');
-    await expect(page.locator('#status-message')).toBeVisible();
+    await expect(page.locator('[data-autosave-alert]')).toBeVisible();
   },
   'the clan-change confirmation': async (page) => {
     await openPlayed(page, ...seedSteps(undefined, undefined, 'Brujah', 'Celerity rated 2 and Potence rated 1'));
     await chooseClan(page, 'Toreador');
-    await expect(page.locator('[data-clan-change]')).toBeVisible();
+    await expect(clanPanel(page)).toBeVisible();
   },
   'a clan-change notice': async (page) => {
     await openPlayed(page, ...seedSteps(undefined, undefined, 'Brujah', 'Celerity rated 2 and Potence rated 1'));
     await chooseClan(page, 'Toreador');
     await page.getByRole('button', { name: 'Switch to Toreador' }).click();
-    await expect(page.locator('#concept-clan-notice')).not.toHaveText('');
+    await expect(clanNotice(page)).not.toHaveText('');
   },
   'the outstanding list with items': async (page) => {
     await openPlayed(page);
-    await openStep(page, 'Finishing touches');
+    await openStep(page, 'Review & resolve');
   },
   'the unspent-freebies confirmation': async (page) => {
     await openPlayedFrom(page, completeBuild('Brujah'));
@@ -266,9 +258,9 @@ async function tabTo(page: Page, target: Locator, stops: { control: string; visi
 
 /** Opens a step from the navigation with the keyboard alone. */
 async function keyboardOpen(page: Page, step: string, stops: { control: string; visible: boolean }[]): Promise<void> {
-  await tabTo(page, stepNav(page).getByRole('link', { name: step, exact: true }), stops);
+  await tabTo(page, stepLink(page, step), stops);
   await page.keyboard.press('Enter');
-  await expect(shownStep(page).getByRole('heading', { name: step, level: 2 })).toBeFocused();
+  await expect(shownStep(page).getByRole('heading', { name: screenTitle(step), level: 2 })).toBeFocused();
 }
 
 const KEYBOARD: Record<string, (page: Page, stops: { control: string; visible: boolean }[]) => Promise<void>> = {
@@ -280,47 +272,50 @@ const KEYBOARD: Record<string, (page: Page, stops: { control: string; visible: b
     await page.keyboard.type('10');
   },
   'choose the clan "Brujah"': async (page, stops) => {
-    await keyboardOpen(page, 'Concept', stops);
-    await tabTo(page, page.locator('#builder').getByRole('combobox', { name: 'Clan', exact: true }), stops);
-    await page.keyboard.type('Bru');
+    await keyboardOpen(page, 'Clan', stops);
+    // The tab stop is the chosen clan; the arrow keys only move focus, and a press chooses.
+    await tabTo(page, clanRadio(page, 'Caitiff'), stops);
+    await page.keyboard.press('Home');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Space');
   },
   'rank Physical primary and raise Strength to 3': async (page, stops) => {
     await keyboardOpen(page, 'Attributes', stops);
     await tabTo(page, page.getByRole('combobox', { name: 'Physical rank' }), stops);
     await page.keyboard.type('p');
-    await tabTo(page, shownStep(page).getByRole('slider', { name: 'Strength', exact: true }), stops);
-    await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('ArrowRight');
+    await tabTo(page, shownStep(page).getByRole('button', { name: 'Increase Strength', exact: true }), stops);
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
   },
   'rank Talents primary and raise Brawl to 2': async (page, stops) => {
     await keyboardOpen(page, 'Abilities', stops);
     await tabTo(page, page.getByRole('combobox', { name: 'Talents rank' }), stops);
     await page.keyboard.type('p');
-    await tabTo(page, shownStep(page).getByRole('slider', { name: 'Brawl', exact: true }), stops);
-    await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('ArrowRight');
+    await tabTo(page, shownStep(page).getByRole('button', { name: 'Increase Brawl', exact: true }), stops);
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
   },
   'add the Discipline "Protean" and raise it to 1': async (page, stops) => {
     await keyboardOpen(page, 'Advantages', stops);
     await tabTo(page, shownStep(page).getByLabel('Discipline to add', { exact: true }), stops);
     await page.keyboard.type('Protean');
     await page.keyboard.press('Enter');
-    await tabTo(page, shownStep(page).getByRole('slider', { name: 'Protean', exact: true }), stops, true);
-    await page.keyboard.press('ArrowRight');
+    await tabTo(page, shownStep(page).getByRole('button', { name: 'Increase Protean', exact: true }), stops, true);
+    await page.keyboard.press('Enter');
   },
   'buy one dot of Willpower with freebie points': async (page, stops) => {
     await keyboardOpen(page, 'Finishing touches', stops);
-    await tabTo(page, shownStep(page).getByRole('slider', { name: 'Willpower', exact: true }), stops);
-    await page.keyboard.press('ArrowRight');
+    await tabTo(page, shownStep(page).getByRole('button', { name: 'Increase Willpower', exact: true }), stops);
+    await page.keyboard.press('Enter');
   },
   'move from Concept to Advantages with the navigation': async (page, stops) => {
     await keyboardOpen(page, 'Advantages', stops);
   },
 };
 
-When(/^using only the keyboard they ((?!focus \w+ and press)(?!move the clan choice).+)$/, async ({ page, memory }, action: string) => {
+When(/^using only the keyboard they ((?!focus .+ and press)(?!move through the clans).+)$/, async ({ page, memory }, action: string) => {
   if (action === 'activate Finish and press Escape') {
-    await keyboardOpen(page, 'Finishing touches', memory.focusStops);
+    await keyboardOpen(page, 'Review & resolve', memory.focusStops);
     await tabTo(page, finishButton(page), memory.focusStops);
     await page.keyboard.press('Enter');
     await expect(finishDialog(page)).toBeVisible();
@@ -338,7 +333,11 @@ Then('every control they stopped on showed a visible focus indicator', async ({ 
 // Announcements
 
 Then('{string} is announced once', async ({ page }, text: string) => {
-  await expect.poll(async () => (await announcements(page)).filter((entry) => entry === text)).toEqual([text]);
+  const heard = async (): Promise<string[]> => (await announcements(page)).filter((entry) => entry === text);
+  await expect.poll(heard).not.toEqual([]);
+  // Given the time a repeat would take, so "once" is not read before the second arrives.
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  expect(await heard()).toEqual([text]);
 });
 
 When('Strength is read by assistive technology on the attributes step', async ({ page }) => {
@@ -348,17 +347,20 @@ When('Strength is read by assistive technology on the attributes step', async ({
 Then(
   /^it is announced as "([^"]+)", value (\d+), lowest (\d+), highest (\d+)$/,
   async ({ page }, name: string, value: string, lowest: string, highest: string) => {
-    const control = shownStep(page).getByRole('slider', { name, exact: true });
-    await expect(control).toHaveAttribute('aria-valuenow', String(value));
-    await expect(control).toHaveAttribute('aria-valuemin', String(lowest));
-    await expect(control).toHaveAttribute('aria-valuemax', String(highest));
+    const row = ratingRow(shownStep(page), name);
+    await expect(row.locator('[data-rating-text]')).toHaveText(`${value} of ${highest}`);
+    await expect(row).toHaveAttribute('data-min', String(lowest));
+    await expect(row).toHaveAttribute('data-max', String(highest));
   },
 );
 
 Then('the refusal text is announced once', async ({ page }) => {
-  await expect
-    .poll(async () => (await announcements(page)).filter((entry) => entry.includes('Mental has no dots remaining')).length)
-    .toBe(1);
+  const times = async (): Promise<number> =>
+    (await announcements(page)).filter((entry) => entry.includes('Mental has no dots remaining')).length;
+  await expect.poll(times).toBeGreaterThan(0);
+  // Given the time a repeat would take, so "once" is not read before the second arrives.
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
+  expect(await times()).toBe(1);
 });
 
 Then('the refusal text is shown inside the Mental group', async ({ page }) => {
@@ -366,11 +368,12 @@ Then('the refusal text is shown inside the Mental group', async ({ page }) => {
 });
 
 Then('Wits is described by that refusal text', async ({ page }) => {
-  await expect(await traitRating(page, 'Wits')).toHaveAccessibleDescription(/Mental has no dots remaining\./);
+  await expect(stepButton(await traitRating(page, 'Wits'), 'Increase')).toHaveAccessibleDescription(/Mental has no dots remaining\./);
 });
 
 Then('nothing new is announced', async ({ page }) => {
-  // Mutation records are delivered before the click that caused them returns.
+  // A repeat would come after the pause, so the log is read once the pause has passed.
+  await waitOnPageClock(page, ANNOUNCEMENT_WINDOW_MS);
   const log = await announcements(page);
   expect(log.filter((entry) => entry.includes('Mental has no dots remaining'))).toHaveLength(1);
   expect(log.at(-1)).toContain('Mental has no dots remaining');

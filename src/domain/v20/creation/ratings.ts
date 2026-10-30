@@ -12,18 +12,23 @@ import {
   CLANS,
   CONCEPT_KINDS,
   DISCIPLINES,
+  RANKS,
   VIRTUE_ALLOTMENT,
   type BuildStep,
   type ClanName,
   type ConceptKind,
+  type Rank,
   type TraitKind,
 } from './rules';
 
 const NO_DOTS: Dots = { creation: 0, freebie: 0 };
 
+/** Humanity and Willpower follow the Virtues: they take no creation dots of their own. */
+export const isVirtueDerived = (ref: string): ref is 'humanity' | 'willpower' => ref === 'humanity' || ref === 'willpower';
+
 /** The kind of trait `ref` names, which sets its freebie cost and where it is placed. */
 export function kindOf(ref: BuildTraitRef): TraitKind {
-  if (ref === 'humanity' || ref === 'willpower') return ref;
+  if (isVirtueDerived(ref)) return ref;
   return ref.slice(0, ref.indexOf(':')) as TraitKind;
 }
 
@@ -74,6 +79,9 @@ export const isClanName = (name: string): name is ClanName => (CLAN_NAMES as rea
 /** Whether `name` is one of the sample concepts the builder offers. */
 export const isConceptKind = (name: string): name is ConceptKind => (CONCEPT_KINDS as readonly string[]).includes(name);
 
+/** Whether `name` is one of the ranks a group can hold. */
+export const isRank = (name: string): name is Rank => (RANKS as readonly string[]).includes(name);
+
 export const isCaitiff = (build: V20Build): boolean => build.clan === 'Caitiff';
 
 /** A clan's three Disciplines; none for Caitiff or for no clan. */
@@ -83,6 +91,12 @@ export function clanDisciplinesOf(clan: string): readonly string[] {
 
 /** The chosen clan's three Disciplines; none for Caitiff or before a clan is chosen. */
 export const clanDisciplines = (build: V20Build): readonly string[] => clanDisciplinesOf(build.clan);
+
+/** Every Discipline the build lists, in the one order the builder and the sheet share: the clan's, then the rest as added. */
+export function disciplineOrder(build: V20Build): string[] {
+  const clan = clanDisciplines(build);
+  return [...clan, ...build.disciplines.map((entry) => entry.name).filter((name) => !clan.includes(name))];
+}
 
 export const isClanDiscipline = (build: V20Build, name: string): boolean =>
   clanDisciplines(build).some((discipline) => sameName(discipline, name));

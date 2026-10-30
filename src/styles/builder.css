@@ -1,13 +1,131 @@
-/* The builder: one step at a time under a step navigation that wraps on a
+/* The builder: one screen at a time beside the screen list, which stacks above on a
    phone. Fields stack; every control is at least 24 px with room around it. */
 
-/* The title with the settings button beside it; the button drops below on a phone. */
-.builder-header {
+/* The builder is drawn as wide as the design's frame, with room for the screen list and the panel either side. */
+.builder-page {
+	max-inline-size: var(--frame-width);
+}
+
+/* The top bar: where the build belongs, its autosave status and the settings button. They wrap on a phone. */
+.builder-topbar {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--space-2) var(--space-4);
+}
+
+.builder-title {
+	margin: 0;
+	min-inline-size: 0;
+	font-size: var(--text-h3);
+	letter-spacing: 0.04em;
+	overflow-wrap: anywhere;
+}
+
+/* The chronicle before "Character builder", set back from it. */
+.builder-title [data-top-chronicle] {
+	color: var(--color-text-status);
+	font-weight: 400;
+}
+
+.builder-save-status {
+	margin: 0 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+}
+
+/* A round mark when saved, a square one when not: the words say it too, so colour is never the only signal. */
+.builder-save-status:not(:empty)::before {
+	content: '';
+	flex: none;
+	inline-size: 0.4rem;
+	block-size: 0.4rem;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.builder-save-status[data-state='not-saved']::before {
+	border-radius: 0;
+}
+
+/* A refused save: what to do, on a line of its own, with the way to try again beside it. */
+.builder-failure {
+	flex: 1 1 100%;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2) var(--space-3);
+	border: var(--stroke) solid var(--color-danger);
+	border-inline-start-width: 0.3rem;
+	border-radius: var(--radius-badge);
+	background: var(--color-surface);
+	color: var(--color-text);
+	padding: var(--space-2) var(--space-3);
+}
+
+.builder-failure p {
+	flex: 1 1 20rem;
+	margin: 0;
+}
+
+/* The identity bar: who is being built, and the way out. */
+.builder-identity {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2) var(--space-4);
+	margin-block-start: var(--space-3);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+	background: var(--color-surface);
+	padding: var(--space-card) var(--space-3);
+}
+
+.builder-avatar {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 3rem;
+	block-size: 3rem;
+	border-radius: 50%;
+	background: var(--color-selected);
+	color: var(--color-text-strong);
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	font-weight: 600;
+}
+
+.builder-identity-text {
+	flex: 1 1 12rem;
+	min-inline-size: 0;
+}
+
+.builder-identity-text p,
+.builder-identity-natdem {
+	margin: 0;
+}
+
+.builder-identity-name {
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	font-weight: 600;
+	color: var(--color-text-strong);
+	overflow-wrap: anywhere;
+}
+
+.builder-identity-subtitle {
+	color: var(--color-text-status);
+	overflow-wrap: anywhere;
+}
+
+.builder-identity-natdem {
+	display: grid;
+	overflow-wrap: anywhere;
 }
 
 /* A dialog's title with its close button. */
@@ -19,43 +137,232 @@
 	gap: var(--space-2);
 }
 
-.step-nav ol {
-	list-style: none;
-	padding: 0;
-	margin: 0;
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--space-2);
+/* The shell: the screen list, the screen and the "Your character" panel. Below the shared breakpoint the
+   list stacks above the screen and the panel below it; between, the panel sits under the screen. */
+.builder-shell {
+	display: grid;
+	grid-template-columns: 15rem minmax(0, 1fr) 17rem;
+	align-items: start;
+	gap: var(--space-4);
+	margin-block-start: var(--space-3);
 }
 
-.step-nav li {
-	display: flex;
-	flex-direction: column;
-	border: 1px solid var(--color-line);
-	border-radius: 4px;
+.builder-main {
+	min-inline-size: 0;
+}
+
+.builder-sidebar {
+	position: sticky;
+	inset-block-start: var(--space-3);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
 	background: var(--color-surface);
-	padding: var(--space-1) var(--space-2);
+	padding: var(--space-card) var(--space-3);
 }
 
-.step-nav a {
+.builder-counter {
+	margin: 0 0 var(--space-2);
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+}
+
+.builder-phases,
+.builder-screens {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+/* A phase: its number, then (for a phase of several screens) its name, then its screens indented beneath. */
+.builder-phase {
+	display: grid;
+	grid-template-columns: 1.75rem minmax(0, 1fr);
+	margin-block-end: var(--space-2);
+}
+
+.builder-phase-number {
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+	padding-block-start: var(--space-1);
+}
+
+.builder-phase-title,
+.builder-screens {
+	grid-column: 2;
+}
+
+.builder-phase-title {
+	margin: 0;
+	padding-block: var(--space-1);
+	color: var(--color-muted);
+	font-weight: 600;
+}
+
+.builder-phase-title + .builder-screens {
+	padding-inline-start: var(--space-3);
+}
+
+.builder-screen {
+	display: flex;
+	gap: var(--space-2);
+	align-items: flex-start;
+	padding-block: var(--space-1);
+}
+
+/* The state as an icon too; the words beside it say the same, so the icon is only a mark. */
+.builder-screen-icon {
+	flex: none;
+	inline-size: 1rem;
+	text-align: center;
+	line-height: 1.5rem;
+}
+
+.builder-screen[data-state='Done'] .builder-screen-icon::before {
+	content: '✓';
+}
+
+.builder-screen[data-state='To do'] .builder-screen-icon::before {
+	content: '○';
+}
+
+.builder-screen[data-state='Optional'] .builder-screen-icon::before {
+	content: '◇';
+}
+
+.builder-screen-body {
+	display: grid;
+	min-inline-size: 0;
+}
+
+.builder-screen a {
 	min-block-size: 1.5rem;
 	display: inline-flex;
 	align-items: center;
 	text-decoration: none;
 }
 
-.step-nav a[aria-current='step'] {
+.builder-screen a[aria-current='step'] {
 	font-weight: 700;
 	text-decoration: underline;
 }
 
-.step-status {
+.builder-screen-title {
+	min-block-size: 1.5rem;
+	display: inline-flex;
+	align-items: center;
 	color: var(--color-muted);
+}
+
+.builder-screen-note {
+	color: var(--color-text-status);
 	font-size: var(--text-small);
 }
 
-.step-status:empty {
-	display: none;
+/* "Current" and the state read as one phrase: Current · Done. */
+.builder-screen-note [data-screen-current]:not([hidden])::after {
+	content: ' · ';
+}
+
+/* The "Your character" panel: a label and its value for each part of the build. */
+.builder-panel {
+	position: sticky;
+	inset-block-start: var(--space-3);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+	background: var(--color-surface);
+	padding: var(--space-card) var(--space-3);
+}
+
+.builder-panel h2 {
+	margin-block-start: 0;
+	font-size: var(--text-h3);
+}
+
+.builder-panel-rows {
+	margin: 0;
+}
+
+.builder-panel-row {
+	padding-block: var(--space-2);
+	border-block-end: var(--stroke) solid var(--color-divider);
+}
+
+.builder-panel-row:last-child {
+	border-block-end: 0;
+}
+
+.builder-panel-row dt {
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+}
+
+.builder-panel-row dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+	font-weight: 600;
+}
+
+.builder-panel-dots {
+	margin-inline-start: var(--space-2);
+	letter-spacing: 0.1em;
+	color: var(--color-accent-text);
+}
+
+/* Back and Continue, with why Continue is not yet available beside them. */
+.builder-footer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-4);
+	margin-block-start: var(--space-5);
+}
+
+.builder-reason-line {
+	order: 1;
+	flex: 1 1 14rem;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1) var(--space-2);
+}
+
+.builder-reason-line .builder-reason {
+	margin: 0;
+}
+
+.builder-footer-actions {
+	order: 2;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	margin-inline-start: auto;
+}
+
+.builder-footer .review-link {
+	order: 3;
+	flex-basis: 100%;
+}
+
+/* The footer's way to the outstanding list from every other screen. */
+.review-link {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--control-size);
+}
+
+.builder-continue[aria-disabled='true'] {
+	color: var(--color-muted);
+	cursor: not-allowed;
+}
+
+/* The phase above a screen's heading: the text reads "Phase 02 / Attributes"; the capitals are only the look. */
+.builder-eyebrow {
+	margin: 0 0 var(--space-1);
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 }
 
 .builder-step h2:focus {
@@ -81,15 +388,20 @@
 	font-weight: 600;
 }
 
-.builder-field select,
-.builder-field input {
+/* A text field or a select, wherever a screen puts one. */
+.builder select,
+.builder input[type='text'] {
 	font: inherit;
 	color: var(--color-text);
 	background: var(--color-surface);
-	border: 1px solid var(--color-border-control);
-	border-radius: 4px;
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
 	min-block-size: var(--control-size);
 	padding: var(--space-1) var(--space-2);
+}
+
+.builder-field select,
+.builder-field input {
 	inline-size: 100%;
 }
 
@@ -120,8 +432,8 @@
 }
 
 .field-tag {
-	border: 1px solid var(--color-border-control);
-	border-radius: 4px;
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
 	padding: 0 var(--space-2);
 	font-size: var(--text-small);
 	color: var(--color-text);
@@ -154,8 +466,8 @@
 }
 
 .settings-readouts > div {
-	border: 1px solid var(--color-line);
-	border-radius: 4px;
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-badge);
 	padding: var(--space-2) var(--space-3);
 }
 
@@ -170,14 +482,6 @@
 	font-size: var(--text-h2);
 }
 
-.step-pager {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-between;
-	gap: var(--space-2);
-	margin-block-start: var(--space-5);
-}
-
 /* Ranked groups: side by side when there is room, stacked on a phone. */
 .builder-columns {
 	display: grid;
@@ -188,7 +492,7 @@
 /* The heading, with what is left to place, stays in view down a long group. */
 .builder-group h3 {
 	position: sticky;
-	inset-block-start: var(--sticky-top, 0);
+	inset-block-start: 0;
 	z-index: 1;
 	background: var(--color-page);
 	padding-block: var(--space-1);
@@ -199,193 +503,240 @@
 	gap: var(--space-1) var(--space-2);
 }
 
-.allotment-readout {
-	font-family: var(--font-body);
-	font-size: var(--text-small);
-	letter-spacing: normal;
-	text-transform: none;
-	color: var(--color-text);
-}
-
-.allotment-readout[data-overspent] {
-	color: var(--color-danger);
-}
-
-.allotment-readout[data-overspent]::before {
-	content: '⚠ ';
-}
-
-.rank-field {
+.builder .rating-row {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: var(--space-2);
-	margin-block-end: var(--space-2);
-}
-
-.rank-field select {
-	font: inherit;
-	color: var(--color-text);
-	background: var(--color-surface);
-	border: 1px solid var(--color-border-control);
-	border-radius: 4px;
-	min-block-size: var(--control-size);
-	padding: var(--space-1) var(--space-2);
-}
-
-.builder .rating-row {
-	display: flex;
-	align-items: center;
 	justify-content: space-between;
-	gap: var(--space-2);
+	gap: var(--space-1) var(--space-2);
 	min-block-size: 2rem;
 }
 
-.builder dot-rating {
-	--mark-size: 1.5rem;
+/* A rating row's controls: minus, the dots with the number, plus, then a line saying why either cannot act. They
+   wrap rather than widen the page, so a ten-dot row fits the narrowest phone. */
+.rating-stepper {
+	--control-size: var(--control-compact);
+	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	justify-content: flex-end;
+	gap: var(--space-1) var(--space-2);
+	min-inline-size: 0;
+	margin-inline-start: auto;
 }
 
-.clan-change {
-	border: 1px solid var(--color-accent);
-	border-inline-start-width: 0.4rem;
-	border-radius: 4px;
-	padding: var(--space-2) var(--space-3);
-}
-
-.clan-change ul {
-	margin: var(--space-1) 0;
-	padding-inline-start: var(--space-4);
-}
-
-.clan-change p {
-	margin: 0;
-}
-
-.clan-change-actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--space-2);
-}
-
-.discipline-add {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--space-2);
-	margin-block: var(--space-2);
-}
-
-.discipline-add input {
-	font: inherit;
-	color: var(--color-text);
-	background: var(--color-surface);
-	border: 1px solid var(--color-border-control);
-	border-radius: 4px;
-	min-block-size: var(--control-size);
-	padding: var(--space-1) var(--space-2);
-	inline-size: 12rem;
-	max-inline-size: 100%;
-}
-
-.discipline-row-actions {
-	display: flex;
-	align-items: center;
-	gap: var(--space-2);
-}
-
-/* The freebie bar stays at the top; group headings stick below it, and a
-   focused control scrolls clear of both. */
-html {
-	scroll-padding-block-start: 7rem;
-}
-
-.freebie-bar {
-	position: sticky;
-	inset-block-start: 0;
-	z-index: 2;
-	background: var(--color-page);
-	border-block-end: 1px solid var(--color-line);
-	margin-block-start: var(--space-3);
-}
-
-.freebie-bar p {
-	margin: 0;
-	padding-block: var(--space-2);
+.rating-step {
+	inline-size: var(--control-size);
+	padding: 0;
+	background: var(--color-control);
 	font-weight: 600;
+	line-height: 1;
 }
 
-.builder {
-	--sticky-top: 2.6rem;
-}
-
-.freebie-heading {
-	margin-block-start: var(--space-4);
-}
-
-.freebie-sections {
-	display: grid;
-	gap: var(--space-2);
-}
-
-.freebie-section {
-	border: 1px solid var(--color-line);
-	border-radius: 4px;
-	padding: var(--space-1) var(--space-3);
-}
-
-.freebie-section summary {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	gap: var(--space-1) var(--space-3);
-	min-block-size: var(--control-size);
-	align-content: center;
-	cursor: pointer;
-}
-
-.freebie-section-title {
-	font-family: var(--font-display);
-	font-size: var(--text-h3);
-	font-weight: 600;
-}
-
-.freebie-section-cost,
-.freebie-section-dots {
+/* At its bound a button stays focusable and keeps its place; it only says it does nothing. */
+.rating-step[aria-disabled='true'] {
 	color: var(--color-muted);
-	font-size: var(--text-small);
-}
-
-.freebie-section-body {
-	padding-block: var(--space-2);
-}
-
-.review {
-	margin-block-start: var(--space-5);
-	border-block-start: 1px solid var(--color-line);
-	padding-block-start: var(--space-3);
-}
-
-.outstanding ul {
-	padding-inline-start: var(--space-4);
-}
-
-.outstanding li {
-	min-block-size: 1.5rem;
-}
-
-.outstanding-step {
-	color: var(--color-muted);
-}
-
-.finish-button[aria-disabled='true'] {
-	color: var(--color-muted);
+	border-style: dashed;
 	cursor: not-allowed;
 }
 
-.review-link {
-	display: inline-flex;
-	align-items: center;
+.rating-step[aria-disabled='true']:hover {
+	border-color: var(--color-border-control);
+}
+
+.rating-dots {
+	min-inline-size: 0;
+}
+
+.rating-dots dot-rating {
+	--mark-size: 1.25rem;
+	flex-shrink: 1;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	cursor: default;
+}
+
+.rating-stepper[data-locked] .rating-mark {
+	border-style: dashed;
+}
+
+.rating-number {
+	display: inline-block;
+	min-inline-size: 1.5ch;
+	text-align: center;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Why the minus or the plus cannot act, on a line of their own under the controls. */
+.rating-reasons {
+	display: flex;
+	flex-basis: 100%;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: var(--space-1) var(--space-2);
+	min-inline-size: 0;
+}
+
+.rating-reasons[hidden] {
+	display: none;
+}
+
+.rating-limit {
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+	text-align: end;
+}
+
+/* Group headings stick to the top, and a focused control scrolls clear of them. */
+html {
+	scroll-padding-block-start: 4.5rem;
+}
+
+/* Pieces the screens share. A screen's own rules live in styles/builder/<screen>.css. */
+
+/* A card groups one idea on a screen. */
+.builder-card {
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+	background: var(--color-surface);
+	padding: var(--space-card) var(--space-3);
+}
+
+/* A pool meter: the segments only echo what the text beside it already says. */
+.builder-meter {
+	display: flex;
+	gap: var(--space-1);
+}
+
+.builder-meter-segment {
+	flex: 1;
+	block-size: 0.5rem;
+	border-radius: var(--radius-segment);
+	background: var(--color-divider);
+}
+
+/* A segment holds no text; the brighter colour keeps anything drawn on a fill readable. */
+.builder-meter-segment[data-filled] {
+	background: var(--color-accent);
+	color: var(--color-text-strong);
+}
+
+/* A callout says what is left to do. The stripe and the words carry it; colour is only a hint. */
+.builder-callout {
+	background: var(--color-callout);
+	color: var(--color-text);
+	border-inline-start: 0.3rem solid var(--color-accent);
+	border-radius: var(--radius-badge);
+	padding: var(--space-2) var(--space-3);
+}
+
+.builder-callout-error {
+	color: var(--color-danger);
+}
+
+/* A chip is a toggle: pressed is shown by fill and by its text, never by colour alone. */
+.builder-chip {
+	font: inherit;
+	color: var(--color-text);
+	background: var(--color-control);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
 	min-block-size: var(--control-size);
+	padding: var(--space-1) var(--space-3);
+}
+
+.builder-chip[aria-pressed='true'] {
+	background: var(--color-selected);
+}
+
+/* A search field and, at its right edge, the keys that go to it; a touch screen has no keys to press. */
+.builder-search-field {
+	position: relative;
+}
+
+.builder-search-field input {
+	font: inherit;
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+	min-block-size: var(--control-size);
+	padding-block: var(--space-1);
+	padding-inline: var(--space-2) 4.5rem;
+	inline-size: 100%;
+	box-sizing: border-box;
+}
+
+.builder-search-hint {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-end: var(--space-2);
+	display: flex;
+	align-items: center;
+	font-size: var(--text-small);
+	color: var(--color-text-helper);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+@media (pointer: coarse) {
+	.builder-search-hint {
+		display: none;
+	}
+}
+
+.builder-search-results {
+	margin: 0;
+}
+
+/* Small text that helps, explains why something is unavailable, or names a state. */
+.builder-helper {
+	color: var(--color-text-helper);
+	font-size: var(--text-small);
+}
+
+.builder-reason {
+	color: var(--color-text-reason);
+	font-size: var(--text-small);
+}
+
+.builder-status {
+	color: var(--color-text-status);
+	font-size: var(--text-small);
+}
+
+/* Too narrow for three columns: the panel sits under the screen, in the screen's column. */
+@media (max-width: 64rem) {
+	.builder-shell {
+		grid-template-columns: 15rem minmax(0, 1fr);
+	}
+
+	.builder-panel {
+		grid-column: 2;
+		position: static;
+	}
+}
+
+/* The breakpoint every screen shares: from here down (a phone, 375 px and 320 px included) the pieces tighten and stack. */
+@media (max-width: 40rem) {
+	.builder-shell {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.builder-sidebar {
+		position: static;
+	}
+
+	.builder-panel {
+		grid-column: auto;
+	}
+
+	.builder-card {
+		padding-inline: var(--space-2);
+	}
+
+	.builder-meter-segment {
+		block-size: 0.375rem;
+	}
 }

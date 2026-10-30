@@ -1,17 +1,5 @@
 Feature: Advantages step
 
-  Scenario: Disciplines wait for a clan
-    Given a build with no clan chosen
-    When they open the advantages step
-    Then they are told to choose a clan on the Concept step before placing Discipline dots
-    And no Discipline dots can be placed
-
-  Scenario: A clan offers exactly its three Disciplines
-    Given a build of clan "Brujah"
-    When they open the advantages step
-    Then the Disciplines offered are exactly "Celerity", "Potence" and "Presence"
-    And there are 3 Discipline dots remaining
-
   Scenario: Discipline dots can go on one Discipline or several
     Given a build of clan "Brujah"
     When they raise Celerity to 2
@@ -23,12 +11,6 @@ Feature: Advantages step
     When they try to raise Potence to 1
     Then they are told there are no Discipline dots remaining and more can be bought with freebie points on Finishing touches
     And Potence is rated 0
-
-  Scenario: A Caitiff may take any Discipline
-    Given a build of clan "Caitiff"
-    When they add the Discipline "Protean" and raise it to 2
-    And they add a write-in Discipline "Flight" and raise it to 1
-    Then there are 0 Discipline dots remaining
 
   Scenario Outline: A write-in Discipline needs a usable name
     Given a build of clan "Caitiff" with the Discipline "Protean"
@@ -56,9 +38,9 @@ Feature: Advantages step
 
   Scenario: Browsing the clan list with the keyboard removes nothing
     Given a build of clan "Brujah" with Celerity rated 2 and Potence rated 1
-    When using only the keyboard they move the clan choice past "Toreador" and "Tremere" and back to "Brujah"
+    When using only the keyboard they move through the clans past "Toreador" and "Tremere" and back to "Brujah"
     Then the clan is "Brujah" with Celerity rated 2 and Potence rated 1
-    And keyboard focus never left the clan choice
+    And keyboard focus never left the clan list
 
   Scenario: A clan change names every Discipline it removes
     Given a build of clan "Caitiff" with Protean rated 2 and the write-in Discipline "Flight" rated 1
@@ -85,18 +67,6 @@ Feature: Advantages step
     Then the choices are exactly
       | Allies | Alternate Identity | Black Hand Membership | Contacts | Domain | Fame | Generation | Herd | Influence | Mentor | Resources | Retainers | Rituals | Status |
 
-  Scenario: Five Background dots are available
-    Given a player on the advantages step
-    When they raise Resources to 3
-    And they raise Herd to 2
-    Then there are 0 Background dots remaining
-
-  Scenario: A sixth Background dot is refused
-    Given a build with Resources rated 3 and Herd rated 2
-    When they try to raise Fame to 1
-    Then they are told there are no Background dots remaining and more can be bought with freebie points on Finishing touches
-    And Fame is rated 0
-
   Scenario: Generation dots improve the effective generation
     Given a build with base generation "11th"
     When they raise the Generation background to 2
@@ -110,28 +80,11 @@ Feature: Advantages step
     And they raise Strength to 6
     Then Strength is rated 6
 
-  Scenario: Generation dots cannot pass 4th generation
-    Given a build with base generation "6th" and the Generation background rated 2
-    When they try to raise the Generation background to 3
-    Then they are told the effective generation cannot be better than 4th
-    And the effective generation is "4th"
-
   Scenario: A 4th generation base accepts no Generation dots
     Given a build with base generation "4th"
     When they try to raise the Generation background to 1
     Then they are told the effective generation cannot be better than 4th
     And the Generation background is rated 0
-
-  Scenario: Virtues start with one free dot each
-    Given a player who has started building a character
-    When they open the advantages step
-    Then Conscience, Self-Control and Courage are each rated 1
-    And there are 7 Virtue dots remaining
-
-  Scenario: Seven Virtue dots are available
-    Given a player on the advantages step
-    When they raise Conscience to 4, Self-Control to 3 and Courage to 3
-    Then there are 0 Virtue dots remaining
 
   Scenario: A Virtue offers five dots, whatever the generation
     Given a 4th generation build
@@ -185,10 +138,3 @@ Feature: Advantages step
     Then Dominate is rated 2
     And Resources is rated 4
     And Courage is rated 3
-
-  Scenario: The advantages step is accessible and fits a phone
-    Given a build of clan "Caitiff" with a write-in Discipline, Backgrounds and Virtues placed
-    When the advantages step is checked
-    Then no WCAG 2.1 AA violations are reported
-    And every control has a unique, non-empty accessible name
-    And at 375 pixels wide the page does not scroll horizontally

@@ -1,0 +1,18 @@
+/* The Review & resolve screen: what is outstanding, and Finish. */
+
+.outstanding ul {
+	padding-inline-start: var(--space-4);
+}
+
+.outstanding li {
+	min-block-size: 1.5rem;
+}
+
+.outstanding-step {
+	color: var(--color-muted);
+}
+
+.finish-button[aria-disabled='true'] {
+	color: var(--color-muted);
+	cursor: not-allowed;
+}

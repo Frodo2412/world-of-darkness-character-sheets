@@ -1,28 +1,78 @@
+// The rating steppers draw their dots with the sheet's dot-rating, read-only.
 import '../components/controls/dot-rating';
 import type { V20Build } from '../domain/v20/creation/build';
 import { report } from '../domain/v20/creation/progress';
 import type { UpdateResult } from '../domain/v20/creation/result';
+import type { ScreenId } from '../domain/v20/creation/rules';
 import { buildKeyFor, type BuildStore } from '../storage/buildStore';
 import type { CharacterStore } from '../storage/characterStore';
-import { wireFinish } from './builder/finish';
-import { clearNotices, reportSave, showNotices, showRefusal } from './builder/messages';
+import { renderChrome, wireChrome } from './builder/chrome';
+import { clearNotices, reportSave, showNotices, showRefusal, type SaveAsk } from './builder/messages';
 import { pageState, showView } from './builder/pageState';
+import { isPlainClick } from './builder/nav';
+import { renderNavigation, wireNavigation } from './builder/navigation';
 import { wireDialog } from './builder/parts/dialog';
+import { screenModules } from './builder/screens';
 import { startSteps } from './builder/steps';
-import { renderControls, wireControls, type Update } from './builder/wiring';
+import { renderControls, wireControls, type Update, type Wiring } from './builder/wiring';
 import { STORAGE_UNAVAILABLE, showStatus } from './status';
 
 const root = document.querySelector<HTMLElement>('#builder')!;
 
 function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterStore): void {
   let build = loaded;
-  const router = startSteps(root, () => build.concept.name.trim() || 'Unnamed build');
+  /** What the shell shows around a screen: the sidebar, Back and Continue, and the chrome. */
+  function drawShell(screen: ScreenId): void {
+    renderNavigation(root, build, screen);
+    renderChrome(root, build, screen);
+  }
+  const router = startSteps(root, () => build.concept.name, drawShell);
 
   function render(): void {
     const current = report(build);
+    for (const screen of screenModules) screen.render(build, root);
     renderControls(root, current);
-    router.renderStatuses(current);
+    drawShell(router.current());
     router.updateTitle();
+  }
+
+  /** The stored build as this page last saw it; another tab's write shows up as a difference. */
+  const storedNow = (): string => {
+    try {
+      const stored = store.load(loaded.id);
+      return stored.status === 'found' ? JSON.stringify(stored.build) : '';
+    } catch {
+      return '';
+    }
+  };
+  // `loaded` is the reader's own output for the stored text, so any write after it was read differs from it.
+  let lastSeen = JSON.stringify(loaded);
+
+  /**
+   * Whether saving is safe: the build is still stored, as this page last left it. Finished or deleted elsewhere,
+   * saving would bring it back; changed elsewhere, saving would undo that, so the page starts again from what is stored.
+   */
+  function stillStored(): boolean {
+    const stored = store.load(build.id);
+    if (stored.status === 'not-found') {
+      showView('not-found');
+      return false;
+    }
+    if (stored.status !== 'found' || JSON.stringify(stored.build) !== lastSeen) {
+      window.location.reload();
+      return false;
+    }
+    return true;
+  }
+
+  /** Whether the page holds changes the store does not: the last save was refused. */
+  let unsaved = false;
+
+  function saveBuild(): 'saved' | 'failed' {
+    const { status } = store.save(build);
+    unsaved = status === 'failed';
+    if (status === 'saved') lastSeen = storedNow();
+    return status;
   }
 
   /** The one path every change takes: update the model, redraw, save. */
@@ -35,33 +85,48 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
       render();
       return 'refused';
     }
-    // Finished or deleted elsewhere since this page loaded: saving would bring it back.
-    if (store.load(build.id).status === 'not-found') {
-      showView('not-found');
-      return 'refused';
-    }
+    if (!stillStored()) return 'refused';
     build = result.build;
     clearNotices(root);
     render();
     showNotices(control, result.notices);
-    reportSave(store.save(build).status);
+    reportSave(saveBuild());
     return 'applied';
   }
 
-  wireControls(root, { commit, current: () => build });
-  wireFinish(root, () => build, store, characters, render);
+  /** The build as it is, stored again; 'gone' when it was finished or deleted elsewhere (or changed there), which the page then shows. */
+  function saveNow(ask: Exclude<SaveAsk, 'change'>): 'saved' | 'failed' | 'gone' {
+    if (!stillStored()) return 'gone';
+    const status = saveBuild();
+    reportSave(status, ask);
+    return status;
+  }
+
+  const wiring: Wiring = { commit, current: () => build, builds: store, characters, render, save: () => (unsaved ? saveNow('retry') : stillStored() ? 'saved' : 'gone') };
+  wireControls(root, wiring);
+  wireNavigation(root);
+  wireChrome(root, {
+    retrySave() {
+      // The retry button goes away once a save lands; focus moves to the status that now says so.
+      if (saveNow('retry') === 'saved') root.querySelector<HTMLElement>('[data-autosave-status]')!.focus();
+    },
+    saveAndExit() {
+      if (saveNow('exit') === 'saved') window.location.assign('/');
+    },
+  });
+  for (const screen of screenModules) screen.wire(root, wiring);
   wireDialog(
     root.querySelector<HTMLDialogElement>('[data-settings-dialog]')!,
     root.querySelector<HTMLElement>('[data-settings-open]')!,
     render,
   );
 
-  // "Review and finish" on every step opens Finishing touches at the outstanding list.
+  // "Review and finish" on every screen opens Review & resolve at the outstanding list.
   root.addEventListener('click', (event) => {
     const link = (event.target as Element).closest('[data-review]');
-    if (!link) return;
+    if (!link || !isPlainClick(event)) return;
     event.preventDefault();
-    router.open('finishing', root.querySelector<HTMLElement>('[data-outstanding]')!);
+    router.open('review', root.querySelector<HTMLElement>('[data-outstanding]')!);
   });
   render();
 
@@ -87,7 +152,7 @@ switch (state.kind) {
     showBuilder(state.build, state.store, state.characters);
     break;
   case 'unavailable':
-    showView('none');
+    showView('unavailable');
     showStatus(STORAGE_UNAVAILABLE);
     break;
   case 'not-found':

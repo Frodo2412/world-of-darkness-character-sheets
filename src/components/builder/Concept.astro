@@ -1,47 +1,74 @@
 ---
-// The sheet's header fields the concept step fills, in the sheet's order.
-// Nature and Demeanor suggest Archetypes but accept any text.
+// The Character concept screen: a prompt, the character's name, concept and drive, the table details
+// (Player, Chronicle, Sire) and the sample concepts. Nature and Demeanor are on their own screen, and Clan
+// on its own. Every text field is `data-concept`, found by the screen module wherever it is on the page.
 import { CONCEPT_FIELDS } from '../../domain/v20/creation/build';
-import { ARCHETYPES, CLAN_NAMES } from '../../domain/v20/creation/rules';
+import { SAMPLE_CONCEPTS } from '../../domain/v20/creation/sampleConcepts';
 import { HEADER_FIELDS } from '../../domain/v20/traits';
 
-const fields = HEADER_FIELDS.filter((field) => (CONCEPT_FIELDS as readonly string[]).includes(field.key));
-const isArchetype = (key: string) => key === 'nature' || key === 'demeanor';
+const fields = HEADER_FIELDS.filter(
+	(field) => (CONCEPT_FIELDS as readonly string[]).includes(field.key) && field.key !== 'nature' && field.key !== 'demeanor',
+);
+// What the player is asked, which is more than the sheet's own labels.
+const ASKED: Record<string, string> = { name: 'Character name', concept: 'Concept in your own words' };
+const own = fields.filter((field) => field.key in ASKED);
+const details = fields.filter((field) => !(field.key in ASKED));
 ---
 
-<div class="builder-fields">
-	{
-		fields.map((field) => (
-			<div class="builder-field">
-				<label for={`concept-${field.key}`}>{field.label}</label>
-				<input
-					type="text"
-					id={`concept-${field.key}`}
-					data-concept={field.key}
-					autocomplete="off"
-					list={isArchetype(field.key) ? 'archetypes' : undefined}
-					aria-describedby={isArchetype(field.key) ? 'archetype-hint' : undefined}
-				/>
-			</div>
-		))
-	}
-	<p id="archetype-hint" class="field-hint">For Nature and Demeanor, pick a suggested Archetype or write your own.</p>
-	<datalist id="archetypes">
-		{ARCHETYPES.map((archetype) => <option value={archetype} />)}
-	</datalist>
-	<div class="builder-field">
-		<label for="concept-clan">Clan</label>
-		<select id="concept-clan" data-clan aria-describedby="concept-clan-notice clan-change-text">
-			<option value="">Choose a clan</option>
-			{CLAN_NAMES.map((clan) => <option value={clan}>{clan}</option>)}
-		</select>
-		<p id="concept-clan-notice" class="field-notice" role="status" data-notice></p>
-		<div class="clan-change" data-clan-change hidden>
-			<div id="clan-change-text" role="status" data-clan-change-text></div>
-			<div class="clan-change-actions">
-				<button type="button" data-clan-switch></button>
-				<button type="button" data-clan-keep></button>
-			</div>
+<div class="concept-layout">
+	<div class="concept-hero">
+		<p class="concept-hero-prompt">Begin with a name, a calling and a reason to endure.</p>
+	</div>
+
+	<div class="builder-fields">
+		{
+			own.map((field) => (
+				<div class="builder-field">
+					<label for={`concept-${field.key}`}>{ASKED[field.key]}</label>
+					<input type="text" id={`concept-${field.key}`} data-concept={field.key} autocomplete="off" />
+				</div>
+			))
+		}
+		<div class="builder-field">
+			<label for="concept-drive">What keeps you going?</label>
+			<textarea class="concept-text" id="concept-drive" data-concept="drive" rows="3"></textarea>
 		</div>
+	</div>
+
+	<div class="builder-card">
+		<h3 class="concept-heading">Table details</h3>
+		<div class="builder-fields">
+			{
+				details.map((field) => (
+					<div class="builder-field">
+						<label for={`concept-${field.key}`}>{field.label}</label>
+						<input
+							type="text"
+							id={`concept-${field.key}`}
+							data-concept={field.key}
+							autocomplete={field.key === 'player' ? 'name' : 'off'}
+						/>
+					</div>
+				))
+			}
+		</div>
+	</div>
+
+	<div class="builder-card">
+		<h3 class="concept-heading" id="concept-samples-heading">Sample concepts</h3>
+		<p class="builder-helper concept-hint" id="concept-samples-hint">Prompts only. Choose one, change it, or write something else.</p>
+		<div class="concept-chips" role="group" aria-labelledby="concept-samples-heading" aria-describedby="concept-samples-hint">
+			{
+				SAMPLE_CONCEPTS.map((sample) => (
+					<button type="button" class="builder-chip" data-sample-concept={sample.name} aria-pressed="false">
+						{sample.name}
+						<span class="concept-chip-state" data-sample-state aria-hidden="true" hidden>
+							✓ Selected
+						</span>
+					</button>
+				))
+			}
+		</div>
+		<p class="builder-helper concept-line" data-sample-line role="status"></p>
 	</div>
 </div>

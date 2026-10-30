@@ -1,26 +1,48 @@
+// The Character concept screen: the free-text details of the character, kept as they are typed, the
+// sample concepts, and what both become on the finished sheet. Screen standards are the shared steps.
+
 import { expect, type Page } from '@playwright/test';
-import type { DataTable } from 'playwright-bdd';
-import { Given, Then, When } from './fixtures';
+import type { V20Build } from '../../src/domain/v20/creation/build';
+import { CONCEPT_KINDS, type ConceptKind } from '../../src/domain/v20/creation/rules';
+import { sampleConceptLine } from '../../src/domain/v20/creation/sampleConcepts';
+import { completeBuild } from '../../src/domain/v20/creation/testing/play';
+import { Given, Then, When, type ScenarioMemory } from './fixtures';
+import { buildWith, openSavedBuild, openStep, reloadBuilder, startBuild } from './support/builder';
 import {
-  buildWith,
-  builderField,
-  openSavedBuild,
-  openStep,
-  startBuild,
-  stepHeading,
-  stepNav,
-} from './support/builder';
+  chooseSampleConcept,
+  conceptField,
+  enterConceptField,
+  expectSampleDoesNotRead,
+  expectSampleReads,
+  openConceptScreen,
+  pressSampleConcept,
+  sampleChips,
+  sampleLine,
+} from './support/concept';
+import { SHEET_ADDRESS } from './support/pages';
+import { openCharacterId, savedCharacter } from './support/sheet';
+import { panelValue } from './support/shell';
 
-const clanSelect = (page: Page) => builderField(page, 'Clan');
+const DRIVE = 'What keeps you going?';
 
-async function suggestionsFor(page: Page, field: string): Promise<string[]> {
-  const list = await builderField(page, field).getAttribute('list');
-  return page
-    .locator(`datalist#${list} option`)
-    .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
+/** "A, B and C" as its names. */
+const names = (list: string): string[] => list.split(/, | and /);
+
+/** A build that can be finished as it is, with the given concept entries. */
+async function openFinishable(page: Page, memory: ScenarioMemory, concept: Partial<V20Build['concept']>): Promise<void> {
+  const build = { ...completeBuild('Brujah'), id: buildWith().id };
+  build.concept = { ...build.concept, ...concept };
+  memory.build = build;
+  memory.entered.set(DRIVE, build.concept.drive);
+  await openSavedBuild(page, build);
 }
 
 // Given
+
+Given('I am on the Character concept screen of a new build', async ({ page }) => {
+  await startBuild(page);
+  await openConceptScreen(page);
+});
 
 Given('a build named {string}', async ({ page }, name: string) => {
   await openSavedBuild(page, buildWith({ concept: { name } }));
@@ -30,145 +52,176 @@ Given('a build named {string} of clan {string}', async ({ page }, name: string, 
   await openSavedBuild(page, buildWith({ concept: { name }, clan }));
 });
 
-Given('a player on the {string} step of a new build', async ({ page }, title: string) => {
-  await startBuild(page);
-  await openStep(page, title);
+Given('the sample concept {string} is selected', async ({ page }, name: string) => {
+  await chooseSampleConcept(page, name);
+});
+
+Given(
+  'a finishable build with sample concept {string} and concept text {string}',
+  async ({ page, memory }, kind: string, text: string) => {
+    await openFinishable(page, memory, { conceptKind: kind as ConceptKind, concept: text });
+  },
+);
+
+Given(
+  'a finishable build with sample concept {string} and the concept text set to spaces only',
+  async ({ page, memory }, kind: string) => {
+    await openFinishable(page, memory, { conceptKind: kind as ConceptKind, concept: '    ' });
+  },
+);
+
+Given(/^a finishable build with "([^"]*)" under "What keeps you going\?"$/, async ({ page, memory }, drive: string) => {
+  await openFinishable(page, memory, { drive });
+});
+
+Given(/^a finishable build with nothing under "What keeps you going\?"$/, async ({ page, memory }) => {
+  await openFinishable(page, memory, { drive: '' });
 });
 
 // When
 
-When('they enter the concept details', async ({ page, memory }, table: DataTable) => {
-  await openStep(page, 'Concept');
-  for (const { field, text } of table.hashes()) {
-    await builderField(page, field).fill(text);
-    memory.entered.set(field, text);
-  }
+When('I enter the name {string} and the concept {string}', async ({ page, memory }, name: string, text: string) => {
+  await enterConceptField(page, 'Name', name);
+  await enterConceptField(page, 'Concept', text);
+  memory.entered.set('Name', name).set('Concept', text);
+});
+
+When(/^I enter "([^"]*)" under "What keeps you going\?"$/, async ({ page, memory }, text: string) => {
+  await enterConceptField(page, DRIVE, text);
+  memory.entered.set(DRIVE, text);
+});
+
+When(/^I enter two lines under "What keeps you going\?"$/, async ({ page, memory }) => {
+  const text = 'Keep the old stories alive.\nName the one who buried them.';
+  await enterConceptField(page, DRIVE, text);
+  memory.entered.set(DRIVE, text);
+});
+
+When(
+  'I enter the player {string}, the chronicle {string} and the sire {string}',
+  async ({ page, memory }, player: string, chronicle: string, sire: string) => {
+    for (const [label, text] of [['Player', player], ['Chronicle', chronicle], ['Sire', sire]]) {
+      await enterConceptField(page, label, text);
+      memory.entered.set(label, text);
+    }
+  },
+);
+
+When('I enter the concept {string}', async ({ page }, text: string) => {
+  await enterConceptField(page, 'Concept', text);
+});
+
+When('I choose the sample concept {string}', async ({ page }, name: string) => {
+  await pressSampleConcept(page, name);
+});
+
+When('I choose {string} again', async ({ page }, name: string) => {
+  await pressSampleConcept(page, name);
 });
 
 When('they clear the Name', async ({ page }) => {
-  await openStep(page, 'Concept');
-  await builderField(page, 'Name').fill('');
-});
-
-When('they look at the clan choices', async ({ page }) => {
-  await openStep(page, 'Concept');
+  await enterConceptField(page, 'Name', '');
 });
 
 When('they open the {string} step', async ({ page }, title: string) => {
   await openStep(page, title);
 });
 
-When('they choose the clan {string}', async ({ page }, clan: string) => {
-  await openStep(page, 'Concept');
-  await clanSelect(page).selectOption({ label: clan });
-});
-
-When('they open the {string} step from the step navigation', async ({ page }, title: string) => {
-  await stepNav(page).getByRole('link', { name: title, exact: true }).click();
-});
-
-When('they use Next', async ({ page }) => {
-  await page.getByRole('button', { name: /^Next: / }).click();
-});
-
-When('they look at the step navigation', async ({ page }) => {
-  await expect(stepNav(page)).toBeVisible();
-});
-
-When('they open the builder with a step address that does not exist', async ({ page }) => {
-  const address = new URL(page.url());
-  address.hash = 'no-such-step';
-  await page.goto(address.toString());
-  await page.reload();
-});
-
 // Then
 
-Then('the concept step shows every detail they entered', async ({ page, memory }) => {
-  await openStep(page, 'Concept');
-  expect(memory.entered.size).toBe(7);
-  for (const [field, text] of memory.entered) {
-    await expect(builderField(page, field)).toHaveValue(text);
-  }
+/** The entries a scenario made are in their fields after the builder is opened again. */
+async function expectEntriesKept(page: Page, memory: ScenarioMemory, count: number): Promise<void> {
+  expect(memory.entered.size).toBe(count);
+  await reloadBuilder(page);
+  await openConceptScreen(page);
+  for (const [label, text] of memory.entered) await expect(conceptField(page, label)).toHaveValue(text);
+}
+
+Then('after reloading the builder all three entries are unchanged', async ({ page, memory }) => {
+  await expectEntriesKept(page, memory, 3);
+});
+
+Then('after reloading the builder both lines are present', async ({ page, memory }) => {
+  expect(memory.entered.get(DRIVE)).toContain('\n');
+  await expectEntriesKept(page, memory, 1);
+});
+
+Then(/^the sample concepts are (.+)$/, async ({ page }, list: string) => {
+  const expected = names(list);
+  expect(expected).toEqual([...CONCEPT_KINDS]);
+  await expect(sampleChips(page)).toHaveCount(expected.length);
+  for (const [index, name] of expected.entries()) await expect(sampleChips(page).nth(index)).toHaveAccessibleName(name);
+});
+
+Then(/^"([^"]*)" (?:still )?reads "([^"]*)"$/, async ({ page }, name: string, state: string) => {
+  await expectSampleReads(page, name, state);
+});
+
+Then(/^"([^"]*)" does not read "[^"]*"$/, async ({ page }, name: string) => {
+  await expectSampleDoesNotRead(page, name);
+});
+
+Then(/^a short description of (\w+) is shown$/, async ({ page }, name: string) => {
+  const line = sampleConceptLine(name);
+  expect(line, `${name} is a sample concept`).toBeDefined();
+  await expect(sampleLine(page)).toBeVisible();
+  await expect(sampleLine(page)).toHaveText(line!);
+});
+
+Then(/^the character panel's Concept row reads "([^"]*)"$/, async ({ page }, text: string) => {
+  await expect(panelValue(page, 'Concept')).toHaveText(text);
+});
+
+Then('no sample concept is selected', async ({ page }) => {
+  await expect(sampleChips(page).and(page.locator('[aria-pressed="true"]'))).toHaveCount(0);
+  await expect(sampleLine(page)).toBeHidden();
+});
+
+Then("the Player field asks the browser for the player's name", async ({ page }) => {
+  await expect(conceptField(page, 'Player')).toHaveAttribute('autocomplete', 'name');
+});
+
+Then('the Chronicle and Sire fields ask the browser for no autofill', async ({ page }) => {
+  for (const label of ['Chronicle', 'Sire']) await expect(conceptField(page, label)).toHaveAttribute('autocomplete', 'off');
+});
+
+Then(/^the description of (\w+) is announced as a status$/, async ({ page }, name: string) => {
+  const line = sampleConceptLine(name);
+  expect(line, `${name} is a sample concept`).toBeDefined();
+  await expect(page.getByRole('status').filter({ hasText: line! })).toHaveCount(1);
+});
+
+Then('the sample concept status is empty', async ({ page }) => {
+  await expect(sampleLine(page)).toHaveAttribute('role', 'status');
+  await expect(sampleLine(page)).toBeEmpty();
+});
+
+Then('the concept field holds {string}', async ({ page }, text: string) => {
+  await expect(conceptField(page, 'Concept')).toHaveValue(text);
 });
 
 Then('the Name is empty', async ({ page }) => {
-  await openStep(page, 'Concept');
-  await expect(builderField(page, 'Name')).toHaveValue('');
-});
-
-Then(
-  'apart from the {string} placeholder the choices are exactly',
-  async ({ page }, placeholder: string, table: DataTable) => {
-    const options = clanSelect(page).getByRole('option');
-    await expect(options.first()).toHaveText(placeholder);
-    await expect(options).toHaveText([placeholder, ...table.raw().flat()]);
-  },
-);
-
-Then('no clan is chosen', async ({ page }) => {
-  await expect(clanSelect(page).locator('option:checked')).toHaveText('Choose a clan');
-});
-
-Then('the chosen clan is {string}', async ({ page }, clan: string) => {
-  await openStep(page, 'Concept');
-  await expect(clanSelect(page).locator('option:checked')).toHaveText(clan);
-});
-
-Then('the {string} placeholder can no longer be chosen', async ({ page }, placeholder: string) => {
-  await expect(clanSelect(page).getByRole('option', { name: placeholder })).toBeDisabled();
-});
-
-Then(
-  /^"([^"]+)" and "([^"]+)" are among the suggestions for (Nature|Demeanor)$/,
-  async ({ page }, first: string, second: string, field: string) => {
-    expect(await suggestionsFor(page, field)).toEqual(expect.arrayContaining([first, second]));
-  },
-);
-
-Then(
-  /^entering "([^"]+)" as the (Nature|Demeanor) is accepted$/,
-  async ({ page }, text: string, field: string) => {
-    await builderField(page, field).fill(text);
-    await page.reload();
-    await openStep(page, 'Concept');
-    await expect(builderField(page, field)).toHaveValue(text);
-    await expect(builderField(page, field)).not.toHaveAttribute('aria-invalid', 'true');
-  },
-);
-
-Then('the {string} step is shown and marked as the current step', async ({ page }, title: string) => {
-  await expect(stepHeading(page, title)).toBeVisible();
-  await expect(stepNav(page).getByRole('link', { name: title, exact: true })).toHaveAttribute(
-    'aria-current',
-    'step',
-  );
-  await expect(page.locator('#builder [data-step]:visible')).toHaveCount(1);
-});
-
-Then('keyboard focus is on the {string} heading', async ({ page }, title: string) => {
-  await expect(stepHeading(page, title)).toBeFocused();
-});
-
-Then('the {string} step is shown', async ({ page }, title: string) => {
-  await expect(stepHeading(page, title)).toBeVisible();
-  await expect(page.locator('#builder [data-step]:visible')).toHaveCount(1);
-});
-
-Then('using Previous shows the {string} step', async ({ page }, title: string) => {
-  await page.getByRole('button', { name: /^Previous: / }).click();
-  await expect(stepHeading(page, title)).toBeVisible();
-});
-
-Then('the Concept step is marked {string}', async ({ page }, status: string) => {
-  const link = stepNav(page).getByRole('link', { name: 'Concept', exact: true });
-  await expect(link).toHaveAccessibleDescription(status);
-  const item = stepNav(page)
-    .getByRole('listitem')
-    .filter({ has: page.getByRole('link', { name: 'Concept', exact: true }) });
-  await expect(item).toContainText(status);
+  await openConceptScreen(page);
+  await expect(conceptField(page, 'Name')).toHaveValue('');
 });
 
 Then('the page title is {string}', async ({ page }, title: string) => {
   await expect(page).toHaveTitle(title);
+});
+
+Then(/^the sheet's Concept reads "([^"]*)"$/, async ({ page }, concept: string) => {
+  await expect(page).toHaveURL(SHEET_ADDRESS);
+  expect((await savedCharacter(page, openCharacterId(page))).header.concept).toBe(concept);
+});
+
+Then('the character\'s notes contain that text', async ({ page, memory }) => {
+  await expect(page).toHaveURL(SHEET_ADDRESS);
+  const drive = memory.entered.get(DRIVE)!;
+  expect(drive).not.toBe('');
+  expect((await savedCharacter(page, openCharacterId(page))).notes).toContain(drive);
+});
+
+Then('the character\'s notes are empty', async ({ page }) => {
+  await expect(page).toHaveURL(SHEET_ADDRESS);
+  expect((await savedCharacter(page, openCharacterId(page))).notes).toBe('');
 });

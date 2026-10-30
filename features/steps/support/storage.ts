@@ -46,6 +46,15 @@ export async function refuseWrites(page: Page): Promise<void> {
   });
 }
 
+/** From the next page load on, every removal from storage fails while writes still succeed. */
+export async function refuseRemovals(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    Storage.prototype.removeItem = () => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    };
+  });
+}
+
 export async function acceptWrites(page: Page): Promise<void> {
   await page.evaluate(() => (window as unknown as { restoreStorage: () => void }).restoreStorage());
 }

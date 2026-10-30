@@ -3,43 +3,23 @@ import { BACKGROUNDS } from '../../src/domain/v20/creation/rules';
 import { Given, Then, When } from './fixtures';
 import {
   baseGeneration,
-  expectRated,
-  groupBox,
-  groupReadout,
   openCreationSettings,
   openPlayed,
   openStep,
-  rateTrait,
   readout,
   setBaseGeneration,
   settingsDialog,
   shownStep,
-  traitRating,
 } from './support/builder';
-import { seedSteps } from './builder-seeding.steps';
-import { addCreationDiscipline, creation } from '../../src/domain/v20/creation/testing/play';
+import { addDiscipline, backgroundChips, disciplineNames } from './support/advantages';
+import { clanNotice, clanPanel, clanRadio, expectClanChosen, focusedClan, openClanScreen } from './support/clan';
+import { expectRated, expectRemaining, groupBox, traitRating } from './support/ranked';
 
-const PLURAL: Record<string, string> = { Discipline: 'Disciplines', Background: 'Backgrounds', Virtue: 'Virtues' };
-
-const clanSelect = (page: Page) => page.locator('#builder').getByRole('combobox', { name: 'Clan', exact: true });
+const PLURAL: Record<string, string> = { Discipline: 'Disciplines', Virtue: 'Virtues' };
 
 /** The visible notice that holds `text`, wherever the refused control was. */
 const noticeWith = (page: Page, text: string | RegExp) =>
   shownStep(page).locator('[data-notice]').or(settingsDialog(page).locator('[data-notice]')).filter({ hasText: text });
-
-async function disciplineNames(page: Page): Promise<string[]> {
-  const group = await groupBox(page, 'Disciplines');
-  return group.getByRole('slider').evaluateAll((sliders) =>
-    sliders.map((slider) => document.getElementById(slider.getAttribute('aria-labelledby')!)!.textContent ?? ''),
-  );
-}
-
-async function addDiscipline(page: Page, name: string): Promise<void> {
-  await openStep(page, 'Advantages');
-  const group = await groupBox(page, 'Disciplines');
-  await group.getByLabel('Discipline to add', { exact: true }).fill(name);
-  await group.getByRole('button', { name: 'Add Discipline' }).click();
-}
 
 // Given
 
@@ -52,29 +32,7 @@ Given('a player on the advantages step', async ({ page }) => {
   await openStep(page, 'Advantages');
 });
 
-Given(
-  'a build of clan {string} with a write-in Discipline, Backgrounds and Virtues placed',
-  async ({ page }, clan: string) => {
-    await openPlayed(
-      page,
-      ...seedSteps(undefined, undefined, clan),
-      addCreationDiscipline('Flight'),
-      creation('discipline:Flight', 2),
-      creation('background:Resources', 3),
-      creation('background:Allies', 2),
-      creation('virtue:conscience', 4),
-      creation('virtue:courage', 3),
-    );
-    await openStep(page, 'Advantages');
-  },
-);
-
 // When
-
-When(/^they add (?:the|a write-in) Discipline "([^"]+)" and raise it to (\d+)$/, async ({ page }, name: string, value: string) => {
-  await addDiscipline(page, name);
-  await rateTrait(page, name, Number(value));
-});
 
 When(/^they try to add a write-in Discipline "([^"]*)"$/, async ({ page }, name: string) => {
   await addDiscipline(page, name);
@@ -84,62 +42,41 @@ When('they look at the Background choices', async ({ page }) => {
   await openStep(page, 'Advantages');
 });
 
-When(
-  /^they raise (\w[\w-]*) to (\d+), ([\w-]+) to (\d+) and (\w[\w-]*) to (\d+)$/,
-  async ({ page }, a: string, ra: string, b: string, rb: string, c: string, rc: string) => {
-    await rateTrait(page, a, Number(ra));
-    await rateTrait(page, b, Number(rb));
-    await rateTrait(page, c, Number(rc));
-  },
-);
-
 When('they try to set the base generation to {string}', async ({ page }, label: string) => {
   await setBaseGeneration(page, label);
 });
 
 When(
-  /^using only the keyboard they move the clan choice past "([^"]+)" and "([^"]+)" and back to "([^"]+)"$/,
+  /^using only the keyboard they move through the clans past "([^"]+)" and "([^"]+)" and back to "([^"]+)"$/,
   async ({ page, memory }, first: string, second: string, back: string) => {
-    await openStep(page, 'Concept');
-    const select = clanSelect(page);
-    await select.focus();
-    const options = await select.locator('option').allTextContents();
-    const start = options.indexOf(back);
-    const far = Math.max(options.indexOf(first), options.indexOf(second));
-    for (let index = start; index < far; index += 1) await page.keyboard.press('ArrowDown');
-    for (let index = far; index > start; index -= 1) await page.keyboard.press('ArrowUp');
-    memory.entered.set('focus', await page.evaluate(() => document.activeElement?.id ?? ''));
+    await openClanScreen(page);
+    await clanRadio(page, back).focus();
+    const names = await page.locator('[data-clan-card]').evaluateAll((cards) => cards.map((card) => card.getAttribute('data-clan-card')!));
+    const start = names.indexOf(back);
+    const far = Math.max(names.indexOf(first), names.indexOf(second));
+    const keys = [...Array<string>(far - start).fill('ArrowDown'), ...Array<string>(far - start).fill('ArrowUp')];
+    let inList = true;
+    for (const key of keys) {
+      await page.keyboard.press(key);
+      inList &&= (await focusedClan(page)) !== '';
+    }
+    // Walked there and back: focus is on the clan it started from, and was on a clan the whole way.
+    memory.entered.set('focus', inList && (await focusedClan(page)) === back ? 'clan list' : 'elsewhere');
   },
 );
 
 // Then
 
-Then('they are told to choose a clan on the Concept step before placing Discipline dots', async ({ page }) => {
-  const group = await groupBox(page, 'Disciplines');
-  await expect(group).toContainText('Choose a clan on the Concept step before placing Discipline dots.');
-  await expect(group.getByRole('link', { name: 'Go to Concept' })).toBeVisible();
-});
-
-Then('no Discipline dots can be placed', async ({ page }) => {
-  await expect((await groupBox(page, 'Disciplines')).getByRole('slider')).toHaveCount(0);
-});
-
-Then(/^the Disciplines offered are exactly "([^"]+)", "([^"]+)" and "([^"]+)"$/, async ({ page }, a: string, b: string, c: string) => {
-  expect(await disciplineNames(page)).toEqual([a, b, c]);
-});
-
 Then('the Disciplines are still only {string}', async ({ page }, name: string) => {
   expect(await disciplineNames(page)).toEqual([name]);
 });
 
-Then(/^there (?:are|is) (\d+) (Discipline|Background|Virtue) dots? remaining$/, async ({ page }, count: string, noun: string) => {
-  const label = PLURAL[noun];
-  const dots = Number(count) === 1 ? 'dot' : 'dots';
-  await expect(await groupReadout(page, label)).toHaveText(`${label}: ${count} ${dots} remaining`);
+Then(/^there (?:are|is) (\d+) Discipline dots? remaining$/, async ({ page }, count: string) => {
+  await expectRemaining(page, 'Disciplines', Number(count));
 });
 
 Then(
-  /^they are told there are no (Discipline|Background|Virtue) dots remaining and more can be bought with freebie points on Finishing touches$/,
+  /^they are told there are no (Discipline|Virtue) dots remaining and more can be bought with freebie points on Finishing touches$/,
   async ({ page }, noun: string) => {
     const notice = (await groupBox(page, PLURAL[noun])).locator('[data-notice]');
     await expect(notice).toContainText(`There are no ${noun} dots remaining. More can be bought with freebie points on Finishing touches.`);
@@ -152,26 +89,24 @@ Then(/^they are told (a Discipline needs a name|the build already has \w+)$/, as
 });
 
 Then(/^the clan is "([^"]+)" with (\w+) rated (\d+) and (\w+) rated (\d+)$/, async ({ page }, name: string, a: string, ra: string, b: string, rb: string) => {
-  await expect(clanSelect(page).locator('option:checked')).toHaveText(name);
-  await expect(page.locator('[data-clan-change]')).toBeHidden();
+  await expectClanChosen(page, name);
+  await expect(clanPanel(page)).toBeHidden();
   await expectRated(await traitRating(page, a), Number(ra));
   await expectRated(await traitRating(page, b), Number(rb));
 });
 
-Then('keyboard focus never left the clan choice', async ({ memory }) => {
-  expect(memory.entered.get('focus')).toBe('concept-clan');
+Then('keyboard focus never left the clan list', async ({ memory }) => {
+  expect(memory.entered.get('focus')).toBe('clan list');
 });
 
 Then('no clan-change notice is shown', async ({ page }) => {
-  await openStep(page, 'Concept');
-  await expect(page.locator('#concept-clan-notice')).toHaveText('');
+  await openClanScreen(page);
+  await expect(clanNotice(page)).toHaveText('');
 });
 
 Then('the choices are exactly', async ({ page }, table: import('playwright-bdd').DataTable) => {
-  const sliders = (await groupBox(page, 'Backgrounds')).getByRole('slider');
-  const names = await sliders.evaluateAll((elements) =>
-    elements.map((slider) => document.getElementById(slider.getAttribute('aria-labelledby')!)!.textContent ?? ''),
-  );
+  // The choices are the chips; a row appears only once its chip is chosen.
+  const names = await backgroundChips(page).evaluateAll((chips) => chips.map((chip) => chip.getAttribute('data-bg-chip') ?? ''));
   expect(names).toEqual(table.raw().flat());
   expect(names).toEqual([...BACKGROUNDS]);
 });
@@ -212,7 +147,3 @@ Then(
     await expect(notice.getByRole('link', { name: `Go to ${step}` })).toBeVisible();
   },
 );
-
-Then('Conscience, Self-Control and Courage are each rated 1', async ({ page }) => {
-  for (const name of ['Conscience', 'Self-Control', 'Courage']) await expectRated(await traitRating(page, name), 1);
-});

@@ -1,0 +1,114 @@
+/* The Attributes and Abilities screens: an intro card, a card for each ranked group (its priority select, pool
+   meter and counts, callout and rows) and the "What the choices say" card. The Advantages cards draw the same
+   pool and callout. The shared card, meter, callout, helper and status pieces are in builder.css. The group's
+   meter only echoes the words beside it; an overspent group says so in words and with a mark, never by colour
+   alone. */
+
+.ranked-screen {
+	display: grid;
+	gap: var(--space-3);
+}
+
+.ranked-text {
+	margin: 0;
+}
+
+.ranked-text + .ranked-text {
+	margin-block-start: var(--space-1);
+}
+
+/* The priority line is a status region that is always on the page; empty, it takes no room. */
+.ranked-text:empty {
+	margin: 0;
+}
+
+.ranked-group {
+	display: grid;
+	gap: var(--space-2);
+	align-content: start;
+	min-inline-size: 0;
+}
+
+.ranked-heading {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	line-height: var(--leading-tight);
+	color: var(--color-text-strong);
+}
+
+.ranked-tag {
+	margin: 0;
+}
+
+/* The rank field above a group's pool. */
+.rank-field {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2);
+	margin-block-end: var(--space-2);
+}
+
+.ranked-pool {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.ranked-pool-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-1) var(--space-3);
+	margin: 0;
+}
+
+.ranked-remaining {
+	font-weight: 600;
+}
+
+/* An overspent group is marked in text too: the warning sign comes with "Overspent by N". */
+.ranked-pool[data-state='overspent'] .ranked-remaining {
+	color: var(--color-danger);
+}
+
+.ranked-pool[data-state='overspent'] .ranked-remaining::before {
+	content: '⚠ ';
+}
+
+/* A placed dot is filled; one past the rank's dots is edged, so it reads apart from the rest without colour. */
+.ranked-meter > [data-segment='over'] {
+	background: transparent;
+	border: var(--stroke) dashed var(--color-danger);
+	box-sizing: border-box;
+}
+
+.ranked-callout {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.ranked-callout[hidden] {
+	display: none;
+}
+
+.ranked-callout :is(p, h4) {
+	margin: 0;
+}
+
+.ranked-callout-heading {
+	font: inherit;
+	font-weight: 600;
+	color: var(--color-text-strong);
+}
+
+.ranked-rows {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.ranked-lines {
+	margin: 0;
+	padding-inline-start: var(--space-3);
+}

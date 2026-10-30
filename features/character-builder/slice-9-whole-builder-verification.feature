@@ -79,9 +79,9 @@ Feature: The builder as a whole
 
     Examples:
       | build                                             | change                                       | announcement                    |
-      | a player who has ranked Physical primary          | raise Strength to 3                          | Physical: 5 dots remaining      |
-      | a build of clan "Brujah"                          | raise Celerity to 1                          | Disciplines: 2 dots remaining   |
-      | a complete build with 15 freebie points remaining | buy one dot of Willpower with freebie points | 14 freebie points remaining     |
+      | a player who has ranked Physical primary          | raise Strength to 3                          | Physical: 5 remaining           |
+      | a build of clan "Brujah"                          | raise Celerity to 1                          | Disciplines: 2 remaining        |
+      | a complete build with 15 freebie points remaining | buy one dot of Willpower with freebie points | Freebie points 14 remaining     |
 
   Scenario: A rating reports its name and value
     Given a 13th generation build with Physical ranked primary and Strength rated 3

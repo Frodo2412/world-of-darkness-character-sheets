@@ -10,7 +10,7 @@ import {
   type Step,
 } from '../../src/domain/v20/creation/testing/play';
 import type { ConceptField } from '../../src/domain/v20/creation/build';
-import { createCharacterStore } from '../../src/storage/characterStore';
+import { createCharacterStore, keyFor as characterKey } from '../../src/storage/characterStore';
 import { watchWrites, writtenTexts } from './support/announcements';
 import { bloodPoolField, bloodPoolMessage, recordBloodPool, unrecordedBloodPool } from './support/bloodpool';
 import { buyDots, leaveFreebies } from './builder-seeding.steps';
@@ -21,6 +21,7 @@ import {
   activateFinish,
   buildWith,
   builderAddress,
+  builderHeading,
   finishButton,
   finishDialog,
   finishOpenBuild,
@@ -28,11 +29,10 @@ import {
   outstandingItems,
   openSavedBuild,
   openStep,
-  rateTrait,
   saveBuilds,
-  shownStep,
   stepHeading,
 } from './support/builder';
+import { rateTrait } from './support/ranked';
 import {
   SHEET_ADDRESS,
   buildEntries,
@@ -55,7 +55,7 @@ import {
   savedCharacter,
   willpowerTotal,
 } from './support/sheet';
-import { storedKeys } from './support/storage';
+import { refuseRemovals, storedKeys, storedText, writeRecord } from './support/storage';
 
 /** One creation dot taken off a complete Brujah build, by the allotment that loses it. */
 const ONE_SHORT: Record<string, Step> = {
@@ -177,6 +177,16 @@ Given('a finished character whose build was not removed', async ({ page, memory 
   }, [...records]);
 });
 
+const DAMAGED_CHARACTER = '{"id": damaged';
+
+Given('the stored character record for the build is damaged', async ({ page, memory }) => {
+  await writeRecord(page, characterKey(memory.build!.id), DAMAGED_CHARACTER);
+});
+
+Given('the browser refuses to remove stored data', async ({ page }) => {
+  await refuseRemovals(page);
+});
+
 Given('the player has since renamed the character {string} on the sheet', async ({ page, memory }, name: string) => {
   await page.goto(sheetAddress(memory.build!.id));
   await ensureEditing(page);
@@ -194,18 +204,22 @@ Given('an entry of {string} has been refused for the Blood Pool', async ({ page 
 
 // When
 
+When('they open the review and resolve step', async ({ page }) => {
+  await openStep(page, 'Review & resolve');
+});
+
 When('they follow the outstanding item', async ({ page }) => {
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   await outstandingItems(page).getByRole('link').click();
 });
 
-When('they place the last Virtue dot and return to the finishing touches step', async ({ page }) => {
+When('they place the last Virtue dot and return to the review and resolve step', async ({ page }) => {
   await rateTrait(page, 'Courage', 3);
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
 });
 
 When('they use {string}', async ({ page }, name: string) => {
-  await shownStep(page).getByRole('link', { name, exact: true }).click();
+  await page.locator('#builder').getByRole('link', { name, exact: true }).click();
 });
 
 When('they finish the build', async ({ page }) => {
@@ -217,7 +231,7 @@ When('they try to finish the build', async ({ page }) => {
 });
 
 When('they try to finish the build twice', async ({ page }) => {
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   // Counts what the notice is given after having been empty, which is what makes a live region speak.
   await watchWrites(page, '[data-finish-notice]');
   await activateFinish(page);
@@ -236,7 +250,7 @@ When('they try to finish the build and choose {string}', async ({ page }, choice
 });
 
 When('they activate Finish twice in quick succession', async ({ page }) => {
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   await finishButton(page).evaluate((button: HTMLButtonElement) => {
     button.click();
     button.click();
@@ -263,7 +277,7 @@ When('they raise Strength to {int} on the sheet', async ({ page }, value: number
 // Then
 
 Then('the outstanding list shows exactly', async ({ page }, table: DataTable) => {
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   const rows = await outstandingItems(page).evaluateAll((items) =>
     items.map((item) => ({
       item: item.querySelector('a')!.textContent!,
@@ -284,6 +298,7 @@ Then('the outstanding list shows an item naming Strength for the Attributes step
 });
 
 Then('the Blood Pool field shows its stored value, not marked invalid', async ({ page }) => {
+  await openStep(page, 'Finishing touches');
   await expect(bloodPoolField(page)).toHaveValue('');
   await expect(bloodPoolField(page)).not.toHaveAttribute('aria-invalid', 'true');
   await expect(bloodPoolMessage(page)).toHaveText('');
@@ -293,8 +308,18 @@ Then('the reason {string} has been announced twice', async ({ page }, message: s
   await expect.poll(async () => (await writtenTexts(page)).filter((said) => said === message)).toHaveLength(2);
 });
 
-Then('the build cannot be finished', async ({ page }) => {
+Then('Finish is offered and Continue is not', async ({ page }) => {
+  await expect(finishButton(page)).toBeVisible();
+  await expect(page.locator('#builder [data-screen-nav] [data-continue]')).toBeHidden();
+});
+
+Then('Finishing touches has no Finish button', async ({ page }) => {
   await openStep(page, 'Finishing touches');
+  await expect(finishButton(page)).toHaveCount(0);
+});
+
+Then('the build cannot be finished', async ({ page }) => {
+  await openStep(page, 'Review & resolve');
   await expect(finishButton(page)).toHaveAttribute('aria-disabled', 'true');
 });
 
@@ -348,7 +373,7 @@ Then('the builder is still shown with keyboard focus on the Finish button', asyn
 
 Then('the builder is still shown', async ({ page }) => {
   await expect(page).toHaveURL(BUILDER_ADDRESS);
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await expect(builderHeading(page)).toBeVisible();
 });
 
 Then(
@@ -430,6 +455,19 @@ Then('the roster lists one character', async ({ page }) => {
 Then('they are told the character could not be saved and the build has been kept', async ({ page }) => {
   await expect(page.getByRole('alert')).toContainText('The character could not be saved');
   await expect(page.getByRole('alert')).toContainText('Your build has been kept.');
+});
+
+Then('they are told the saved character could not be read and the build has been kept', async ({ page }) => {
+  await expect(page.getByRole('alert')).toContainText('A saved character under this build could not be read');
+  await expect(page.getByRole('alert')).toContainText('Your build has been kept.');
+});
+
+Then('the damaged record is still stored as it was', async ({ page, memory }) => {
+  expect(await storedText(page, characterKey(memory.build!.id))).toBe(DAMAGED_CHARACTER);
+});
+
+Then('they are told the build was already finished but could not be removed', async ({ page }) => {
+  await expect(page.locator('[data-finish-notice]')).toContainText('This build was already finished, but it could not be removed.');
 });
 
 Then('the build is still stored', async ({ page, memory }) => {

@@ -152,7 +152,7 @@ Then('a build carrying that character\'s id and first six Backgrounds opens in t
   );
   await openSavedBuild(page, build);
   expect(openBuildId(page)).toBe(id);
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   await expect(page.locator('[data-outstanding-list]')).toBeVisible();
   await expect(statusRegion(page)).toBeHidden();
 });

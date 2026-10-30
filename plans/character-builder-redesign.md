@@ -101,7 +101,7 @@ Full wording is in the spec; ids match. Ticked at PR review, not during build.
 | [ ] RD-20 | Base rules and refusals visible | Slices 2, 8, 9, 11 (refusal scenarios) |
 | [ ] RD-21 | Old builds open, new fields round-trip | Slices 1, 5 |
 | [ ] RD-22 | Roster and blank sheet unchanged | Slice 14 (explicit scenarios) + existing `features/roster-redesign/`, `features/v20-character-sheet/` |
-| [ ] RD-23 | Look of the frames, contrast and class tests | Slice 3.2 extends the test globs; every slice runs them |
+| [ ] RD-23 | Look of the frames, contrast and class tests | Slice 3.2 extends the test globs; every slice runs them. Phase eyebrows: `phaseEyebrow` (screens.test.ts) and the `builder-screen-standards.feature` scenario "Each screen names its phase above the heading"; the eyebrow reads "Phase NN / <PHASES title>" (e.g. "Phase 02 / Attributes", not the frame's "SELECT ATTRIBUTES"), capitals by CSS |
 | [ ] RD-24 | Outstanding items exactly | Slices 1, 12 |
 | [ ] RD-25 | Keyboard, names, headings, focus, AA | Each screen/dialog slice (DoD below); Slice 14 sweep |
 | [ ] RD-26 | Search fields, shortcut hint, counts | Slices 6, 7, 9 |
@@ -834,6 +834,13 @@ Feature: The builder shell reflects the build and its save state
     When I change my character's name
     Then the autosave status reads "Saved just now"
 
+  Scenario: Try saving again after a failed save
+    Given the browser refused the last save and now accepts storage
+    And the autosave status reads "Changes not saved"
+    When I choose "Try saving again"
+    Then the autosave status reads "Saved just now"
+    And the failure alert is gone
+
   Scenario: Save & exit
     Given a build named "Éloïse Voss"
     When I choose "Save & exit"
@@ -883,7 +890,7 @@ Feature: The Character concept screen
   Scenario: Entering the opening details
     When I enter the name "Éloïse Voss" and the concept "Antiquarian searching for lost voices"
     And I enter "I preserve the stories others would erase" under "What keeps you going?"
-    Then the identity bar and the character panel show "Éloïse Voss"
+    Then the identity bar reads "Éloïse Voss" with the initials "ÉV"
     And after reloading the builder all three entries are unchanged
 
   Scenario: Multi-line text is kept
@@ -903,6 +910,13 @@ Feature: The Character concept screen
     Then "Intellectual" reads "Selected"
     And a short description of Intellectual is shown
     And the character panel's Concept row reads "Intellectual"
+
+  Scenario: Choosing a second sample concept replaces the first
+    Given the sample concept "Intellectual" is selected
+    When I choose the sample concept "Soldier"
+    Then "Soldier" reads "Selected"
+    And "Intellectual" does not read "Selected"
+    And the character panel's Concept row reads "Soldier"
 
   Scenario: A sample concept can be deselected
     Given the sample concept "Intellectual" is selected
@@ -925,8 +939,12 @@ Feature: The Character concept screen
       | Intellectual | Antiquarian | Intellectual · Antiquarian |
       | Intellectual |             | Intellectual               |
       |              | Antiquarian | Antiquarian                |
-      | Intellectual | "  "        | Intellectual               |
       |              |             |                            |
+
+  Scenario: A whitespace-only concept text is ignored
+    Given a finishable build with sample concept "Intellectual" and the concept text set to spaces only
+    When I finish the build
+    Then the sheet's Concept reads "Intellectual"
 
   Scenario: What keeps you going reaches the character's notes
     Given a finishable build with "I preserve the stories others would erase" under "What keeps you going?"
@@ -939,8 +957,20 @@ Feature: The Character concept screen
     Then the character's notes are empty
 
   Scenario: Screen standards
-    Then axe reports no violations at 1512 px and 375 px
+    When I choose Clan in the sidebar and then Character concept
+    Then focus is on the Character concept heading
     And there is exactly one h1
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Screen standards with a sample concept selected
+    Given the sample concept "Intellectual" is selected
+    Then axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
 ```
 
 **Steps:**
@@ -984,11 +1014,13 @@ Feature: The Clan screen
   Scenario: Searching the clans
     When I search the clans for "ven"
     Then only Ventrue is listed
+    And the clan count heading reads "All Clans · 1"
+    And the clan result count "1 clan listed" is announced
 
   Scenario: A search with no match
     When I search the clans for "zzz"
     Then no clans are listed
-    And I am told no clan matches
+    And I am told no clan matches and it is announced
 
   Scenario: Choosing a clan shows its Disciplines
     When I choose Toreador
@@ -1003,11 +1035,12 @@ Feature: The Clan screen
   Scenario: Caitiff has no fixed Disciplines
     When I choose Caitiff
     Then the detail panel says any Discipline is available
-    And I am told Caitiff is a choice distinct from leaving the clan unchosen
+    And the "Not sure yet?" note says Caitiff is a clan choice distinct from leaving the clan unchosen
 
   Scenario: Nosferatu's rule is stated
     When I choose Nosferatu
     Then the detail panel says Appearance is fixed at 0
+    And the detail panel notes that only Nosferatu's Appearance rule changes creation arithmetic
 
   Scenario: Changing clan with nothing to remove does not prompt
     Given a Brujah build with no Discipline dots
@@ -1042,7 +1075,7 @@ Feature: The Clan screen
     Given the platform is "<platform>"
     When I press <keys>
     Then focus is in the clan search field
-    And the hint reads "<hint>"
+    And the clan search hint reads "<hint>"
 
     Examples:
       | platform | keys      | hint   |
@@ -1050,8 +1083,22 @@ Feature: The Clan screen
       | other    | Control+K | Ctrl K |
 
   Scenario: Screen standards
-    Then axe reports no violations at 1512 px and 375 px, also with a clan selected and a confirmation shown
+    When I choose Character concept in the sidebar and then Clan
+    Then focus is on the Clan heading
     And there is exactly one h1
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Screen standards with a clan selected and a confirmation shown
+    Given a Brujah build with creation dots in Celerity, Potence and Presence
+    When I choose Toreador
+    Then the switch confirmation is shown
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
 ```
 
 **Steps:**
@@ -1077,7 +1124,7 @@ Feature: The Clan screen
 ### Slice 7: Nature & Demeanor screen
 
 **Depends-on:** 4
-**Files:** `src/domain/v20/creation/archetypes.ts`, `src/domain/v20/creation/archetypes.test.ts`, `src/components/builder/NatureDemeanor.astro`, `src/scripts/builder/screens/natureDemeanor.ts`, `src/styles/builder/natureDemeanor.css`, `features/steps/builder-nature.steps.ts`, `features/steps/support/nature.ts`, `features/character-builder/slice-2c-nature.feature`
+**Files:** `src/domain/v20/creation/archetypes.ts`, `src/domain/v20/creation/archetypes.test.ts`, `src/components/builder/NatureDemeanor.astro`, `src/scripts/builder/screens/natureDemeanor.ts`, `src/styles/builder/natureDemeanor.css`, `features/steps/builder-nature-screen.steps.ts`, `features/steps/support/nature.ts`, `features/character-builder/builder-nature-edges.feature`
 
 **Behavior:**
 
@@ -1090,31 +1137,64 @@ Feature: The Nature & Demeanor screen
   Scenario: Both roles start empty
     Then the Nature and Demeanor cards read "Not chosen"
     And the role switch has Nature active
+    And the role switch offers "Assign as Nature" and "Assign as Demeanor"
 
   Scenario: Assigning a Nature and a Demeanor
     When I assign Visionary as Nature
     And I switch to Demeanor and choose Bon Vivant
     Then the Nature card reads Visionary and the Demeanor card reads Bon Vivant
-    And the identity bar's readout reads "Visionary / Bon Vivant"
+    And the Nature / Demeanor readout reads "Visionary / Bon Vivant"
+    And after reloading the builder the Nature card reads Visionary and the Demeanor card reads Bon Vivant
 
   Scenario: The same archetype may fill both roles
     When I assign Visionary as Nature
     And I switch to Demeanor and choose Visionary
     Then both cards read Visionary
 
+  Scenario: Archetypes are marked with the roles they fill
+    When I assign Visionary as Nature
+    And I switch to Demeanor and choose Bon Vivant
+    Then Visionary is marked "N" and Bon Vivant is marked "D"
+    And Thrill-Seeker has no mark
+
+  Scenario: An archetype filling both roles is marked N and D
+    When I assign Visionary as Nature
+    And I switch to Demeanor and choose Visionary
+    Then Visionary is marked "N D"
+
+  Scenario: The archetype held by the active role reads Selected
+    Given Visionary is assigned as Nature
+    Then Visionary reads "Selected" while Nature is active
+    When I switch to Demeanor
+    Then Visionary does not read "Selected"
+
+  Scenario: Assigning is announced
+    When I assign Visionary as Nature
+    Then the assignment "Visionary assigned as Nature." is announced
+
   Scenario: Choosing the assigned archetype again clears that role
     Given Visionary is assigned as Nature
     When I choose Visionary again with Nature active
     Then the Nature card reads "Not chosen"
+    And Visionary has no mark
+    And the assignment "Visionary cleared as Nature." is announced
+
+  Scenario: Emptying my own archetype clears that role
+    Given Visionary is assigned as Nature
+    When I empty my own archetype with Nature active
+    Then the Nature card reads "Not chosen"
+    And Visionary has no mark
 
   Scenario: Searching the catalogue
     When I search the archetypes for "thr"
-    Then only Thrill-Seeker is listed
-    And the result count is announced
+    Then only the archetype Thrill-Seeker is listed
+    And the archetype count heading reads "All Archetypes · 1"
+    And the archetype result count "1 archetype listed" is announced
 
   Scenario: A search with no match
     When I search the archetypes for "zzz"
-    Then none are listed and I am told nothing matches
+    Then no archetypes are listed
+    And I am told no archetype matches and it is announced
 
   Scenario: Writing my own archetype goes to the active role
     Given Demeanor is the active role
@@ -1123,15 +1203,45 @@ Feature: The Nature & Demeanor screen
     And after reloading the builder it is unchanged
 
   Scenario: No archetype is required
-    Given a build with no Nature or Demeanor
-    Then Continue is enabled and the sidebar marks the screen "Optional"
+    Then Continue is enabled
+    And the sidebar marks Nature & Demeanor "Optional"
 
   Scenario: No archetype description is shown
     Then no archetype shows a description line
 
+  Scenario: The keys are named beside the role switch
+    Then the role switch is described as arrow keys switch role, Tab moves between archetypes, Space or Enter assigns
+    And the archetype list is not described by that line
+
+  Scenario Outline: The search shortcut on each platform
+    Given the platform is "<platform>"
+    And I am on the Nature & Demeanor screen
+    When I press <keys>
+    Then focus is in the archetype search field
+    And the archetype search hint reads "<hint>"
+
+    Examples:
+      | platform | keys      | hint   |
+      | macOS    | Meta+K    | ⌘K     |
+      | other    | Control+K | Ctrl K |
+
   Scenario: Screen standards
-    Then axe reports no violations at 1512 px and 375 px
+    When I choose Character concept in the sidebar and then Nature & Demeanor
+    Then focus is on the Nature & Demeanor heading
     And there is exactly one h1
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Screen standards with both roles assigned and a search shown
+    When I assign Visionary as Nature
+    And I switch to Demeanor and choose Bon Vivant
+    And I search the archetypes for "i"
+    Then axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
 ```
 
 **Steps:**
@@ -1139,8 +1249,8 @@ Feature: The Nature & Demeanor screen
 #### Step 7.1: Archetype search and marks
 
 **Complexity**: standard
-**IMPLEMENT**: `archetypes.ts` — `matchArchetypes(query)` over `matchByName` and the catalogue with N/D marks for a build; assignment uses `setConceptText` directly (no wrapper); choosing the already-assigned name for the active role clears it.
-**TEST**: Unit tests: matching (case, partial, none), marks for one, both and neither role, toggle-off rule, own names, blank clears.
+**IMPLEMENT**: `archetypes.ts` — `matchArchetypes(query)` over `matchByName` and the catalogue with N/D marks for a build; assignment uses `setConceptText` directly (no wrapper); choosing the already-assigned name for the active role clears it (the button is an `aria-pressed` toggle), and a role is also cleared by emptying the player's own-archetype field (see Risks & Open Questions: RD-8).
+**TEST**: Unit tests: matching (case, partial, none), marks for one, both and neither role, pressing the held name clears the role, own names, blank clears.
 **REFACTOR**: `ARCHETYPES` stays in `rules.ts`.
 **Files**: `src/domain/v20/creation/archetypes.ts`, `src/domain/v20/creation/archetypes.test.ts`
 **Commit**: `feat(builder): archetype search and marks`
@@ -1148,16 +1258,16 @@ Feature: The Nature & Demeanor screen
 #### Step 7.2: The Nature & Demeanor screen
 
 **Complexity**: standard
-**IMPLEMENT**: Two summary cards, the role radiogroup, the labelled search with count and hint, the `aria-pressed` catalogue buttons with N/D marks, the own-name field.
-**TEST**: Scenarios above; replace the old Nature/Demeanor scenarios in `slice-2c-nature.feature`; screen DoD; full suites green.
+**IMPLEMENT**: Two summary cards, the role radiogroup ("Assign as Nature" / "Assign as Demeanor"), the labelled search with count and hint, the `aria-pressed` catalogue buttons with N/D marks, the own-name field; the Nature and Demeanor inputs leave the generic `[data-concept]` path.
+**TEST**: Scenarios above; replace the old Nature/Demeanor scenarios in `slice-2c-nature.feature` (all covered, so the file goes); screen DoD; full suites green.
 **REFACTOR**: Remove the old two-field markup.
-**Files**: `src/components/builder/NatureDemeanor.astro`, `src/scripts/builder/screens/natureDemeanor.ts`, `src/styles/builder/natureDemeanor.css`, `features/steps/builder-nature.steps.ts`, `features/steps/support/nature.ts`, `features/character-builder/slice-2c-nature.feature`
+**Files**: `src/components/builder/NatureDemeanor.astro`, `src/scripts/builder/screens/natureDemeanor.ts`, `src/styles/builder/natureDemeanor.css`, `features/steps/builder-nature-screen.steps.ts` (replaces `builder-nature.steps.ts`), `features/steps/support/nature.ts`, `features/character-builder/builder-nature-edges.feature`, `features/character-builder/slice-2c-nature.feature` (deleted)
 **Commit**: `feat(builder): nature and demeanor screen`
 
 ### Slice 8: Attributes and Abilities screens
 
 **Depends-on:** 5, 6, 7
-**Files:** `src/domain/v20/creation/poolViews.ts`, `src/domain/v20/creation/poolViews.test.ts`, `src/domain/v20/creation/updates.ts`, `src/domain/v20/creation/updates.test.ts`, `src/components/builder/Attributes.astro`, `src/components/builder/Abilities.astro`, `src/components/builder/RankedGroup.astro`, `src/scripts/builder/screens/attributes.ts`, `src/scripts/builder/screens/abilities.ts`, `src/scripts/builder/parts/ranked.ts`, `src/styles/builder/ranked.css`, `features/steps/builder-attributes.steps.ts`, `features/steps/builder-abilities.steps.ts`, `features/steps/support/ranked.ts`, `features/character-builder/slice-4-attributes-step.feature`, `features/character-builder/slice-5-abilities-step.feature`
+**Files:** `src/domain/v20/creation/poolViews.ts`, `src/domain/v20/creation/poolViews.test.ts`, `src/domain/v20/creation/updates.ts`, `src/domain/v20/creation/updates.test.ts`, `src/components/builder/Attributes.astro`, `src/components/builder/Abilities.astro`, `src/components/builder/RankedGroup.astro`, `src/components/builder/RankedScreen.astro`, `src/scripts/builder/screens/attributes.ts`, `src/scripts/builder/screens/abilities.ts`, `src/scripts/builder/parts/ranked.ts`, `src/styles/builder/ranked.css`, `features/steps/builder-attributes.steps.ts`, `features/steps/builder-abilities.steps.ts`, `features/steps/support/ranked.ts`, `features/character-builder/slice-4-attributes-step.feature`, `features/character-builder/slice-5-abilities-step.feature`
 
 *(Serialised after Slices 5–7 only to cap concurrent worktrees at three; no code dependency. `TraitRow.astro` and `RatingStepper.astro` were finished in Step 3.5 and are **frozen**: Slices 8 and 9 only consume them. Freebie controls live only in `FinishingTouches.astro` (`FreebieSection`) today and stay there until Slice 11.3, so the creation screens never host them.)*
 
@@ -1172,6 +1282,7 @@ Feature: Attributes and Abilities screens
   Scenario: Every priority is always offered
     When I open the Social priority select
     Then Primary, Secondary and Tertiary are all offered
+    And the options read "Primary · 7 dots", "Secondary · 5 dots" and "Tertiary · 3 dots"
 
   Scenario: Choosing a rank another group holds swaps the two
     Given Physical is Primary and Social is Tertiary
@@ -1180,14 +1291,58 @@ Feature: Attributes and Abilities screens
     And it is announced that Social is now Primary and Physical is now Tertiary
     And the status reads "Priority order is unique"
 
+  Scenario: A rank nobody else holds is announced once
+    Given Social is Primary
+    When I set Mental to Secondary
+    Then exactly one message is announced and it reads "Mental is now Secondary."
+    And the status reads "Priority order is unique"
+
+  Scenario: Moving a group to a rank nobody holds is announced once
+    Given Social is Primary
+    When I set Social to Secondary
+    Then exactly one message is announced and it reads "Social is now Secondary."
+
+  Scenario: A rank held twice is said by the priority status, which is a live region
+    Given a saved build holds Primary for both Physical and Social
+    When I open the Attributes screen
+    Then the status reads "Priority order is not unique · Give each group a different rank"
+    And the priority status is a live region
+
   Scenario: Re-ranking keeps the dots that still fit
     Given Social is Primary with 7 of 7 dots placed
     When I set Social to Secondary
     Then the Social pool reads "Overspent by 2"
     And no Social dot was removed
 
+  Scenario: Choosing a rank another Abilities group holds swaps the two
+    Given I am on the Abilities screen with Talents Primary, Skills Secondary and Knowledges Tertiary
+    When I set Knowledges to Primary
+    Then Knowledges is Primary and Talents is Tertiary
+    And Skills is still Secondary
+    And it is announced that Knowledges is now Primary and Talents is now Tertiary
+    And the status reads "Priority order is unique"
+
+  Scenario: Every Abilities priority is always offered
+    Given I am on the Abilities screen
+    When I open the Skills priority select
+    Then Primary, Secondary and Tertiary are all offered
+    And the options read "Primary · 13 dots", "Secondary · 9 dots" and "Tertiary · 5 dots"
+
+  Scenario: Attribute priorities and Ability priorities are independent
+    Given Physical is Primary on the Attributes screen
+    When I set Talents to Primary on the Abilities screen
+    Then Physical is still Primary
+    And the Attributes status reads "Priority order is unique"
+
+  Scenario: Re-ranking an Abilities group keeps the dots that still fit
+    Given Skills is Primary with 13 of 13 dots placed
+    When I set Skills to Secondary
+    Then the Skills pool reads "Overspent by 4"
+    And no Skills dot was removed
+
   Scenario: An overspent group blocks Continue with its reason
     Given Social is Tertiary with 7 dots placed
+    And Physical is Primary and Mental is Secondary
     Then the Social pool reads "Overspent by 4"
     And the text beside Continue reads "Social is 4 dots over · Lower it to continue"
 
@@ -1203,11 +1358,12 @@ Feature: Attributes and Abilities screens
   Scenario: Dots include the automatic dot
     Given a Toreador build
     Then every Attribute shows at least one dot
-    And the card says it includes 1 automatic dot in each trait
+    And the card says dot counts include 1 automatic dot in each trait
 
   Scenario: An unfinished group raises a callout
     Given Physical is Tertiary with 2 of 3 additional dots placed
     Then a callout reads "Finish Physical before moving on"
+    And the callout title is a level 4 heading
     And it says 2 of 3 additional Physical dots are placed and 1 remains
     And it names Strength, Dexterity and Stamina
 
@@ -1221,12 +1377,38 @@ Feature: Attributes and Abilities screens
     Given Stamina is at 1
     When I try to lower Stamina
     Then it stays at 1
+    And "Minimum 1, free dot" is shown beside Decrease Stamina
+
+  Scenario: A row with a freebie dot reports its real lowest rating
+    Given Physical is Primary with a freebie dot on Dexterity
+    Then Dexterity reports 2 as its lowest rating
+    And "Minimum 2, freebie dots are removed on Finishing touches" is shown beside Decrease Dexterity
 
   Scenario: Remaining counts are announced
+    Given Physical is Secondary with 3 of 5 additional dots placed
     When I place one more Physical dot
     Then the Physical status region reads the new remaining count
     When the last Physical dot is placed
     Then the Physical status region reads "Complete"
+
+  Scenario: Remaining counts are announced for an Attribute group other than Physical
+    Given Social is Primary with 6 of 7 additional dots placed
+    When I place the last Social dot
+    Then the Social status region reads "Complete"
+    When I lower one Social Attribute
+    Then the Social status region reads "1 remaining"
+
+  Scenario: Remaining counts are announced for an Abilities group
+    Given Skills is Secondary with 8 of 9 dots placed
+    When I place the last Skills dot
+    Then the Skills status region reads "Complete"
+    When I lower one Skill
+    Then the Skills status region reads "1 remaining"
+
+  Scenario: A rank swap is announced once
+    Given Physical is Primary and Social is Tertiary
+    When I set Social to Primary
+    Then exactly one message is announced and it names both groups
 
   Scenario: Nosferatu Appearance is fixed
     Given a Nosferatu build
@@ -1241,29 +1423,79 @@ Feature: Attributes and Abilities screens
   Scenario: Spending more than the creation dots is not possible here
     Given Social is Primary with 7 of 7 additional dots placed
     Then the plus controls in Social are unavailable
-    And the freebie pool is unchanged
+    And the freebie points remaining on the panel are unchanged
 
   Scenario: Abilities are capped at 3 at creation
     Given I am on the Abilities screen with Skills ranked Secondary
     When I raise Crafts to 3
     Then the plus control on Crafts is unavailable but still focused
-    And it shows "Maximum 3"
-    And the Skills group says "All ratings 0–3"
+    And "Maximum 3" is shown beside Increase Crafts
+    And the Skills group is tagged "All ratings 0–3"
 
   Scenario: An unfinished Abilities group raises a callout
-    Given Skills has 1 dot remaining and Crafts is at 3
-    Then a callout says 1 Skill dot remains
+    Given Skills is Secondary with 8 of 9 dots placed
+    And Crafts is at 3
+    Then a callout says 8 of 9 Skill dots are placed and 1 remains
     And it names the Skills below 3 and not Crafts
 
   Scenario: Abilities start at zero in 13 / 9 / 5
     Given I am on the Abilities screen
     When I rank Knowledges Primary, Skills Secondary and Talents Tertiary
-    Then the pools read 13, 9 and 5 dots to place
+    Then the pools read "13 remaining", "9 remaining" and "5 remaining"
     And every Ability reads 0
 
-  Scenario: Screen standards
-    Then on each of the Attributes and Abilities screens axe reports no violations at 1512 px and 375 px, also with a callout shown
-    And each has exactly one h1
+  Scenario Outline: Screen standards
+    When I choose Character concept in the sidebar and then <screen>
+    Then focus is on the <screen> heading
+    And there is exactly one h1
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+    Examples:
+      | screen     |
+      | Attributes |
+      | Abilities  |
+
+  Scenario: Attribute screen standards with a callout and a refusal shown
+    Given Physical is Tertiary with 2 of 3 additional dots placed
+    And Social is Primary with 7 of 7 additional dots placed
+    When I try to raise another Social Attribute
+    Then a callout reads "Finish Physical before moving on"
+    And I am told the Social group has no dots left
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Attribute screen standards with an overspent group shown
+    Given Social is Tertiary with 7 dots placed
+    And Physical is Primary and Mental is Secondary
+    Then the Social pool reads "Overspent by 4"
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Attribute screen standards with the longest minimum shown
+    Given Physical is Primary with a freebie dot on Dexterity
+    Then "Minimum 2, freebie dots are removed on Finishing touches" is shown beside Decrease Dexterity
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Abilities screen standards with a callout and the cap shown
+    Given Skills is Secondary with 8 of 9 dots placed
+    And Crafts is at 3
+    When I try to raise Crafts
+    Then a callout says 8 of 9 Skill dots are placed and 1 remains
+    And the plus control on Crafts is unavailable but still focused
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
 ```
 
 **Steps:**
@@ -1274,7 +1506,7 @@ Feature: Attributes and Abilities screens
 **IMPLEMENT**: `setRank` swaps when the chosen rank is held by another group (returns `applied` with a notice naming both); `poolViews.ts` per ranked group: meter segments, status text ("N remaining", "x / y spent · Complete | Allocation needed", "Overspent by N"), the callout (group, placed/total, remaining, traits that can still take dots), and `categorySummary` as neutral lines.
 **TEST**: Unit tests: swap with two and three ranked groups, no-op when unchanged, overspent after re-rank with dots kept, every status string, callout trait lists (excluding traits at their cap and the Nosferatu lock), no pronouns in any output, ties/unranked.
 **REFACTOR**: Build on `allotmentReports`; no recount of dots.
-**Files**: `src/domain/v20/creation/poolViews.ts`, `src/domain/v20/creation/poolViews.test.ts`, `src/domain/v20/creation/updates.ts`, `src/domain/v20/creation/updates.test.ts`
+**Files**: `src/domain/v20/creation/poolViews.ts`, `src/domain/v20/creation/poolViews.test.ts`, `src/domain/v20/creation/updates.ts`, `src/domain/v20/creation/updates.test.ts`, `src/domain/v20/creation/limits.ts` (`creationMaximum`, shared with `setRating`), `src/domain/v20/creation/limits.test.ts`, `src/domain/v20/creation/screens.ts` (exports `list`, `dotNoun`), `src/domain/v20/creation/result.test.ts` (layer map), `plans/character-builder-redesign.md` (Slice 8 Gherkin: Abilities swap and announcement scenarios)
 **Commit**: `feat(builder): rank swap, pool meters and callouts as view models`
 
 #### Step 8.2: Attributes screen
@@ -1283,7 +1515,7 @@ Feature: Attributes and Abilities screens
 **IMPLEMENT**: Intro card, three group cards with the priority select (all ranks offered), meter, rows with named "Increase/Decrease <trait>" controls, callout, summary card, Nosferatu lock text; remaining values in per-group status regions; a "+" at its maximum stays focusable with "Maximum N" beside it.
 **TEST**: Scenarios above; replace the old slice 4 scenarios the new feature covers; screen DoD; full suites green.
 **REFACTOR**: One `parts/ranked.ts` serves both screens.
-**Files**: `src/components/builder/Attributes.astro`, `src/components/builder/RankedGroup.astro`, `src/scripts/builder/screens/attributes.ts`, `src/scripts/builder/parts/ranked.ts`, `src/styles/builder/ranked.css`, `features/steps/builder-attributes.steps.ts`, `features/steps/support/ranked.ts`, `features/character-builder/slice-4-attributes-step.feature`
+**Files**: `src/components/builder/Attributes.astro`, `src/components/builder/RankedGroup.astro`, `src/components/builder/RankedScreen.astro`, `src/scripts/builder/screens/attributes.ts`, `src/scripts/builder/parts/ranked.ts`, `src/styles/builder/ranked.css`, `features/steps/builder-attributes.steps.ts`, `features/steps/support/ranked.ts`, `features/character-builder/slice-4-attributes-step.feature`
 **Commit**: `feat(builder): attributes screen`
 
 #### Step 8.3: Abilities screen
@@ -1298,7 +1530,7 @@ Feature: Attributes and Abilities screens
 ### Slice 9: Advantages screen
 
 **Depends-on:** 5, 6, 7
-**Files:** `src/domain/v20/creation/advantageViews.ts`, `src/domain/v20/creation/advantageViews.test.ts`, `src/components/builder/Advantages.astro`, `src/components/builder/DisciplineRows.astro`, `src/components/builder/FlatGroup.astro`, `src/scripts/builder/screens/advantages.ts`, `src/styles/builder/advantages.css`, `features/steps/builder-advantages.steps.ts`, `features/steps/support/advantages.ts`, `features/character-builder/slice-6-advantages-step.feature`
+**Files:** `src/domain/v20/creation/advantageViews.ts`, `src/domain/v20/creation/advantageViews.test.ts`, `src/components/builder/Advantages.astro`, `src/components/builder/DisciplineRows.astro`, `src/components/builder/FlatGroup.astro`, `src/components/builder/SearchField.astro`, `src/components/builder/Pool.astro`, `src/scripts/builder/screens/advantages.ts`, `src/scripts/builder/parts/search.ts`, `src/scripts/builder/parts/pool.ts`, `src/styles/builder/advantages.css`, `features/steps/builder-advantages-screen.steps.ts`, `features/steps/support/advantages.ts`, `features/character-builder/slice-6-advantages-step.feature`
 
 *(Same wave as Slice 8; consumes `TraitRow.astro` unchanged.)*
 
@@ -1311,12 +1543,13 @@ Feature: The Advantages screen
     Given I am on the Advantages screen of a Toreador build
 
   Scenario: A clan's Disciplines are the rows
-    Then Auspex, Celerity and Presence are listed with a pool of 3 dots
+    Then Auspex, Celerity and Presence are listed and the Disciplines pool reads "3 remaining"
 
   Scenario: No clan chosen yet
     Given a build with no clan on the Advantages screen
-    Then I am told a clan must be chosen before Discipline dots are placed
+    Then the reason reads "Choose a clan to place Discipline dots"
     And a button "Go to Clan" is offered
+    And the text beside Continue reads "Choose a clan to place Discipline dots"
 
   Scenario: A Caitiff places dots on any Discipline
     Given a Caitiff build on the Advantages screen
@@ -1325,8 +1558,16 @@ Feature: The Advantages screen
 
   Scenario: Choosing Backgrounds
     When I choose the Background chips Contacts, Resources and Mentor
-    Then each has a rating row
-    And the Backgrounds pool reads 5 dots to place
+    Then each chosen Background has a rating row
+    And the Backgrounds pool reads "5 remaining"
+
+  Scenario: A chosen chip is selected in text and in state
+    When I choose the Background chip Resources
+    Then the Resources chip reads "Selected" and is pressed
+    And the other Background chips are not selected
+
+  Scenario: The keys for the Background chips are named
+    Then the Background chips are described as "Tab moves between chips; Space or Enter chooses or clears a Background."
 
   Scenario: Sabbat Backgrounds are labelled
     Then the chips for Black Hand Membership and Rituals read "(Sabbat)"
@@ -1341,24 +1582,45 @@ Feature: The Advantages screen
     Given a build with five Backgrounds holding dots and a sixth chip chosen at 0 dots
     Then the other Background chips are unavailable
 
+  Scenario: A chip that cannot be chosen explains itself when pressed
+    Given a build seeded with six Backgrounds each holding a dot
+    When I press a Background chip that is unavailable
+    Then "Six is the most" is announced
+    And the chip is still unavailable and still focused
+
   Scenario: Generation is limited by the base generation
     Given a build at base 6th generation
-    When I raise the Generation Background
+    When I raise the Generation Background as far as it goes
     Then it cannot go above 2 dots
     And I am told why
 
   Scenario: Searching Backgrounds
     When I search the Backgrounds for "re"
     Then only Resources and Retainers are shown
+    And the Backgrounds count heading reads "All Backgrounds · 2"
+    And the Backgrounds result count "2 Backgrounds listed" is announced
 
   Scenario: A search with no match
     When I search the Backgrounds for "zzz"
-    Then none are shown and I am told nothing matches
+    Then none are shown and I am told nothing matches and it is announced
+
+  Scenario Outline: The search shortcut on each platform
+    Given the platform is "<platform>"
+    And I am on the Advantages screen
+    When I press <keys>
+    Then focus is in the Backgrounds search field
+    And the Backgrounds search hint reads "<hint>"
+
+    Examples:
+      | platform | keys      | hint   |
+      | macOS    | Meta+K    | ⌘K     |
+      | other    | Control+K | Ctrl K |
 
   Scenario: Removing an empty row
     Given a Background row at 0 dots
     When I remove it
     Then its chip is no longer selected
+    And focus is on its chip
 
   Scenario: A chip that holds dots cannot be deselected silently
     Given Contacts holds 2 dots
@@ -1366,25 +1628,56 @@ Feature: The Advantages screen
     Then I am told to lower Contacts to 0 first
     And Contacts still holds 2 dots
 
-  Scenario: A chosen but empty Background is not kept across a reload
+  Scenario: A chosen but empty Background is only a choice of this screen
     Given the Resources chip is chosen at 0 dots
     When I reload the builder
     Then Resources is not chosen
 
   Scenario: Virtues
-    Then each Virtue shows at least one dot and the pool reads 7 dots to place
-    When 6 of the 7 are placed
-    Then a callout says 1 dot is still to place
+    Then each Virtue shows at least one dot and the pool reads "7 remaining"
+    When 6 of the 7 Virtue dots are placed
+    Then the Virtues callout says 6 of 7 additional Virtue dots are placed and 1 remains
     And a line says Humanity and Willpower are derived from the Virtues
 
   Scenario: Spending beyond the pools is not possible here
     Given the Backgrounds pool is fully placed
+    When I press a plus on Backgrounds
     Then the plus controls on Backgrounds are unavailable
-    And the freebie pool is unchanged
+    And no freebie point was spent
 
   Scenario: Screen standards
-    Then axe reports no violations at 1512 px and 375 px, also with a callout shown
+    When I choose Character concept in the sidebar and then Advantages
+    Then focus is on the Advantages heading
     And there is exactly one h1
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Screen standards with a callout, chosen chips, a search and a refusal shown
+    Given Resources holds 2 dots and the Mentor chip is chosen at 0 dots
+    When 6 of the 7 Virtue dots are placed
+    And I search the Backgrounds for "re"
+    And I choose the Resources chip again
+    Then the Virtues callout says 6 of 7 additional Virtue dots are placed and 1 remains
+    And axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Screen standards with six Backgrounds chosen
+    Given a build seeded with six Backgrounds each holding a dot
+    Then axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
+
+  Scenario: Screen standards with no clan chosen
+    Given a build with no clan on the Advantages screen
+    Then axe reports no violations at 1512 px and 375 px
+    And every control has a unique accessible name
+    And the page does not scroll horizontally at 375 px
+    And the page does not scroll horizontally at 320 px
 ```
 
 **Steps:**
@@ -1401,10 +1694,10 @@ Feature: The Advantages screen
 #### Step 9.2: The Advantages screen
 
 **Complexity**: standard
-**IMPLEMENT**: Three cards per the frame: Disciplines (rows with original lines), Backgrounds (labelled search, `aria-pressed` chips, rows; the picked-but-empty set is page state passed to the view model and dropped on reload), Virtues (pool, callout, derivation line).
-**TEST**: Scenarios above; replace the old slice 6 scenarios the new feature covers; screen DoD; full suites green.
-**REFACTOR**: None of the Discipline wiring remains outside `screens/advantages.ts`.
-**Files**: `src/components/builder/Advantages.astro`, `src/components/builder/DisciplineRows.astro`, `src/components/builder/FlatGroup.astro`, `src/scripts/builder/screens/advantages.ts`, `src/styles/builder/advantages.css`, `features/steps/builder-advantages.steps.ts`, `features/steps/support/advantages.ts`, `features/character-builder/slice-6-advantages-step.feature`
+**IMPLEMENT**: Three cards per the frame: Disciplines (rows with original lines), Backgrounds (labelled search, `aria-pressed` chips, rows; the picked-but-empty set is page state passed to the view model and dropped on reload), Virtues (pool, callout, derivation line). The search field's markup, hint and `aria-keyshortcuts` wiring that the Clan and Nature screens each had is one shared `SearchField.astro` + `parts/search.ts` (`findSearch`, `wireSearchField`), now used by all three; the pool meter/callout drawing is one shared `Pool.astro` + `parts/pool.ts` used by the ranked groups and these cards.
+**TEST**: Scenarios above; replace the old slice 6 scenarios the new feature covers; screen DoD; full suites green (the Clan and Nature e2e unchanged).
+**REFACTOR**: None of the creation-mode Discipline wiring remains outside `screens/advantages.ts` (the freebie-mode rows stay in `parts/ranked.ts` until Finishing touches is reworked).
+**Files**: `src/components/builder/Advantages.astro`, `src/components/builder/DisciplineRows.astro`, `src/components/builder/FlatGroup.astro`, `src/components/builder/SearchField.astro`, `src/components/builder/Pool.astro`, `src/scripts/builder/screens/advantages.ts`, `src/scripts/builder/parts/search.ts`, `src/scripts/builder/parts/pool.ts`, `src/styles/builder/advantages.css`, `features/steps/builder-advantages-screen.steps.ts`, `features/steps/support/advantages.ts`, `features/character-builder/slice-6-advantages-step.feature`
 **Commit**: `feat(builder): advantages screen`
 
 > **Merge point — PR 2 (Slices 3–9).** Finishing touches and Finish still work as before (old freebie controls kept).
@@ -2118,6 +2411,34 @@ Run at each merge point:
   "Required"; RD-3 reason copy and inert activation; RD-4 alert/quiet announcements and
   next-step copy; history via `pushState`; RD-27 drops "Chronicle notes" and adds 320 px;
   RD-19 adds the headline. These were not in the spec you approved — confirm at the gate.
+- **Slice 7 build-time amendments** (RD-8): (1) The spec says choosing a name "assigns it to
+  the active role" and says nothing of clearing. The archetype buttons are `aria-pressed`
+  toggles, so pressing the name the active role holds clears that role (as the first plan
+  draft said; a build-time idempotent reading was reversed at review); the Gherkin scenario
+  reads "Choosing the assigned archetype again clears that role", and the status notice says
+  "<Name> cleared as Nature.". A role is also cleared by emptying the player's own-archetype
+  field, which shows the active role's text and is labelled for it ("Your own Nature" /
+  "Your own Demeanor"; base AC-10 free text; a scenario covers it). (2) Added scenarios: N/D
+  marks, "Assign as ..." labels, Selected state, assignment announcement, result-count
+  announcement, the Ctrl/⌘+K hint and 320 px / focus-to-heading standards. (3) Step texts
+  made screen-specific ("only the archetype X is listed", "the Nature / Demeanor readout
+  reads ..."). (4) The keys line ("Arrow keys switch role; ...") describes the role switch
+  only: the arrow keys do nothing on the archetype list, which carries no such description.
+  (5) Result counts on the Clan and Nature & Demeanor searches are announced after a 400 ms
+  pause, not at every keystroke (design rule 10); the shortcut hint is hidden while the
+  search holds text so it never covers the browser's clear button.
+- **Slice 9 build-time amendments** (RD-12): (1) A Background chip chosen at 0 dots is UI-only:
+  the record holds dots, so it cannot say "chosen at 0" without a shape change (RD-21 stays
+  as approved); such a chip lives in the screen and is gone after a reload, and a scenario
+  states it. (2) The pool meter and callout copy follows the Attributes and Abilities
+  screens (one `Pool` and `parts/pool.ts` serve all of them), so the three cards read the
+  same as the ranked groups. (3) The Virtues callout therefore reads "6 of 7 additional
+  Virtue dots are placed and 1 remains", and the Gherkin says so (the first draft's "1 dot
+  is still to place" was reworded to match). (4) Six chosen counts held and picked chips,
+  but the build's own cap counts dots only, so freebie points could buy a dot on a seventh
+  Background while six empty chips were chosen. When the build gains a held Background the
+  screen drops the picked-empty chips that no longer fit, the earliest chosen kept, so held
+  plus picked never exceeds six (`reconcilePicked`); no change to the record.
 - **Old e2e features are hand-maintained** from Slice 1 (old plan marked superseded);
   re-running the old plan's export would overwrite them. Each slice replaces, not adds.
 - **Empty picked Background rows are page state**, dropped on reload (a scenario states
@@ -2182,37 +2503,37 @@ This section is the machine-parseable recovery handle. `/build` updates checkbox
   - [x] Step 2.2: Remove the Settings step
 
 #### Wave 3
-- [ ] Slice 3: Nine screens and navigation
-  - [ ] Step 3.1: Screens, completeness, statuses and gate reasons as data
-  - [ ] Step 3.2: Screen contract, behaviour-preserving split of wiring, shared styles and test globs
-  - [ ] Step 3.3: Sidebar, router, Back and Continue
-  - [ ] Step 3.4: Split the concept step; move Finish into Review; split the old feature files
-  - [ ] Step 3.5: Rating rows with minus/plus buttons
+- [x] Slice 3: Nine screens and navigation
+  - [x] Step 3.1: Screens, completeness, statuses and gate reasons as data
+  - [x] Step 3.2: Screen contract, behaviour-preserving split of wiring, shared styles and test globs
+  - [x] Step 3.3: Sidebar, router, Back and Continue
+  - [x] Step 3.4: Split the concept step; move Finish into Review; split the old feature files
+  - [x] Step 3.5: Rating rows with minus/plus buttons
 
 #### Wave 4
-- [ ] Slice 4: Shell chrome — identity bar, autosave status, character panel
-  - [ ] Step 4.1: View models for the identity bar and character panel
-  - [ ] Step 4.2: Top bar, identity bar, panel, autosave status, Save & exit
+- [x] Slice 4: Shell chrome — identity bar, autosave status, character panel
+  - [x] Step 4.1: View models for the identity bar and character panel
+  - [x] Step 4.2: Top bar, identity bar, panel, autosave status, Save & exit
 
 #### Wave 5
-- [ ] Slice 5: Character concept screen
-  - [ ] Step 5.1: Sample concepts and the finished Concept text
-  - [ ] Step 5.2: The Character concept screen
-- [ ] Slice 6: Clan screen
-  - [ ] Step 6.1: Clan cards, search and detail
-  - [ ] Step 6.2: The Clan screen
-- [ ] Slice 7: Nature & Demeanor screen
-  - [ ] Step 7.1: Archetype search and marks
-  - [ ] Step 7.2: The Nature & Demeanor screen
+- [x] Slice 5: Character concept screen
+  - [x] Step 5.1: Sample concepts and the finished Concept text
+  - [x] Step 5.2: The Character concept screen
+- [x] Slice 6: Clan screen
+  - [x] Step 6.1: Clan cards, search and detail
+  - [x] Step 6.2: The Clan screen
+- [x] Slice 7: Nature & Demeanor screen
+  - [x] Step 7.1: Archetype search and marks
+  - [x] Step 7.2: The Nature & Demeanor screen
 
 #### Wave 6
-- [ ] Slice 8: Attributes and Abilities screens
-  - [ ] Step 8.1: Rank swap, pool views, callouts and summary
-  - [ ] Step 8.2: Attributes screen
-  - [ ] Step 8.3: Abilities screen
-- [ ] Slice 9: Advantages screen
-  - [ ] Step 9.1: Advantages view models
-  - [ ] Step 9.2: The Advantages screen
+- [x] Slice 8: Attributes and Abilities screens
+  - [x] Step 8.1: Rank swap, pool views, callouts and summary
+  - [x] Step 8.2: Attributes screen
+  - [x] Step 8.3: Abilities screen
+- [x] Slice 9: Advantages screen
+  - [x] Step 9.1: Advantages view models
+  - [x] Step 9.2: The Advantages screen
 
 #### Wave 7
 - [ ] Slice 10: Finishing touches — Humanity, Willpower and the freebie ledger

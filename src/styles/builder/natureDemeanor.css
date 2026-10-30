@@ -1,0 +1,92 @@
+/* The Nature & Demeanor screen: two role cards, the role switch, a field for a player's own Archetype, a
+   search, and the Archetype buttons. The shared card, chip and helper pieces are in builder.css. */
+
+.nd-layout {
+	display: grid;
+	gap: var(--space-3);
+	max-inline-size: 44rem;
+}
+
+.nd-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+	gap: var(--space-3);
+}
+
+.nd-heading {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	line-height: var(--leading-tight);
+	color: var(--color-text-strong);
+}
+
+.nd-card-value {
+	margin: var(--space-1) 0 0;
+	overflow-wrap: anywhere;
+}
+
+.nd-text {
+	margin: 0;
+}
+
+/* The role switch: two options side by side; the chosen one is filled, edged in the accent text colour (3:1
+   on the fill, which the accent fill colour is not) and, as a radio, checked. */
+.nd-roles {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
+.nd-role {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	min-block-size: var(--control-size);
+	padding: var(--space-1) var(--space-3);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-button);
+	background: var(--color-control);
+	cursor: pointer;
+}
+
+.nd-role input {
+	accent-color: var(--color-accent-text);
+}
+
+.nd-role:has(input:checked) {
+	background: var(--color-selected);
+	border-color: var(--color-accent-text);
+}
+
+.nd-assigned {
+	margin: 0;
+}
+
+.nd-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
+.nd-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+}
+
+.nd-chip[hidden] {
+	display: none;
+}
+
+/* N and D name the roles a name fills; the same roles are spelled out for assistive technology. */
+.nd-chip-marks {
+	font-size: var(--text-small);
+	font-weight: 600;
+	color: var(--color-text-status);
+}
+
+.nd-chip-state {
+	font-size: var(--text-small);
+	color: var(--color-text-status);
+}

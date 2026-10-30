@@ -3,7 +3,6 @@ import { blankBuild, type V20Build } from '../../../src/domain/v20/creation/buil
 import { play, type Step } from '../../../src/domain/v20/creation/testing/play';
 import { createBuildStore } from '../../../src/storage/buildStore';
 import type { StoragePort } from '../../../src/storage/storagePort';
-import { ABILITY_GROUPS, ATTRIBUTE_GROUPS } from '../../../src/domain/v20/traits';
 import { createAction, openRoster } from './pages';
 import { ANNOUNCEMENT_WINDOW_MS, waitOnPageClock, watchAnnouncements } from './announcements';
 import { storedKeys, storedText, writeRecord } from './storage';
@@ -18,12 +17,16 @@ export const builderAddress = (id: string): string => `/build/?id=${encodeURICom
 export const openBuildId = (page: Page): string =>
   new URL(page.url()).searchParams.get('id') ?? '';
 
+/** The builder's title: the one level 1 heading it shows, whatever the chronicle before it says. */
+export const builderHeading = (page: Page): Locator =>
+  page.getByRole('heading', { name: 'Character builder', level: 1 });
+
 /** Starts a build from the roster and ends on the builder. */
 export async function startBuild(page: Page): Promise<void> {
   await openRoster(page);
   await createAction(page, 'Start character creator').click();
   await expect(page).toHaveURL(BUILDER_ADDRESS);
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await expect(builderHeading(page)).toBeVisible();
   await watchAnnouncements(page);
 }
 
@@ -93,9 +96,9 @@ export function buildWith(values: BuildValues = {}): V20Build {
   return build;
 }
 
-/** Opens the Finishing touches step and activates Finish. */
+/** Opens the Review & resolve screen and activates Finish. */
 export async function activateFinish(page: Page): Promise<void> {
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   // Force: a blocked Finish is only aria-disabled, which Playwright would otherwise wait out.
   await finishButton(page).click({ force: true });
 }
@@ -108,7 +111,7 @@ export const finishButton = (page: Page): Locator => page.getByRole('button', { 
 
 export const outstandingItems = (page: Page): Locator => page.locator('[data-outstanding-list] li');
 
-/** Finishes the build open on Finishing touches, accepting the unspent-freebie question when `accept` and it is asked. */
+/** Finishes the build, accepting the unspent-freebie question when `accept` and it is asked. */
 export async function finishOpenBuild(page: Page, accept = true): Promise<void> {
   await activateFinish(page);
   if (accept && (await finishDialog(page).isVisible())) {
@@ -118,7 +121,7 @@ export async function finishOpenBuild(page: Page, accept = true): Promise<void> 
 
 /** Finish while something is outstanding: reachable by keyboard, and explaining itself in text. */
 export async function expectFinishExplains(page: Page, reason: string): Promise<void> {
-  await openStep(page, 'Finishing touches');
+  await openStep(page, 'Review & resolve');
   const finish = page.getByRole('button', { name: reason, exact: true });
   await expect(finish).toHaveAttribute('aria-disabled', 'true');
   // aria-disabled, not the disabled attribute, so keyboard users can still reach it.
@@ -148,13 +151,13 @@ export async function expectFinishDoesNothing(page: Page): Promise<void> {
 /** Opens a build already in storage, without saving anything first; one that cannot be read is opened too. */
 export async function openStored(page: Page, id: string): Promise<void> {
   await page.goto(builderAddress(id));
-  await expect(page.getByRole('heading', { name: /^Build (a character|could not be read)$/ })).toBeVisible();
+  await expect(builderHeading(page).or(page.getByRole('heading', { name: 'Build could not be read' }))).toBeVisible();
   await watchAnnouncements(page);
 }
 
 export async function reloadBuilder(page: Page): Promise<void> {
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await expect(builderHeading(page)).toBeVisible();
   await watchAnnouncements(page);
 }
 
@@ -168,31 +171,40 @@ export async function storeRawBuild(page: Page, id: string, record: unknown): Pr
 export async function openSavedBuild(page: Page, build: V20Build): Promise<void> {
   await saveBuilds(page, [build]);
   await page.goto(builderAddress(build.id));
-  await expect(page.getByRole('heading', { name: 'Build a character' })).toBeVisible();
+  await expect(builderHeading(page)).toBeVisible();
   await watchAnnouncements(page);
 }
 
+/** The screen list (the sidebar), whose items are the old steps' navigation. */
 export const stepNav = (page: Page): Locator =>
-  page.getByRole('navigation', { name: 'Build steps' });
+  page.getByRole('navigation', { name: 'Build screens' });
+
+/**
+ * The sidebar's name for a screen. The scenarios that predate the sidebar say "Concept" for the screen
+ * the sidebar calls "Character concept"; every other name is the same, whatever its case.
+ */
+export function screenTitle(title: string): string {
+  return /^concept$/i.test(title) ? 'Character concept' : title;
+}
+
+/** A screen's link in the sidebar. */
+export const stepLink = (page: Page, title: string): Locator =>
+  stepNav(page).getByRole('link', { name: screenTitle(title), exact: true });
 
 export const stepHeading = (page: Page, title: string): Locator =>
-  page.getByRole('heading', { name: title, level: 2, exact: true });
+  page.getByRole('heading', { name: screenTitle(title), level: 2, exact: true });
 
-/** Opens a step from the step navigation, unless it is already shown. */
+/** The one step panel being shown. */
+export const shownStep = (page: Page): Locator => page.locator('#builder [data-step]:visible');
+
+/** Opens a screen from the sidebar, unless it is already shown. */
 export async function openStep(page: Page, title: string): Promise<void> {
   await closeCreationSettings(page);
   if (!(await stepHeading(page, title).isVisible())) {
-    await stepNav(page).getByRole('link', { name: title, exact: true }).click();
+    await stepLink(page, title).click();
   }
   await expect(stepHeading(page, title)).toBeVisible();
 }
-
-/** A builder field by its label; a step region of the same name is not a field. */
-export const builderField = (page: Page, label: string): Locator =>
-  page
-    .locator('#builder')
-    .getByLabel(label, { exact: true })
-    .and(page.locator('input, select, textarea'));
 
 /**
  * Puts builds into the browser's storage as if they had been saved earlier.
@@ -217,116 +229,6 @@ export async function saveBuilds(page: Page, builds: V20Build[]): Promise<void> 
   }, [...records]);
 }
 
-// Traits and groups
-
-
-/** The step a trait's creation dots are placed on, by its label. */
-export function homeStepOf(label: string): string {
-  if (ATTRIBUTE_GROUPS.some((group) => group.traits.some((trait) => trait.label === label))) {
-    return 'Attributes';
-  }
-  if (ABILITY_GROUPS.some((group) => group.traits.some((trait) => trait.label === label))) {
-    return 'Abilities';
-  }
-  if (label === 'Humanity' || label === 'Willpower') return 'Finishing touches';
-  return 'Advantages';
-}
-
-/** The step a ranked group is on. */
-export function groupStepOf(label: string): string {
-  if (ATTRIBUTE_GROUPS.some((group) => group.label === label)) return 'Attributes';
-  if (ABILITY_GROUPS.some((group) => group.label === label)) return 'Abilities';
-  return 'Advantages';
-}
-
-/** The one step panel being shown. */
-export const shownStep = (page: Page): Locator => page.locator('#builder [data-step]:visible');
-
-/** "the Generation background" and "Generation" name the same row. */
-export const traitName = (name: string): string =>
-  name.replace(/^the (?:Attribute |Ability |Discipline |Background |Virtue )?/, '').replace(/ background$/, '');
-
-/** Opens every collapsed freebie section on the shown step, so their rows can be found. */
-export async function openFreebieSections(page: Page): Promise<void> {
-  await shownStep(page).evaluate((step) => {
-    for (const details of step.querySelectorAll('details')) details.open = true;
-  });
-}
-
-/** A trait's rating control on the shown step, opening the trait's own step if it is not there. */
-export async function traitRating(page: Page, name: string): Promise<Locator> {
-  const label = traitName(name);
-  await openFreebieSections(page);
-  const here = shownStep(page).getByRole('slider', { name: label, exact: true });
-  if ((await here.count()) > 0) return here;
-  await openStep(page, homeStepOf(label));
-  return shownStep(page).getByRole('slider', { name: label, exact: true });
-}
-
-/** Asks a rating for `target` the way a player would, by activating a dot. */
-export async function requestRating(control: Locator, target: number): Promise<void> {
-  const current = Number(await control.getAttribute('aria-valuenow'));
-  if (current === target) return;
-  if (target > 0) {
-    await control.locator('.rating-mark').nth(target - 1).click();
-    return;
-  }
-  // The first dot sets 1; activating it again lowers to 0, if the floor allows.
-  await control.locator('.rating-mark').first().click();
-  if (current > 1 && (await control.getAttribute('aria-valuenow')) === '1') {
-    await control.locator('.rating-mark').first().click();
-  }
-}
-
-export async function expectRated(control: Locator, value: number): Promise<void> {
-  await expect(control).toHaveAttribute('aria-valuenow', String(value));
-  await expect(control.locator('.rating-mark.is-filled')).toHaveCount(value);
-}
-
-/** Sets a trait through the page and checks it took. */
-export async function rateTrait(page: Page, name: string, value: number): Promise<void> {
-  const control = await traitRating(page, name);
-  await requestRating(control, value);
-  await expectRated(control, value);
-}
-
-export async function groupBox(page: Page, label: string): Promise<Locator> {
-  await openFreebieSections(page);
-  const here = shownStep(page).getByRole('group', { name: label, exact: true });
-  if ((await here.count()) > 0) return here;
-  await openStep(page, groupStepOf(label));
-  return shownStep(page).getByRole('group', { name: label, exact: true });
-}
-
-export const groupReadout = async (page: Page, label: string): Promise<Locator> =>
-  (await groupBox(page, label)).locator('[data-allotment-status]');
-
-export const groupNotice = async (page: Page, label: string): Promise<Locator> =>
-  (await groupBox(page, label)).locator('[data-notice]');
-
-export async function rankSelect(page: Page, label: string): Promise<Locator> {
-  return (await groupBox(page, label)).getByRole('combobox', { name: `${label} rank`, exact: true });
-}
-
-export async function rankGroup(page: Page, label: string, rank: string): Promise<void> {
-  await (await rankSelect(page, label)).selectOption(rank);
-}
-
-/** Places `count` creation dots across a group's traits, filling each to `cap` in turn. */
-export async function placeDots(page: Page, label: string, count: number, cap: number): Promise<void> {
-  const group = await groupBox(page, label);
-  const sliders = group.getByRole('slider');
-  let left = count;
-  for (const slider of await sliders.all()) {
-    if (left === 0) break;
-    const current = Number(await slider.getAttribute('aria-valuenow'));
-    const target = Math.min(cap, current + left);
-    left -= target - current;
-    await requestRating(slider, target);
-    await expectRated(slider, target);
-  }
-}
-
 /** Saves a build made by playing the real updates, then opens it in the builder. */
 export async function openPlayed(page: Page, ...steps: Step[]): Promise<V20Build> {
   return openPlayedFrom(page, buildWith(), ...steps);
@@ -343,5 +245,5 @@ export async function openPlayedFrom(page: Page, start: V20Build, ...steps: Step
   return build;
 }
 
-/** The freebie points remaining bar, shown on every step. */
-export const freebieBar = (page: Page): Locator => page.locator('[data-freebie-remaining]');
+/** The freebie points remaining, a row of the "Your character" panel shown on every screen: "15 remaining". */
+export const freebiePointsRemaining = (page: Page): Locator => page.locator('[data-freebie-remaining]');

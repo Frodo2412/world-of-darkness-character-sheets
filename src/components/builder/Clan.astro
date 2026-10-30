@@ -1,0 +1,77 @@
+---
+// The Clan screen: a search over the clans, one card for each, the detail of the chosen clan and, beside
+// it, the question a switch that would remove dots asks. The cards are a radiogroup the screen module
+// shows, hides and marks; the text that changes with the build is written there from clanCards.ts.
+import { CAITIFF_NOTE, CLAN_CARDS } from '../../domain/v20/creation/clanCards';
+import { CLAN_LIST_HELP } from '../../scripts/builder/parts/keyHelp';
+import SearchField from './SearchField.astro';
+
+const slug = (name: string): string => name.toLowerCase().replaceAll(' ', '-');
+---
+
+<div class="clan-layout">
+	<div class="clan-column">
+		<SearchField id="clan-search" label="Search clans" prefix="clan" />
+
+		<div class="clan-counts">
+			<h3 class="clan-heading" data-clan-heading>All Clans · {CLAN_CARDS.length}</h3>
+			<span class="builder-status" data-clan-selected>Selected · 0/1</span>
+		</div>
+
+		<p id="clan-list-help" class="builder-helper clan-list-help">{CLAN_LIST_HELP}</p>
+
+		<div class="clan-list" role="radiogroup" aria-label="Clans" aria-describedby="clan-list-help clan-choice-notice" data-clan-list>
+			{
+				CLAN_CARDS.map((card) => (
+					<button
+						type="button"
+						class="clan-card"
+						role="radio"
+						aria-checked="false"
+						aria-label={card.name}
+						aria-describedby={`clan-line-${slug(card.name)}`}
+						tabindex="-1"
+						data-clan-card={card.name}
+					>
+						<span class="clan-card-name">{card.name}</span>
+						<span class="clan-card-state" data-clan-card-state aria-hidden="true" hidden>
+							✓ Selected
+						</span>
+						<span class="clan-card-line" id={`clan-line-${slug(card.name)}`}>
+							{card.line}
+						</span>
+					</button>
+				))
+			}
+		</div>
+
+		<div class="builder-card clan-help">
+			<h3 class="clan-heading">{CAITIFF_NOTE.heading}</h3>
+			<p class="clan-text" data-clan-help>{CAITIFF_NOTE.text}</p>
+		</div>
+	</div>
+
+	<div class="clan-column">
+		<div class="clan-change" data-clan-change>
+			<div id="clan-change-text" role="status" data-clan-change-text></div>
+			<div class="clan-change-actions" data-clan-change-actions hidden>
+				<button type="button" aria-describedby="clan-change-text" data-clan-switch></button>
+				<button type="button" aria-describedby="clan-change-text" data-clan-keep></button>
+			</div>
+		</div>
+		<p id="clan-choice-notice" class="field-notice" role="status" data-notice></p>
+
+		<section class="builder-card clan-detail" aria-labelledby="clan-detail-label" data-clan-detail>
+			<p id="clan-detail-label" class="clan-heading">Chosen clan</p>
+			<p class="builder-helper clan-text" data-clan-detail-empty>Choose a clan to see its Disciplines.</p>
+			<div data-clan-detail-body hidden>
+				<h3 class="clan-detail-name" data-clan-detail-name></h3>
+				<p class="clan-text" data-clan-detail-line></p>
+				<h4 class="clan-subheading">Disciplines</h4>
+				<ul class="clan-disciplines" data-clan-detail-disciplines></ul>
+				<p class="clan-text" data-clan-detail-rule></p>
+				<p class="builder-helper clan-text" data-clan-detail-note></p>
+			</div>
+		</section>
+	</div>
+</div>

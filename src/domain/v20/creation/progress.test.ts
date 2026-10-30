@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { blankBuild } from './build';
 import { completeBuild, creation, generation, play } from './testing/play';
-import { BACKGROUNDS, BUILD_STEPS } from './rules';
-import { bloodPoolHint, conceptReport, finishReport, isFinishable, report, settingsReport, stepStatuses } from './progress';
+import { BACKGROUNDS } from './rules';
+import { bloodPoolHint, conceptReport, finishReport, isFinishable, report, settingsReport } from './progress';
 import { setBaseGeneration, setClan, setConceptText, setExtraFreebies } from './updates';
 
 function played(generation: number, extra: string) {
@@ -51,7 +51,6 @@ describe('report', () => {
     expect(report(build)).toMatchObject({
       settings: settingsReport(build),
       concept: conceptReport(build),
-      steps: stepStatuses(build),
     });
   });
 });
@@ -72,7 +71,7 @@ describe('finishReport', () => {
   test('a complete build is not blocked and says nothing', () => {
     expect(finishReport(completeBuild('Brujah'))).toEqual({
       blocked: false,
-      itemsLeft: 0,
+      outstandingCount: 0,
       unspentFreebies: 15,
       label: 'Finish character',
       refusalMessage: 'This build is not finished: resolve the outstanding items first.',
@@ -83,7 +82,7 @@ describe('finishReport', () => {
     const build = { ...completeBuild('Brujah'), bloodPool: null };
     expect(finishReport(build)).toMatchObject({
       blocked: true,
-      itemsLeft: 1,
+      outstandingCount: 1,
       label: 'Finish character · 1 item left',
       refusalMessage: 'This build is not finished: resolve the outstanding items first.',
     });
@@ -93,7 +92,7 @@ describe('finishReport', () => {
     // A new build owes a clan, both rank sets, three allotments and the Blood Pool.
     expect(finishReport(blankBuild('abc'))).toMatchObject({
       blocked: true,
-      itemsLeft: 7,
+      outstandingCount: 7,
       label: 'Finish character · 7 items left',
     });
   });
@@ -117,18 +116,6 @@ describe('conceptReport', () => {
       fields: { name: 'Lucita', player: '', chronicle: '', nature: '', demeanor: '', concept: '', sire: '' },
       clan: 'Lasombra',
     });
-  });
-});
-
-describe('stepStatuses', () => {
-  test('has a status entry for exactly the builder steps', () => {
-    expect(Object.keys(stepStatuses(blankBuild('abc')))).toEqual(BUILD_STEPS.map((entry) => entry.step));
-  });
-
-  test('the concept step needs a clan until one is chosen', () => {
-    const build = blankBuild('abc');
-    expect(stepStatuses(build).concept).toBe('clan needed');
-    expect(stepStatuses(setClan(build, 'Toreador').build).concept).toBe('');
   });
 });
 

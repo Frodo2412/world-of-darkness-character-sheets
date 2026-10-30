@@ -1,0 +1,16 @@
+---
+// The builder's top bar: where the build belongs, how its saving is going, and the Creation settings.
+// The shell fills the chronicle and the autosave status from the build; this is only the markup. The
+// application bar above it already carries the product mark.
+---
+
+<div class="builder-topbar">
+	<h1 class="builder-title"><span data-top-chronicle hidden></span>Character builder</h1>
+	<!-- Text only: a save follows every change, so it is not a live region. A failure is the alert below. -->
+	<p class="builder-save-status" tabindex="-1" data-autosave-status></p>
+	<button type="button" data-settings-open>Creation settings</button>
+	<div class="builder-failure" data-autosave-failure hidden>
+		<p role="alert" data-autosave-alert></p>
+		<button type="button" data-autosave-retry>Try saving again</button>
+	</div>
+</div>

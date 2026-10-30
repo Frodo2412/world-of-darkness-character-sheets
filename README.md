@@ -5,7 +5,7 @@ Interactive character sheets for World of Darkness games, kept in your browser.
 The first sheet is **Vampire: The Masquerade 20th Anniversary Edition (V20)**. You get a
 roster of characters and, for each one, a **play view** of **page 1** of the official
 sheet: the character's identity, attributes, abilities, Disciplines, virtues, Humanity,
-Willpower, Blood Pool and health, with a dice-pool calculator. A step-by-step
+Willpower, Blood Pool and health, with a dice-pool calculator. A guided
 **builder** creates a new character by the V20 creation rules.
 
 Beside the Character sheet, five more tabs turn the sheet into a character dossier:
@@ -29,8 +29,8 @@ existed opens on every one of them.
 
 ## Building a character
 
-"Build a character" on the roster opens the builder: Concept, Attributes, Abilities,
-Advantages and Finishing touches, visited in any order. Every change is saved
+"Build a character" on the roster opens the builder: Character concept, Clan, Nature & Demeanor,
+Attributes, Abilities, Advantages and Finishing touches, visited in any order. Every change is saved
 as you go, and builds in progress are listed on the roster to continue or delete.
 
 - **Two creation settings** are for the Storyteller's house rules: the base generation
@@ -98,8 +98,8 @@ Requires Node 22.12 or later.
 | `npm run lint`      | `oxlint`                                                        |
 
 The end-to-end suite is written as Gherkin. Each `.feature` file under
-`features/v20-character-sheet/` and `features/character-builder/` is exported from the
-matching plan in `plans/`; the step definitions that drive the browser are in
+`features/v20-character-sheet/` and `features/character-builder-redesign/` is exported from
+the matching plan in `plans/`; the files under `features/character-builder/` are hand-maintained; the step definitions that drive the browser are in
 `features/steps/`. `npm run test:e2e` builds the site, serves it on port 4322 and runs
 every scenario, including an automated WCAG 2.1 AA check of each page state. A scenario
 with an undefined step fails the run. The first run needs a browser:
@@ -114,7 +114,7 @@ with an undefined step fails the run. The first run needs a browser:
 | `src/storage/`              | The only code that reads or writes `localStorage`                       |
 | `src/components/controls/`  | Custom elements: dot rating, box tracker, health track                  |
 | `src/components/sheet/`     | Astro components for the sheet's sections                               |
-| `src/components/builder/`   | Astro components for the builder's steps                                |
+| `src/components/builder/`   | Astro components for the builder's screens and shell                    |
 | `src/scripts/`              | Page wiring: a control changes, the model updates, the store saves      |
 | `src/pages/`                | The roster (`/`), the sheet (`/sheet/?id=…`) and the builder (`/build/?id=…`) |
 | `docs/specs/`, `plans/`     | The spec and the plan this was built from                               |

@@ -1,0 +1,70 @@
+/* The Character concept screen: a prompt banner drawn in CSS alone, a multi-line field, and the sample
+   concept chips. The shared card, chip and helper pieces are in builder.css. */
+
+.concept-layout {
+	display: grid;
+	gap: var(--space-4);
+	max-inline-size: 44rem;
+}
+
+.concept-hero {
+	background-color: var(--color-callout);
+	background-image:
+		radial-gradient(circle at 12% 120%, rgb(182 71 76 / 0.35), transparent 55%),
+		linear-gradient(135deg, rgb(255 255 255 / 0.04), transparent 60%);
+	border: var(--stroke) solid var(--color-line);
+	border-radius: var(--radius-card);
+	padding: var(--space-4) var(--space-3);
+}
+
+.concept-hero-prompt {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-h2);
+	line-height: var(--leading-tight);
+	color: var(--color-text-strong);
+}
+
+.concept-heading {
+	margin: 0 0 var(--space-2);
+	font-family: var(--font-display);
+	font-size: var(--text-h3);
+	line-height: var(--leading-tight);
+	color: var(--color-text-strong);
+}
+
+/* Multi-line text, drawn as the builder's single-line fields are. */
+.concept-text {
+	font: inherit;
+	color: var(--color-text);
+	background: var(--color-surface);
+	border: var(--stroke) solid var(--color-border-control);
+	border-radius: var(--radius-badge);
+	min-block-size: 5.5rem;
+	padding: var(--space-1) var(--space-2);
+	inline-size: 100%;
+	resize: vertical;
+}
+
+.concept-hint {
+	margin: 0 0 var(--space-2);
+}
+
+.concept-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
+.concept-chip-state {
+	margin-inline-start: var(--space-1);
+	font-size: var(--text-small);
+}
+
+.concept-line {
+	margin: var(--space-2) 0 0;
+}
+
+.concept-line:empty {
+	display: none;
+}

@@ -1,0 +1,33 @@
+---
+// "Your character": the build so far, a row for each part. The shell fills the values from the build;
+// Humanity and Willpower are shown from Finishing touches on. The freebie points remaining are the one
+// live region in the panel: they are what the player spends against, and are said when they change.
+import { isVirtueDerived } from '../../domain/v20/creation/ratings';
+import { PANEL_ROWS } from '../../domain/v20/creation/shellView';
+---
+
+<aside class="builder-panel" aria-labelledby="character-panel-title" data-character-panel>
+	<h2 id="character-panel-title">Your character</h2>
+	<dl class="builder-panel-rows">
+		{
+			PANEL_ROWS.map(({ key, label }) => (
+				<div class="builder-panel-row" data-panel-row={key} hidden={isVirtueDerived(key)}>
+					<dt>{label}</dt>
+					<dd>
+						{key === 'freebies' ? (
+							<span role="status" aria-atomic="true">
+								<span class="visually-hidden">Freebie points </span>
+								<span data-panel-value data-freebie-remaining />
+							</span>
+						) : (
+							<>
+								<span data-panel-value />
+								{isVirtueDerived(key) && <span class="builder-panel-dots" aria-hidden="true" data-panel-dots />}
+							</>
+						)}
+					</dd>
+				</div>
+			))
+		}
+	</dl>
+</aside>
