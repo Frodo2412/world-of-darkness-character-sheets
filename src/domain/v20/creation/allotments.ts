@@ -2,7 +2,7 @@
 // allotment grants, how many creation dots it holds, and what is left.
 // Nothing here names a particular trait; the descriptors say it all.
 
-import type { BuildTraitRef, FixedTraitRef, V20Build } from './build';
+import { backgroundRef, disciplineRef, virtueRef, type BuildTraitRef, type FixedTraitRef, type V20Build } from './build';
 import { dotsOf, kindOf, keyOf } from './ratings';
 import {
   BACKGROUNDS,
@@ -62,11 +62,11 @@ export function groupTraits(allotment: RankedAllotment, groupKey: string): Fixed
 export function flatTraits(build: V20Build, allotment: FlatAllotment): BuildTraitRef[] {
   switch (allotment.key) {
     case 'disciplines':
-      return build.disciplines.map((entry): BuildTraitRef => `discipline:${entry.name}`);
+      return build.disciplines.map((entry) => disciplineRef(entry.name));
     case 'backgrounds':
-      return BACKGROUNDS.map((name): BuildTraitRef => `background:${name}`);
+      return BACKGROUNDS.map(backgroundRef);
     case 'virtues':
-      return BUILD_VIRTUES.map((virtue): BuildTraitRef => `virtue:${virtue.key}`);
+      return BUILD_VIRTUES.map((virtue) => virtueRef(virtue.key));
   }
 }
 

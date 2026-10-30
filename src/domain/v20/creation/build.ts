@@ -59,6 +59,13 @@ export interface DisciplineEntry extends Dots {
   writeIn: boolean;
 }
 
+/** The address of the Discipline called `name`. */
+export const disciplineRef = (name: string): DisciplineRef => `discipline:${name}`;
+
+export const backgroundRef = (name: BackgroundName): FixedTraitRef => `background:${name}`;
+
+export const virtueRef = (key: VirtueKey): FixedTraitRef => `virtue:${key}`;
+
 export const FIXED_TRAIT_REFS: readonly FixedTraitRef[] = [
   ...ATTRIBUTE_ALLOTMENT.groups.flatMap((group) =>
     group.traits.map((trait) => `attribute:${trait}` as FixedTraitRef),
@@ -66,10 +73,16 @@ export const FIXED_TRAIT_REFS: readonly FixedTraitRef[] = [
   ...ABILITY_ALLOTMENT.groups.flatMap((group) =>
     group.traits.map((trait) => `ability:${trait}` as FixedTraitRef),
   ),
-  ...BUILD_VIRTUES.map((virtue): FixedTraitRef => `virtue:${virtue.key}`),
-  ...BACKGROUNDS.map((name): FixedTraitRef => `background:${name}`),
+  ...BUILD_VIRTUES.map((virtue) => virtueRef(virtue.key)),
+  ...BACKGROUNDS.map(backgroundRef),
   'humanity',
   'willpower',
+];
+
+/** Every trait the build rates: the fixed ones, then each Discipline it holds. */
+export const allTraitRefs = (build: V20Build): BuildTraitRef[] => [
+  ...FIXED_TRAIT_REFS,
+  ...build.disciplines.map((entry) => disciplineRef(entry.name)),
 ];
 
 /** Every group a ranked allotment has, Attributes then Abilities. */

@@ -7,7 +7,7 @@
 // place to record a chip chosen at 0 dots, so `picked` is the screen's own state, passed in: it is gone after
 // a reload. No line names the character or uses a pronoun.
 
-import type { BuildTraitRef, V20Build } from './build';
+import { backgroundRef, virtueRef, type V20Build } from './build';
 import { matchByName } from './catalogue';
 import { GENERATION_REF, MOST_POTENT, generationBackgroundTop, maximumFor, ordinal } from './limits';
 import { calloutOf, poolOf, rowOf, type Callout, type PoolView, type RowView } from './poolViews';
@@ -47,8 +47,6 @@ const SABBAT_BACKGROUNDS: readonly BackgroundName[] = ['Black Hand Membership', 
 
 /** What a Background is called on the screen. The name the build stores and the sheet carries is unchanged. */
 export const backgroundLabel = (name: BackgroundName): string => (SABBAT_BACKGROUNDS.includes(name) ? `${name} (Sabbat)` : name);
-
-const backgroundRef = (name: BackgroundName): BuildTraitRef => `background:${name}`;
 
 // Disciplines
 
@@ -208,7 +206,7 @@ export interface VirtuesView {
 
 export function virtuesView(build: V20Build): VirtuesView {
   const report = allotmentReports(build).virtues;
-  const rows = BUILD_VIRTUES.map((virtue) => rowOf(build, report, `virtue:${virtue.key}`));
+  const rows = BUILD_VIRTUES.map((virtue) => rowOf(build, report, virtueRef(virtue.key)));
   return {
     line: VIRTUES_LINE,
     pool: poolOf(report),

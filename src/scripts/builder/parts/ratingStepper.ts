@@ -9,6 +9,7 @@
 import type { BuildTraitRef } from '../../../domain/v20/creation/build';
 import type { RowView } from '../../../domain/v20/creation/poolViews';
 import type { TraitReport } from '../../../domain/v20/creation/progress';
+import { isVirtueDerived } from '../../../domain/v20/creation/ratings';
 import type { DotSource } from '../../../domain/v20/creation/updates';
 
 /** What the stepper shows for a trait, decided apart from the DOM. */
@@ -32,7 +33,7 @@ export interface StepperView {
 /** What holds a trait at its floor: the Virtues give Humanity and Willpower theirs, a free dot gives the rest. */
 function floorReason(trait: TraitReport): string {
   if (trait.floor === 0) return 'Minimum 0';
-  if (trait.ref === 'humanity' || trait.ref === 'willpower') return `Minimum ${trait.floor}, from Virtues`;
+  if (isVirtueDerived(trait.ref)) return `Minimum ${trait.floor}, from Virtues`;
   return `Minimum ${trait.floor}, free ${trait.floor === 1 ? 'dot' : 'dots'}`;
 }
 

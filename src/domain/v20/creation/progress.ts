@@ -2,7 +2,7 @@
 // the page never compares numbers against budgets or maximums itself.
 
 import { allotmentStates, isUnranked, poolStateOf, type AllotmentState } from './allotments';
-import { CONCEPT_FIELDS, FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
+import { CONCEPT_FIELDS, FIXED_TRAIT_REFS, allTraitRefs, disciplineRef, type BuildTraitRef, type ConceptField, type V20Build } from './build';
 import { freebieBudget, freebiesRemaining, freebiesSpent } from './freebies';
 import { effectiveGeneration, limits, maximumFor, ordinal, violations } from './limits';
 import {
@@ -13,6 +13,7 @@ import {
   freeDots,
   isCaitiff,
   isLocked,
+  isVirtueDerived,
   kindOf,
   rating,
   traitLabel,
@@ -139,7 +140,7 @@ function valueText(build: V20Build, ref: BuildTraitRef, max: number): string {
   if (isLocked(build, ref)) return `${value}, fixed for ${build.clan}`;
   const { freebie } = dotsOf(build, ref);
   if (freebie === 0) return `${value} of ${max}`;
-  const base = ref === 'humanity' || ref === 'willpower' ? 'from Virtues' : 'from creation';
+  const base = isVirtueDerived(ref) ? 'from Virtues' : 'from creation';
   return `${value} of ${max}: ${creationRating(build, ref)} ${base}, ${freebie} from freebie points`;
 }
 
@@ -158,8 +159,6 @@ export function traitReport(build: V20Build, ref: BuildTraitRef): TraitReport {
   };
 }
 
-const disciplineRef = (name: string): BuildTraitRef => `discipline:${name}`;
-
 const SECTION_KINDS: Record<FreebieSection, keyof typeof FREEBIE_COSTS> = {
   attributes: 'attribute',
   abilities: 'ability',
@@ -172,7 +171,7 @@ const SECTION_KINDS: Record<FreebieSection, keyof typeof FREEBIE_COSTS> = {
 
 export function freebieReport(build: V20Build): FreebieReport {
   const remaining = freebiesRemaining(build);
-  const traits: BuildTraitRef[] = [...FIXED_TRAIT_REFS, ...build.disciplines.map((entry) => disciplineRef(entry.name))];
+  const traits = allTraitRefs(build);
   const sections = Object.fromEntries(
     Object.entries(SECTION_KINDS).map(([section, kind]) => [
       section,

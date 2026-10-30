@@ -10,7 +10,7 @@ import {
   type V20Character,
 } from '../character';
 import type { TraitRef } from '../traits';
-import { CONCEPT_FIELDS, composeConcept, FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
+import { CONCEPT_FIELDS, backgroundRef, composeConcept, disciplineRef, FIXED_TRAIT_REFS, type BuildTraitRef, type ConceptField, type V20Build } from './build';
 import { effectiveGeneration, limits, ordinal } from './limits';
 import { disciplineOrder, keyOf, kindOf, rating } from './ratings';
 import { BACKGROUNDS } from './rules';
@@ -30,12 +30,12 @@ function sheetTrait(ref: BuildTraitRef): TraitRef {
 /** Held Disciplines in the builder's order: the clan's, then the rest as added. */
 function heldDisciplines(build: V20Build): { name: string; rating: number }[] {
   return disciplineOrder(build)
-    .map((name) => ({ name, rating: rating(build, `discipline:${name}`) }))
+    .map((name) => ({ name, rating: rating(build, disciplineRef(name)) }))
     .filter((entry) => entry.rating > 0);
 }
 
 function heldBackgrounds(build: V20Build): { name: string; rating: number }[] {
-  return BACKGROUNDS.map((name) => ({ name, rating: rating(build, `background:${name}`) })).filter(
+  return BACKGROUNDS.map((name) => ({ name, rating: rating(build, backgroundRef(name)) })).filter(
     (entry) => entry.rating > 0,
   );
 }

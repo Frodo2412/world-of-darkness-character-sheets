@@ -3,13 +3,14 @@
 
 import { ordinal } from '../identity';
 import type { BuildTraitRef, V20Build } from './build';
-import { FIXED_TRAIT_REFS } from './build';
+import { allTraitRefs, backgroundRef } from './build';
 import { freebieBudget, freebiesSpent } from './freebies';
 import {
   creationRating,
   creationStepOf,
   dotsOf,
   fixedRating,
+  isVirtueDerived,
   kindOf,
   rating,
   traitLabel,
@@ -28,7 +29,7 @@ export { freebieBudget } from './freebies';
 export const MOST_POTENT = GENERATION_TABLE[0].generation;
 const LEAST_POTENT = GENERATION_TABLE[GENERATION_TABLE.length - 1].generation;
 
-export const GENERATION_REF: BuildTraitRef = `background:${GENERATION_BACKGROUND}`;
+export const GENERATION_REF: BuildTraitRef = backgroundRef(GENERATION_BACKGROUND);
 
 export { ordinal };
 
@@ -107,7 +108,7 @@ function traitViolation(build: V20Build, ref: BuildTraitRef): Violation | undefi
   if (value <= max) return undefined;
   const label = traitLabel(ref);
   // Humanity and Willpower follow the Virtues; only their freebie dots can be lowered.
-  if (ref === 'humanity' || ref === 'willpower') {
+  if (isVirtueDerived(ref)) {
     return { key: `trait:${ref}`, amount: value - max, message: `Remove ${dotWord(value - max)} of ${label} first.`, step: 'finishing' };
   }
   // A bought dot is removed on Finishing touches; creation dots where they were placed.
@@ -131,11 +132,7 @@ export function violations(build: V20Build): Violation[] {
     });
   }
 
-  const traits: BuildTraitRef[] = [
-    ...FIXED_TRAIT_REFS,
-    ...build.disciplines.map((entry): BuildTraitRef => `discipline:${entry.name}`),
-  ];
-  for (const ref of traits) {
+  for (const ref of allTraitRefs(build)) {
     if (ref === GENERATION_REF && pastBest) continue;
     const violation = traitViolation(build, ref);
     if (violation) found.push(violation);

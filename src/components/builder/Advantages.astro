@@ -4,7 +4,7 @@
 // the line that Humanity and Willpower follow them. The screen module (scripts/builder/screens/advantages.ts)
 // writes everything that changes with the build, from advantageViews.ts; the chips are toggle buttons it shows,
 // hides and marks, and the rows of the chosen Backgrounds are drawn as they are chosen.
-import type { BuildTraitRef } from '../../domain/v20/creation/build';
+import { virtueRef } from '../../domain/v20/creation/build';
 import { backgroundLabel } from '../../domain/v20/creation/advantageViews';
 import { BACKGROUND_KEYS_HELP } from '../../scripts/builder/parts/keyHelp';
 import { BACKGROUNDS, BUILD_VIRTUES, MAX_HELD } from '../../domain/v20/creation/rules';
@@ -64,7 +64,7 @@ import TraitRow from './TraitRow.astro';
 			<div class="advantages-rows">
 				{
 					BUILD_VIRTUES.map((virtue) => (
-						<TraitRow trait={`virtue:${virtue.key}` as BuildTraitRef} mode="creation" step="advantages" noticeId="advantages-virtues-notice" />
+						<TraitRow trait={virtueRef(virtue.key)} mode="creation" step="advantages" noticeId="advantages-virtues-notice" />
 					))
 				}
 			</div>

@@ -1,5 +1,5 @@
 ---
-import type { BuildTraitRef } from '../../domain/v20/creation/build';
+import { backgroundRef, virtueRef } from '../../domain/v20/creation/build';
 import {
 	ABILITY_ALLOTMENT,
 	ATTRIBUTE_ALLOTMENT,
@@ -64,7 +64,7 @@ import TraitRow from './TraitRow.astro';
 		<FlatGroup key="backgrounds" label="Backgrounds" step="finishing">
 			{
 				BACKGROUNDS.map((name) => (
-					<TraitRow trait={`background:${name}` as BuildTraitRef} mode="freebie" step="finishing" noticeId="finishing-backgrounds-notice" />
+					<TraitRow trait={backgroundRef(name)} mode="freebie" step="finishing" noticeId="finishing-backgrounds-notice" />
 				))
 			}
 		</FlatGroup>
@@ -73,7 +73,7 @@ import TraitRow from './TraitRow.astro';
 		<FlatGroup key="virtues" label="Virtues" step="finishing">
 			{
 				BUILD_VIRTUES.map((virtue) => (
-					<TraitRow trait={`virtue:${virtue.key}` as BuildTraitRef} mode="freebie" step="finishing" noticeId="finishing-virtues-notice" />
+					<TraitRow trait={virtueRef(virtue.key)} mode="freebie" step="finishing" noticeId="finishing-virtues-notice" />
 				))
 			}
 		</FlatGroup>

@@ -12,6 +12,7 @@ import type {
   FixedTraitRef,
   V20Build,
 } from './build';
+import { disciplineRef } from './build';
 import { freebieCost, freebiesRemaining } from './freebies';
 import { DISCIPLINES_NEED_CLAN, list, numberWord, plural, screenTitle, titleCase } from './wording';
 import {
@@ -40,6 +41,7 @@ import {
   isClanName,
   isConceptKind,
   isRank,
+  isVirtueDerived,
   isLocked,
   keyOf,
   kindOf,
@@ -347,7 +349,7 @@ function heldCount(build: V20Build, ref: BuildTraitRef): number {
   if (!allotment) return 0;
   const traits: BuildTraitRef[] =
     kindOf(ref) === 'discipline'
-      ? build.disciplines.map((entry): BuildTraitRef => `discipline:${entry.name}`)
+      ? build.disciplines.map((entry) => disciplineRef(entry.name))
       : (Object.keys(build.traits) as FixedTraitRef[]).filter((key) => kindOf(key) === kindOf(ref));
   return traits.filter((trait) => rating(build, trait) > 0).length;
 }
@@ -430,7 +432,7 @@ function generationRefusal(build: V20Build, ref: BuildTraitRef, target: number):
 
 /** Humanity and Willpower take no creation dots: they follow the Virtues. */
 function derivedRefusal(build: V20Build, ref: BuildTraitRef): Refusal | undefined {
-  if (ref !== 'humanity' && ref !== 'willpower') return undefined;
+  if (!isVirtueDerived(ref)) return undefined;
   return because(`${traitLabel(ref)} comes from the Virtues. ${MORE_WITH_FREEBIES}`, 'finishing');
 }
 
@@ -507,7 +509,7 @@ function freebieFloorRefusal(build: V20Build, ref: BuildTraitRef, target: number
   if (target >= freeDots(build, ref) && dotsOf(build, ref).creation > 0) {
     return because(`Creation dots are changed on the ${screenTitle(creationStepOf(ref))} screen.`, creationStepOf(ref));
   }
-  if (ref === 'humanity' || ref === 'willpower') {
+  if (isVirtueDerived(ref)) {
     return because(`${traitLabel(ref)} from the Virtues is changed on the ${screenTitle('advantages')} screen.`, 'advantages');
   }
   return because(`${traitLabel(ref)} cannot go below ${floor}.`);
@@ -562,7 +564,7 @@ export function addDiscipline(build: V20Build, name: string, source: DotSource):
     }
     return commit(build, { ...build, disciplines: [...build.disciplines, entry] }, []);
   }
-  const ref: BuildTraitRef = `discipline:${canonical}`;
+  const ref = disciplineRef(canonical);
   const refusal = costRefusal(build, ref, 1) ?? heldCapRefusal(build, ref, 1);
   if (refusal) return refuse(build, refusal.reason, refusal.step);
   return commit(build, { ...build, disciplines: [...build.disciplines, { ...entry, freebie: 1 }] }, []);

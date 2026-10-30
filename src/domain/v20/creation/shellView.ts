@@ -3,6 +3,7 @@
 
 import { UNNAMED_CHARACTER } from '../character';
 import { poolsOn, type AllotmentState } from './allotments';
+import { isVirtueDerived } from './ratings';
 import { composeConcept, type V20Build } from './build';
 import { freebieReport, traitReport } from './progress';
 import { RANKS, type Rank, type ScreenId } from './rules';
@@ -123,7 +124,7 @@ export function characterRows(build: V20Build, screen: ScreenId): CharacterRow[]
     freebies: remaining >= 0 ? `${remaining} remaining` : `Overspent by ${-remaining}`,
   };
   return PANEL_ROWS.flatMap(({ key, label }): CharacterRow[] => {
-    if (key === 'humanity' || key === 'willpower') return showsVirtueTotals(screen) ? [dotsRow(build, key, label)] : [];
+    if (isVirtueDerived(key)) return showsVirtueTotals(screen) ? [dotsRow(build, key, label)] : [];
     return [{ key, label, value: values[key] }];
   });
 }

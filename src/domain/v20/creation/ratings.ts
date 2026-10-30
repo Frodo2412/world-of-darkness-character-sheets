@@ -23,9 +23,12 @@ import {
 
 const NO_DOTS: Dots = { creation: 0, freebie: 0 };
 
+/** Humanity and Willpower follow the Virtues: they take no creation dots of their own. */
+export const isVirtueDerived = (ref: string): ref is 'humanity' | 'willpower' => ref === 'humanity' || ref === 'willpower';
+
 /** The kind of trait `ref` names, which sets its freebie cost and where it is placed. */
 export function kindOf(ref: BuildTraitRef): TraitKind {
-  if (ref === 'humanity' || ref === 'willpower') return ref;
+  if (isVirtueDerived(ref)) return ref;
   return ref.slice(0, ref.indexOf(':')) as TraitKind;
 }
 
