@@ -29,10 +29,7 @@ export interface StepperView {
   lowerShown: boolean;
 }
 
-/** What a stepper shows for a row: given by the domain, never decided from the trait here. */
-export type RowOverride = RowLimits;
-
-export function stepperView(trait: TraitReport, settings: { maxTrait: number }, row: RowOverride): StepperView {
+export function stepperView(trait: TraitReport, settings: { maxTrait: number }, row: RowLimits): StepperView {
   const shown = (limit: string | null, lowerReason: string | null) => lowerReason !== null && lowerReason !== limit;
   return {
     // A locked trait keeps the generation's scale; a rating above the row's top (freebie dots) still shows its dots.
@@ -151,7 +148,7 @@ function setText(element: Element, text: string): void {
  * Draws the stepper from `trait` and the `row` a screen decided for it. A row drawn this way is the screen's
  * (`data-row-view`): the page-wide draw of the freebie steppers, `renderFreebieStepper`, leaves it be.
  */
-export function renderStepper(host: HTMLElement, trait: TraitReport, settings: { maxTrait: number }, row: RowOverride): void {
+export function renderStepper(host: HTMLElement, trait: TraitReport, settings: { maxTrait: number }, row: RowLimits): void {
   setAttr(host, 'data-row-view', '');
   draw(host, trait, settings, row);
 }
@@ -162,7 +159,7 @@ export function renderFreebieStepper(host: HTMLElement, trait: TraitReport, sett
   draw(host, trait, settings, freebieLimitsOf(trait, clan));
 }
 
-function draw(host: HTMLElement, trait: TraitReport, settings: { maxTrait: number }, row: RowOverride): void {
+function draw(host: HTMLElement, trait: TraitReport, settings: { maxTrait: number }, row: RowLimits): void {
   if (host.childElementCount === 0) fill(host, trait.label);
   const view = stepperView(trait, settings, row);
   const dots = host.querySelector('dot-rating')!;

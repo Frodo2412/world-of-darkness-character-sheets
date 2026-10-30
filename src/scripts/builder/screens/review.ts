@@ -36,8 +36,8 @@ function renderOutstanding(root: HTMLElement, items: OutstandingItem[]): void {
 
 export default {
   id: 'review',
-  wire(root, { current, builds, characters, render }) {
-    wireFinish(root, current, builds, characters, render);
+  wire(root, { current, builds, characters, render, save }) {
+    wireFinish(root, current, builds, characters, render, save);
   },
   render(build, root) {
     const items = outstanding(build);

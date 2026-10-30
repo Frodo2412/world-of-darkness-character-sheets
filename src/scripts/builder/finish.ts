@@ -22,6 +22,8 @@ export function wireFinish(
   characters: CharacterStore,
   /** Redraws every field from the build, giving back what a cleared refusal had left typed. */
   render: () => void,
+  /** Stores the build as it is now: what is finished is what is stored, so the two must be the same. */
+  save: () => 'saved' | 'failed' | 'gone',
 ): void {
   const button = root.querySelector<HTMLButtonElement>('[data-finish]')!;
   const notice = root.querySelector<HTMLElement>('[data-finish-notice]')!;
@@ -47,6 +49,17 @@ export function wireFinish(
   function finish(): void {
     // Disabled at once, so a second activation cannot start a second finish.
     button.disabled = true;
+    // A refused autosave would leave the stored build behind the page's: the page keeps the build and says so.
+    let saved: ReturnType<typeof save> = 'failed';
+    try {
+      saved = save();
+    } catch {
+      // Storage threw while reading; the button must not be left disabled with nothing said.
+    }
+    if (saved !== 'saved') {
+      button.disabled = false;
+      return;
+    }
     const build = current();
     switch (finishBuild(builds, characters, build.id)) {
       case 'finished':

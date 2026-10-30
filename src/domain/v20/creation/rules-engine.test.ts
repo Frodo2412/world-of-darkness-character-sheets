@@ -306,6 +306,7 @@ describe('clan changes', () => {
     expect(remaining(result.build, 'social')).toBe(7);
 
     const bought = play(fresh(), clan('Toreador'), freebie('attribute:appearance', 2));
+    expect(clanChangeEffects(bought, 'Nosferatu')).toEqual(['Appearance will be set to 0 and 5 freebie points refunded.']);
     expect(setClan(bought, 'Nosferatu')).toMatchObject({ notices: ['Appearance was set to 0 and 5 freebie points were refunded.'] });
     expect(freebiesRemaining(appliedBuild(setClan(bought, 'Nosferatu')))).toBe(15);
   });

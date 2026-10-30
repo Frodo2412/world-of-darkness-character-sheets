@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { TraitReport } from '../../../domain/v20/creation/progress';
-import { freebieLimitsOf } from '../../../domain/v20/creation/poolViews';
-import { stepperFor, stepperView, type RowOverride } from './ratingStepper';
+import { freebieLimitsOf, type RowLimits } from '../../../domain/v20/creation/poolViews';
+import { stepperFor, stepperView } from './ratingStepper';
 
 const trait = (overrides: Partial<TraitReport> = {}): TraitReport => ({
   ref: 'attribute:strength',
@@ -101,7 +101,7 @@ describe('stepperView', () => {
 });
 
 describe('stepperView with a screen\'s row', () => {
-  const row = (overrides: Partial<RowOverride> = {}): RowOverride => ({
+  const row = (overrides: Partial<RowLimits> = {}): RowLimits => ({
     max: 5,
     min: 1,
     canRaise: true,

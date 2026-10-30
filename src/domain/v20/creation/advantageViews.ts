@@ -10,7 +10,7 @@
 import { backgroundRef, virtueRef, type V20Build } from './build';
 import { matchByName } from './catalogue';
 import { GENERATION_REF, MOST_POTENT, generationBackgroundTop, maximumFor, ordinal } from './limits';
-import { calloutOf, poolOf, rowOf, type Callout, type PoolView, type RowView } from './poolViews';
+import { calloutOf, maximumText, poolOf, rowOf, type Callout, type PoolView, type RowView } from './poolViews';
 import { allotmentReports, disciplineRows, type AllotmentReport } from './progress';
 import { dotsOf, rating } from './ratings';
 import {
@@ -146,10 +146,10 @@ function backgroundRow(build: V20Build, report: AllotmentReport, name: Backgroun
   const top = ref === GENERATION_REF ? generationTop(build) : undefined;
   const row = rowOf(build, report, ref, top);
   // A top lower than the Background's own is the generation's, and the row says so.
-  const bound = top !== undefined && top < FIXED_MAXIMUMS.generationBackground && row.limit === `Maximum ${top}`;
+  const bound = top !== undefined && top < FIXED_MAXIMUMS.generationBackground && row.limit === maximumText(top);
   return {
     ...row,
-    limit: bound ? `Maximum ${top}, ${ordinal(MOST_POTENT)} generation is the best` : row.limit,
+    limit: bound ? `${maximumText(top)}, ${ordinal(MOST_POTENT)} generation is the best` : row.limit,
     name,
     label: backgroundLabel(name),
     removable: row.rating === 0,

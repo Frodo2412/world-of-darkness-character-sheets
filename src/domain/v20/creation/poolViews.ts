@@ -135,10 +135,19 @@ export function poolOf(report: AllotmentReport): PoolView {
   };
 }
 
+/** What the plus says when the clan fixes a trait. */
+const fixedFor = (clan: string): string => `Fixed for ${clan}`;
+
+/** What the plus says at the top of a trait's range. */
+export const maximumText = (max: number): string => `Maximum ${max}`;
+
+/** What the minus says at a floor the free dots hold. */
+const freeFloorText = (floor: number): string => `Minimum ${floor}, free ${floor === 1 ? 'dot' : 'dots'}`;
+
 /** Why the plus on `ref` cannot place a dot, in the order a player can act on: fixed, at its top, unranked, pool spent. */
 function limitOf(build: V20Build, report: AllotmentReport, ref: BuildTraitRef, max: number): string | null {
-  if (isLocked(build, ref)) return `Fixed for ${build.clan}`;
-  if (rating(build, ref) >= max) return `Maximum ${max}`;
+  if (isLocked(build, ref)) return fixedFor(build.clan);
+  if (rating(build, ref) >= max) return maximumText(max);
   if (isUnranked(report)) return `Rank ${report.label} first`;
   if (report.remaining <= 0) return `No dots left in ${report.label}`;
   return null;
@@ -146,11 +155,11 @@ function limitOf(build: V20Build, report: AllotmentReport, ref: BuildTraitRef, m
 
 /** Why the minus on `ref` cannot take a dot off, or null when it can: fixed, or at the floor free and freebie dots set. */
 function lowerLimitOf(build: V20Build, ref: BuildTraitRef, floor: number): string | null {
-  if (isLocked(build, ref)) return `Fixed for ${build.clan}`;
+  if (isLocked(build, ref)) return fixedFor(build.clan);
   if (rating(build, ref) > floor) return null;
   if (dotsOf(build, ref).freebie > 0) return `Minimum ${floor}, freebie dots are removed on Finishing touches`;
   const free = freeDots(build, ref);
-  return free > 0 ? `Minimum ${floor}, free ${free === 1 ? 'dot' : 'dots'}` : `Minimum ${floor}`;
+  return free > 0 ? freeFloorText(floor) : `Minimum ${floor}`;
 }
 
 /** One trait's row in a pool. `max` is the top creation dots reach, which a screen may lower (Generation). */
@@ -178,18 +187,18 @@ export type RowLimits = Pick<RowView, 'min' | 'max' | 'canRaise' | 'limit' | 'ca
 function floorReason(trait: TraitReport): string {
   if (trait.floor === 0) return 'Minimum 0';
   if (isVirtueDerived(trait.ref)) return `Minimum ${trait.floor}, from Virtues`;
-  return `Minimum ${trait.floor}, free ${trait.floor === 1 ? 'dot' : 'dots'}`;
+  return freeFloorText(trait.floor);
 }
 
 /** The limits of a trait bought with freebie points, which has no pool: its whole range, from its free dots to its top. */
 export function freebieLimitsOf(trait: TraitReport, clan: string): RowLimits {
   const canLower = !trait.locked && trait.rating > trait.floor;
-  const fixed = `Fixed for ${clan}`;
+  const fixed = fixedFor(clan);
   return {
     min: trait.floor,
     max: trait.max,
     canRaise: !trait.locked && trait.rating < trait.max,
-    limit: trait.locked ? fixed : trait.rating >= trait.max ? `Maximum ${trait.max}` : null,
+    limit: trait.locked ? fixed : trait.rating >= trait.max ? maximumText(trait.max) : null,
     canLower,
     lowerLimit: trait.locked ? fixed : canLower ? null : floorReason(trait),
   };

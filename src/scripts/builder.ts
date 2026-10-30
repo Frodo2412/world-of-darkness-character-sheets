@@ -38,10 +38,15 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
 
   /** The stored build as this page last saw it; another tab's write shows up as a difference. */
   const storedNow = (): string => {
-    const stored = store.load(loaded.id);
-    return stored.status === 'found' ? JSON.stringify(stored.build) : '';
+    try {
+      const stored = store.load(loaded.id);
+      return stored.status === 'found' ? JSON.stringify(stored.build) : '';
+    } catch {
+      return '';
+    }
   };
-  let lastSeen = storedNow();
+  // `loaded` is the reader's own output for the stored text, so any write after it was read differs from it.
+  let lastSeen = JSON.stringify(loaded);
 
   /**
    * Whether saving is safe: the build is still stored, as this page last left it. Finished or deleted elsewhere,
@@ -60,8 +65,12 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
     return true;
   }
 
+  /** Whether the page holds changes the store does not: the last save was refused. */
+  let unsaved = false;
+
   function saveBuild(): 'saved' | 'failed' {
     const { status } = store.save(build);
+    unsaved = status === 'failed';
     if (status === 'saved') lastSeen = storedNow();
     return status;
   }
@@ -93,7 +102,7 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
     return status;
   }
 
-  const wiring: Wiring = { commit, current: () => build, builds: store, characters, render };
+  const wiring: Wiring = { commit, current: () => build, builds: store, characters, render, save: () => (unsaved ? saveNow('retry') : stillStored() ? 'saved' : 'gone') };
   wireControls(root, wiring);
   wireNavigation(root);
   wireChrome(root, {

@@ -29,6 +29,8 @@ export interface Wiring {
   characters: CharacterStore;
   /** Redraws every screen from the build, giving back what a cleared refusal had left typed. */
   render: () => void;
+  /** Makes the store hold the build as it is now (storing it if a save was refused); 'gone' when it was finished or deleted elsewhere (or changed there), which the page then shows. */
+  save: () => 'saved' | 'failed' | 'gone';
 }
 
 export function wireControls(root: HTMLElement, wiring: Wiring): void {
