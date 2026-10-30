@@ -9,6 +9,7 @@ import type { CharacterStore } from '../storage/characterStore';
 import { renderChrome, wireChrome } from './builder/chrome';
 import { clearNotices, reportSave, showNotices, showRefusal, type SaveAsk } from './builder/messages';
 import { pageState, showView } from './builder/pageState';
+import { isPlainClick } from './builder/nav';
 import { renderNavigation, wireNavigation } from './builder/navigation';
 import { wireDialog } from './builder/parts/dialog';
 import { screenModules } from './builder/screens';
@@ -35,6 +36,36 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
     router.updateTitle();
   }
 
+  /** The stored build as this page last saw it; another tab's write shows up as a difference. */
+  const storedNow = (): string => {
+    const stored = store.load(loaded.id);
+    return stored.status === 'found' ? JSON.stringify(stored.build) : '';
+  };
+  let lastSeen = storedNow();
+
+  /**
+   * Whether saving is safe: the build is still stored, as this page last left it. Finished or deleted elsewhere,
+   * saving would bring it back; changed elsewhere, saving would undo that, so the page starts again from what is stored.
+   */
+  function stillStored(): boolean {
+    const stored = store.load(build.id);
+    if (stored.status === 'not-found') {
+      showView('not-found');
+      return false;
+    }
+    if (stored.status !== 'found' || JSON.stringify(stored.build) !== lastSeen) {
+      window.location.reload();
+      return false;
+    }
+    return true;
+  }
+
+  function saveBuild(): 'saved' | 'failed' {
+    const { status } = store.save(build);
+    if (status === 'saved') lastSeen = storedNow();
+    return status;
+  }
+
   /** The one path every change takes: update the model, redraw, save. */
   function commit(update: Update, control: HTMLElement): UpdateResult['status'] {
     const result = update(build);
@@ -45,26 +76,19 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
       render();
       return 'refused';
     }
-    // Finished or deleted elsewhere since this page loaded: saving would bring it back.
-    if (store.load(build.id).status === 'not-found') {
-      showView('not-found');
-      return 'refused';
-    }
+    if (!stillStored()) return 'refused';
     build = result.build;
     clearNotices(root);
     render();
     showNotices(control, result.notices);
-    reportSave(store.save(build).status);
+    reportSave(saveBuild());
     return 'applied';
   }
 
-  /** The build as it is, stored again; 'gone' when it was finished or deleted elsewhere, which the page then shows. */
+  /** The build as it is, stored again; 'gone' when it was finished or deleted elsewhere (or changed there), which the page then shows. */
   function saveNow(ask: Exclude<SaveAsk, 'change'>): 'saved' | 'failed' | 'gone' {
-    if (store.load(build.id).status === 'not-found') {
-      showView('not-found');
-      return 'gone';
-    }
-    const { status } = store.save(build);
+    if (!stillStored()) return 'gone';
+    const status = saveBuild();
     reportSave(status, ask);
     return status;
   }
@@ -91,7 +115,7 @@ function showBuilder(loaded: V20Build, store: BuildStore, characters: CharacterS
   // "Review and finish" on every screen opens Review & resolve at the outstanding list.
   root.addEventListener('click', (event) => {
     const link = (event.target as Element).closest('[data-review]');
-    if (!link) return;
+    if (!link || !isPlainClick(event)) return;
     event.preventDefault();
     router.open('review', root.querySelector<HTMLElement>('[data-outstanding]')!);
   });

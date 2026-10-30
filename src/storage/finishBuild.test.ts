@@ -39,30 +39,30 @@ function arrange(refuse: Parameters<typeof fakeStorage>[0] = {}) {
 describe('finishBuild', () => {
   test('saves the character under the build id, then removes the build', () => {
     const { build, items, builds, characters } = arrange();
-    expect(finishBuild(builds, characters, build)).toBe('finished');
+    expect(finishBuild(builds, characters, build.id)).toBe('finished');
     expect(characters.load(build.id)).toEqual({ status: 'found', character: toCharacter(build) });
     expect(items.has(buildKeyFor(build.id))).toBe(false);
   });
 
   test('saves nothing and removes nothing while something is outstanding', () => {
     const { build, items, builds, characters } = arrange();
-    const unrecorded = { ...build, bloodPool: null };
+    builds.save({ ...build, bloodPool: null });
 
-    expect(finishBuild(builds, characters, unrecorded)).toBe('not-finishable');
+    expect(finishBuild(builds, characters, build.id)).toBe('not-finishable');
     expect(items.has(buildKeyFor(build.id))).toBe(true);
     expect(characters.load(build.id)).toEqual({ status: 'not-found' });
   });
 
   test('keeps the build when the character cannot be saved', () => {
     const { build, items, builds, characters } = arrange({ set: (key) => key === keyFor('abc') });
-    expect(finishBuild(builds, characters, build)).toBe('save-failed');
+    expect(finishBuild(builds, characters, build.id)).toBe('save-failed');
     expect(items.has(buildKeyFor(build.id))).toBe(true);
     expect(characters.load(build.id)).toEqual({ status: 'not-found' });
   });
 
   test('keeps the character when the build cannot be removed', () => {
     const { build, builds, characters } = arrange({ remove: true });
-    expect(finishBuild(builds, characters, build)).toBe('finished-build-kept');
+    expect(finishBuild(builds, characters, build.id)).toBe('finished-build-kept');
     expect(characters.load(build.id).status).toBe('found');
   });
 
@@ -70,23 +70,22 @@ describe('finishBuild', () => {
     const { build, items, builds, characters } = arrange();
     const renamed = { ...blankCharacter(build.id), header: { ...blankCharacter(build.id).header, name: 'Lucita the Elder' } };
     characters.save(renamed);
-    expect(finishBuild(builds, characters, build)).toBe('already-finished');
+    expect(finishBuild(builds, characters, build.id)).toBe('already-finished');
     expect(characters.load(build.id)).toEqual({ status: 'found', character: renamed });
     expect(items.has(buildKeyFor(build.id))).toBe(false);
   });
 
   test('reports a build finished in another tab as finished, even though this tab still holds it unfinishable', () => {
     const { build, items, builds, characters } = arrange();
-    const staleCopy = { ...build, bloodPool: null };
     characters.save(toCharacter(build));
-    expect(finishBuild(builds, characters, staleCopy)).toBe('already-finished');
+    expect(finishBuild(builds, characters, build.id)).toBe('already-finished');
     expect(items.has(buildKeyFor(build.id))).toBe(false);
   });
 
   test('keeps the build and the unreadable record when the character under the id cannot be read', () => {
     const { build, items, builds, characters } = arrange();
     items.set(keyFor(build.id), '{not a character');
-    expect(finishBuild(builds, characters, build)).toBe('character-unreadable');
+    expect(finishBuild(builds, characters, build.id)).toBe('character-unreadable');
     expect(items.has(buildKeyFor(build.id))).toBe(true);
     expect(items.get(keyFor(build.id))).toBe('{not a character');
   });
@@ -94,21 +93,31 @@ describe('finishBuild', () => {
   test('keeps the build, and says so, when it is already finished elsewhere but cannot be removed', () => {
     const { build, items, builds, characters } = arrange({ remove: true });
     characters.save(toCharacter(build));
-    expect(finishBuild(builds, characters, build)).toBe('already-finished-build-kept');
+    expect(finishBuild(builds, characters, build.id)).toBe('already-finished-build-kept');
     expect(items.has(buildKeyFor(build.id))).toBe(true);
     expect(characters.load(build.id).status).toBe('found');
   });
 
-  test('reports a build deleted in another tab as missing, even though this tab still holds it unfinishable', () => {
+  test('finishes the build as it is stored now, not as the page last held it', () => {
     const { build, builds, characters } = arrange();
-    builds.delete(build.id);
-    expect(finishBuild(builds, characters, { ...build, bloodPool: null })).toBe('build-missing');
+    const edited = { ...build, concept: { ...build.concept, name: 'Edited in another tab' } };
+    builds.save(edited);
+    expect(finishBuild(builds, characters, build.id)).toBe('finished');
+    expect(characters.load(build.id)).toEqual({ status: 'found', character: toCharacter(edited) });
+  });
+
+  test('leaves a build alone that has become unreadable, rewritten elsewhere', () => {
+    const { build, items, builds, characters } = arrange();
+    items.set(buildKeyFor(build.id), '{not a build');
+    expect(finishBuild(builds, characters, build.id)).toBe('build-unreadable');
+    expect(items.get(buildKeyFor(build.id))).toBe('{not a build');
+    expect(characters.load(build.id)).toEqual({ status: 'not-found' });
   });
 
   test('does nothing for a build no longer stored', () => {
     const { build, builds, characters } = arrange();
     builds.delete(build.id);
-    expect(finishBuild(builds, characters, build)).toBe('build-missing');
+    expect(finishBuild(builds, characters, build.id)).toBe('build-missing');
     expect(characters.load(build.id)).toEqual({ status: 'not-found' });
   });
 });

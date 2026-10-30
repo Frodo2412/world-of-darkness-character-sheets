@@ -278,11 +278,11 @@ phrasing.
 - **RD-22** Existing roster behaviour (Build a character, in-progress list, continue,
   delete with confirmation) and the "New character" blank-sheet flow are unchanged.
 - **RD-23** The visual language follows the frames: dark surfaces, display-serif
-  headings, uppercase phase eyebrows ("PHASE 02 / SELECT ATTRIBUTES"), a primary red
+  headings, phase eyebrows set in capitals by the stylesheet ("Phase 02 / Attributes"), a primary red
   Continue/Confirm button, bordered cards, ring-style dots. The existing contrast and
   class-name tests continue to pass with the new styles.
 - **RD-25** Every control is keyboard-operable with a unique accessible name and exposed
-  value; each screen has one `h1` (the display headline) and a logical heading order;
+  value; the page has one `h1` (the top bar), each screen's display headline is an `h2` beneath it, and the heading order is logical;
   focus moves to the screen heading after navigating between screens; dialogs are native
   modal dialogs with labelled titles; disabled Continue and Add purchase explain
   themselves in text; refusals and outstanding items are perceivable without colour.
@@ -373,3 +373,5 @@ trail.
 - [x] Terminology consistent across artifacts
 - [x] No contradictions between artifacts
 - [x] Every gap/ambiguity finding is logged — inferable with rationale or resolved by human
+| RD-23 | Eyebrow reads "Phase 02 / Attributes", capitals from the stylesheet | The implemented copy; the spec's example was a placeholder |
+| RD-25 | One `h1` per page (the top bar); the screen headline is an `h2` | The top bar names the product on every screen; the plan's Definition of Done already asks for exactly one `h1` per page |

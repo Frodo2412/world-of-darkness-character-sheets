@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import type { V20Build } from './build';
+import type { TraitReport } from './progress';
 import { allotmentStates } from './allotments';
-import { PRIORITY_DUPLICATE, PRIORITY_UNIQUE, rankedView, type RankedGroupView, type RankedScreenView } from './poolViews';
+import { PRIORITY_DUPLICATE, PRIORITY_UNIQUE, freebieLimitsOf, rankedView, type RankedGroupView, type RankedScreenView } from './poolViews';
 import { creationFloor, rating } from './ratings';
 import { abilitiesRanked, attributesRanked, clan, completeBuild, creation, freebie, fresh, play, rank } from './testing/play';
 import { setRank, setRating } from './updates';
@@ -340,5 +341,50 @@ describe('the summary and the copy', () => {
         }
       }
     }
+  });
+});
+
+describe('freebieLimitsOf', () => {
+  const trait = (overrides: Partial<TraitReport> = {}): TraitReport => ({
+    ref: 'attribute:strength',
+    label: 'Strength',
+    rating: 3,
+    creationRating: 2,
+    freebieDots: 0,
+    max: 5,
+    floor: 1,
+    locked: false,
+    valueText: '3 of 5',
+    ...overrides,
+  });
+
+  test('lets a rating between its floor and top go either way, with nothing to explain', () => {
+    expect(freebieLimitsOf(trait(), 'Brujah')).toEqual({ min: 1, max: 5, canRaise: true, limit: null, canLower: true, lowerLimit: null });
+  });
+
+  test('stops the plus at the top and the minus at the floor, each with its words', () => {
+    expect(freebieLimitsOf(trait({ rating: 5 }), 'Brujah')).toMatchObject({ canRaise: false, limit: 'Maximum 5', canLower: true });
+    expect(freebieLimitsOf(trait({ rating: 1 }), 'Brujah')).toMatchObject({ canLower: false, lowerLimit: 'Minimum 1, free dot' });
+    expect(freebieLimitsOf(trait({ rating: 5, floor: 5 }), 'Brujah')).toMatchObject({ lowerLimit: 'Minimum 5, free dots' });
+    expect(freebieLimitsOf(trait({ rating: 0, floor: 0 }), 'Brujah').lowerLimit).toBe('Minimum 0');
+  });
+
+  test('says the Virtues hold Humanity and Willpower at their floor', () => {
+    const humanity = trait({ ref: 'humanity', label: 'Humanity', rating: 4, floor: 4 });
+    const willpower = trait({ ref: 'willpower', label: 'Willpower', rating: 2, floor: 2 });
+    expect(freebieLimitsOf(humanity, 'Brujah').lowerLimit).toBe('Minimum 4, from Virtues');
+    expect(freebieLimitsOf(willpower, 'Brujah').lowerLimit).toBe('Minimum 2, from Virtues');
+  });
+
+  test('fixes a trait the clan fixes, for both buttons', () => {
+    const locked = trait({ rating: 0, floor: 0, max: 0, locked: true });
+    expect(freebieLimitsOf(locked, 'Nosferatu')).toEqual({
+      min: 0,
+      max: 0,
+      canRaise: false,
+      limit: 'Fixed for Nosferatu',
+      canLower: false,
+      lowerLimit: 'Fixed for Nosferatu',
+    });
   });
 });

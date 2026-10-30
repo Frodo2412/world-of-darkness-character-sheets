@@ -7,9 +7,8 @@
 // that is applied says the trait's new value text once through the stepper's polite slot.
 
 import type { BuildTraitRef } from '../../../domain/v20/creation/build';
-import type { RowView } from '../../../domain/v20/creation/poolViews';
+import { freebieLimitsOf, type RowLimits } from '../../../domain/v20/creation/poolViews';
 import type { TraitReport } from '../../../domain/v20/creation/progress';
-import { isVirtueDerived } from '../../../domain/v20/creation/ratings';
 import type { DotSource } from '../../../domain/v20/creation/updates';
 
 /** What the stepper shows for a trait, decided apart from the DOM. */
@@ -30,47 +29,21 @@ export interface StepperView {
   lowerShown: boolean;
 }
 
-/** What holds a trait at its floor: the Virtues give Humanity and Willpower theirs, a free dot gives the rest. */
-function floorReason(trait: TraitReport): string {
-  if (trait.floor === 0) return 'Minimum 0';
-  if (isVirtueDerived(trait.ref)) return `Minimum ${trait.floor}, from Virtues`;
-  return `Minimum ${trait.floor}, free ${trait.floor === 1 ? 'dot' : 'dots'}`;
-}
+/** What a stepper shows for a row: given by the domain, never decided from the trait here. */
+export type RowOverride = RowLimits;
 
-/**
- * What a screen that judges its own rows (the ranked groups, whose plus also depends on the group's pool)
- * says about one: the stepper then shows it as given instead of deciding from the trait alone.
- */
-export type RowOverride = Pick<RowView, 'min' | 'max' | 'canRaise' | 'limit' | 'canLower' | 'lowerLimit'>;
-
-export function stepperView(trait: TraitReport, settings: { maxTrait: number }, clan: string, row?: RowOverride): StepperView {
+export function stepperView(trait: TraitReport, settings: { maxTrait: number }, row: RowOverride): StepperView {
   const shown = (limit: string | null, lowerReason: string | null) => lowerReason !== null && lowerReason !== limit;
-  if (row) {
-    return {
-      // A locked trait keeps the generation's scale; a rating above the row's top (freebie dots) still shows its dots.
-      dots: trait.locked ? settings.maxTrait : Math.max(row.max, trait.rating),
-      min: row.min,
-      max: row.max,
-      canLower: row.canLower,
-      canRaise: row.canRaise,
-      limit: row.limit,
-      lowerReason: row.lowerLimit,
-      lowerShown: shown(row.limit, row.lowerLimit),
-    };
-  }
-  const canLower = !trait.locked && trait.rating > trait.floor;
-  const fixed = `Fixed for ${clan}`;
-  const limit = trait.locked ? fixed : trait.rating >= trait.max ? `Maximum ${trait.max}` : null;
-  const lowerReason = trait.locked ? fixed : canLower ? null : floorReason(trait);
   return {
-    dots: trait.locked ? settings.maxTrait : trait.max,
-    min: trait.floor,
-    max: trait.max,
-    canLower,
-    canRaise: !trait.locked && trait.rating < trait.max,
-    limit,
-    lowerReason,
-    lowerShown: shown(limit, lowerReason),
+    // A locked trait keeps the generation's scale; a rating above the row's top (freebie dots) still shows its dots.
+    dots: trait.locked ? settings.maxTrait : Math.max(row.max, trait.rating),
+    min: row.min,
+    max: row.max,
+    canLower: row.canLower,
+    canRaise: row.canRaise,
+    limit: row.limit,
+    lowerReason: row.lowerLimit,
+    lowerShown: shown(row.limit, row.lowerLimit),
   };
 }
 
@@ -175,14 +148,23 @@ function setText(element: Element, text: string): void {
 }
 
 /**
- * Draws the stepper from `trait`, or from `row` where a screen decides for its rows. A row drawn from a screen's
- * view (`data-row-view`) stays the screen's: a later draw without a `row`, such as the page-wide one, leaves it be.
+ * Draws the stepper from `trait` and the `row` a screen decided for it. A row drawn this way is the screen's
+ * (`data-row-view`): the page-wide draw of the freebie steppers, `renderFreebieStepper`, leaves it be.
  */
-export function renderStepper(host: HTMLElement, trait: TraitReport, settings: { maxTrait: number }, clan: string, row?: RowOverride): void {
-  if (row === undefined && host.hasAttribute('data-row-view')) return;
-  if (row !== undefined) setAttr(host, 'data-row-view', '');
+export function renderStepper(host: HTMLElement, trait: TraitReport, settings: { maxTrait: number }, row: RowOverride): void {
+  setAttr(host, 'data-row-view', '');
+  draw(host, trait, settings, row);
+}
+
+/** Draws a stepper no screen owns: its limits are the trait's own (`freebieLimitsOf`). */
+export function renderFreebieStepper(host: HTMLElement, trait: TraitReport, settings: { maxTrait: number }, clan: string): void {
+  if (host.hasAttribute('data-row-view')) return;
+  draw(host, trait, settings, freebieLimitsOf(trait, clan));
+}
+
+function draw(host: HTMLElement, trait: TraitReport, settings: { maxTrait: number }, row: RowOverride): void {
   if (host.childElementCount === 0) fill(host, trait.label);
-  const view = stepperView(trait, settings, clan, row);
+  const view = stepperView(trait, settings, row);
   const dots = host.querySelector('dot-rating')!;
   setAttr(dots, 'max', String(view.dots));
   setAttr(dots, 'freebie', String(trait.freebieDots));

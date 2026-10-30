@@ -173,27 +173,23 @@ interface DisciplineRemoval {
 
 type ClanEffect = TraitReset | DisciplineRemoval;
 
-const was = (count: number): string => (count === 1 ? 'was' : 'were');
+type Tense = 'future' | 'past';
 
-/** What `effect` will do, for the player to confirm. */
-function willSentence(effect: ClanEffect): string {
-  if (effect.kind === 'removal') {
-    return `The ${list(effect.names)} ${effect.dots === 1 ? 'dot' : 'dots'} will be removed ${removalReason(effect)}.`;
-  }
-  const parts = [`${effect.label} will be set to 0`];
-  if (effect.dots > 0) parts.push(`${plural(effect.dots, 'dot')} returned to ${effect.group}`);
-  if (effect.points > 0) parts.push(`${plural(effect.points, 'freebie point')} refunded`);
-  return `${list(parts)}.`;
-}
+/** "will be" before the change; "was" or "were" after it, agreeing with `count`. */
+const done = (tense: Tense, count: number): string => (tense === 'future' ? 'will be' : count === 1 ? 'was' : 'were');
 
-/** The same, said after it was done. */
-function wasSentence(effect: ClanEffect): string {
+/** What `effect` does: said before, for the player to confirm, and after it was done. */
+function sentenceOf(effect: ClanEffect, tense: Tense): string {
   if (effect.kind === 'removal') {
-    return `The ${list(effect.names)} ${effect.dots === 1 ? 'dot' : 'dots'} ${was(effect.dots)} removed ${removalReason(effect)}.`;
+    return `The ${list(effect.names)} ${effect.dots === 1 ? 'dot' : 'dots'} ${done(tense, effect.dots)} removed ${removalReason(effect)}.`;
   }
-  const parts = [`${effect.label} was set to 0`];
-  if (effect.dots > 0) parts.push(`${plural(effect.dots, 'dot')} ${was(effect.dots)} returned to ${effect.group}`);
-  if (effect.points > 0) parts.push(`${plural(effect.points, 'freebie point')} ${was(effect.points)} refunded`);
+  // Said before, "will be" once opens the sentence and the rest follow it; said after, each part carries its own verb.
+  const then = (count: number): string => (tense === 'future' ? '' : `${done(tense, count)} `);
+  const parts = [
+    `${effect.label} ${done(tense, 1)} set to 0`,
+    ...(effect.dots > 0 ? [`${plural(effect.dots, 'dot')} ${then(effect.dots)}returned to ${effect.group}`] : []),
+    ...(effect.points > 0 ? [`${plural(effect.points, 'freebie point')} ${then(effect.points)}refunded`] : []),
+  ];
   return `${list(parts)}.`;
 }
 
@@ -247,7 +243,7 @@ function changeClan(build: V20Build, clan: ClanName): ClanChange {
 /** What choosing `clan` would remove, as sentences for the player to confirm. Empty if nothing. */
 export function clanChangeEffects(build: V20Build, clan: string): string[] {
   if (!isClanName(clan) || clan === build.clan) return [];
-  return changeClan(build, clan as ClanName).effects.map(willSentence);
+  return changeClan(build, clan as ClanName).effects.map((effect) => sentenceOf(effect, 'future'));
 }
 
 /**
@@ -263,7 +259,7 @@ export function setClan(build: V20Build, clan: string): UpdateResult {
   }
   if (clan === build.clan) return applied(build);
   const { candidate, effects } = changeClan(build, clan as ClanName);
-  return commit(build, candidate, effects.map(wasSentence));
+  return commit(build, candidate, effects.map((effect) => sentenceOf(effect, 'past')));
 }
 
 // Ranks

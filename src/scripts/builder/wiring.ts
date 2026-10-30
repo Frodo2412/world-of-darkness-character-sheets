@@ -11,7 +11,7 @@ import { setRank, setRating, type DotSource } from '../../domain/v20/creation/up
 import type { BuildStore } from '../../storage/buildStore';
 import type { CharacterStore } from '../../storage/characterStore';
 import { showReadout } from './messages';
-import { announceValue, renderStepper } from './parts/ratingStepper';
+import { announceValue, renderFreebieStepper } from './parts/ratingStepper';
 import { renderTypedNumbers, wireTypedNumbers } from './parts/typedNumber';
 
 export type Update = (build: V20Build) => UpdateResult;
@@ -72,6 +72,6 @@ export function renderControls(root: HTMLElement, report: BuildReport): void {
   }
   for (const stepper of root.querySelectorAll<HTMLElement>('[data-build-trait]')) {
     const trait = report.traits[stepper.dataset.buildTrait!];
-    if (trait) renderStepper(stepper, trait, report.settings, report.concept.clan);
+    if (trait) renderFreebieStepper(stepper, trait, report.settings, report.concept.clan);
   }
 }

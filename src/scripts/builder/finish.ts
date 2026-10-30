@@ -36,35 +36,38 @@ export function wireFinish(
     button.focus();
   }
 
+  /** Says `text` followed by a link to the roster. */
+  function showRosterLink(text: string): void {
+    const link = document.createElement('a');
+    link.href = '/';
+    link.textContent = 'Go to your characters';
+    notice.replaceChildren(text, link);
+  }
+
   function finish(): void {
     // Disabled at once, so a second activation cannot start a second finish.
     button.disabled = true;
     const build = current();
-    switch (finishBuild(builds, characters, build)) {
+    switch (finishBuild(builds, characters, build.id)) {
       case 'finished':
       case 'finished-build-kept':
         clearStatus();
         window.location.assign(sheetUrl(build.id));
         return;
-      case 'already-finished': {
-        const link = document.createElement('a');
-        link.href = '/';
-        link.textContent = 'Go to your characters';
-        notice.replaceChildren('This build was already finished and has been removed. Its character is on your roster. ', link);
+      case 'already-finished':
+        showRosterLink('This build was already finished and has been removed. Its character is on your roster. ');
         return;
-      }
-      case 'already-finished-build-kept': {
-        const link = document.createElement('a');
-        link.href = '/';
-        link.textContent = 'Go to your characters';
-        notice.replaceChildren('This build was already finished, but it could not be removed. Its character is on your roster. ', link);
+      case 'already-finished-build-kept':
+        showRosterLink('This build was already finished, but it could not be removed. Its character is on your roster. ');
         return;
-      }
       case 'build-missing':
         showView('not-found');
         return;
       case 'not-finishable':
         keepBuild('This build still has items outstanding, so it was not finished. Your build has been kept.');
+        return;
+      case 'build-unreadable':
+        keepBuild('This build could not be read, so it was not finished. Reload the page to see what is stored.');
         return;
       case 'character-unreadable':
         keepBuild('A saved character under this build could not be read, so the build was not finished. Your build has been kept.');

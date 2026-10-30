@@ -6,10 +6,10 @@
 // (advantageViews.ts), which have no rank.
 
 import { isUnranked, poolStateOf, type PoolState } from './allotments';
-import { allotmentReports, type AllotmentReport } from './progress';
+import { allotmentReports, type AllotmentReport, type TraitReport } from './progress';
 import type { BuildTraitRef, FixedTraitRef, V20Build } from './build';
 import { creationMaximum } from './limits';
-import { creationFloor, dotsOf, freeDots, isLocked, rating, traitLabel } from './ratings';
+import { creationFloor, dotsOf, freeDots, isLocked, isVirtueDerived, rating, traitLabel } from './ratings';
 import { dotNoun } from './screens';
 import { FIXED_MAXIMUMS, RANKED_ALLOTMENTS, RANKS, type Rank, type RankedAllotment } from './rules';
 import { NOT_ALLOCATED, list, plural, titleCase } from './wording';
@@ -168,6 +168,30 @@ export function rowOf(build: V20Build, report: AllotmentReport, ref: BuildTraitR
     min,
     canLower: lowerLimit === null,
     lowerLimit,
+  };
+}
+
+/** What a stepper needs of a row: its range and, for each button, whether it can act and the words if it cannot. */
+export type RowLimits = Pick<RowView, 'min' | 'max' | 'canRaise' | 'limit' | 'canLower' | 'lowerLimit'>;
+
+/** What holds a trait at its floor: the Virtues give Humanity and Willpower theirs, a free dot gives the rest. */
+function floorReason(trait: TraitReport): string {
+  if (trait.floor === 0) return 'Minimum 0';
+  if (isVirtueDerived(trait.ref)) return `Minimum ${trait.floor}, from Virtues`;
+  return `Minimum ${trait.floor}, free ${trait.floor === 1 ? 'dot' : 'dots'}`;
+}
+
+/** The limits of a trait bought with freebie points, which has no pool: its whole range, from its free dots to its top. */
+export function freebieLimitsOf(trait: TraitReport, clan: string): RowLimits {
+  const canLower = !trait.locked && trait.rating > trait.floor;
+  const fixed = `Fixed for ${clan}`;
+  return {
+    min: trait.floor,
+    max: trait.max,
+    canRaise: !trait.locked && trait.rating < trait.max,
+    limit: trait.locked ? fixed : trait.rating >= trait.max ? `Maximum ${trait.max}` : null,
+    canLower,
+    lowerLimit: trait.locked ? fixed : canLower ? null : floorReason(trait),
   };
 }
 

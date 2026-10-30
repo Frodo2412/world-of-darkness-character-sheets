@@ -101,7 +101,7 @@ function drawDisciplines(root: HTMLElement, view: DisciplinesView, current: Buil
     view.rows.map((row) => existing.get(`${row.ref}|${row.removable}`) ?? disciplineRowElement(container, row)),
   );
   for (const row of view.rows) {
-    renderStepper(stepperFor(card, row.ref)!, current.traits[row.ref], current.settings, current.concept.clan, row);
+    renderStepper(stepperFor(card, row.ref)!, current.traits[row.ref], current.settings, row);
   }
 }
 
@@ -158,7 +158,7 @@ function drawBackgrounds(root: HTMLElement, view: BackgroundsView, current: Buil
   );
   for (const row of view.rows) {
     const element = container.querySelector<HTMLElement>(`:scope > [data-row="${row.name}"]`)!;
-    renderStepper(element.querySelector<HTMLElement>('[data-build-trait]')!, current.traits[row.ref], current.settings, current.concept.clan, row);
+    renderStepper(element.querySelector<HTMLElement>('[data-build-trait]')!, current.traits[row.ref], current.settings, row);
     part<HTMLElement>(element, 'bg-remove').hidden = !row.removable;
   }
 }
@@ -170,7 +170,7 @@ function drawVirtues(root: HTMLElement, view: VirtuesView, current: BuildReport)
   drawCardPool(card, 'virtues', view.pool);
   drawCallout(card, view.callout);
   for (const row of view.rows) {
-    renderStepper(stepperFor(card, row.ref)!, current.traits[row.ref], current.settings, current.concept.clan, row);
+    renderStepper(stepperFor(card, row.ref)!, current.traits[row.ref], current.settings, row);
   }
 }
 

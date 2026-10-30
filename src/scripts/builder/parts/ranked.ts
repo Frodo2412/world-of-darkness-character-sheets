@@ -49,7 +49,7 @@ export function createRankedScreen(key: RankedKey): Pick<ScreenModule, 'wire' | 
     drawCallout(group, view.callout);
     for (const row of view.rows) {
       const stepper = stepperFor(group, row.ref)!;
-      renderStepper(stepper, current.traits[row.ref], current.settings, current.concept.clan, row);
+      renderStepper(stepper, current.traits[row.ref], current.settings, row);
     }
   }
 
